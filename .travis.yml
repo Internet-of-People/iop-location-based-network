@@ -6,16 +6,12 @@ language: cpp
 #  - clang
 #  - gcc
 
-install:
-  - export CXX=g++-5
-  - export CC=gcc-5
-
 # Build steps
 script:
   - mkdir build
   - cd build
   - cmake .. && make
-  - test/test
+  - test/tests
 
 matrix:
   include:
@@ -26,7 +22,10 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-5
-      env: COMPILER=g++-5
+      env:
+        COMPILER=g++-5
+        CXX=g++-5
+        CC=gcc-5
     - compiler: clang
       addons:
         apt:
@@ -35,5 +34,8 @@ matrix:
             - llvm-toolchain-precise-3.7
           packages:
             - clang-3.7
-      env: COMPILER=clang++-3.7
+      env:
+        COMPILER=clang++-3.7
+        CXX=clang++-3.7
+
 
