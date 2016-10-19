@@ -12,9 +12,11 @@ class Node
     
 public:
     
-    Node(std::string idArg);
+    Node(const std::string &id, double latitude, double longitude);
     
     const std::string& id() const;
+    double latitude() const;
+    double longitude() const;
 };
 
 #endif // NODE_H

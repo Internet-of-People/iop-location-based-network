@@ -7,7 +7,7 @@ using namespace std;
 
 int main()
 {
-    Node node("Located");
+    Node node("Located", 0, 0);
     cout << node.id() << " works" << endl;
     return 0;
 }
