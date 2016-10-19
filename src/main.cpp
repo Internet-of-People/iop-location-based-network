@@ -1,13 +1,12 @@
 #include <iostream>
 
-#include "node.h"
+#include "node.hpp"
 
 using namespace std;
 
 
 int main()
 {
-    Node node("Located", 0, 0);
-    cout << node.id() << " works" << endl;
+    cout << "Located works" << endl;
     return 0;
 }
