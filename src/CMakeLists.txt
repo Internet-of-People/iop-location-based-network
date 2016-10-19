@@ -1,3 +1,4 @@
-add_executable (iop-locationd main.cpp)
+add_library(iop-location node.cpp)
 
-#target_link_libraries (iop-locationd LINK_PUBLIC libraryName)
+add_executable (iop-located main.cpp)
+target_link_libraries (iop-located LINK_PUBLIC iop-location)

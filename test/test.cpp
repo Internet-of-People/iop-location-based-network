@@ -1,10 +1,13 @@
 #include <iostream>
 
+#include "node.h"
+
 using namespace std;
 
 
 int main()
 {
-    cout << "It works!" << endl;
+    Node node("Test");
+    cout << node.id() << " works" << endl;
     return 0;
 }
