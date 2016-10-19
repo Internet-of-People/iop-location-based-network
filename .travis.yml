@@ -6,6 +6,8 @@ script:
   - mkdir build
   - cd build
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER .. && make
+  - pwd
+  - ls -al
   - ./test/tests
 
 # Custom packages for different target compilers
