@@ -4,7 +4,22 @@ using namespace std;
 
 
 
-GpsLocation::GpsLocation(const IGpsLocation &position) :
+NodeProfile::NodeProfile(const NodeId& id,
+                         const Ipv4Address& ipv4Address, TcpPort ipv4Port,
+                         const Ipv6Address& ipv6Address, TcpPort ipv6Port) :
+    _id(id),
+    _ipv4Address(ipv4Address), _ipv4Port(ipv4Port),
+    _ipv6Address(ipv6Address), _ipv6Port(ipv6Port) {}
+
+const NodeId& NodeProfile::id() const { return _id; }
+const Ipv4Address& NodeProfile::ipv4Address() const { return _ipv4Address; }
+TcpPort NodeProfile::ipv4Port() const { return _ipv4Port; }
+const Ipv6Address& NodeProfile::ipv6Address() const { return _ipv6Address; }
+TcpPort NodeProfile::ipv6Port() const { return _ipv6Port; }
+
+
+
+GpsLocation::GpsLocation(const GpsLocation &position) :
     _latitude( position.latitude() ), _longitude( position.longitude() ) {}
     
 GpsLocation::GpsLocation(double latitude, double longitude) :
@@ -15,23 +30,13 @@ double GpsLocation::longitude() const { return _longitude; }
 
 
 
-NodeProfile::NodeProfile(const string &id, const IGpsLocation &position) :
-    _id(id), _position(position) {}
+NodeLocation::NodeLocation(const NodeProfile &profile, const GpsLocation &position) :
+    _profile(profile), _position(position) {}
 
-NodeProfile::NodeProfile(const string &id, double latitude, double longitude) :
-    _id(id), _position(latitude, longitude) {}
+NodeLocation::NodeLocation(const NodeProfile &profile, double latitude, double longitude) :
+    _profile(profile), _position(latitude, longitude) {}
 
-const string& NodeProfile::id() const { return _id; }
-double NodeProfile::latitude()  const { return _position.latitude(); }
-double NodeProfile::longitude() const { return _position.longitude(); }
+const NodeProfile& NodeLocation::profile() const { return _profile; }
+double NodeLocation::latitude()  const { return _position.latitude(); }
+double NodeLocation::longitude() const { return _position.longitude(); }
 
-
-
-ServerInfo::ServerInfo(const string& id, ServerType serverType,
-                       const string& ipAddress, uint16_t tcpPort) :
-    _id(id), _ipAddress(ipAddress), _tcpPort(tcpPort), _serverType(serverType) {}
-
-const string& ServerInfo::id() const { return _id; }
-ServerType ServerInfo::serverType() const { return _serverType; }
-const string& ServerInfo::ipAddress() const { return _ipAddress; }
-uint16_t ServerInfo::tcpPort() const { return _tcpPort; }

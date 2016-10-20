@@ -4,60 +4,73 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 
 
-// TODO consider if this interface makes sense or should be removed
-class IGpsLocation
+typedef std::string NodeId;
+typedef std::string Ipv4Address;
+typedef std::string Ipv6Address;
+typedef uint16_t    TcpPort;
+
+
+
+class NodeProfile
 {
+    NodeId      _id;
+    Ipv4Address _ipv4Address;
+    TcpPort     _ipv4Port;
+    Ipv6Address _ipv6Address;
+    TcpPort     _ipv6Port;
+    
 public:
-    virtual double latitude() const = 0;
-    virtual double longitude() const = 0;
+    
+    NodeProfile(const NodeId &id,
+                const Ipv4Address &ipv4Address, TcpPort ipv4Port,
+                const Ipv6Address &ipv6Address, TcpPort ipv6Port);
+    
+    const NodeId& id() const;
+    const Ipv4Address& ipv4Address() const;
+    TcpPort ipv4Port() const;
+    const Ipv6Address& ipv6Address() const;
+    TcpPort ipv6Port() const;
 };
 
 
-class GpsLocation : public IGpsLocation
+
+class GpsLocation
 {
     double _latitude;
     double _longitude;
     
 public:
     
-    GpsLocation(const IGpsLocation &position);
+    GpsLocation(const GpsLocation &position);
     GpsLocation(double latitude, double longitude);
-    double latitude() const override;
-    double longitude() const override;
+    double latitude() const;
+    double longitude() const;
 };
 
 
 
-// TODO consider if this interface makes sense or should be removed
-class INodeProfile : public IGpsLocation
+class NodeLocation
 {
-public:
-    virtual const std::string& id() const = 0;
-};
-
-
-
-class NodeProfile : public INodeProfile
-{
-    std::string _id;
+    NodeProfile _profile;
     GpsLocation _position;
     
 public:
     
-    NodeProfile(const std::string &id, const IGpsLocation &position);
-    NodeProfile(const std::string &id, double latitude, double longitude);
+    NodeLocation(const NodeProfile &profile, const GpsLocation &position);
+    NodeLocation(const NodeProfile &profile, double latitude, double longitude);
     
-    const std::string& id() const override;
-    double latitude() const override;
-    double longitude() const override;
+    const NodeProfile& profile() const;
+    double latitude() const;
+    double longitude() const;
 };
 
 
 
-enum ServerType : uint8_t
+enum class ServerType : uint8_t
 {
     TokenServer         = 1,
     ProfileServer       = 2,
@@ -67,36 +80,16 @@ enum ServerType : uint8_t
     MintingServer       = 6,
 };
 
-
-
-// TODO consider if this interface makes sense or should be removed
-class IServerInfo
+// Utility class to enable hash classes to be used as a hash key until fixed in C++ standard
+// NOTE for simple (not class) enums, std::hash<int> also works instead of this class
+struct EnumHasher
 {
-    virtual const std::string& id() const = 0;
-    virtual ServerType serverType() const = 0;
-    virtual const std::string& ipAddress() const = 0;
-    virtual uint16_t tcpPort() const = 0;
+    template <typename EnumType>
+    std::size_t operator()(EnumType e) const // static_cast any type to size_t using type deduction
+        { return static_cast<std::size_t>(e); }
 };
 
-
-
-class ServerInfo : IServerInfo
-{
-    std::string _id;
-    std::string _ipAddress;
-    uint16_t    _tcpPort;
-    ServerType  _serverType;
-    
-public:
-    
-    ServerInfo(const std::string &id, ServerType serverType,
-               const std::string &ipAddress, uint16_t tcpPort);
-    
-    const std::string& id() const override;
-    ServerType serverType() const override;
-    const std::string& ipAddress() const override;
-    uint16_t tcpPort() const override;
-};
+typedef NodeProfile ServerInfo;
 
 
 
@@ -132,29 +125,29 @@ class ISpatialDb
 class GeographicNetwork
 {
     std::shared_ptr<ISpatialDb> _spatialDb;
-    std::vector<ServerInfo> _servers;
+    std::unordered_map<ServerType, ServerInfo, EnumHasher> _servers;
     
 public:
     
     GeographicNetwork(std::shared_ptr<ISpatialDb> spatialDb);
     
     // Local interface for servers running on the same hardware
-    virtual void registerServer(const ServerInfo &server);
-    virtual std::vector<NodeProfile> GetNeighbourHood() const;
+    virtual void registerServer(ServerType serverType, const ServerInfo &server);
+    virtual std::vector<NodeLocation> GetNeighbourHood() const;
     
     // Interface provided for the same network instances running on remote machines
-    virtual std::vector<NodeProfile> GetRandomNodes(
-        uint16_t nodeCount, bool includeNeighbours = false) const;
+    virtual std::vector<NodeLocation> GetRandomNodes(
+        uint16_t maxNodeCount, bool includeNeighbours = false) const;
     
-    virtual std::vector<NodeProfile> GetClosestNodes(const GpsLocation &location,
+    virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
         double radiusKm = 100, uint16_t maxNodeCount = 100) const;
     
-    virtual void ExchangeNodeProfile(NodeProfile profile);
-    virtual void RenewNodeProfile(NodeProfile profile);
-    virtual void AcceptNeighbor(NodeProfile profile);
+    virtual void ExchangeNodeProfile(NodeLocation profile);
+    virtual void RenewNodeProfile(NodeLocation profile);
+    virtual void AcceptNeighbor(NodeLocation profile);
     
     // Interface provided to serve higher level services and clients
-    virtual const std::vector<ServerInfo>& GetServers() const;
+    virtual const std::unordered_map<ServerType,ServerInfo,EnumHasher>& GetServers() const;
     // + GetClosestNodes() which is the same as for network instances on remote machines
 };
 
