@@ -5,7 +5,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Needed to convince Travis to use proper compiler options
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+if ( CMAKE_COMPILER_IS_GNUCXX )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wextra -pedantic")
+endif ( CMAKE_COMPILER_IS_GNUCXX )
 
 add_subdirectory(src)
 add_subdirectory(test)

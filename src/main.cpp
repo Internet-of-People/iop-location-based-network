@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "node.hpp"
+#include "geonet.hpp"
 
 using namespace std;
 

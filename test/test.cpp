@@ -8,9 +8,9 @@ using namespace std;
 
 
 SCENARIO("Node construction", "[constructor]") {
-    GpsPosition position(1.0, 2.0);
-    IGpsPosition &ipos = static_cast<IGpsPosition&>(position);
-    Node node("NodeId", ipos);
+    GpsLocation position(1.0, 2.0);
+    IGpsLocation &ipos = static_cast<IGpsLocation&>(position);
+    NodeProfile node("NodeId", ipos);
     
     GIVEN("A node object with its position") {
         THEN("Position fields are properly filled in") {
@@ -18,7 +18,7 @@ SCENARIO("Node construction", "[constructor]") {
             REQUIRE( ipos.longitude() == 2.0 );
         }
         
-        INode &inode = static_cast<INode&>(node);
+        INodeProfile &inode = static_cast<INodeProfile&>(node);
         THEN("Node fields are properly filled in") {
             REQUIRE( inode.id() == "NodeId" );
             REQUIRE( inode.latitude() == 1.0 );

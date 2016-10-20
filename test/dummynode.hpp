@@ -1,39 +1,15 @@
-#ifndef DUMMY_NODE_H
-#define DUMMY_NODE_H
+#ifndef __DUMMY_NODE_H__
+#define __DUMMY_NODE_H__
 
 #include <string>
 
-#include "node.hpp"
+#include "geonet.hpp"
 
 
-class GpsPosition : public IGpsPosition
-{
-    double _latitude;
-    double _longitude;
-    
-public:
-    
-    GpsPosition(const IGpsPosition &position);
-    GpsPosition(double latitude, double longitude);
-    double latitude() const override;
-    double longitude() const override;
-};
+
+// TODO remove this if remains empty
 
 
-class Node : public INode
-{
-    std::string _id;
-    GpsPosition _position;
-    
-public:
-    
-    Node(const std::string &id, const IGpsPosition &position);
-    Node(const std::string &id, double latitude, double longitude);
-    
-    const std::string& id() const override;
-    double latitude() const override;
-    double longitude() const override;
-};
 
 
-#endif // DUMMY_NODE_H
+#endif // __DUMMY_NODE_H__
