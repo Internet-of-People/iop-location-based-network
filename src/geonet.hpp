@@ -47,6 +47,8 @@ class GpsLocation
     double _latitude;
     double _longitude;
     
+    void Validate();
+    
 public:
     
     GpsLocation(const GpsLocation &position);
@@ -110,18 +112,16 @@ typedef NodeProfile ServerInfo;
 
 class SpatialDatabase
 {
-// public:
-//     
-//     virtual double GetDistance(const IGpsPosition &one, const IGpsPosition &other) const = 0;
-//     
-//     virtual std::vector<std::unique_ptr<INode>> GetNeighbourHood() const = 0;    
-//     virtual std::vector<std::unique_ptr<INode>> GetNodesCloseTo(
-//         const IGpsPosition &position,
-//         std::experimental::optional<double> radius,
-//         std::experimental::optional<size_t> maxNodeCount) const = 0;
+public:
+    
+    virtual double GetDistance(const GpsLocation &one, const GpsLocation &other) const = 0;
+    
+//     virtual std::vector<NodeLocation> GetNeighbourHood() const = 0;    
+//     virtual std::vector<NodeLocation> GetNodesCloseTo(
+//         const GpsLocation &position, double radius, size_t maxNodeCount) const = 0;
 //         
-//     virtual void Store(const INode &node) = 0;
-//     virtual std::unique_ptr<INode> Load(const INode &node) const = 0;
+//     virtual void Store(const NodeLocation &node) = 0;
+//     virtual NodeLocation Load(const std::string &nodeId) const = 0;
 //     virtual void Remove(const std::string &nodeId) = 0;
 };
 

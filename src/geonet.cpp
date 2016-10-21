@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "geonet.hpp"
 
 using namespace std;
@@ -40,10 +42,18 @@ GpsLocation::GpsLocation(const GpsLocation &location) :
     _latitude( location.latitude() ), _longitude( location.longitude() ) {}
     
 GpsLocation::GpsLocation(double latitude, double longitude) :
-    _latitude(latitude), _longitude(longitude) {}
+    _latitude(latitude), _longitude(longitude)
+    { Validate(); }
 
 double GpsLocation::latitude()  const { return _latitude; }
 double GpsLocation::longitude() const { return _longitude; }
+
+void GpsLocation::Validate()
+{
+    if ( _latitude < -90. || 90. < _latitude ||
+         _longitude < -180. || 180. < _longitude )
+        { throw new runtime_error("Invalid GPS location"); }
+}
 
 
 

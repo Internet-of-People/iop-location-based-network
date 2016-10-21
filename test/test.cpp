@@ -1,19 +1,27 @@
+// #define CATCH_CONFIG_RUNNER
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 #include <iostream>
 
-#include "dummynode.hpp"
+#include "testimpls.hpp"
 
 using namespace std;
 
 
-SCENARIO("Constructors", "[types]")
+
+SCENARIO("Construction and behaviour of data holder types", "[types]")
 {
     GpsLocation loc(1.0, 2.0);
     GIVEN("A location object") {
         THEN("its fields are properly filled in") {
             REQUIRE( loc.latitude() == 1.0 );
             REQUIRE( loc.longitude() == 2.0 );
+        }
+    }
+    
+    GIVEN("A location object with invalid coordinates") {
+        THEN("it will throw") {
+            REQUIRE_THROWS( GpsLocation(100.0, 1.0) );
         }
     }
     
@@ -28,8 +36,8 @@ SCENARIO("Constructors", "[types]")
         }
     }
     
-    NodeLocation nodeLoc(prof, loc);
     GIVEN("A node profile + location object") {
+        NodeLocation nodeLoc(prof, loc);
         THEN("its fields are properly filled in") {
             REQUIRE( nodeLoc.profile().id() == prof.id() );
             REQUIRE( nodeLoc.profile().ipv4Address() == prof.ipv4Address() );
@@ -42,12 +50,17 @@ SCENARIO("Constructors", "[types]")
     }
     
     GIVEN("A spatial database implementation") {
-        SpatialDatabase db;
+        DummySpatialDatabase geodb;
+        // TODO
     }
-    
-    GIVEN("A location based network object") {
-        shared_ptr<SpatialDatabase> db( new SpatialDatabase() );
-        GeographicNetwork geonet(db);
+}
+
+
+SCENARIO("Server registration", "")
+{
+    GIVEN("The location based network") {
+        shared_ptr<SpatialDatabase> geodb( new DummySpatialDatabase() );
+        GeographicNetwork geonet(geodb);
         WHEN("it's newly created") {
             THEN("it has no registered servers") {
                 auto servers = geonet.servers();
@@ -61,8 +74,7 @@ SCENARIO("Constructors", "[types]")
             ServerInfo minterServer("Minter", "127.0.0.1", 2222, "", 0);
             geonet.RegisterServer(ServerType::TokenServer, tokenServer);
             geonet.RegisterServer(ServerType::MintingServer, minterServer);
-            THEN("they appear on queries") {
-                //unordered_map<ServerType,ServerInfo,EnumHasher> servers = geonet.servers();
+            THEN("added servers appear on queries") {
                 auto servers = geonet.servers();
                 REQUIRE( servers.find(ServerType::StunTurnServer) == servers.end() );
                 REQUIRE( servers.find(ServerType::TokenServer) != servers.end() );
@@ -73,3 +85,27 @@ SCENARIO("Constructors", "[types]")
         }
     }
 }
+
+
+
+// int main( int argc, char* const argv[] )
+// {
+//     Catch::Session session; // There must be exactly once instance
+// 
+//     // writing to session.configData() here sets defaults
+//     // this is the preferred way to set them
+// 
+//     int returnCode = session.applyCommandLine( argc, argv );
+//     if( returnCode != 0 ) // Indicates a command line error
+//         { return returnCode; }
+// 
+//     // writing to session.configData() or session.Config() here 
+//     // overrides command line args
+//     // only do this if you know you need to
+// 
+//     try {
+//         return session.run();
+//     } catch (exception &e) {
+//         cerr << "Caught exception: " << e.what() << endl;
+//     }
+// }
