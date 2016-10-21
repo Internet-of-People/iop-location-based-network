@@ -25,6 +25,8 @@ class NodeProfile
     
 public:
     
+    NodeProfile();
+    NodeProfile(const NodeProfile &other);
     NodeProfile(const NodeId &id,
                 const Ipv4Address &ipv4Address, TcpPort ipv4Port,
                 const Ipv6Address &ipv6Address, TcpPort ipv6Port);
@@ -34,6 +36,8 @@ public:
     TcpPort ipv4Port() const;
     const Ipv6Address& ipv6Address() const;
     TcpPort ipv6Port() const;
+    
+    bool operator==(const NodeProfile &other) const;
 };
 
 
@@ -47,6 +51,7 @@ public:
     
     GpsLocation(const GpsLocation &position);
     GpsLocation(double latitude, double longitude);
+    
     double latitude() const;
     double longitude() const;
 };
@@ -56,11 +61,11 @@ public:
 class NodeLocation
 {
     NodeProfile _profile;
-    GpsLocation _position;
+    GpsLocation _location;
     
 public:
     
-    NodeLocation(const NodeProfile &profile, const GpsLocation &position);
+    NodeLocation(const NodeProfile &profile, const GpsLocation &location);
     NodeLocation(const NodeProfile &profile, double latitude, double longitude);
     
     const NodeProfile& profile() const;
@@ -103,7 +108,7 @@ typedef NodeProfile ServerInfo;
 // }
 
 
-class ISpatialDb
+class SpatialDatabase
 {
 // public:
 //     
@@ -124,15 +129,19 @@ class ISpatialDb
 
 class GeographicNetwork
 {
-    std::shared_ptr<ISpatialDb> _spatialDb;
+    std::shared_ptr<SpatialDatabase> _spatialDb;
     std::unordered_map<ServerType, ServerInfo, EnumHasher> _servers;
     
 public:
     
-    GeographicNetwork(std::shared_ptr<ISpatialDb> spatialDb);
+    GeographicNetwork(std::shared_ptr<SpatialDatabase> spatialDb);
+
+    // Interface provided to serve higher level services and clients
+    virtual const std::unordered_map<ServerType,ServerInfo,EnumHasher>& servers() const;
+    // + GetClosestNodes() which is the same as for network instances on remote machines
     
     // Local interface for servers running on the same hardware
-    virtual void registerServer(ServerType serverType, const ServerInfo &server);
+    virtual void RegisterServer(ServerType serverType, const ServerInfo &serverInfo);
     virtual std::vector<NodeLocation> GetNeighbourHood() const;
     
     // Interface provided for the same network instances running on remote machines
@@ -145,10 +154,6 @@ public:
     virtual void ExchangeNodeProfile(NodeLocation profile);
     virtual void RenewNodeProfile(NodeLocation profile);
     virtual void AcceptNeighbor(NodeLocation profile);
-    
-    // Interface provided to serve higher level services and clients
-    virtual const std::unordered_map<ServerType,ServerInfo,EnumHasher>& GetServers() const;
-    // + GetClosestNodes() which is the same as for network instances on remote machines
 };
 
 
