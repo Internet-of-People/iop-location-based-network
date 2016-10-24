@@ -56,6 +56,8 @@ public:
     
     double latitude() const;
     double longitude() const;
+    
+    bool operator==(const GpsLocation &other) const;
 };
 
 
@@ -115,14 +117,15 @@ public:
     virtual double GetDistance(const GpsLocation &one, const GpsLocation &other) const = 0;
     virtual double GetBubbleSize(const GpsLocation &location) const = 0;
     
-    virtual void Store(const NodeLocation &node, bool isNeighbour) = 0;
-    virtual NodeLocation Load(const std::string &nodeId) const = 0;
-    virtual void Remove(const std::string &nodeId) = 0;
+    virtual bool Store(const NodeLocation &node, bool isNeighbour) = 0;
+    virtual std::shared_ptr<NodeLocation> Load(const std::string &nodeId) const = 0;
+    virtual bool Update(const NodeLocation &node) const = 0;
+    virtual bool Remove(const std::string &nodeId) = 0;
     
-    virtual double GetNeighbourHoodRadiusKm() const = 0;
+    virtual double GetNeighbourhoodRadiusKm() const = 0;
     
     virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &position,
-        double radiusKm, size_t maxNodeCount, bool includeNeighbours) const = 0;
+        double Km, size_t maxNodeCount, bool includeNeighbours) const = 0;
 
     virtual std::vector<NodeLocation> GetRandomNodes(
         uint16_t maxNodeCount, bool includeNeighbours) const = 0;
@@ -139,7 +142,7 @@ class IGeographicNetwork
     // Local interface for servers running on the same hardware
     virtual void RegisterServer(ServerType serverType, const ServerInfo &serverInfo) = 0;
     virtual void RemoveServer(ServerType serverType) = 0;
-    virtual double GetNeighbourHoodRadiusKm() const = 0;
+    virtual double GetNeighbourhoodRadiusKm() const = 0;
     
     // Interface provided for the same network instances running on remote machines
     virtual std::vector<NodeLocation> GetRandomNodes(
@@ -148,21 +151,34 @@ class IGeographicNetwork
     virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
         double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const = 0;
     
-    virtual bool ExchangeNodeProfile(NodeLocation profile) = 0;
-    virtual bool RenewNodeProfile(NodeLocation profile) = 0;
-    virtual bool AcceptNeighbor(NodeLocation profile) = 0;
+    virtual bool ExchangeNodeProfile(const NodeLocation &node) = 0;
+    virtual bool RenewNodeProfile(const NodeLocation &node) = 0;
+    virtual bool AcceptNeighbor(const NodeLocation &node) = 0;
 };
 
+
+
+class IGeographicNetworkConnectionFactory
+{
+public:
+    
+    virtual std::shared_ptr<IGeographicNetwork> ConnectTo(const NodeProfile &node) = 0;
+};
 
 
 class GeographicNetwork : public IGeographicNetwork
 {
     std::unordered_map<ServerType, ServerInfo, EnumHasher> _servers;
     std::shared_ptr<ISpatialDatabase> _spatialDb;
+    std::shared_ptr<IGeographicNetworkConnectionFactory> _connectionFactory;
+    
+    void DiscoverWorld();
+    void DiscoverNeighbourhood();
     
 public:
     
-    GeographicNetwork(std::shared_ptr<ISpatialDatabase> spatialDb);
+    GeographicNetwork( std::shared_ptr<ISpatialDatabase> spatialDb,
+                       std::shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory );
 
     // Interface provided to serve higher level services and clients
     virtual const std::unordered_map<ServerType,ServerInfo,EnumHasher>& servers() const override;
@@ -171,7 +187,7 @@ public:
     // Local interface for servers running on the same hardware
     virtual void RegisterServer(ServerType serverType, const ServerInfo &serverInfo) override;
     virtual void RemoveServer(ServerType serverType);
-    virtual double GetNeighbourHoodRadiusKm() const override;
+    virtual double GetNeighbourhoodRadiusKm() const override;
     
     // Interface provided for the same network instances running on remote machines
     virtual std::vector<NodeLocation> GetRandomNodes(
@@ -180,9 +196,9 @@ public:
     virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
         double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const override;
     
-    virtual bool ExchangeNodeProfile(NodeLocation profile) override;
-    virtual bool RenewNodeProfile(NodeLocation profile) override;
-    virtual bool AcceptNeighbor(NodeLocation profile) override;
+    virtual bool ExchangeNodeProfile(const NodeLocation &node) override;
+    virtual bool RenewNodeProfile(const NodeLocation &node) override;
+    virtual bool AcceptNeighbor(const NodeLocation &node) override;
 };
 
 

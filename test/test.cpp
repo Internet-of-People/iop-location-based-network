@@ -61,7 +61,8 @@ SCENARIO("Server registration", "")
     GIVEN("The location based network") {
         GpsLocation loc(1.0, 2.0);
         shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
-        GeographicNetwork geonet(geodb);
+        shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory( new DummyGeographicNetworkConnectionFactory() );
+        GeographicNetwork geonet(geodb, connectionFactory);
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {

@@ -33,27 +33,37 @@ double DummySpatialDatabase::GetBubbleSize(const GpsLocation& location) const
 }
 
 
-void DummySpatialDatabase::Store(const NodeLocation& node, bool isNeighbour)
+bool DummySpatialDatabase::Store(const NodeLocation& node, bool isNeighbour)
 {
     // TODO
+    return true;
 }
 
 
-NodeLocation DummySpatialDatabase::Load(const string& nodeId) const
+shared_ptr<NodeLocation> DummySpatialDatabase::Load(const string& nodeId) const
 {
     // TODO
-    return NodeLocation( NodeProfile("NodeId", "", 0, "", 0),
-                         GpsLocation(0., 0.) );
+    return shared_ptr<NodeLocation>(
+        new NodeLocation( NodeProfile("NodeId", "", 0, "", 0),
+                          GpsLocation(0., 0.) ) );
 }
 
 
-void DummySpatialDatabase::Remove(const string& nodeId)
+bool DummySpatialDatabase::Update(const NodeLocation& node) const
 {
     // TODO
+    return true;
 }
 
 
-double DummySpatialDatabase::GetNeighbourHoodRadiusKm() const
+bool DummySpatialDatabase::Remove(const string& nodeId)
+{
+    // TODO
+    return true;
+}
+
+
+double DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
 {
     // TODO
     return 42.;
@@ -73,3 +83,11 @@ std::vector<NodeLocation>DummySpatialDatabase::GetRandomNodes(uint16_t maxNodeCo
     // TODO
     return vector<NodeLocation>();
 }
+
+
+
+shared_ptr<IGeographicNetwork> DummyGeographicNetworkConnectionFactory::ConnectTo(const NodeProfile& node)
+{
+    return shared_ptr<IGeographicNetwork>();
+}
+

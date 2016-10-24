@@ -31,18 +31,27 @@ public:
 
     double GetDistance(const GpsLocation &one, const GpsLocation &other) const override;
     double GetBubbleSize(const GpsLocation &location) const override;
+
+    bool Store(const NodeLocation &node, bool isNeighbour) override;
+    std::shared_ptr<NodeLocation> Load(const std::string &nodeId) const override;
+    bool Update(const NodeLocation &node) const override;
+    bool Remove(const std::string &nodeId) override;
     
-    double GetNeighbourHoodRadiusKm() const;
+    double GetNeighbourhoodRadiusKm() const override;
     std::vector<NodeLocation> GetRandomNodes(uint16_t maxNodeCount, bool includeNeighbours) const override;
     
     std::vector<NodeLocation> GetClosestNodes(const GpsLocation &position,
         double radiusKm, size_t maxNodeCount, bool includeNeighbours) const override;
-
-    void Store(const NodeLocation &node, bool isNeighbour) override;
-    NodeLocation Load(const std::string &nodeId) const override;
-    void Remove(const std::string &nodeId) override;
 };
 
+
+
+class DummyGeographicNetworkConnectionFactory: public IGeographicNetworkConnectionFactory
+{
+public:
+    
+    std::shared_ptr<IGeographicNetwork> ConnectTo(const NodeProfile &node) override;
+};
 
 
 #endif // __IMPLEMENTATIONS_FOR_TESTING_H__
