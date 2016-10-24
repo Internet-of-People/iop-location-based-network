@@ -112,7 +112,11 @@ typedef NodeProfile ServerInfo;
 
 class SpatialDatabase
 {
+    GpsLocation _myLocation;
+    
 public:
+    
+    SpatialDatabase(const GpsLocation &myLocation);
     
     virtual double GetDistance(const GpsLocation &one, const GpsLocation &other) const = 0;
     
@@ -129,8 +133,23 @@ public:
 
 class GeographicNetwork
 {
-    std::shared_ptr<SpatialDatabase> _spatialDb;
+    class NodeEntry : public NodeLocation
+    {
+        bool _neighbour;
+        
+    protected:
+        
+        NodeEntry(const NodeProfile &profile, const GpsLocation &location, bool neighbour);
+        NodeEntry(const NodeProfile &profile, double latitude, double longitude, bool neighbour);
+        
+        bool neighbour();
+    };
+    
+    
     std::unordered_map<ServerType, ServerInfo, EnumHasher> _servers;
+    
+    std::shared_ptr<SpatialDatabase> _spatialDb;
+    std::vector<NodeLocation> _nodeMap;
     
 public:
     
@@ -142,6 +161,7 @@ public:
     
     // Local interface for servers running on the same hardware
     virtual void RegisterServer(ServerType serverType, const ServerInfo &serverInfo);
+    virtual void RemoveServer(ServerType serverType);
     virtual std::vector<NodeLocation> GetNeighbourHood() const;
     
     // Interface provided for the same network instances running on remote machines
@@ -151,9 +171,9 @@ public:
     virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
         double radiusKm = 100, uint16_t maxNodeCount = 100) const;
     
-    virtual void ExchangeNodeProfile(NodeLocation profile);
-    virtual void RenewNodeProfile(NodeLocation profile);
-    virtual void AcceptNeighbor(NodeLocation profile);
+    virtual bool ExchangeNodeProfile(NodeLocation profile);
+    virtual bool RenewNodeProfile(NodeLocation profile);
+    virtual bool AcceptNeighbor(NodeLocation profile);
 };
 
 

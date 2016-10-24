@@ -6,6 +6,7 @@ using namespace std;
 
 
 
+
 NodeProfile::NodeProfile() :
     _id(), _ipv4Address(), _ipv4Port(0), _ipv6Address(), _ipv6Port(0) {}
 
@@ -38,6 +39,7 @@ bool NodeProfile::operator==(const NodeProfile& other) const
 
 
 
+
 GpsLocation::GpsLocation(const GpsLocation &location) :
     _latitude( location.latitude() ), _longitude( location.longitude() ) {}
     
@@ -57,6 +59,7 @@ void GpsLocation::Validate()
 
 
 
+
 NodeLocation::NodeLocation(const NodeProfile &profile, const GpsLocation &location) :
     _profile(profile), _location(location) {}
 
@@ -68,6 +71,23 @@ double NodeLocation::latitude()  const { return _location.latitude(); }
 double NodeLocation::longitude() const { return _location.longitude(); }
 
 
+
+
+SpatialDatabase::SpatialDatabase(const GpsLocation& myLocation) :
+    _myLocation(myLocation) {}
+
+
+    
+
+GeographicNetwork::NodeEntry::NodeEntry(const NodeProfile& profile, double latitude, double longitude, bool neighbour):
+    NodeLocation(profile, latitude, longitude), _neighbour(neighbour) {}
+
+GeographicNetwork::NodeEntry::NodeEntry(const NodeProfile& profile, const GpsLocation& location, bool neighbour):
+    NodeLocation(profile, location), _neighbour(neighbour) {}
+
+bool GeographicNetwork::NodeEntry::neighbour() { return _neighbour; }
+    
+    
 
 GeographicNetwork::GeographicNetwork(shared_ptr<SpatialDatabase> spatialDb) :
     _spatialDb(spatialDb) {}
@@ -85,16 +105,31 @@ void GeographicNetwork::RegisterServer(ServerType serverType, const ServerInfo& 
     _servers[serverType] = serverInfo;
 }
 
+void GeographicNetwork::RemoveServer(ServerType serverType)
+{
+    auto it = _servers.find(serverType);
+    if ( it != _servers.end() ) {
+        _servers.erase(serverType);
+    }
+}
 
-void GeographicNetwork::AcceptNeighbor(NodeLocation profile)
+
+bool GeographicNetwork::ExchangeNodeProfile(NodeLocation profile)
 {
     // TODO
 }
 
-void GeographicNetwork::ExchangeNodeProfile(NodeLocation profile)
+bool GeographicNetwork::RenewNodeProfile(NodeLocation profile)
 {
     // TODO
 }
+
+bool GeographicNetwork::AcceptNeighbor(NodeLocation profile)
+{
+    // TODO
+}
+
+
 
 vector<NodeLocation> GeographicNetwork::GetClosestNodes(const GpsLocation& location, double radiusKm, uint16_t maxNodeCount) const
 {
@@ -112,10 +147,5 @@ vector<NodeLocation> GeographicNetwork::GetRandomNodes(uint16_t maxNodeCount, bo
 {
     // TODO
     return vector<NodeLocation>();
-}
-
-void GeographicNetwork::RenewNodeProfile(NodeLocation profile)
-{
-    // TODO
 }
 

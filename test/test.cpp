@@ -50,7 +50,7 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
     }
     
     GIVEN("A spatial database implementation") {
-        DummySpatialDatabase geodb;
+        DummySpatialDatabase geodb(loc);
         // TODO
     }
 }
@@ -59,8 +59,10 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
 SCENARIO("Server registration", "")
 {
     GIVEN("The location based network") {
-        shared_ptr<SpatialDatabase> geodb( new DummySpatialDatabase() );
+        GpsLocation loc(1.0, 2.0);
+        shared_ptr<SpatialDatabase> geodb( new DummySpatialDatabase(loc) );
         GeographicNetwork geonet(geodb);
+        
         WHEN("it's newly created") {
             THEN("it has no registered servers") {
                 auto servers = geonet.servers();
@@ -69,18 +71,31 @@ SCENARIO("Server registration", "")
                 REQUIRE( servers.find(ServerType::MintingServer) == servers.end() );
             }
         }
+        ServerInfo tokenServer("Token", "127.0.0.1", 1111, "", 0);
         WHEN("adding servers") {
-            ServerInfo tokenServer("Token", "127.0.0.1", 1111, "", 0);
             ServerInfo minterServer("Minter", "127.0.0.1", 2222, "", 0);
             geonet.RegisterServer(ServerType::TokenServer, tokenServer);
             geonet.RegisterServer(ServerType::MintingServer, minterServer);
             THEN("added servers appear on queries") {
-                auto servers = geonet.servers();
+                auto const &servers = geonet.servers();
                 REQUIRE( servers.find(ServerType::StunTurnServer) == servers.end() );
                 REQUIRE( servers.find(ServerType::TokenServer) != servers.end() );
-                REQUIRE( servers[ServerType::TokenServer] == tokenServer );
+                REQUIRE( servers.at(ServerType::TokenServer) == tokenServer );
                 REQUIRE( servers.find(ServerType::MintingServer) != servers.end() );
-                REQUIRE( servers[ServerType::MintingServer] == minterServer );
+                REQUIRE( servers.at(ServerType::MintingServer) == minterServer );
+            }
+        }
+        WHEN("removing servers") {
+            ServerInfo minterServer("Minter", "127.0.0.1", 2222, "", 0);
+            geonet.RegisterServer(ServerType::TokenServer, tokenServer);
+            geonet.RegisterServer(ServerType::MintingServer, minterServer);
+            geonet.RemoveServer(ServerType::MintingServer);
+            THEN("they disappear from the list") {
+                auto const &servers = geonet.servers();
+                REQUIRE( servers.find(ServerType::StunTurnServer) == servers.end() );
+                REQUIRE( servers.find(ServerType::MintingServer) == servers.end() );
+                REQUIRE( servers.find(ServerType::TokenServer) != servers.end() );
+                REQUIRE( servers.at(ServerType::TokenServer) == tokenServer );
             }
         }
     }

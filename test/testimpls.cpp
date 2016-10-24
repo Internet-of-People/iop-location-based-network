@@ -4,6 +4,11 @@ using namespace std;
 
 
 
+DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& myLocation):
+    SpatialDatabase(myLocation) {}
+
+
+
 double DummySpatialDatabase::GetDistance(const GpsLocation& one, const GpsLocation& other) const
 {
     // TODO

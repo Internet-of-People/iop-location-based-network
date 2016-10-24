@@ -11,6 +11,8 @@ class DummySpatialDatabase : public SpatialDatabase
 {
 public:
     
+    DummySpatialDatabase(const GpsLocation& myLocation);
+    
     double GetDistance(const GpsLocation &one, const GpsLocation &other) const override;
     
 //     std::vector<NodeLocation> GetNeighbourHood() const override;
