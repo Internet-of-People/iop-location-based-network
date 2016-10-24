@@ -44,8 +44,8 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
             REQUIRE( nodeLoc.profile().ipv4Port() == prof.ipv4Port() );
             REQUIRE( nodeLoc.profile().ipv6Address() == prof.ipv6Address() );
             REQUIRE( nodeLoc.profile().ipv6Port() == prof.ipv6Port() );
-            REQUIRE( nodeLoc.latitude() == loc.latitude() );
-            REQUIRE( nodeLoc.longitude() == loc.longitude() );
+            REQUIRE( nodeLoc.location().latitude() == loc.latitude() );
+            REQUIRE( nodeLoc.location().longitude() == loc.longitude() );
         }
     }
     
@@ -60,7 +60,7 @@ SCENARIO("Server registration", "")
 {
     GIVEN("The location based network") {
         GpsLocation loc(1.0, 2.0);
-        shared_ptr<SpatialDatabase> geodb( new DummySpatialDatabase(loc) );
+        shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
         GeographicNetwork geonet(geodb);
         
         WHEN("it's newly created") {

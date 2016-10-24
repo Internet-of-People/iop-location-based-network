@@ -1,4 +1,4 @@
-#include <cassert>
+#include <limits>
 
 #include "geonet.hpp"
 
@@ -67,34 +67,22 @@ NodeLocation::NodeLocation(const NodeProfile &profile, double latitude, double l
     _profile(profile), _location(latitude, longitude) {}
 
 const NodeProfile& NodeLocation::profile() const { return _profile; }
-double NodeLocation::latitude()  const { return _location.latitude(); }
-double NodeLocation::longitude() const { return _location.longitude(); }
+const GpsLocation& NodeLocation::location() const { return _location; }
 
 
 
 
-SpatialDatabase::SpatialDatabase(const GpsLocation& myLocation) :
-    _myLocation(myLocation) {}
+GeographicNetwork::GeographicNetwork(shared_ptr<ISpatialDatabase> spatialDb) :
+    _spatialDb(spatialDb)
+{
+    if (spatialDb == nullptr) {
+        throw new runtime_error("Invalid SpatialDatabase argument");
+    }
+}
 
-
-    
-
-GeographicNetwork::NodeEntry::NodeEntry(const NodeProfile& profile, double latitude, double longitude, bool neighbour):
-    NodeLocation(profile, latitude, longitude), _neighbour(neighbour) {}
-
-GeographicNetwork::NodeEntry::NodeEntry(const NodeProfile& profile, const GpsLocation& location, bool neighbour):
-    NodeLocation(profile, location), _neighbour(neighbour) {}
-
-bool GeographicNetwork::NodeEntry::neighbour() { return _neighbour; }
-    
-    
-
-GeographicNetwork::GeographicNetwork(shared_ptr<SpatialDatabase> spatialDb) :
-    _spatialDb(spatialDb) {}
 
 const unordered_map<ServerType,ServerInfo,EnumHasher>& GeographicNetwork::servers() const
     { return _servers; }
-
     
 void GeographicNetwork::RegisterServer(ServerType serverType, const ServerInfo& serverInfo)
 {
@@ -116,36 +104,54 @@ void GeographicNetwork::RemoveServer(ServerType serverType)
 
 bool GeographicNetwork::ExchangeNodeProfile(NodeLocation profile)
 {
-    // TODO
+    vector<NodeLocation> closestNodes = _spatialDb->GetClosestNodes(
+        profile.location(), numeric_limits<double>::max(), 1, false);
+    if ( closestNodes.empty() ) { return false; }
+    
+    const GpsLocation &myClosesNodeLocation = closestNodes.front().location();
+    const GpsLocation &newNodeLocation      = profile.location();
+    
+    double NewNodeDistanceFromClosestNode = _spatialDb->GetDistance(newNodeLocation, myClosesNodeLocation);
+    double myClosestNodeBubbleSize = _spatialDb->GetBubbleSize(myClosesNodeLocation);
+    double newNodeBubbleSize       = _spatialDb->GetBubbleSize(newNodeLocation);
+    
+    if (myClosestNodeBubbleSize + newNodeBubbleSize < NewNodeDistanceFromClosestNode)
+    {
+        _spatialDb->Store(profile, false);
+        return true;
+    }
+    
+    return false;
 }
+
 
 bool GeographicNetwork::RenewNodeProfile(NodeLocation profile)
 {
     // TODO
+    return false;
 }
 
 bool GeographicNetwork::AcceptNeighbor(NodeLocation profile)
 {
     // TODO
+    return false;
 }
 
 
 
-vector<NodeLocation> GeographicNetwork::GetClosestNodes(const GpsLocation& location, double radiusKm, uint16_t maxNodeCount) const
+vector<NodeLocation> GeographicNetwork::GetClosestNodes(const GpsLocation& location,
+    double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const
 {
-    // TODO
-    return vector<NodeLocation>();
+    return _spatialDb->GetClosestNodes(location, radiusKm, maxNodeCount, includeNeighbours);
 }
 
-vector<NodeLocation> GeographicNetwork::GetNeighbourHood() const
+double GeographicNetwork::GetNeighbourHoodRadiusKm() const
 {
-    // TODO
-    return vector<NodeLocation>();
+    return _spatialDb->GetNeighbourHoodRadiusKm();
 }
 
 vector<NodeLocation> GeographicNetwork::GetRandomNodes(uint16_t maxNodeCount, bool includeNeighbours) const
 {
-    // TODO
-    return vector<NodeLocation>();
+    return _spatialDb->GetRandomNodes(maxNodeCount, includeNeighbours);
 }
 

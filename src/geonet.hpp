@@ -71,8 +71,7 @@ public:
     NodeLocation(const NodeProfile &profile, double latitude, double longitude);
     
     const NodeProfile& profile() const;
-    double latitude() const;
-    double longitude() const;
+    const GpsLocation& location() const;
 };
 
 
@@ -110,70 +109,80 @@ typedef NodeProfile ServerInfo;
 // }
 
 
-class SpatialDatabase
+class ISpatialDatabase
 {
-    GpsLocation _myLocation;
-    
 public:
-    
-    SpatialDatabase(const GpsLocation &myLocation);
-    
     virtual double GetDistance(const GpsLocation &one, const GpsLocation &other) const = 0;
+    virtual double GetBubbleSize(const GpsLocation &location) const = 0;
     
-//     virtual std::vector<NodeLocation> GetNeighbourHood() const = 0;    
-//     virtual std::vector<NodeLocation> GetNodesCloseTo(
-//         const GpsLocation &position, double radius, size_t maxNodeCount) const = 0;
-//         
-//     virtual void Store(const NodeLocation &node) = 0;
-//     virtual NodeLocation Load(const std::string &nodeId) const = 0;
-//     virtual void Remove(const std::string &nodeId) = 0;
+    virtual void Store(const NodeLocation &node, bool isNeighbour) = 0;
+    virtual NodeLocation Load(const std::string &nodeId) const = 0;
+    virtual void Remove(const std::string &nodeId) = 0;
+    
+    virtual double GetNeighbourHoodRadiusKm() const = 0;
+    
+    virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &position,
+        double radiusKm, size_t maxNodeCount, bool includeNeighbours) const = 0;
+
+    virtual std::vector<NodeLocation> GetRandomNodes(
+        uint16_t maxNodeCount, bool includeNeighbours) const = 0;
 };
 
 
 
-class GeographicNetwork
+class IGeographicNetwork
 {
-    class NodeEntry : public NodeLocation
-    {
-        bool _neighbour;
-        
-    protected:
-        
-        NodeEntry(const NodeProfile &profile, const GpsLocation &location, bool neighbour);
-        NodeEntry(const NodeProfile &profile, double latitude, double longitude, bool neighbour);
-        
-        bool neighbour();
-    };
-    
-    
-    std::unordered_map<ServerType, ServerInfo, EnumHasher> _servers;
-    
-    std::shared_ptr<SpatialDatabase> _spatialDb;
-    std::vector<NodeLocation> _nodeMap;
-    
-public:
-    
-    GeographicNetwork(std::shared_ptr<SpatialDatabase> spatialDb);
-
     // Interface provided to serve higher level services and clients
-    virtual const std::unordered_map<ServerType,ServerInfo,EnumHasher>& servers() const;
+    virtual const std::unordered_map<ServerType,ServerInfo,EnumHasher>& servers() const = 0;
     // + GetClosestNodes() which is the same as for network instances on remote machines
     
     // Local interface for servers running on the same hardware
-    virtual void RegisterServer(ServerType serverType, const ServerInfo &serverInfo);
-    virtual void RemoveServer(ServerType serverType);
-    virtual std::vector<NodeLocation> GetNeighbourHood() const;
+    virtual void RegisterServer(ServerType serverType, const ServerInfo &serverInfo) = 0;
+    virtual void RemoveServer(ServerType serverType) = 0;
+    virtual double GetNeighbourHoodRadiusKm() const = 0;
     
     // Interface provided for the same network instances running on remote machines
     virtual std::vector<NodeLocation> GetRandomNodes(
-        uint16_t maxNodeCount, bool includeNeighbours = false) const;
+        uint16_t maxNodeCount, bool includeNeighbours) const = 0;
     
     virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
-        double radiusKm = 100, uint16_t maxNodeCount = 100) const;
+        double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const = 0;
     
-    virtual bool ExchangeNodeProfile(NodeLocation profile);
-    virtual bool RenewNodeProfile(NodeLocation profile);
-    virtual bool AcceptNeighbor(NodeLocation profile);
+    virtual bool ExchangeNodeProfile(NodeLocation profile) = 0;
+    virtual bool RenewNodeProfile(NodeLocation profile) = 0;
+    virtual bool AcceptNeighbor(NodeLocation profile) = 0;
+};
+
+
+
+class GeographicNetwork : public IGeographicNetwork
+{
+    std::unordered_map<ServerType, ServerInfo, EnumHasher> _servers;
+    std::shared_ptr<ISpatialDatabase> _spatialDb;
+    
+public:
+    
+    GeographicNetwork(std::shared_ptr<ISpatialDatabase> spatialDb);
+
+    // Interface provided to serve higher level services and clients
+    virtual const std::unordered_map<ServerType,ServerInfo,EnumHasher>& servers() const override;
+    // + GetClosestNodes() which is the same as for network instances on remote machines
+    
+    // Local interface for servers running on the same hardware
+    virtual void RegisterServer(ServerType serverType, const ServerInfo &serverInfo) override;
+    virtual void RemoveServer(ServerType serverType);
+    virtual double GetNeighbourHoodRadiusKm() const override;
+    
+    // Interface provided for the same network instances running on remote machines
+    virtual std::vector<NodeLocation> GetRandomNodes(
+        uint16_t maxNodeCount, bool includeNeighbours) const override;
+    
+    virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
+        double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const override;
+    
+    virtual bool ExchangeNodeProfile(NodeLocation profile) override;
+    virtual bool RenewNodeProfile(NodeLocation profile) override;
+    virtual bool AcceptNeighbor(NodeLocation profile) override;
 };
 
 
