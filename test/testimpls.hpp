@@ -30,7 +30,7 @@ public:
     DummySpatialDatabase(const GpsLocation& myLocation);
 
     double GetDistance(const GpsLocation &one, const GpsLocation &other) const override;
-    double GetBubbleSize(const GpsLocation &location) const override;
+    //double GetBubbleSize(const GpsLocation &location) const override;
 
     bool Store(const NodeLocation &node, bool isNeighbour) override;
     std::shared_ptr<NodeLocation> Load(const std::string &nodeId) const override;
@@ -38,6 +38,7 @@ public:
     bool Remove(const std::string &nodeId) override;
     
     double GetNeighbourhoodRadiusKm() const override;
+    size_t GetColleagueNodeCount() const override;
     std::vector<NodeLocation> GetRandomNodes(uint16_t maxNodeCount, bool includeNeighbours) const override;
     
     std::vector<NodeLocation> GetClosestNodes(const GpsLocation &position,

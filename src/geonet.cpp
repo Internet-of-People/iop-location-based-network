@@ -1,9 +1,13 @@
+#include <algorithm>
+#include <cmath>
+#include <iostream>
 #include <limits>
 
 #include "geonet.hpp"
 
 using namespace std;
 
+static const size_t INIT_WORLD_SEED_RANDOM_NODE_COUNT = 100;
 
 
 
@@ -77,10 +81,19 @@ const GpsLocation& NodeLocation::location() const { return _location; }
 
 
 
+const vector<NodeProfile> GeographicNetwork::_seedNodes {
+    // TODO put some real seed nodes in here
+    NodeProfile( NodeId("FirstSeedNodeId"), "1.2.3.4", 5555, "", 0 ),
+    NodeProfile( NodeId("SecondSeedNodeId"), "6.7.8.9", 5555, "", 0 ),
+};
 
-GeographicNetwork::GeographicNetwork( shared_ptr<ISpatialDatabase> spatialDb,
-        std::shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory ) :
-    _spatialDb(spatialDb), _connectionFactory(connectionFactory)
+random_device GeographicNetwork::_randomDevice;
+
+
+GeographicNetwork::GeographicNetwork( const NodeLocation &nodeInfo,
+                                      shared_ptr<ISpatialDatabase> spatialDb,
+                                      std::shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory ) :
+    _nodeInfo(nodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
 {
     if (spatialDb == nullptr) {
         throw new runtime_error("Invalid SpatialDatabase argument");
@@ -115,7 +128,7 @@ void GeographicNetwork::RemoveServer(ServerType serverType)
 }
 
 
-bool GeographicNetwork::ExchangeNodeProfile(const NodeLocation &newNode)
+bool GeographicNetwork::AcceptColleague(const NodeLocation &newNode)
 {
     vector<NodeLocation> closestNodes = _spatialDb->GetClosestNodes(
         newNode.location(), numeric_limits<double>::max(), 1, false);
@@ -124,11 +137,11 @@ bool GeographicNetwork::ExchangeNodeProfile(const NodeLocation &newNode)
     const GpsLocation &myClosesNodeLocation = closestNodes.front().location();
     const GpsLocation &newNodeLocation      = newNode.location();
     
-    double NewNodeDistanceFromClosestNode = _spatialDb->GetDistance(newNodeLocation, myClosesNodeLocation);
-    double myClosestNodeBubbleSize = _spatialDb->GetBubbleSize(myClosesNodeLocation);
-    double newNodeBubbleSize       = _spatialDb->GetBubbleSize(newNodeLocation);
+    double newNodeDistanceFromClosestNode = _spatialDb->GetDistance(newNodeLocation, myClosesNodeLocation);
+    double myClosestNodeBubbleSize = GetBubbleSize(myClosesNodeLocation);
+    double newNodeBubbleSize       = GetBubbleSize(newNodeLocation);
     
-    if (myClosestNodeBubbleSize + newNodeBubbleSize < NewNodeDistanceFromClosestNode)
+    if (myClosestNodeBubbleSize + newNodeBubbleSize < newNodeDistanceFromClosestNode)
     {
         return _spatialDb->Store(newNode, false);
     }
@@ -137,7 +150,7 @@ bool GeographicNetwork::ExchangeNodeProfile(const NodeLocation &newNode)
 }
 
 
-bool GeographicNetwork::RenewNodeProfile(const NodeLocation &updatedNode)
+bool GeographicNetwork::RenewNodeConnection(const NodeLocation &updatedNode)
 {
     shared_ptr<NodeLocation> storedProfile = _spatialDb->Load( updatedNode.profile().id() );
     if (storedProfile != nullptr) {
@@ -157,26 +170,104 @@ bool GeographicNetwork::AcceptNeighbor(const NodeLocation &node)
 
 
 
+size_t GeographicNetwork::GetColleagueNodeCount() const
+    { return _spatialDb->GetColleagueNodeCount(); }
+
+double GeographicNetwork::GetNeighbourhoodRadiusKm() const
+    { return _spatialDb->GetNeighbourhoodRadiusKm(); }
+
+vector<NodeLocation> GeographicNetwork::GetRandomNodes(
+    uint16_t maxNodeCount, bool includeNeighbours) const
+{
+    return _spatialDb->GetRandomNodes(maxNodeCount, includeNeighbours);
+}
+
 vector<NodeLocation> GeographicNetwork::GetClosestNodes(const GpsLocation& location,
     double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const
 {
     return _spatialDb->GetClosestNodes(location, radiusKm, maxNodeCount, includeNeighbours);
 }
 
-double GeographicNetwork::GetNeighbourhoodRadiusKm() const
-{
-    return _spatialDb->GetNeighbourhoodRadiusKm();
-}
 
-vector<NodeLocation> GeographicNetwork::GetRandomNodes(uint16_t maxNodeCount, bool includeNeighbours) const
+double GeographicNetwork::GetBubbleSize(const GpsLocation& location) const
 {
-    return _spatialDb->GetRandomNodes(maxNodeCount, includeNeighbours);
+    double distance = _spatialDb->GetDistance( _nodeInfo.location(), location );
+    double bubbleSize = log10(distance + 2500.) * 500. - 1700.;
+    return bubbleSize;
 }
 
 
 void GeographicNetwork::DiscoverWorld()
 {
-    // TODO
+    // Initialize random generator and utility variables
+    uniform_int_distribution<int> fromRange( 0, _seedNodes.size() );
+    vector<string> triedSeedNodes;
+    
+    size_t seedNodeColleagueCount = 0;
+    vector<NodeLocation> initialRandomNodes;
+    while ( triedSeedNodes.size() < _seedNodes.size() )
+    {
+        // Select random node from hardwired seed node list
+        size_t selectedSeedNodeIdx = fromRange(_randomDevice);
+        const NodeProfile& selectedSeedNode = _seedNodes[selectedSeedNodeIdx];
+        
+        // If node has been already tried and failed, choose another one
+        auto it = find( triedSeedNodes.begin(), triedSeedNodes.end(), selectedSeedNode.id() );
+        if ( it != triedSeedNodes.end() )
+            { continue; }
+        
+        try
+        {
+            // Try connecting to selected seed node
+            triedSeedNodes.push_back( selectedSeedNode.id() );
+            shared_ptr<IGeographicNetwork> seedNodeConnection = _connectionFactory->ConnectTo(selectedSeedNode);
+            if (seedNodeConnection == nullptr)
+                { continue; }
+            
+            // And query both a target World Map size and an initial list of random nodes to start with
+            seedNodeColleagueCount = seedNodeConnection->GetColleagueNodeCount();
+            initialRandomNodes = seedNodeConnection->GetRandomNodes(
+                min(INIT_WORLD_SEED_RANDOM_NODE_COUNT, seedNodeColleagueCount), false );
+            
+            // If got a reasonable response from a seed server, stop contacting other seeds
+            if ( seedNodeColleagueCount > 0 && ! initialRandomNodes.empty() )
+                { break; }
+        }
+        catch (exception &e)
+        {
+            // TODO use some kind of logging framework all around the file
+            cerr << "Failed to connect to seed node: " << e.what() << ", trying other seeds" << endl;
+        }
+    }
+    
+    // Check if all nodes tried and failed
+    if ( seedNodeColleagueCount == 0 && initialRandomNodes.empty() &&
+         triedSeedNodes.size() == _seedNodes.size() )
+    {
+        // TODO reconsider error handling here, should we completely give up?
+        cerr << "All seed nodes have been tried and failed, giving up" << endl;
+        return;
+    }
+    
+    size_t addedColleagues = 0;
+    for (auto const &nodeInfo : initialRandomNodes)
+    {
+        if (addedColleagues >= seedNodeColleagueCount)
+            { break; }
+            
+        try
+        {
+            shared_ptr<IGeographicNetwork> nodeConnection =
+                _connectionFactory->ConnectTo( nodeInfo.profile() );
+            if (nodeConnection == nullptr) {
+                // TODO
+            }
+        }
+        catch (exception &e)
+        {
+            // TODO
+        }
+    }
 }
 
 

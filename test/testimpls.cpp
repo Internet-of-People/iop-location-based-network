@@ -26,11 +26,11 @@ double DummySpatialDatabase::GetDistance(const GpsLocation& one, const GpsLocati
 }
 
 
-double DummySpatialDatabase::GetBubbleSize(const GpsLocation& location) const
-{
-    // TODO
-    return 0;
-}
+// double DummySpatialDatabase::GetBubbleSize(const GpsLocation& location) const
+// {
+//     // TODO
+//     return 0;
+// }
 
 
 bool DummySpatialDatabase::Store(const NodeLocation& node, bool isNeighbour)
@@ -68,6 +68,14 @@ double DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
     // TODO
     return 42.;
 }
+
+
+size_t DummySpatialDatabase::GetColleagueNodeCount() const
+{
+    // TODO
+    return 0;
+}
+
 
 
 vector<NodeLocation> DummySpatialDatabase::GetClosestNodes(

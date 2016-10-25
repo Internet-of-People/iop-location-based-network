@@ -1,10 +1,11 @@
 #ifndef __GEONET_H__
 #define __GEONET_H__
 
-#include <string>
 #include <memory>
-#include <vector>
+#include <random>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 
 
@@ -115,13 +116,13 @@ class ISpatialDatabase
 {
 public:
     virtual double GetDistance(const GpsLocation &one, const GpsLocation &other) const = 0;
-    virtual double GetBubbleSize(const GpsLocation &location) const = 0;
     
     virtual bool Store(const NodeLocation &node, bool isNeighbour) = 0;
     virtual std::shared_ptr<NodeLocation> Load(const std::string &nodeId) const = 0;
     virtual bool Update(const NodeLocation &node) const = 0;
     virtual bool Remove(const std::string &nodeId) = 0;
     
+    virtual size_t GetColleagueNodeCount() const = 0;
     virtual double GetNeighbourhoodRadiusKm() const = 0;
     
     virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &position,
@@ -135,6 +136,8 @@ public:
 
 class IGeographicNetwork
 {
+public:
+    
     // Interface provided to serve higher level services and clients
     virtual const std::unordered_map<ServerType,ServerInfo,EnumHasher>& servers() const = 0;
     // + GetClosestNodes() which is the same as for network instances on remote machines
@@ -145,15 +148,17 @@ class IGeographicNetwork
     virtual double GetNeighbourhoodRadiusKm() const = 0;
     
     // Interface provided for the same network instances running on remote machines
+    // TODO add operation GetColleagueNodeCount() to the specs
+    virtual size_t GetColleagueNodeCount() const = 0;
     virtual std::vector<NodeLocation> GetRandomNodes(
         uint16_t maxNodeCount, bool includeNeighbours) const = 0;
     
     virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
         double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const = 0;
     
-    virtual bool ExchangeNodeProfile(const NodeLocation &node) = 0;
-    virtual bool RenewNodeProfile(const NodeLocation &node) = 0;
+    virtual bool AcceptColleague(const NodeLocation &node) = 0;
     virtual bool AcceptNeighbor(const NodeLocation &node) = 0;
+    virtual bool RenewNodeConnection(const NodeLocation &node) = 0;
 };
 
 
@@ -168,6 +173,10 @@ public:
 
 class GeographicNetwork : public IGeographicNetwork
 {
+    static const std::vector<NodeProfile> _seedNodes;
+    static std::random_device _randomDevice;
+    
+    NodeLocation _nodeInfo;
     std::unordered_map<ServerType, ServerInfo, EnumHasher> _servers;
     std::shared_ptr<ISpatialDatabase> _spatialDb;
     std::shared_ptr<IGeographicNetworkConnectionFactory> _connectionFactory;
@@ -175,30 +184,34 @@ class GeographicNetwork : public IGeographicNetwork
     void DiscoverWorld();
     void DiscoverNeighbourhood();
     
+    double GetBubbleSize(const GpsLocation &location) const;
+    
 public:
     
-    GeographicNetwork( std::shared_ptr<ISpatialDatabase> spatialDb,
+    GeographicNetwork( const NodeLocation &nodeInfo,
+                       std::shared_ptr<ISpatialDatabase> spatialDb,
                        std::shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory );
 
     // Interface provided to serve higher level services and clients
-    virtual const std::unordered_map<ServerType,ServerInfo,EnumHasher>& servers() const override;
+    const std::unordered_map<ServerType,ServerInfo,EnumHasher>& servers() const override;
     // + GetClosestNodes() which is the same as for network instances on remote machines
     
     // Local interface for servers running on the same hardware
-    virtual void RegisterServer(ServerType serverType, const ServerInfo &serverInfo) override;
-    virtual void RemoveServer(ServerType serverType);
-    virtual double GetNeighbourhoodRadiusKm() const override;
+    void RegisterServer(ServerType serverType, const ServerInfo &serverInfo) override;
+    void RemoveServer(ServerType serverType);
+    double GetNeighbourhoodRadiusKm() const override;
     
     // Interface provided for the same network instances running on remote machines
-    virtual std::vector<NodeLocation> GetRandomNodes(
+    size_t GetColleagueNodeCount() const override;
+    std::vector<NodeLocation> GetRandomNodes(
         uint16_t maxNodeCount, bool includeNeighbours) const override;
     
-    virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
+    std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
         double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const override;
     
-    virtual bool ExchangeNodeProfile(const NodeLocation &node) override;
-    virtual bool RenewNodeProfile(const NodeLocation &node) override;
-    virtual bool AcceptNeighbor(const NodeLocation &node) override;
+    bool AcceptColleague(const NodeLocation &node) override;
+    bool AcceptNeighbor(const NodeLocation &node) override;
+    bool RenewNodeConnection(const NodeLocation &node) override;
 };
 
 
