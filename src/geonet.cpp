@@ -7,7 +7,10 @@
 
 using namespace std;
 
-static const size_t INIT_WORLD_SEED_RANDOM_NODE_COUNT = 100;
+
+static const size_t INIT_WORLD_RANDOM_NODE_COUNT        = 100;
+static const double INIT_WORLD_NODE_FILL_TARGET_RATE    = 0.75;
+
 
 
 
@@ -130,22 +133,8 @@ void GeographicNetwork::RemoveServer(ServerType serverType)
 
 bool GeographicNetwork::AcceptColleague(const NodeLocation &newNode)
 {
-    vector<NodeLocation> closestNodes = _spatialDb->GetClosestNodes(
-        newNode.location(), numeric_limits<double>::max(), 1, false);
-    if ( closestNodes.empty() ) { return false; }
-    
-    const GpsLocation &myClosesNodeLocation = closestNodes.front().location();
-    const GpsLocation &newNodeLocation      = newNode.location();
-    
-    double newNodeDistanceFromClosestNode = _spatialDb->GetDistance(newNodeLocation, myClosesNodeLocation);
-    double myClosestNodeBubbleSize = GetBubbleSize(myClosesNodeLocation);
-    double newNodeBubbleSize       = GetBubbleSize(newNodeLocation);
-    
-    if (myClosestNodeBubbleSize + newNodeBubbleSize < newNodeDistanceFromClosestNode)
-    {
-        return _spatialDb->Store(newNode, false);
-    }
-    
+    if (! Overlaps( newNode.location() ) )
+        { return _spatialDb->Store(newNode, false); }
     return false;
 }
 
@@ -197,6 +186,22 @@ double GeographicNetwork::GetBubbleSize(const GpsLocation& location) const
 }
 
 
+bool GeographicNetwork::Overlaps(const GpsLocation& newNodeLocation) const
+{
+    vector<NodeLocation> closestNodes = _spatialDb->GetClosestNodes(
+        newNodeLocation, numeric_limits<double>::max(), 1, false);
+    if ( closestNodes.empty() ) { return false; }
+    
+    const GpsLocation &myClosesNodeLocation = closestNodes.front().location();
+    double newNodeDistanceFromClosestNode = _spatialDb->GetDistance(newNodeLocation, myClosesNodeLocation);
+    
+    double myClosestNodeBubbleSize = GetBubbleSize(myClosesNodeLocation);
+    double newNodeBubbleSize       = GetBubbleSize(newNodeLocation);
+    
+    return myClosestNodeBubbleSize + newNodeBubbleSize >= newNodeDistanceFromClosestNode;
+}
+
+
 void GeographicNetwork::DiscoverWorld()
 {
     // Initialize random generator and utility variables
@@ -204,7 +209,7 @@ void GeographicNetwork::DiscoverWorld()
     vector<string> triedSeedNodes;
     
     size_t seedNodeColleagueCount = 0;
-    vector<NodeLocation> initialRandomNodes;
+    vector<NodeLocation> randomNodes;
     while ( triedSeedNodes.size() < _seedNodes.size() )
     {
         // Select random node from hardwired seed node list
@@ -226,11 +231,11 @@ void GeographicNetwork::DiscoverWorld()
             
             // And query both a target World Map size and an initial list of random nodes to start with
             seedNodeColleagueCount = seedNodeConnection->GetColleagueNodeCount();
-            initialRandomNodes = seedNodeConnection->GetRandomNodes(
-                min(INIT_WORLD_SEED_RANDOM_NODE_COUNT, seedNodeColleagueCount), false );
+            randomNodes = seedNodeConnection->GetRandomNodes(
+                min(INIT_WORLD_RANDOM_NODE_COUNT, seedNodeColleagueCount), false );
             
             // If got a reasonable response from a seed server, stop contacting other seeds
-            if ( seedNodeColleagueCount > 0 && ! initialRandomNodes.empty() )
+            if ( seedNodeColleagueCount > 0 && ! randomNodes.empty() )
                 { break; }
         }
         catch (exception &e)
@@ -241,31 +246,67 @@ void GeographicNetwork::DiscoverWorld()
     }
     
     // Check if all nodes tried and failed
-    if ( seedNodeColleagueCount == 0 && initialRandomNodes.empty() &&
+    if ( seedNodeColleagueCount == 0 && randomNodes.empty() &&
          triedSeedNodes.size() == _seedNodes.size() )
     {
-        // TODO reconsider error handling here, should we completely give up?
+        // TODO reconsider error handling here, should we completely give up and maybe exit()?
         cerr << "All seed nodes have been tried and failed, giving up" << endl;
         return;
     }
     
-    size_t addedColleagues = 0;
-    for (auto const &nodeInfo : initialRandomNodes)
+    // We received a reasonable random node list from a seed, try to fill in our world map
+    size_t targetNodeCound = INIT_WORLD_NODE_FILL_TARGET_RATE * seedNodeColleagueCount;
+    while(true)
     {
-        if (addedColleagues >= seedNodeColleagueCount)
-            { break; }
-            
-        try
+        // TODO consider if this really guaranteed to stop
+        for (auto const &nodeInfo : randomNodes)
         {
-            shared_ptr<IGeographicNetwork> nodeConnection =
-                _connectionFactory->ConnectTo( nodeInfo.profile() );
-            if (nodeConnection == nullptr) {
-                // TODO
+            if ( _spatialDb->GetColleagueNodeCount() >= targetNodeCound)
+                { break; }
+                
+            if ( Overlaps( nodeInfo.location() ) )
+                { continue; }
+                
+            try
+            {
+                shared_ptr<IGeographicNetwork> nodeConnection = _connectionFactory->ConnectTo( nodeInfo.profile() );
+                if (nodeConnection == nullptr) {
+                    continue;
+                }
+                
+                if ( nodeConnection->AcceptColleague(_nodeInfo) )
+                    { _spatialDb->Store(nodeInfo, false); }
+            }
+            catch (exception &e)
+            {
+                // TODO should we do anything here besides printing some log message?
             }
         }
-        catch (exception &e)
+        
+        if (_spatialDb->GetColleagueNodeCount() >= targetNodeCound)
+            { break; }
+        
+        randomNodes.clear();
+        while ( randomNodes.empty() )
         {
-            // TODO
+            randomNodes = _spatialDb->GetRandomNodes(1, false);
+            if ( randomNodes.empty() )
+            {
+                // TODO reconsider error handling here
+                cerr << "After trying all random nodes returned by seed, still have no colleagues, give up" << endl;
+                return;
+            }
+            
+            try
+            {
+                shared_ptr<IGeographicNetwork> randomConnection =
+                    _connectionFactory->ConnectTo( randomNodes.front().profile() );
+                randomNodes = randomConnection->GetRandomNodes(INIT_WORLD_RANDOM_NODE_COUNT, false);
+            }
+            catch (exception &e)
+            {
+                randomNodes.clear();
+            }
         }
     }
 }

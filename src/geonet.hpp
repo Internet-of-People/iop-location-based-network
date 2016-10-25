@@ -185,6 +185,7 @@ class GeographicNetwork : public IGeographicNetwork
     void DiscoverNeighbourhood();
     
     double GetBubbleSize(const GpsLocation &location) const;
+    bool Overlaps(const GpsLocation &newNodeLocation) const;
     
 public:
     
