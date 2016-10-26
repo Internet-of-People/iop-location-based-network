@@ -205,7 +205,7 @@ bool GeographicNetwork::Overlaps(const GpsLocation& newNodeLocation) const
 void GeographicNetwork::DiscoverWorld()
 {
     // Initialize random generator and utility variables
-    uniform_int_distribution<int> fromRange( 0, _seedNodes.size() );
+    uniform_int_distribution<int> fromRange( 0, _seedNodes.size() - 1 );
     vector<string> triedSeedNodes;
     
     size_t seedNodeColleagueCount = 0;
