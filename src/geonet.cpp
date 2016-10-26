@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <cmath>
+#include <deque>
 #include <iostream>
 #include <limits>
+#include <unordered_set>
 
 #include "geonet.hpp"
 
@@ -10,6 +12,9 @@ using namespace std;
 
 static const size_t INIT_WORLD_RANDOM_NODE_COUNT        = 100;
 static const double INIT_WORLD_NODE_FILL_TARGET_RATE    = 0.75;
+static const double INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT = 10;
+static const double INIT_NEIGHBOURHOOD_MAX_RANGE_KM     = 100;
+static const double NEIGHBOURHOOD_MAX_NODE_COUNT        = 100;
 
 
 
@@ -29,7 +34,7 @@ GeoNetBusinessLogic::GeoNetBusinessLogic( const NodeInfo &nodeInfo,
     _myNodeInfo(nodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
 {
     if (spatialDb == nullptr) {
-        throw new runtime_error("Invalid SpatialDatabase argument");
+        throw new runtime_error("Invalid spatial database argument");
     }
     if (connectionFactory == nullptr) {
         throw new runtime_error("Invalid connection factory argument");
@@ -227,9 +232,8 @@ bool GeoNetBusinessLogic::DiscoverWorld()
                 
                 // Try connecting to candidate node
                 shared_ptr<IGeographicNetwork> nodeConnection = SafeConnectTo( nodeInfo.profile() );
-                if (nodeConnection == nullptr) {
-                    continue;
-                }
+                if (nodeConnection == nullptr)
+                    { continue; }
                 
                 // Ask for its permission to be colleagues
                 if ( nodeConnection->AcceptColleague(_myNodeInfo) )
@@ -262,9 +266,8 @@ bool GeoNetBusinessLogic::DiscoverWorld()
                 {
                     // Connect to selected random node
                     shared_ptr<IGeographicNetwork> randomConnection = SafeConnectTo( randomColleagueCandidates.front().profile() );
-                    if (randomConnection == nullptr) {
-                        continue;
-                    }
+                    if (randomConnection == nullptr)
+                        { continue; }
                     
                     // Ask for random colleague candidates
                     randomColleagueCandidates = randomConnection->GetRandomNodes(INIT_WORLD_RANDOM_NODE_COUNT, false);
@@ -284,7 +287,79 @@ bool GeoNetBusinessLogic::DiscoverWorld()
 
 bool GeoNetBusinessLogic::DiscoverNeighbourhood()
 {
-    // TODO
+    // Get the closest node known to us so far
+    vector<NodeInfo> newClosestNode = _spatialDb->GetClosestNodes(
+        _myNodeInfo.location(), numeric_limits<double>::max(), 1, true);
+    if ( newClosestNode.empty() )
+        { return false; }
+    
+    // Repeat asking (so far) closest node for an even closer node until no new node discovered
+    vector<NodeInfo> oldClosestNode;
+    while ( oldClosestNode.size() != newClosestNode.size() ||
+            oldClosestNode.front().profile().id() != newClosestNode.front().profile().id() )
+    {
+        oldClosestNode = newClosestNode;
+        try
+        {
+            shared_ptr<IGeographicNetwork> closestNodeConnection =
+                SafeConnectTo( newClosestNode.front().profile() );
+            if (closestNodeConnection == nullptr) {
+                // TODO what to do if closest node is not reachable?
+                return false;
+            }
+            
+            newClosestNode = closestNodeConnection->GetClosestNodes(
+                _myNodeInfo.location(), numeric_limits<double>::max(), 1, true);
+        }
+        catch (exception &e) {
+            // TODO consider what to do besides debug logging exception here
+        }
+    }
+    
+    deque<NodeInfo> nodesToAskQueue( newClosestNode.begin(), newClosestNode.end() );
+    unordered_set<string> askedNodeIds;
+    
+    // Try to fill neighbourhood map until limit reached or no new nodes left to ask
+    vector<NodeInfo> neighbourCandidates;
+    while ( neighbourCandidates.size() < NEIGHBOURHOOD_MAX_NODE_COUNT &&
+            ! nodesToAskQueue.empty() )
+    {
+        // Get next candidate
+        NodeInfo neighbourCandidate = nodesToAskQueue.front();
+        nodesToAskQueue.pop_front();
+        
+        // Skip it if has been processed already
+        auto askedIt = find( askedNodeIds.begin(), askedNodeIds.end(), neighbourCandidate.profile().id() );
+        if ( askedIt != askedNodeIds.end() )
+            { continue; }
+            
+        try
+        {
+            // Try connecting to the node
+            shared_ptr<IGeographicNetwork> candidateConnection =
+                SafeConnectTo( neighbourCandidate.profile() );
+            if (candidateConnection == nullptr)
+                { continue; }
+            
+            // If its permission is granted, store it as a neighbour
+            if ( candidateConnection->AcceptNeighbor(_myNodeInfo) ) {
+                _spatialDb->Store(neighbourCandidate, true);
+            }
+            
+            // Get its neighbours closest to us
+            vector<NodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodes(
+                _myNodeInfo.location(), INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT, 10, true );
+            
+            // Mark current node as processed and append its new neighbours to our todo list
+            askedNodeIds.insert( neighbourCandidate.profile().id() );
+            nodesToAskQueue.insert( nodesToAskQueue.end(),
+                newNeighbourCandidates.begin(), newNeighbourCandidates.end() );
+        }
+        catch (exception &e) {
+            // TODO consider what to do besides debug logging exception here?
+        }
+    }
+    
     return true;
 }
 
