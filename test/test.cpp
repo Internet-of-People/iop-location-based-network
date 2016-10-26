@@ -37,15 +37,15 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
     }
     
     GIVEN("A node profile + location object") {
-        NodeLocation nodeLoc(prof, loc);
+        NodeInfo nodeInfo(prof, loc);
         THEN("its fields are properly filled in") {
-            REQUIRE( nodeLoc.profile().id() == prof.id() );
-            REQUIRE( nodeLoc.profile().ipv4Address() == prof.ipv4Address() );
-            REQUIRE( nodeLoc.profile().ipv4Port() == prof.ipv4Port() );
-            REQUIRE( nodeLoc.profile().ipv6Address() == prof.ipv6Address() );
-            REQUIRE( nodeLoc.profile().ipv6Port() == prof.ipv6Port() );
-            REQUIRE( nodeLoc.location().latitude() == loc.latitude() );
-            REQUIRE( nodeLoc.location().longitude() == loc.longitude() );
+            REQUIRE( nodeInfo.profile().id() == prof.id() );
+            REQUIRE( nodeInfo.profile().ipv4Address() == prof.ipv4Address() );
+            REQUIRE( nodeInfo.profile().ipv4Port() == prof.ipv4Port() );
+            REQUIRE( nodeInfo.profile().ipv6Address() == prof.ipv6Address() );
+            REQUIRE( nodeInfo.profile().ipv6Port() == prof.ipv6Port() );
+            REQUIRE( nodeInfo.location().latitude() == loc.latitude() );
+            REQUIRE( nodeInfo.location().longitude() == loc.longitude() );
         }
     }
     
@@ -60,10 +60,10 @@ SCENARIO("Server registration", "")
 {
     GIVEN("The location based network") {
         GpsLocation loc(1.0, 2.0);
-        NodeLocation nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
+        NodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
         shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
         shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory( new DummyGeographicNetworkConnectionFactory() );
-        GeographicNetwork geonet(nodeInfo, geodb, connectionFactory);
+        GeoNetBusinessLogic geonet(nodeInfo, geodb, connectionFactory);
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {

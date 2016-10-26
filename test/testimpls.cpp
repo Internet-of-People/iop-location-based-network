@@ -33,23 +33,23 @@ double DummySpatialDatabase::GetDistance(const GpsLocation& one, const GpsLocati
 // }
 
 
-bool DummySpatialDatabase::Store(const NodeLocation& node, bool isNeighbour)
+bool DummySpatialDatabase::Store(const NodeInfo& node, bool isNeighbour)
 {
     // TODO
     return true;
 }
 
 
-shared_ptr<NodeLocation> DummySpatialDatabase::Load(const string& nodeId) const
+shared_ptr<NodeInfo> DummySpatialDatabase::Load(const string& nodeId) const
 {
     // TODO
-    return shared_ptr<NodeLocation>(
-        new NodeLocation( NodeProfile("NodeId", "", 0, "", 0),
+    return shared_ptr<NodeInfo>(
+        new NodeInfo( NodeProfile("NodeId", "", 0, "", 0),
                           GpsLocation(0., 0.) ) );
 }
 
 
-bool DummySpatialDatabase::Update(const NodeLocation& node) const
+bool DummySpatialDatabase::Update(const NodeInfo& node) const
 {
     // TODO
     return true;
@@ -73,23 +73,24 @@ double DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
 size_t DummySpatialDatabase::GetColleagueNodeCount() const
 {
     // TODO
-    return 0;
+    return 1;
 }
 
 
 
-vector<NodeLocation> DummySpatialDatabase::GetClosestNodes(
+vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
     const GpsLocation& position, double radius, size_t maxNodeCount, bool includeNeighbours) const
 {
     // TODO
-    return vector<NodeLocation>();
+    return vector<NodeInfo>();
 }
 
 
-std::vector<NodeLocation>DummySpatialDatabase::GetRandomNodes(uint16_t maxNodeCount, bool includeNeighbours) const
+std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(uint16_t maxNodeCount, bool includeNeighbours) const
 {
     // TODO
-    return vector<NodeLocation>();
+    return vector<NodeInfo>{ NodeInfo( NodeProfile("RandomNodeId", "", 0, "", 0),
+                                       GpsLocation(0., 0.) ) };
 }
 
 

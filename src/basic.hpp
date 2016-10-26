@@ -59,15 +59,15 @@ public:
 
 
 
-class NodeLocation
+class NodeInfo
 {
     NodeProfile _profile;
     GpsLocation _location;
     
 public:
     
-    NodeLocation(const NodeProfile &profile, const GpsLocation &location);
-    NodeLocation(const NodeProfile &profile, double latitude, double longitude);
+    NodeInfo(const NodeProfile &profile, const GpsLocation &location);
+    NodeInfo(const NodeProfile &profile, double latitude, double longitude);
     
     const NodeProfile& profile() const;
     const GpsLocation& location() const;

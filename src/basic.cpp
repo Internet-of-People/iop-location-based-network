@@ -66,11 +66,11 @@ bool GpsLocation::operator==(const GpsLocation& other) const
 
 
 
-NodeLocation::NodeLocation(const NodeProfile &profile, const GpsLocation &location) :
+NodeInfo::NodeInfo(const NodeProfile &profile, const GpsLocation &location) :
     _profile(profile), _location(location) {}
 
-NodeLocation::NodeLocation(const NodeProfile &profile, double latitude, double longitude) :
+NodeInfo::NodeInfo(const NodeProfile &profile, double latitude, double longitude) :
     _profile(profile), _location(latitude, longitude) {}
 
-const NodeProfile& NodeLocation::profile() const { return _profile; }
-const GpsLocation& NodeLocation::location() const { return _location; }
+const NodeProfile& NodeInfo::profile() const { return _profile; }
+const GpsLocation& NodeInfo::location() const { return _location; }

@@ -1,5 +1,5 @@
-#ifndef __GEONET_H__
-#define __GEONET_H__
+#ifndef __GEONET_BUSINESS_LOGIC_H__
+#define __GEONET_BUSINESS_LOGIC_H__
 
 #include <random>
 #include <unordered_map>
@@ -24,15 +24,15 @@ public:
     // Interface provided for the same network instances running on remote machines
     // TODO add operation GetColleagueNodeCount() to the specs
     virtual size_t GetColleagueNodeCount() const = 0;
-    virtual std::vector<NodeLocation> GetRandomNodes(
+    virtual std::vector<NodeInfo> GetRandomNodes(
         uint16_t maxNodeCount, bool includeNeighbours) const = 0;
     
-    virtual std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
+    virtual std::vector<NodeInfo> GetClosestNodes(const GpsLocation &location,
         double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const = 0;
     
-    virtual bool AcceptColleague(const NodeLocation &node) = 0;
-    virtual bool AcceptNeighbor(const NodeLocation &node) = 0;
-    virtual bool RenewNodeConnection(const NodeLocation &node) = 0;
+    virtual bool AcceptColleague(const NodeInfo &node) = 0;
+    virtual bool AcceptNeighbor(const NodeInfo &node) = 0;
+    virtual bool RenewNodeConnection(const NodeInfo &node) = 0;
 };
 
 
@@ -45,28 +45,28 @@ public:
 };
 
 
-class GeographicNetwork : public IGeographicNetwork
+class GeoNetBusinessLogic : public IGeographicNetwork
 {
     static const std::vector<NodeProfile> _seedNodes;
     static std::random_device _randomDevice;
     
-    NodeLocation _myNodeInfo;
+    NodeInfo _myNodeInfo;
     std::unordered_map<ServerType, ServerInfo, EnumHasher> _servers;
     std::shared_ptr<ISpatialDatabase> _spatialDb;
     std::shared_ptr<IGeographicNetworkConnectionFactory> _connectionFactory;
     
     std::shared_ptr<IGeographicNetwork> SafeConnectTo(const NodeProfile &node);
-    void DiscoverWorld();
-    void DiscoverNeighbourhood();
+    bool DiscoverWorld();
+    bool DiscoverNeighbourhood();
     
     double GetBubbleSize(const GpsLocation &location) const;
     bool Overlaps(const GpsLocation &newNodeLocation) const;
     
 public:
     
-    GeographicNetwork( const NodeLocation &nodeInfo,
-                       std::shared_ptr<ISpatialDatabase> spatialDb,
-                       std::shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory );
+    GeoNetBusinessLogic( const NodeInfo &nodeInfo,
+                         std::shared_ptr<ISpatialDatabase> spatialDb,
+                         std::shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory );
 
     // Interface provided to serve higher level services and clients
     const std::unordered_map<ServerType,ServerInfo,EnumHasher>& servers() const override;
@@ -79,17 +79,17 @@ public:
     
     // Interface provided for the same network instances running on remote machines
     size_t GetColleagueNodeCount() const override;
-    std::vector<NodeLocation> GetRandomNodes(
+    std::vector<NodeInfo> GetRandomNodes(
         uint16_t maxNodeCount, bool includeNeighbours) const override;
     
-    std::vector<NodeLocation> GetClosestNodes(const GpsLocation &location,
+    std::vector<NodeInfo> GetClosestNodes(const GpsLocation &location,
         double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const override;
     
-    bool AcceptColleague(const NodeLocation &node) override;
-    bool AcceptNeighbor(const NodeLocation &node) override;
-    bool RenewNodeConnection(const NodeLocation &node) override;
+    bool AcceptColleague(const NodeInfo &node) override;
+    bool AcceptNeighbor(const NodeInfo &node) override;
+    bool RenewNodeConnection(const NodeInfo &node) override;
 };
 
 
 
-#endif // __GEONET_H__
+#endif // __GEONET_BUSINESS_LOGIC_H__
