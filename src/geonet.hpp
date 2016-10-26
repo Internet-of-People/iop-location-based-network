@@ -176,11 +176,12 @@ class GeographicNetwork : public IGeographicNetwork
     static const std::vector<NodeProfile> _seedNodes;
     static std::random_device _randomDevice;
     
-    NodeLocation _nodeInfo;
+    NodeLocation _myNodeInfo;
     std::unordered_map<ServerType, ServerInfo, EnumHasher> _servers;
     std::shared_ptr<ISpatialDatabase> _spatialDb;
     std::shared_ptr<IGeographicNetworkConnectionFactory> _connectionFactory;
     
+    std::shared_ptr<IGeographicNetwork> SafeConnectTo(const NodeProfile &node);
     void DiscoverWorld();
     void DiscoverNeighbourhood();
     
@@ -199,7 +200,7 @@ public:
     
     // Local interface for servers running on the same hardware
     void RegisterServer(ServerType serverType, const ServerInfo &serverInfo) override;
-    void RemoveServer(ServerType serverType);
+    void RemoveServer(ServerType serverType) override;
     double GetNeighbourhoodRadiusKm() const override;
     
     // Interface provided for the same network instances running on remote machines

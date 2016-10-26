@@ -96,7 +96,7 @@ random_device GeographicNetwork::_randomDevice;
 GeographicNetwork::GeographicNetwork( const NodeLocation &nodeInfo,
                                       shared_ptr<ISpatialDatabase> spatialDb,
                                       std::shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory ) :
-    _nodeInfo(nodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
+    _myNodeInfo(nodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
 {
     if (spatialDb == nullptr) {
         throw new runtime_error("Invalid SpatialDatabase argument");
@@ -180,7 +180,7 @@ vector<NodeLocation> GeographicNetwork::GetClosestNodes(const GpsLocation& locat
 
 double GeographicNetwork::GetBubbleSize(const GpsLocation& location) const
 {
-    double distance = _spatialDb->GetDistance( _nodeInfo.location(), location );
+    double distance = _spatialDb->GetDistance( _myNodeInfo.location(), location );
     double bubbleSize = log10(distance + 2500.) * 500. - 1700.;
     return bubbleSize;
 }
@@ -202,6 +202,26 @@ bool GeographicNetwork::Overlaps(const GpsLocation& newNodeLocation) const
 }
 
 
+shared_ptr<IGeographicNetwork> GeographicNetwork::SafeConnectTo(const NodeProfile& node)
+{
+    // There is no point in connecting to ourselves
+    if ( node.id() == _myNodeInfo.profile().id() )
+        { return shared_ptr<IGeographicNetwork>(); }
+    
+    try { return _connectionFactory->ConnectTo(node); }
+    catch (exception &e)
+    {
+        // TODO log this instead
+        cerr << "Failed to connect to " << node.ipv4Address() << ":" << node.ipv4Port() << " / "
+                                        << node.ipv6Address() << ":" << node.ipv6Port() << endl;
+        cerr << "Error was: " << e.what() << endl;
+        return shared_ptr<IGeographicNetwork>();
+    }
+}
+
+
+
+// TODO consider if this is guaranteed to stop
 void GeographicNetwork::DiscoverWorld()
 {
     // Initialize random generator and utility variables
@@ -209,7 +229,7 @@ void GeographicNetwork::DiscoverWorld()
     vector<string> triedSeedNodes;
     
     size_t seedNodeColleagueCount = 0;
-    vector<NodeLocation> randomNodes;
+    vector<NodeLocation> randomColleagueCandidates;
     while ( triedSeedNodes.size() < _seedNodes.size() )
     {
         // Select random node from hardwired seed node list
@@ -223,19 +243,20 @@ void GeographicNetwork::DiscoverWorld()
         
         try
         {
-            // Try connecting to selected seed node
             triedSeedNodes.push_back( selectedSeedNode.id() );
-            shared_ptr<IGeographicNetwork> seedNodeConnection = _connectionFactory->ConnectTo(selectedSeedNode);
+            
+            // Try connecting to selected seed node
+            shared_ptr<IGeographicNetwork> seedNodeConnection = SafeConnectTo(selectedSeedNode);
             if (seedNodeConnection == nullptr)
                 { continue; }
             
             // And query both a target World Map size and an initial list of random nodes to start with
             seedNodeColleagueCount = seedNodeConnection->GetColleagueNodeCount();
-            randomNodes = seedNodeConnection->GetRandomNodes(
+            randomColleagueCandidates = seedNodeConnection->GetRandomNodes(
                 min(INIT_WORLD_RANDOM_NODE_COUNT, seedNodeColleagueCount), false );
             
             // If got a reasonable response from a seed server, stop contacting other seeds
-            if ( seedNodeColleagueCount > 0 && ! randomNodes.empty() )
+            if ( seedNodeColleagueCount > 0 && ! randomColleagueCandidates.empty() )
                 { break; }
         }
         catch (exception &e)
@@ -246,7 +267,7 @@ void GeographicNetwork::DiscoverWorld()
     }
     
     // Check if all nodes tried and failed
-    if ( seedNodeColleagueCount == 0 && randomNodes.empty() &&
+    if ( seedNodeColleagueCount == 0 && randomColleagueCandidates.empty() &&
          triedSeedNodes.size() == _seedNodes.size() )
     {
         // TODO reconsider error handling here, should we completely give up and maybe exit()?
@@ -255,61 +276,74 @@ void GeographicNetwork::DiscoverWorld()
     }
     
     // We received a reasonable random node list from a seed, try to fill in our world map
-    size_t targetNodeCound = INIT_WORLD_NODE_FILL_TARGET_RATE * seedNodeColleagueCount;
-    while(true)
+    size_t targetColleageCound = INIT_WORLD_NODE_FILL_TARGET_RATE * seedNodeColleagueCount;
+    for (size_t addedColleagueCount = 0; addedColleagueCount < targetColleageCound; )
     {
-        // TODO consider if this really guaranteed to stop
-        for (auto const &nodeInfo : randomNodes)
+        if ( ! randomColleagueCandidates.empty() )
         {
-            if ( _spatialDb->GetColleagueNodeCount() >= targetNodeCound)
-                { break; }
-                
-            if ( Overlaps( nodeInfo.location() ) )
-                { continue; }
-                
+            // Pick a single node from the candidate list and try to make it a colleague node
+            NodeLocation nodeInfo( randomColleagueCandidates.back() );
+            randomColleagueCandidates.pop_back();
+            
             try
             {
-                shared_ptr<IGeographicNetwork> nodeConnection = _connectionFactory->ConnectTo( nodeInfo.profile() );
+                // Check if node location is acceptable
+                if ( Overlaps( nodeInfo.location() ) )
+                    { continue; }
+                
+                // Try connecting to candidate node
+                shared_ptr<IGeographicNetwork> nodeConnection = SafeConnectTo( nodeInfo.profile() );
                 if (nodeConnection == nullptr) {
                     continue;
                 }
                 
-                if ( nodeConnection->AcceptColleague(_nodeInfo) )
-                    { _spatialDb->Store(nodeInfo, false); }
+                // Ask for its permission to be colleagues
+                if ( nodeConnection->AcceptColleague(_myNodeInfo) )
+                {
+                    // We both agreed, store it as colleague
+                    _spatialDb->Store(nodeInfo, false);
+                    ++addedColleagueCount;
+                }
             }
             catch (exception &e)
             {
                 // TODO should we do anything here besides printing some log message?
             }
         }
-        
-        if (_spatialDb->GetColleagueNodeCount() >= targetNodeCound)
-            { break; }
-        
-        randomNodes.clear();
-        while ( randomNodes.empty() )
+        else
         {
-            randomNodes = _spatialDb->GetRandomNodes(1, false);
-            if ( randomNodes.empty() )
+            // We ran out of colleague candidates, pick some more random candidates
+            while ( randomColleagueCandidates.empty() )
             {
-                // TODO reconsider error handling here
-                cerr << "After trying all random nodes returned by seed, still have no colleagues, give up" << endl;
-                return;
-            }
-            
-            try
-            {
-                shared_ptr<IGeographicNetwork> randomConnection =
-                    _connectionFactory->ConnectTo( randomNodes.front().profile() );
-                randomNodes = randomConnection->GetRandomNodes(INIT_WORLD_RANDOM_NODE_COUNT, false);
-            }
-            catch (exception &e)
-            {
-                randomNodes.clear();
+                // Select random node that we already know so far
+                randomColleagueCandidates = _spatialDb->GetRandomNodes(1, false);
+                if ( randomColleagueCandidates.empty() )
+                {
+                    // TODO reconsider error handling here
+                    cerr << "After trying all random nodes returned by seed, still have no colleagues, give up" << endl;
+                    return;
+                }
+                
+                try
+                {
+                    // Connect to selected random node
+                    shared_ptr<IGeographicNetwork> randomConnection = SafeConnectTo( randomColleagueCandidates.front().profile() );
+                    if (randomConnection == nullptr) {
+                        continue;
+                    }
+                    
+                    // Ask for random colleague candidates
+                    randomColleagueCandidates = randomConnection->GetRandomNodes(INIT_WORLD_RANDOM_NODE_COUNT, false);
+                }
+                catch (exception &e)
+                {
+                    // TODO maybe log error here
+                }
             }
         }
     }
 }
+
 
 
 void GeographicNetwork::DiscoverNeighbourhood()
