@@ -1,7 +1,7 @@
 // #define CATCH_CONFIG_RUNNER
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
-#include <iostream>
+//#include <iostream>
 
 #include "testimpls.hpp"
 

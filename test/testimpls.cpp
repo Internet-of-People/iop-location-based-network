@@ -4,16 +4,6 @@ using namespace std;
 
 
 
-// DummySpatialDatabase::NodeEntry::NodeEntry(const NodeProfile& profile, double latitude, double longitude, bool neighbour):
-//     NodeLocation(profile, latitude, longitude), _neighbour(neighbour) {}
-// 
-// DummySpatialDatabase::NodeEntry::NodeEntry(const NodeProfile& profile, const GpsLocation& location, bool neighbour):
-//     NodeLocation(profile, location), _neighbour(neighbour) {}
-// 
-// bool DummySpatialDatabase::NodeEntry::neighbour() { return _neighbour; }
-
-
-
 DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& myLocation):
     _myLocation(myLocation) {}
 
@@ -26,14 +16,7 @@ Distance DummySpatialDatabase::GetDistance(const GpsLocation& one, const GpsLoca
 }
 
 
-// double DummySpatialDatabase::GetBubbleSize(const GpsLocation& location) const
-// {
-//     // TODO
-//     return 0;
-// }
-
-
-bool DummySpatialDatabase::Store(const NodeInfo& node, NodeType nodeType)
+bool DummySpatialDatabase::Store(const NodeInfo& node, NodeType nodeType, RelationType relationType)
 {
     // TODO
     return true;
@@ -79,14 +62,14 @@ size_t DummySpatialDatabase::GetNodeCount(NodeType nodeType) const
 
 
 vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
-    const GpsLocation& position, Distance radius, size_t maxNodeCount, bool includeNeighbours) const
+    const GpsLocation& position, Distance radius, size_t maxNodeCount, Neighbours filter) const
 {
     // TODO
     return vector<NodeInfo>();
 }
 
 
-std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, bool includeNeighbours) const
+std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
 {
     // TODO
     return vector<NodeInfo>{ NodeInfo( NodeProfile("RandomNodeId", "", 0, "", 0),

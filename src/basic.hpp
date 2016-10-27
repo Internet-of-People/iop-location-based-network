@@ -80,6 +80,15 @@ public:
     
     const NodeProfile& profile() const;
     const GpsLocation& location() const;
+    
+    bool operator==(const NodeInfo &other) const;
+};
+
+
+enum class RelationType : uint8_t
+{
+    Initiator   = 1,
+    Acceptor    = 2,
 };
 
 

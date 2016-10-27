@@ -74,3 +74,9 @@ NodeInfo::NodeInfo(const NodeProfile &profile, GpsCoordinate latitude, GpsCoordi
 
 const NodeProfile& NodeInfo::profile() const { return _profile; }
 const GpsLocation& NodeInfo::location() const { return _location; }
+
+bool NodeInfo::operator==(const NodeInfo& other) const
+{
+    return _profile  == other._profile &&
+           _location == other._location;
+}
