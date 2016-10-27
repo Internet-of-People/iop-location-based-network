@@ -19,7 +19,7 @@ DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& myLocation):
 
 
 
-double DummySpatialDatabase::GetDistance(const GpsLocation& one, const GpsLocation& other) const
+Distance DummySpatialDatabase::GetDistance(const GpsLocation& one, const GpsLocation& other) const
 {
     // TODO
     return 0;
@@ -33,7 +33,7 @@ double DummySpatialDatabase::GetDistance(const GpsLocation& one, const GpsLocati
 // }
 
 
-bool DummySpatialDatabase::Store(const NodeInfo& node, bool isNeighbour)
+bool DummySpatialDatabase::Store(const NodeInfo& node, NodeType nodeType)
 {
     // TODO
     return true;
@@ -63,14 +63,14 @@ bool DummySpatialDatabase::Remove(const string& nodeId)
 }
 
 
-double DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
+Distance DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
 {
     // TODO
     return 42.;
 }
 
 
-size_t DummySpatialDatabase::GetColleagueNodeCount() const
+size_t DummySpatialDatabase::GetNodeCount(NodeType nodeType) const
 {
     // TODO
     return 1;
@@ -79,14 +79,14 @@ size_t DummySpatialDatabase::GetColleagueNodeCount() const
 
 
 vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
-    const GpsLocation& position, double radius, size_t maxNodeCount, bool includeNeighbours) const
+    const GpsLocation& position, Distance radius, size_t maxNodeCount, bool includeNeighbours) const
 {
     // TODO
     return vector<NodeInfo>();
 }
 
 
-std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(uint16_t maxNodeCount, bool includeNeighbours) const
+std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, bool includeNeighbours) const
 {
     // TODO
     return vector<NodeInfo>{ NodeInfo( NodeProfile("RandomNodeId", "", 0, "", 0),

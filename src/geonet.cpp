@@ -10,19 +10,20 @@
 using namespace std;
 
 
-static const size_t INIT_WORLD_RANDOM_NODE_COUNT        = 100;
-static const double INIT_WORLD_NODE_FILL_TARGET_RATE    = 0.75;
-static const double INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT = 10;
-static const double INIT_NEIGHBOURHOOD_MAX_RANGE_KM     = 100;
-static const double NEIGHBOURHOOD_MAX_NODE_COUNT        = 100;
+static const Distance NEIGHBOURHOOD_MAX_RANGE_KM          = 100;
+static const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT        = 100;
+
+static const size_t   INIT_WORLD_RANDOM_NODE_COUNT        = 100;
+static const float    INIT_WORLD_NODE_FILL_TARGET_RATE    = 0.75;
+static const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT = 10;
 
 
 
 
-const vector<NodeProfile> GeoNetBusinessLogic::_seedNodes {
+const vector<NodeInfo> GeoNetBusinessLogic::_seedNodes {
     // TODO put some real seed nodes in here
-    NodeProfile( NodeId("FirstSeedNodeId"), "1.2.3.4", 5555, "", 0 ),
-    NodeProfile( NodeId("SecondSeedNodeId"), "6.7.8.9", 5555, "", 0 ),
+    NodeInfo( NodeProfile( NodeId("FirstSeedNodeId"), "1.2.3.4", 5555, "", 0 ),  GpsLocation(1.0, 2.0) ),
+    NodeInfo( NodeProfile( NodeId("SecondSeedNodeId"), "6.7.8.9", 5555, "", 0 ), GpsLocation(3.0, 4.0) ),
 };
 
 random_device GeoNetBusinessLogic::_randomDevice;
@@ -40,7 +41,7 @@ GeoNetBusinessLogic::GeoNetBusinessLogic( const NodeInfo &nodeInfo,
         throw new runtime_error("Invalid connection factory argument");
     }
     
-    if ( _spatialDb->GetColleagueNodeCount() == 0 ) {
+    if ( _spatialDb->GetNodeCount(NodeType::Colleague) == 0 ) {
         bool discovery = DiscoverWorld() && DiscoverNeighbourhood();
         if (! discovery)
             { throw new runtime_error("Network discovery failed"); }
@@ -72,9 +73,7 @@ void GeoNetBusinessLogic::RemoveServer(ServerType serverType)
 
 bool GeoNetBusinessLogic::AcceptColleague(const NodeInfo &newNode)
 {
-    if (! Overlaps( newNode.location() ) )
-        { return _spatialDb->Store(newNode, false); }
-    return false;
+    return SafeStoreNode(newNode, NodeType::Colleague, false);
 }
 
 
@@ -93,51 +92,55 @@ bool GeoNetBusinessLogic::RenewNodeConnection(const NodeInfo &updatedNode)
 
 bool GeoNetBusinessLogic::AcceptNeighbor(const NodeInfo &node)
 {
-    return _spatialDb->Store(node, true);
+    return SafeStoreNode(node, NodeType::Neighbour, false);
 }
 
 
 
-size_t GeoNetBusinessLogic::GetColleagueNodeCount() const
-    { return _spatialDb->GetColleagueNodeCount(); }
+size_t GeoNetBusinessLogic::GetNodeCount(NodeType nodeType) const
+    { return _spatialDb->GetNodeCount(nodeType); }
 
-double GeoNetBusinessLogic::GetNeighbourhoodRadiusKm() const
+Distance GeoNetBusinessLogic::GetNeighbourhoodRadiusKm() const
     { return _spatialDb->GetNeighbourhoodRadiusKm(); }
 
 vector<NodeInfo> GeoNetBusinessLogic::GetRandomNodes(
-    uint16_t maxNodeCount, bool includeNeighbours) const
+    size_t maxNodeCount, bool includeNeighbours) const
 {
     return _spatialDb->GetRandomNodes(maxNodeCount, includeNeighbours);
 }
 
 vector<NodeInfo> GeoNetBusinessLogic::GetClosestNodes(const GpsLocation& location,
-    double radiusKm, uint16_t maxNodeCount, bool includeNeighbours) const
+    Distance radiusKm, size_t maxNodeCount, bool includeNeighbours) const
 {
     return _spatialDb->GetClosestNodes(location, radiusKm, maxNodeCount, includeNeighbours);
 }
 
 
-double GeoNetBusinessLogic::GetBubbleSize(const GpsLocation& location) const
+Distance GeoNetBusinessLogic::GetBubbleSize(const GpsLocation& location) const
 {
-    double distance = _spatialDb->GetDistance( _myNodeInfo.location(), location );
-    double bubbleSize = log10(distance + 2500.) * 500. - 1700.;
+    Distance distance = _spatialDb->GetDistance( _myNodeInfo.location(), location );
+    Distance bubbleSize = log10(distance + 2500.) * 500. - 1700.;
     return bubbleSize;
 }
 
 
-bool GeoNetBusinessLogic::Overlaps(const GpsLocation& newNodeLocation) const
+bool GeoNetBusinessLogic::BubbleOverlaps(const GpsLocation& newNodeLocation) const
 {
+    // Get our closest node to location, no matter the radius
     vector<NodeInfo> closestNodes = _spatialDb->GetClosestNodes(
-        newNodeLocation, numeric_limits<double>::max(), 1, false);
+        newNodeLocation, numeric_limits<Distance>::max(), 1, false);
+    
+    // If there is no such point yet (i.e. map is still empty), it cannot overlap
     if ( closestNodes.empty() ) { return false; }
     
+    // Get bubble sizes of both locations
     const GpsLocation &myClosesNodeLocation = closestNodes.front().location();
-    double newNodeDistanceFromClosestNode = _spatialDb->GetDistance(newNodeLocation, myClosesNodeLocation);
+    Distance myClosestNodeBubbleSize = GetBubbleSize(myClosesNodeLocation);
+    Distance newNodeBubbleSize       = GetBubbleSize(newNodeLocation);
     
-    double myClosestNodeBubbleSize = GetBubbleSize(myClosesNodeLocation);
-    double newNodeBubbleSize       = GetBubbleSize(newNodeLocation);
-    
-    return myClosestNodeBubbleSize + newNodeBubbleSize >= newNodeDistanceFromClosestNode;
+    // If sum of bubble sizes greater than distance of points, the bubbles overlap
+    Distance newNodeDistanceFromClosestNode = _spatialDb->GetDistance(newNodeLocation, myClosesNodeLocation);
+    return myClosestNodeBubbleSize + newNodeBubbleSize > newNodeDistanceFromClosestNode;
 }
 
 
@@ -159,6 +162,65 @@ shared_ptr<IGeographicNetwork> GeoNetBusinessLogic::SafeConnectTo(const NodeProf
 }
 
 
+bool GeoNetBusinessLogic::SafeStoreNode(const NodeInfo& nodeInfo, NodeType nodeType,
+    bool requireRemoteConsent, shared_ptr<IGeographicNetwork> nodeConnection)
+{
+    try
+    {
+        // Check if node is acceptable
+        switch (nodeType)
+        {
+            case NodeType::Neighbour:
+                if ( _spatialDb->GetNodeCount(NodeType::Neighbour) >= NEIGHBOURHOOD_MAX_NODE_COUNT ||
+                     _spatialDb->GetDistance( _myNodeInfo.location(), nodeInfo.location() ) >= NEIGHBOURHOOD_MAX_RANGE_KM )
+                    { return false; }
+                break;
+                
+            case NodeType::Colleague:
+                if ( BubbleOverlaps( nodeInfo.location() ) )
+                    { return false; }
+                break;
+                
+            default:
+                throw runtime_error("Unknown nodetype, missing implementation");
+        }
+        
+        if (requireRemoteConsent)
+        {
+            // If no connection argument is specified, try connecting to candidate node
+            if (nodeConnection == nullptr)
+                { nodeConnection = SafeConnectTo( nodeInfo.profile() ); }
+            if (nodeConnection == nullptr)
+                { return false; }
+            
+            // Ask for its permission to add it
+            switch (nodeType)
+            {
+                case NodeType::Colleague:
+                    if ( ! nodeConnection->AcceptColleague(_myNodeInfo) )
+                        { return false; }
+                    break;
+                    
+                case NodeType::Neighbour:
+                    if ( ! nodeConnection->AcceptNeighbor(_myNodeInfo) )
+                        { return false; }
+                    break;
+                    
+                default:
+                    throw runtime_error("Unknown nodetype, missing implementation");
+            }
+        }
+        
+        return _spatialDb->Store(nodeInfo, nodeType);
+    }
+    catch (exception &e)
+    {
+        // TODO log exception here
+    }
+    
+    return false;
+}
+
 
 // TODO consider if this is guaranteed to stop
 bool GeoNetBusinessLogic::DiscoverWorld()
@@ -173,30 +235,37 @@ bool GeoNetBusinessLogic::DiscoverWorld()
     {
         // Select random node from hardwired seed node list
         size_t selectedSeedNodeIdx = fromRange(_randomDevice);
-        const NodeProfile& selectedSeedNode = _seedNodes[selectedSeedNodeIdx];
+        const NodeInfo& selectedSeedNode = _seedNodes[selectedSeedNodeIdx];
         
         // If node has been already tried and failed, choose another one
-        auto it = find( triedSeedNodes.begin(), triedSeedNodes.end(), selectedSeedNode.id() );
+        auto it = find( triedSeedNodes.begin(), triedSeedNodes.end(), selectedSeedNode.profile().id() );
         if ( it != triedSeedNodes.end() )
             { continue; }
         
         try
         {
-            triedSeedNodes.push_back( selectedSeedNode.id() );
+            triedSeedNodes.push_back( selectedSeedNode.profile().id() );
             
             // Try connecting to selected seed node
-            shared_ptr<IGeographicNetwork> seedNodeConnection = SafeConnectTo(selectedSeedNode);
+            shared_ptr<IGeographicNetwork> seedNodeConnection = SafeConnectTo( selectedSeedNode.profile() );
             if (seedNodeConnection == nullptr)
                 { continue; }
             
             // And query both a target World Map size and an initial list of random nodes to start with
-            seedNodeColleagueCount = seedNodeConnection->GetColleagueNodeCount();
+            seedNodeColleagueCount = seedNodeConnection->GetNodeCount(NodeType::Colleague);
             randomColleagueCandidates = seedNodeConnection->GetRandomNodes(
                 min(INIT_WORLD_RANDOM_NODE_COUNT, seedNodeColleagueCount), false );
             
             // If got a reasonable response from a seed server, stop contacting other seeds
             if ( seedNodeColleagueCount > 0 && ! randomColleagueCandidates.empty() )
-                { break; }
+            {
+                // Try to add seed node to our network and step out of seed node phase
+                Distance seedNodeDistance = _spatialDb->GetDistance( _myNodeInfo.location(), selectedSeedNode.location() );
+                NodeType seedNodeType = seedNodeDistance <= NEIGHBOURHOOD_MAX_RANGE_KM ?
+                    NodeType::Neighbour : NodeType::Colleague;
+                SafeStoreNode(selectedSeedNode, seedNodeType, true);
+                break;
+            }
         }
         catch (exception &e)
         {
@@ -205,13 +274,19 @@ bool GeoNetBusinessLogic::DiscoverWorld()
         }
     }
     
-    // Check if all nodes tried and failed
+    // Check if all seed nodes tried and failed
     if ( seedNodeColleagueCount == 0 && randomColleagueCandidates.empty() &&
          triedSeedNodes.size() == _seedNodes.size() )
     {
-        // TODO reconsider error handling here, should we completely give up and maybe exit()?
-        cerr << "All seed nodes have been tried and failed, giving up" << endl;
-        return false;
+        // This still might be normal if we're the very first seed node of the whole network
+        auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
+            [this] (const NodeInfo& seedProfile) { return _myNodeInfo.profile() == seedProfile.profile(); } );
+        if ( seedIt == _seedNodes.end() )
+        {
+            // TODO reconsider error handling here, should we completely give up and maybe exit()?
+            cerr << "All seed nodes have been tried and failed, giving up" << endl;
+            return false;
+        }
     }
     
     // We received a reasonable random node list from a seed, try to fill in our world map
@@ -224,29 +299,8 @@ bool GeoNetBusinessLogic::DiscoverWorld()
             NodeInfo nodeInfo( randomColleagueCandidates.back() );
             randomColleagueCandidates.pop_back();
             
-            try
-            {
-                // Check if node location is acceptable
-                if ( Overlaps( nodeInfo.location() ) )
-                    { continue; }
-                
-                // Try connecting to candidate node
-                shared_ptr<IGeographicNetwork> nodeConnection = SafeConnectTo( nodeInfo.profile() );
-                if (nodeConnection == nullptr)
-                    { continue; }
-                
-                // Ask for its permission to be colleagues
-                if ( nodeConnection->AcceptColleague(_myNodeInfo) )
-                {
-                    // We both agreed, store it as colleague
-                    _spatialDb->Store(nodeInfo, false);
-                    ++addedColleagueCount;
-                }
-            }
-            catch (exception &e)
-            {
-                // TODO should we do anything here besides printing some log message?
-            }
+            if ( SafeStoreNode(nodeInfo, NodeType::Colleague, true) )
+                { ++addedColleagueCount; }
         }
         else
         {
@@ -289,7 +343,7 @@ bool GeoNetBusinessLogic::DiscoverNeighbourhood()
 {
     // Get the closest node known to us so far
     vector<NodeInfo> newClosestNode = _spatialDb->GetClosestNodes(
-        _myNodeInfo.location(), numeric_limits<double>::max(), 1, true);
+        _myNodeInfo.location(), numeric_limits<Distance>::max(), 1, true);
     if ( newClosestNode.empty() )
         { return false; }
     
@@ -309,7 +363,7 @@ bool GeoNetBusinessLogic::DiscoverNeighbourhood()
             }
             
             newClosestNode = closestNodeConnection->GetClosestNodes(
-                _myNodeInfo.location(), numeric_limits<double>::max(), 1, true);
+                _myNodeInfo.location(), numeric_limits<Distance>::max(), 1, true);
         }
         catch (exception &e) {
             // TODO consider what to do besides debug logging exception here
@@ -336,15 +390,8 @@ bool GeoNetBusinessLogic::DiscoverNeighbourhood()
         try
         {
             // Try connecting to the node
-            shared_ptr<IGeographicNetwork> candidateConnection =
-                SafeConnectTo( neighbourCandidate.profile() );
-            if (candidateConnection == nullptr)
-                { continue; }
-            
-            // If its permission is granted, store it as a neighbour
-            if ( candidateConnection->AcceptNeighbor(_myNodeInfo) ) {
-                _spatialDb->Store(neighbourCandidate, true);
-            }
+            shared_ptr<IGeographicNetwork> candidateConnection = SafeConnectTo( neighbourCandidate.profile() );
+            SafeStoreNode(neighbourCandidate, NodeType::Neighbour, true, candidateConnection);
             
             // Get its neighbours closest to us
             vector<NodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodes(

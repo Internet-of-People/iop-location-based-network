@@ -9,6 +9,8 @@ typedef std::string NodeId;
 typedef std::string Ipv4Address;
 typedef std::string Ipv6Address;
 typedef uint16_t    TcpPort;
+typedef float       GpsCoordinate;
+typedef float       Distance;
 
 
 
@@ -38,21 +40,28 @@ public:
 };
 
 
+enum class NodeType : uint8_t
+{
+    Colleague   = 1,
+    Neighbour   = 2,
+};
+
+
 
 class GpsLocation
 {
-    double _latitude;
-    double _longitude;
+    GpsCoordinate _latitude;
+    GpsCoordinate _longitude;
     
     void Validate();
     
 public:
     
     GpsLocation(const GpsLocation &position);
-    GpsLocation(double latitude, double longitude);
+    GpsLocation(GpsCoordinate latitude, GpsCoordinate longitude);
     
-    double latitude() const;
-    double longitude() const;
+    GpsCoordinate latitude() const;
+    GpsCoordinate longitude() const;
     
     bool operator==(const GpsLocation &other) const;
 };
@@ -67,7 +76,7 @@ class NodeInfo
 public:
     
     NodeInfo(const NodeProfile &profile, const GpsLocation &location);
-    NodeInfo(const NodeProfile &profile, double latitude, double longitude);
+    NodeInfo(const NodeProfile &profile, float latitude, float longitude);
     
     const NodeProfile& profile() const;
     const GpsLocation& location() const;

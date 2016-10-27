@@ -43,12 +43,12 @@ bool NodeProfile::operator==(const NodeProfile& other) const
 GpsLocation::GpsLocation(const GpsLocation &location) :
     _latitude( location.latitude() ), _longitude( location.longitude() ) {}
     
-GpsLocation::GpsLocation(double latitude, double longitude) :
+GpsLocation::GpsLocation(GpsCoordinate latitude, GpsCoordinate longitude) :
     _latitude(latitude), _longitude(longitude)
     { Validate(); }
 
-double GpsLocation::latitude()  const { return _latitude; }
-double GpsLocation::longitude() const { return _longitude; }
+GpsCoordinate GpsLocation::latitude()  const { return _latitude; }
+GpsCoordinate GpsLocation::longitude() const { return _longitude; }
 
 void GpsLocation::Validate()
 {
@@ -69,7 +69,7 @@ bool GpsLocation::operator==(const GpsLocation& other) const
 NodeInfo::NodeInfo(const NodeProfile &profile, const GpsLocation &location) :
     _profile(profile), _location(location) {}
 
-NodeInfo::NodeInfo(const NodeProfile &profile, double latitude, double longitude) :
+NodeInfo::NodeInfo(const NodeProfile &profile, GpsCoordinate latitude, GpsCoordinate longitude) :
     _profile(profile), _location(latitude, longitude) {}
 
 const NodeProfile& NodeInfo::profile() const { return _profile; }
