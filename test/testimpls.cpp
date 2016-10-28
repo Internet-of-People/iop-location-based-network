@@ -16,23 +16,23 @@ Distance DummySpatialDatabase::GetDistance(const GpsLocation&, const GpsLocation
 }
 
 
-bool DummySpatialDatabase::Store(const NodeInfo&, LocNetRelationType, RelationType)
+bool DummySpatialDatabase::Store(const LocNetNodeDbEntry&)
 {
     // TODO
     return true;
 }
 
 
-shared_ptr<NodeInfo> DummySpatialDatabase::Load(const string&) const
+shared_ptr<LocNetNodeDbEntry> DummySpatialDatabase::Load(const string&) const
 {
     // TODO
-    return shared_ptr<NodeInfo>(
-        new NodeInfo( NodeProfile("NodeId", "", 0, "", 0),
-                          GpsLocation(0., 0.) ) );
+    return shared_ptr<LocNetNodeDbEntry>(
+        new LocNetNodeDbEntry( NodeProfile("NodeId", "", 0, "", 0),
+            GpsLocation(0., 0.), LocNetRelationType::Colleague, PeerRoleType::Acceptor ) );
 }
 
 
-bool DummySpatialDatabase::Update(const NodeInfo&) const
+bool DummySpatialDatabase::Update(const LocNetNodeInfo&) const
 {
     // TODO
     return true;
@@ -61,24 +61,24 @@ size_t DummySpatialDatabase::GetNodeCount(LocNetRelationType) const
 
 
 
-vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
+vector<LocNetNodeInfo> DummySpatialDatabase::GetClosestNodes(
     const GpsLocation&, Distance, size_t, Neighbours) const
 {
     // TODO
-    return vector<NodeInfo>();
+    return vector<LocNetNodeInfo>();
 }
 
 
-std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t, Neighbours) const
+std::vector<LocNetNodeInfo>DummySpatialDatabase::GetRandomNodes(size_t, Neighbours) const
 {
     // TODO
-    return vector<NodeInfo>{ NodeInfo( NodeProfile("RandomNodeId", "", 0, "", 0),
+    return vector<LocNetNodeInfo>{ LocNetNodeInfo( NodeProfile("RandomNodeId", "", 0, "", 0),
                                        GpsLocation(0., 0.) ) };
 }
 
 
 
-shared_ptr<ILocNetRemoteNode> DummyGeographicNetworkConnectionFactory::ConnectTo(const NodeProfile&)
+shared_ptr<ILocNetRemoteNode> DummyLocNetRemoteNodeConnectionFactory::ConnectTo(const NodeProfile&)
 {
     return shared_ptr<ILocNetRemoteNode>();
 }
