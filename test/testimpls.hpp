@@ -32,11 +32,11 @@ public:
 
 
 
-class DummyGeographicNetworkConnectionFactory: public IGeographicNetworkConnectionFactory
+class DummyGeographicNetworkConnectionFactory: public IGeoNetRemoteNodeConnectionFactory
 {
 public:
     
-    std::shared_ptr<IGeographicNetwork> ConnectTo(const NodeProfile &node) override;
+    std::shared_ptr<IGeoNetRemoteNode> ConnectTo(const NodeProfile &node) override;
 };
 
 

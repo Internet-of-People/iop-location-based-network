@@ -31,7 +31,7 @@ random_device GeoNetBusinessLogic::_randomDevice;
 
 GeoNetBusinessLogic::GeoNetBusinessLogic( const NodeInfo &nodeInfo,
                                       shared_ptr<ISpatialDatabase> spatialDb,
-                                      std::shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory ) :
+                                      std::shared_ptr<IGeoNetRemoteNodeConnectionFactory> connectionFactory ) :
     _myNodeInfo(nodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
 {
     if (spatialDb == nullptr) {
@@ -144,11 +144,11 @@ bool GeoNetBusinessLogic::BubbleOverlaps(const GpsLocation& newNodeLocation) con
 }
 
 
-shared_ptr<IGeographicNetwork> GeoNetBusinessLogic::SafeConnectTo(const NodeProfile& node)
+shared_ptr<IGeoNetRemoteNode> GeoNetBusinessLogic::SafeConnectTo(const NodeProfile& node)
 {
     // There is no point in connecting to ourselves
     if ( node.id() == _myNodeInfo.profile().id() )
-        { return shared_ptr<IGeographicNetwork>(); }
+        { return shared_ptr<IGeoNetRemoteNode>(); }
     
     try { return _connectionFactory->ConnectTo(node); }
     catch (exception &e)
@@ -157,13 +157,13 @@ shared_ptr<IGeographicNetwork> GeoNetBusinessLogic::SafeConnectTo(const NodeProf
         cerr << "Failed to connect to " << node.ipv4Address() << ":" << node.ipv4Port() << " / "
                                         << node.ipv6Address() << ":" << node.ipv6Port() << endl;
         cerr << "Error was: " << e.what() << endl;
-        return shared_ptr<IGeographicNetwork>();
+        return shared_ptr<IGeoNetRemoteNode>();
     }
 }
 
 
 bool GeoNetBusinessLogic::SafeStoreNode(const NodeInfo& nodeInfo, NodeType nodeType,
-    RelationType relationType, shared_ptr<IGeographicNetwork> nodeConnection)
+    RelationType relationType, shared_ptr<IGeoNetRemoteNode> nodeConnection)
 {
     try
     {
@@ -247,7 +247,7 @@ bool GeoNetBusinessLogic::DiscoverWorld()
             triedSeedNodes.push_back( selectedSeedNode.profile().id() );
             
             // Try connecting to selected seed node
-            shared_ptr<IGeographicNetwork> seedNodeConnection = SafeConnectTo( selectedSeedNode.profile() );
+            shared_ptr<IGeoNetRemoteNode> seedNodeConnection = SafeConnectTo( selectedSeedNode.profile() );
             if (seedNodeConnection == nullptr)
                 { continue; }
             
@@ -319,7 +319,7 @@ bool GeoNetBusinessLogic::DiscoverWorld()
                 try
                 {
                     // Connect to selected random node
-                    shared_ptr<IGeographicNetwork> randomConnection = SafeConnectTo( randomColleagueCandidates.front().profile() );
+                    shared_ptr<IGeoNetRemoteNode> randomConnection = SafeConnectTo( randomColleagueCandidates.front().profile() );
                     if (randomConnection == nullptr)
                         { continue; }
                     
@@ -356,7 +356,7 @@ bool GeoNetBusinessLogic::DiscoverNeighbourhood()
         oldClosestNode = newClosestNode;
         try
         {
-            shared_ptr<IGeographicNetwork> closestNodeConnection =
+            shared_ptr<IGeoNetRemoteNode> closestNodeConnection =
                 SafeConnectTo( newClosestNode.front().profile() );
             if (closestNodeConnection == nullptr) {
                 // TODO what to do if closest node is not reachable?
@@ -391,7 +391,7 @@ bool GeoNetBusinessLogic::DiscoverNeighbourhood()
         try
         {
             // Try connecting to the node
-            shared_ptr<IGeographicNetwork> candidateConnection = SafeConnectTo( neighbourCandidate.profile() );
+            shared_ptr<IGeoNetRemoteNode> candidateConnection = SafeConnectTo( neighbourCandidate.profile() );
             if (candidateConnection == nullptr)
                 { continue; }
                 

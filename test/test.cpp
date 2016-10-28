@@ -62,7 +62,7 @@ SCENARIO("Server registration", "")
         GpsLocation loc(1.0, 2.0);
         NodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
         shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
-        shared_ptr<IGeographicNetworkConnectionFactory> connectionFactory( new DummyGeographicNetworkConnectionFactory() );
+        shared_ptr<IGeoNetRemoteNodeConnectionFactory> connectionFactory( new DummyGeographicNetworkConnectionFactory() );
         GeoNetBusinessLogic geonet(nodeInfo, geodb, connectionFactory);
         
         WHEN("it's newly created") {

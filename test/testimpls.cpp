@@ -9,21 +9,21 @@ DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& myLocation):
 
 
 
-Distance DummySpatialDatabase::GetDistance(const GpsLocation& one, const GpsLocation& other) const
+Distance DummySpatialDatabase::GetDistance(const GpsLocation&, const GpsLocation&) const
 {
     // TODO
     return 0;
 }
 
 
-bool DummySpatialDatabase::Store(const NodeInfo& node, NodeType nodeType, RelationType relationType)
+bool DummySpatialDatabase::Store(const NodeInfo&, NodeType, RelationType)
 {
     // TODO
     return true;
 }
 
 
-shared_ptr<NodeInfo> DummySpatialDatabase::Load(const string& nodeId) const
+shared_ptr<NodeInfo> DummySpatialDatabase::Load(const string&) const
 {
     // TODO
     return shared_ptr<NodeInfo>(
@@ -32,14 +32,14 @@ shared_ptr<NodeInfo> DummySpatialDatabase::Load(const string& nodeId) const
 }
 
 
-bool DummySpatialDatabase::Update(const NodeInfo& node) const
+bool DummySpatialDatabase::Update(const NodeInfo&) const
 {
     // TODO
     return true;
 }
 
 
-bool DummySpatialDatabase::Remove(const string& nodeId)
+bool DummySpatialDatabase::Remove(const string&)
 {
     // TODO
     return true;
@@ -53,7 +53,7 @@ Distance DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
 }
 
 
-size_t DummySpatialDatabase::GetNodeCount(NodeType nodeType) const
+size_t DummySpatialDatabase::GetNodeCount(NodeType) const
 {
     // TODO
     return 1;
@@ -62,14 +62,14 @@ size_t DummySpatialDatabase::GetNodeCount(NodeType nodeType) const
 
 
 vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
-    const GpsLocation& position, Distance radius, size_t maxNodeCount, Neighbours filter) const
+    const GpsLocation&, Distance, size_t, Neighbours) const
 {
     // TODO
     return vector<NodeInfo>();
 }
 
 
-std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t, Neighbours) const
 {
     // TODO
     return vector<NodeInfo>{ NodeInfo( NodeProfile("RandomNodeId", "", 0, "", 0),
@@ -78,8 +78,8 @@ std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, N
 
 
 
-shared_ptr<IGeographicNetwork> DummyGeographicNetworkConnectionFactory::ConnectTo(const NodeProfile& node)
+shared_ptr<IGeoNetRemoteNode> DummyGeographicNetworkConnectionFactory::ConnectTo(const NodeProfile&)
 {
-    return shared_ptr<IGeographicNetwork>();
+    return shared_ptr<IGeoNetRemoteNode>();
 }
 
