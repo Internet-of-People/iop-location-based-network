@@ -62,8 +62,8 @@ SCENARIO("Server registration", "")
         GpsLocation loc(1.0, 2.0);
         NodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
         shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
-        shared_ptr<IGeoNetRemoteNodeConnectionFactory> connectionFactory( new DummyGeographicNetworkConnectionFactory() );
-        GeoNetBusinessLogic geonet(nodeInfo, geodb, connectionFactory);
+        shared_ptr<ILocNetRemoteNodeConnectionFactory> connectionFactory( new DummyGeographicNetworkConnectionFactory() );
+        LocNetNode geonet(nodeInfo, geodb, connectionFactory);
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {
@@ -73,9 +73,9 @@ SCENARIO("Server registration", "")
                 REQUIRE( servers.find(ServerType::MintingServer) == servers.end() );
             }
         }
-        ServerInfo tokenServer("Token", "127.0.0.1", 1111, "", 0);
+        ServerProfile tokenServer("Token", "127.0.0.1", 1111, "", 0);
         WHEN("adding servers") {
-            ServerInfo minterServer("Minter", "127.0.0.1", 2222, "", 0);
+            ServerProfile minterServer("Minter", "127.0.0.1", 2222, "", 0);
             geonet.RegisterServer(ServerType::TokenServer, tokenServer);
             geonet.RegisterServer(ServerType::MintingServer, minterServer);
             THEN("added servers appear on queries") {
@@ -88,7 +88,7 @@ SCENARIO("Server registration", "")
             }
         }
         WHEN("removing servers") {
-            ServerInfo minterServer("Minter", "127.0.0.1", 2222, "", 0);
+            ServerProfile minterServer("Minter", "127.0.0.1", 2222, "", 0);
             geonet.RegisterServer(ServerType::TokenServer, tokenServer);
             geonet.RegisterServer(ServerType::MintingServer, minterServer);
             geonet.RemoveServer(ServerType::MintingServer);

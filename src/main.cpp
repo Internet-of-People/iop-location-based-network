@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "geonet.hpp"
+#include "locnet.hpp"
 
 using namespace std;
 

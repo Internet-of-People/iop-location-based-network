@@ -1,5 +1,5 @@
-#ifndef __GEONET_BASIC_TYPES_H__
-#define __GEONET_BASIC_TYPES_H__
+#ifndef __LOCNET_BASIC_TYPES_H__
+#define __LOCNET_BASIC_TYPES_H__
 
 #include <string>
 
@@ -40,7 +40,11 @@ public:
 };
 
 
-enum class NodeType : uint8_t
+typedef NodeProfile ServerProfile;
+
+
+
+enum class LocNetRelationType : uint8_t
 {
     Colleague   = 1,
     Neighbour   = 2,
@@ -112,7 +116,6 @@ struct EnumHasher
         { return static_cast<std::size_t>(e); }
 };
 
-typedef NodeProfile ServerInfo;
 
 
 
@@ -128,4 +131,4 @@ typedef NodeProfile ServerInfo;
 
 
 
-#endif // __GEONET_BASIC_TYPES_H__
+#endif // __LOCNET_BASIC_TYPES_H__

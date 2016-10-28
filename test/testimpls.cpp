@@ -16,7 +16,7 @@ Distance DummySpatialDatabase::GetDistance(const GpsLocation&, const GpsLocation
 }
 
 
-bool DummySpatialDatabase::Store(const NodeInfo&, NodeType, RelationType)
+bool DummySpatialDatabase::Store(const NodeInfo&, LocNetRelationType, RelationType)
 {
     // TODO
     return true;
@@ -53,7 +53,7 @@ Distance DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
 }
 
 
-size_t DummySpatialDatabase::GetNodeCount(NodeType) const
+size_t DummySpatialDatabase::GetNodeCount(LocNetRelationType) const
 {
     // TODO
     return 1;
@@ -78,8 +78,8 @@ std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t, Neighbours) co
 
 
 
-shared_ptr<IGeoNetRemoteNode> DummyGeographicNetworkConnectionFactory::ConnectTo(const NodeProfile&)
+shared_ptr<ILocNetRemoteNode> DummyGeographicNetworkConnectionFactory::ConnectTo(const NodeProfile&)
 {
-    return shared_ptr<IGeoNetRemoteNode>();
+    return shared_ptr<ILocNetRemoteNode>();
 }
 

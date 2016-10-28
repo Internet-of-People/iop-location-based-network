@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "geonet.hpp"
+#include "locnet.hpp"
 
 
 
@@ -17,13 +17,13 @@ public:
 
     Distance GetDistance(const GpsLocation &one, const GpsLocation &other) const override;
 
-    bool Store(const NodeInfo &node, NodeType nodeType, RelationType relationType) override;
+    bool Store(const NodeInfo &node, LocNetRelationType nodeType, RelationType relationType) override;
     std::shared_ptr<NodeInfo> Load(const std::string &nodeId) const override;
     bool Update(const NodeInfo &node) const override;
     bool Remove(const std::string &nodeId) override;
     
     Distance GetNeighbourhoodRadiusKm() const override;
-    size_t GetNodeCount(NodeType nodeType) const override;
+    size_t GetNodeCount(LocNetRelationType nodeType) const override;
     std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
     
     std::vector<NodeInfo> GetClosestNodes(const GpsLocation &position,
@@ -32,11 +32,11 @@ public:
 
 
 
-class DummyGeographicNetworkConnectionFactory: public IGeoNetRemoteNodeConnectionFactory
+class DummyGeographicNetworkConnectionFactory: public ILocNetRemoteNodeConnectionFactory
 {
 public:
     
-    std::shared_ptr<IGeoNetRemoteNode> ConnectTo(const NodeProfile &node) override;
+    std::shared_ptr<ILocNetRemoteNode> ConnectTo(const NodeProfile &node) override;
 };
 
 
