@@ -5,6 +5,8 @@
 
 
 
+// TODO put all these into some namespace
+
 typedef std::string NodeId;
 typedef std::string Ipv4Address;
 typedef std::string Ipv6Address;
@@ -40,7 +42,7 @@ public:
 };
 
 
-typedef NodeProfile ServerProfile;
+typedef NodeProfile ServiceProfile;
 
 
 
@@ -72,24 +74,7 @@ public:
 
 
 
-class NodeInfo
-{
-    NodeProfile _profile;
-    GpsLocation _location;
-    
-public:
-    
-    NodeInfo(const NodeProfile &profile, const GpsLocation &location);
-    NodeInfo(const NodeProfile &profile, float latitude, float longitude);
-    
-    const NodeProfile& profile() const;
-    const GpsLocation& location() const;
-    
-    bool operator==(const NodeInfo &other) const;
-};
-
-
-enum class RelationType : uint8_t
+enum class PeerRoleType : uint8_t
 {
     Initiator   = 1,
     Acceptor    = 2,
@@ -97,14 +82,34 @@ enum class RelationType : uint8_t
 
 
 
-enum class ServerType : uint8_t
+class LocNetNodeInfo
 {
-    TokenServer         = 1,
-    ProfileServer       = 2,
-    ProximityServer     = 3,
-    StunTurnServer      = 4,
-    ReputationServer    = 5,
-    MintingServer       = 6,
+    NodeProfile _profile;
+    GpsLocation _location;
+    
+public:
+    
+    LocNetNodeInfo(const NodeProfile &profile, const GpsLocation &location);
+    LocNetNodeInfo(const NodeProfile &profile, float latitude, float longitude);
+    
+    const NodeProfile& profile() const;
+    const GpsLocation& location() const;
+    
+    bool operator==(const LocNetNodeInfo &other) const;
+};
+
+
+
+enum class ServiceType : uint8_t
+{
+    // TODO are low level "networks" directly reachable by clients?
+    //      If so, should be included here
+    Token       = 1,
+    Profile     = 2,
+    Proximity   = 3,
+    Relay       = 4,
+    Reputation  = 5,
+    Minting     = 6,
 };
 
 // Utility class to enable hash classes to be used as a hash key until fixed in C++ standard

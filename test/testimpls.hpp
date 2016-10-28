@@ -17,22 +17,22 @@ public:
 
     Distance GetDistance(const GpsLocation &one, const GpsLocation &other) const override;
 
-    bool Store(const NodeInfo &node, LocNetRelationType nodeType, RelationType relationType) override;
-    std::shared_ptr<NodeInfo> Load(const std::string &nodeId) const override;
-    bool Update(const NodeInfo &node) const override;
+    bool Store(const LocNetNodeDbEntry &node) override;
+    std::shared_ptr<LocNetNodeDbEntry> Load(const std::string &nodeId) const override;
+    bool Update(const LocNetNodeInfo &node) const override;
     bool Remove(const std::string &nodeId) override;
     
     Distance GetNeighbourhoodRadiusKm() const override;
     size_t GetNodeCount(LocNetRelationType nodeType) const override;
-    std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
+    std::vector<LocNetNodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
     
-    std::vector<NodeInfo> GetClosestNodes(const GpsLocation &position,
+    std::vector<LocNetNodeInfo> GetClosestNodes(const GpsLocation &position,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
 
 
 
-class DummyGeographicNetworkConnectionFactory: public ILocNetRemoteNodeConnectionFactory
+class DummyLocNetRemoteNodeConnectionFactory: public ILocNetRemoteNodeConnectionFactory
 {
 public:
     
