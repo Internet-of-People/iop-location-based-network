@@ -48,12 +48,32 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
             REQUIRE( nodeInfo.location().longitude() == loc.longitude() );
         }
     }
-    
+}
+
+
+
+SCENARIO("Spatial database", "")
+{
     GIVEN("A spatial database implementation") {
-        DummySpatialDatabase geodb(loc);
-        // TODO
+        DummySpatialDatabase geodb( GpsLocation(0.0, 0.0) );
+        THEN("its initially empty") {
+            REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 0 );
+            REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 0 );
+        }
+        
+        WHEN("adding nodes") {
+            NodeProfile prof("NodeId", "127.0.0.1", 6666, "", 0);
+            GpsLocation loc(1.0, 2.0);
+            LocNetNodeDbEntry entry(prof, loc, LocNetRelationType::Colleague, PeerContactRoleType::Initiator);
+            geodb.Store(entry);
+            THEN("they can be queried") {
+                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 1 );
+                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 0 );
+            }
+        }
     }
 }
+
 
 
 SCENARIO("Server registration", "")
@@ -63,7 +83,7 @@ SCENARIO("Server registration", "")
         LocNetNodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
         shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
         shared_ptr<ILocNetRemoteNodeConnectionFactory> connectionFactory( new DummyLocNetRemoteNodeConnectionFactory() );
-        LocNetNode geonet(nodeInfo, geodb, connectionFactory);
+        LocNetNode geonet(nodeInfo, geodb, connectionFactory, true);
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {

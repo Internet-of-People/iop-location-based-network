@@ -10,6 +10,7 @@
 class DummySpatialDatabase : public ISpatialDatabase
 {
     GpsLocation _myLocation;
+    std::unordered_map<std::string,LocNetNodeDbEntry> _nodes;
     
 public:
     

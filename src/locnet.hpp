@@ -33,8 +33,10 @@ class ILocNetClientMethods
 public:
     
     virtual const std::unordered_map<ServiceType,ServiceProfile,EnumHasher>& services() const = 0;
-    // TODO do this
-    //GetClosestNodes() which is the same as for network instances on remote machines
+    // TODO same method as for remote machines, only protection may be different.
+    //      Check if this might cause any diamond shape inheritance problems.
+    virtual std::vector<LocNetNodeInfo> GetClosestNodes(const GpsLocation &location,
+        Distance radiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
 };
 
 
@@ -83,7 +85,8 @@ public:
     
     LocNetNode( const LocNetNodeInfo &nodeInfo,
                 std::shared_ptr<ISpatialDatabase> spatialDb,
-                std::shared_ptr<ILocNetRemoteNodeConnectionFactory> connectionFactory );
+                std::shared_ptr<ILocNetRemoteNodeConnectionFactory> connectionFactory,
+                bool ignoreDiscovery = false );
 
     // Interface provided to serve higher level services and clients
     const std::unordered_map<ServiceType,ServiceProfile,EnumHasher>& services() const override;

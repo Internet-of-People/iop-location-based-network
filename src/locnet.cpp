@@ -30,8 +30,9 @@ random_device LocNetNode::_randomDevice;
 
 
 LocNetNode::LocNetNode( const LocNetNodeInfo &nodeInfo,
-                                      shared_ptr<ISpatialDatabase> spatialDb,
-                                      std::shared_ptr<ILocNetRemoteNodeConnectionFactory> connectionFactory ) :
+                        shared_ptr<ISpatialDatabase> spatialDb,
+                        std::shared_ptr<ILocNetRemoteNodeConnectionFactory> connectionFactory,
+                        bool ignoreDiscovery ) :
     _myNodeInfo(nodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
 {
     if (spatialDb == nullptr) {
@@ -41,9 +42,10 @@ LocNetNode::LocNetNode( const LocNetNodeInfo &nodeInfo,
         throw new runtime_error("Invalid connection factory argument");
     }
     
-    if ( _spatialDb->GetNodeCount(LocNetRelationType::Colleague) == 0 ) {
-        bool discovery = DiscoverWorld() && DiscoverNeighbourhood();
-        if (! discovery)
+    if ( _spatialDb->GetNodeCount(LocNetRelationType::Colleague) == 0 && ! ignoreDiscovery )
+    {
+        bool discoverySucceeded = DiscoverWorld() && DiscoverNeighbourhood();
+        if (! discoverySucceeded)
             { throw new runtime_error("Network discovery failed"); }
     }
 }
@@ -74,7 +76,7 @@ void LocNetNode::RemoveService(ServiceType serviceType)
 bool LocNetNode::AcceptColleague(const LocNetNodeInfo &newNode)
 {
     return SafeStoreNode( LocNetNodeDbEntry(
-        newNode, LocNetRelationType::Colleague, PeerRoleType::Acceptor) );
+        newNode, LocNetRelationType::Colleague, PeerContactRoleType::Acceptor) );
 }
 
 
@@ -94,7 +96,7 @@ bool LocNetNode::RenewNodeConnection(const LocNetNodeInfo &updatedNode)
 bool LocNetNode::AcceptNeighbour(const LocNetNodeInfo &node)
 {
     return SafeStoreNode( LocNetNodeDbEntry(
-        node, LocNetRelationType::Neighbour, PeerRoleType::Acceptor) );
+        node, LocNetRelationType::Neighbour, PeerContactRoleType::Acceptor) );
 }
 
 
@@ -187,7 +189,7 @@ bool LocNetNode::SafeStoreNode(const LocNetNodeDbEntry& entry,
                 throw runtime_error("Unknown nodetype, missing implementation");
         }
         
-        if ( entry.roleType() == PeerRoleType::Initiator )
+        if ( entry.roleType() == PeerContactRoleType::Initiator )
         {
             // If no connection argument is specified, try connecting to candidate node
             if (nodeConnection == nullptr)
@@ -265,7 +267,7 @@ bool LocNetNode::DiscoverWorld()
                 Distance seedNodeDistance = _spatialDb->GetDistance( _myNodeInfo.location(), selectedSeedNode.location() );
                 LocNetRelationType seedNodeType = seedNodeDistance <= NEIGHBOURHOOD_MAX_RANGE_KM ?
                     LocNetRelationType::Neighbour : LocNetRelationType::Colleague;
-                SafeStoreNode( LocNetNodeDbEntry(selectedSeedNode, seedNodeType, PeerRoleType::Initiator) );
+                SafeStoreNode( LocNetNodeDbEntry(selectedSeedNode, seedNodeType, PeerContactRoleType::Initiator) );
                 break;
             }
         }
@@ -301,7 +303,7 @@ bool LocNetNode::DiscoverWorld()
             LocNetNodeInfo nodeInfo( randomColleagueCandidates.back() );
             randomColleagueCandidates.pop_back();
             
-            if ( SafeStoreNode( LocNetNodeDbEntry(nodeInfo, LocNetRelationType::Colleague, PeerRoleType::Initiator) ) )
+            if ( SafeStoreNode( LocNetNodeDbEntry(nodeInfo, LocNetRelationType::Colleague, PeerContactRoleType::Initiator) ) )
                 { ++addedColleagueCount; }
         }
         else
@@ -398,7 +400,7 @@ bool LocNetNode::DiscoverNeighbourhood()
                 { continue; }
                 
             // Try to add node as neighbour, reusing connection
-            SafeStoreNode( LocNetNodeDbEntry(neighbourCandidate, LocNetRelationType::Neighbour, PeerRoleType::Initiator), candidateConnection );
+            SafeStoreNode( LocNetNodeDbEntry(neighbourCandidate, LocNetRelationType::Neighbour, PeerContactRoleType::Initiator), candidateConnection );
             
             // Get its neighbours closest to us
             vector<LocNetNodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodes(

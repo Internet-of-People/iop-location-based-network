@@ -19,17 +19,18 @@ enum class Neighbours : uint8_t
 class LocNetNodeDbEntry : public LocNetNodeInfo
 {
     LocNetRelationType  _relationType;
-    PeerRoleType        _roleType;
+    PeerContactRoleType _roleType;
     
 public:
     
+    LocNetNodeDbEntry(const LocNetNodeDbEntry& other);
     LocNetNodeDbEntry( const NodeProfile& profile, const GpsLocation& location,
-                       LocNetRelationType relationType, PeerRoleType roleType );
+                       LocNetRelationType relationType, PeerContactRoleType roleType );
     LocNetNodeDbEntry( const LocNetNodeInfo& info,
-                       LocNetRelationType relationType, PeerRoleType roleType );
+                       LocNetRelationType relationType, PeerContactRoleType roleType );
     
-    LocNetRelationType relationType() const;
-    PeerRoleType       roleType() const;
+    LocNetRelationType  relationType() const;
+    PeerContactRoleType roleType() const;
 };
 
 

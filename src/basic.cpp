@@ -40,8 +40,8 @@ bool NodeProfile::operator==(const NodeProfile& other) const
 
 
 
-GpsLocation::GpsLocation(const GpsLocation &location) :
-    _latitude( location.latitude() ), _longitude( location.longitude() ) {}
+GpsLocation::GpsLocation(const GpsLocation &other) :
+    _latitude( other.latitude() ), _longitude( other.longitude() ) {}
     
 GpsLocation::GpsLocation(GpsCoordinate latitude, GpsCoordinate longitude) :
     _latitude(latitude), _longitude(longitude)
@@ -65,6 +65,9 @@ bool GpsLocation::operator==(const GpsLocation& other) const
 
 
 
+
+LocNetNodeInfo::LocNetNodeInfo(const LocNetNodeInfo& other) :
+    _profile(other._profile), _location(other._location) {}
 
 LocNetNodeInfo::LocNetNodeInfo(const NodeProfile &profile, const GpsLocation &location) :
     _profile(profile), _location(location) {}

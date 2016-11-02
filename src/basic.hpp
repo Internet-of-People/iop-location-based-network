@@ -63,7 +63,7 @@ class GpsLocation
     
 public:
     
-    GpsLocation(const GpsLocation &position);
+    GpsLocation(const GpsLocation &other);
     GpsLocation(GpsCoordinate latitude, GpsCoordinate longitude);
     
     GpsCoordinate latitude() const;
@@ -74,7 +74,7 @@ public:
 
 
 
-enum class PeerRoleType : uint8_t
+enum class PeerContactRoleType : uint8_t
 {
     Initiator   = 1,
     Acceptor    = 2,
@@ -89,6 +89,7 @@ class LocNetNodeInfo
     
 public:
     
+    LocNetNodeInfo(const LocNetNodeInfo &other);
     LocNetNodeInfo(const NodeProfile &profile, const GpsLocation &location);
     LocNetNodeInfo(const NodeProfile &profile, float latitude, float longitude);
     

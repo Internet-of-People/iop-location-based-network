@@ -16,32 +16,44 @@ Distance DummySpatialDatabase::GetDistance(const GpsLocation&, const GpsLocation
 }
 
 
-bool DummySpatialDatabase::Store(const LocNetNodeDbEntry&)
+bool DummySpatialDatabase::Store(const LocNetNodeDbEntry &node)
+{
+    auto it = _nodes.find( node.profile().id() );
+    if ( it != _nodes.end() ) {
+        throw runtime_error("Node is already present");
+    }
+    _nodes.emplace( unordered_map<std::string,LocNetNodeDbEntry>::value_type(
+        node.profile().id(), node ) );
+    return true;
+}
+
+
+shared_ptr<LocNetNodeDbEntry> DummySpatialDatabase::Load(const string &nodeId) const
+{
+    auto it = _nodes.find(nodeId);
+    if ( it == _nodes.end() ) {
+        throw runtime_error("Node is not found");
+        //return shared_ptr<LocNetNodeDbEntry>();
+    }
+    
+    return shared_ptr<LocNetNodeDbEntry>( new LocNetNodeDbEntry(it->second) );
+}
+
+
+bool DummySpatialDatabase::Update(const LocNetNodeInfo &) const
 {
     // TODO
     return true;
 }
 
 
-shared_ptr<LocNetNodeDbEntry> DummySpatialDatabase::Load(const string&) const
+bool DummySpatialDatabase::Remove(const string &nodeId)
 {
-    // TODO
-    return shared_ptr<LocNetNodeDbEntry>(
-        new LocNetNodeDbEntry( NodeProfile("NodeId", "", 0, "", 0),
-            GpsLocation(0., 0.), LocNetRelationType::Colleague, PeerRoleType::Acceptor ) );
-}
-
-
-bool DummySpatialDatabase::Update(const LocNetNodeInfo&) const
-{
-    // TODO
-    return true;
-}
-
-
-bool DummySpatialDatabase::Remove(const string&)
-{
-    // TODO
+    auto it = _nodes.find(nodeId);
+    if ( it != _nodes.end() ) {
+        throw runtime_error("Node is already present");
+    }
+    _nodes.erase(nodeId);
     return true;
 }
 
@@ -53,10 +65,15 @@ Distance DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
 }
 
 
-size_t DummySpatialDatabase::GetNodeCount(LocNetRelationType) const
+size_t DummySpatialDatabase::GetNodeCount(LocNetRelationType relationType) const
 {
-    // TODO
-    return 1;
+    size_t result = 0;
+    for (auto it : _nodes)
+    {
+        if ( it.second.relationType() == relationType )
+            { ++result; }
+    }
+    return result;
 }
 
 
