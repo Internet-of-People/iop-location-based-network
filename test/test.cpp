@@ -56,9 +56,28 @@ SCENARIO("Spatial database", "")
 {
     GIVEN("A spatial database implementation") {
         DummySpatialDatabase geodb( GpsLocation(0.0, 0.0) );
+        
         THEN("its initially empty") {
             REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 0 );
             REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 0 );
+        }
+        
+        THEN("it can measure distances") {
+            GpsLocation Budapest(47.4916843,19.023606);
+            GpsLocation Kecskemet(46.885473,19.5389727);
+            GpsLocation London(51.528308,-0.3817805);
+            GpsLocation NewYork(40.705311,-74.258193);
+            GpsLocation CapeTown(-33.9135299,18.0955879);
+            
+            Distance Budapest_Kecskemet = geodb.GetDistanceKm(Budapest, Kecskemet);
+            Distance Budapest_London = geodb.GetDistanceKm(Budapest, London);
+            Distance Budapest_NewYork = geodb.GetDistanceKm(Budapest, NewYork);
+            Distance Budapest_CapeTown = geodb.GetDistanceKm(Budapest, CapeTown);
+            
+            REQUIRE( Budapest_Kecskemet == Approx(83.56).epsilon(0.10) ); // TODO decrease epsilon here
+            REQUIRE( Budapest_London == Approx(1449.57).epsilon(0.02) );
+            REQUIRE( Budapest_NewYork == Approx(7005.61).epsilon(0.01) );
+            REQUIRE( Budapest_CapeTown == Approx(9053.66).epsilon(0.01) );
         }
         
         WHEN("adding nodes") {

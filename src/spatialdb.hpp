@@ -38,7 +38,7 @@ public:
 class ISpatialDatabase
 {
 public:
-    virtual Distance GetDistance(const GpsLocation &one, const GpsLocation &other) const = 0;
+    virtual Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const = 0;
     
     virtual bool Store(const LocNetNodeDbEntry &node) = 0;
     virtual std::shared_ptr<LocNetNodeDbEntry> Load(const std::string &nodeId) const = 0;

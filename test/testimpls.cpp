@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <cmath>
+
 #include "testimpls.hpp"
 
 using namespace std;
@@ -8,11 +11,43 @@ DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& myLocation):
     _myLocation(myLocation) {}
 
 
-
-Distance DummySpatialDatabase::GetDistance(const GpsLocation&, const GpsLocation&) const
+    
+GpsCoordinate degreesToRadian(GpsCoordinate degrees)
 {
-    // TODO
-    return 0;
+    //static const GpsCoordinate PI = acos(-1);
+    return degrees * M_PI / 180.0;
+}
+
+
+// Implementation based on Haversine formula, see e.g. http://www.movable-type.co.uk/scripts/latlong.html
+// An original example code in Javascript:
+// var R = 6371e3; // metres
+// var φ1 = lat1.toRadians();
+// var φ2 = lat2.toRadians();
+// var Δφ = (lat2-lat1).toRadians();
+// var Δλ = (lon2-lon1).toRadians();
+// 
+// var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+//         Math.cos(φ1) * Math.cos(φ2) *
+//         Math.sin(Δλ/2) * Math.sin(Δλ/2);
+// var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+// 
+// var d = R * c;
+
+Distance DummySpatialDatabase::GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const
+{
+    static const double EARTH_RADIUS = 6371.;
+    
+    GpsCoordinate fi1 = degreesToRadian( one.latitude() );
+    GpsCoordinate fi2 = degreesToRadian( other.latitude() );
+    GpsCoordinate delta_fi = fi2 - fi1;
+    GpsCoordinate delta_lambda = degreesToRadian( other.longitude() - one.longitude() );
+    
+    Distance a = sin(delta_fi / 2) * sin(delta_fi / 2) +
+        cos(fi1) * cos(fi2) * sin(delta_lambda / 2) * sin(delta_lambda / 2);
+
+    Distance c = 2 * atan2( sqrt(a), sqrt(1-a) );
+    return EARTH_RADIUS * c;
 }
 
 
@@ -67,13 +102,8 @@ Distance DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
 
 size_t DummySpatialDatabase::GetNodeCount(LocNetRelationType relationType) const
 {
-    size_t result = 0;
-    for (auto it : _nodes)
-    {
-        if ( it.second.relationType() == relationType )
-            { ++result; }
-    }
-    return result;
+    return count_if( _nodes.begin(), _nodes.end(),
+        [relationType] (auto const &elem) { return elem.second.relationType() == relationType; } );
 }
 
 

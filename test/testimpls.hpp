@@ -16,7 +16,7 @@ public:
     
     DummySpatialDatabase(const GpsLocation& myLocation);
 
-    Distance GetDistance(const GpsLocation &one, const GpsLocation &other) const override;
+    Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
     bool Store(const LocNetNodeDbEntry &node) override;
     std::shared_ptr<LocNetNodeDbEntry> Load(const std::string &nodeId) const override;

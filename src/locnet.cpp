@@ -122,7 +122,7 @@ vector<LocNetNodeInfo> LocNetNode::GetClosestNodes(const GpsLocation& location,
 
 Distance LocNetNode::GetBubbleSize(const GpsLocation& location) const
 {
-    Distance distance = _spatialDb->GetDistance( _myNodeInfo.location(), location );
+    Distance distance = _spatialDb->GetDistanceKm( _myNodeInfo.location(), location );
     Distance bubbleSize = log10(distance + 2500.) * 500. - 1700.;
     return bubbleSize;
 }
@@ -143,7 +143,7 @@ bool LocNetNode::BubbleOverlaps(const GpsLocation& newNodeLocation) const
     Distance newNodeBubbleSize       = GetBubbleSize(newNodeLocation);
     
     // If sum of bubble sizes greater than distance of points, the bubbles overlap
-    Distance newNodeDistanceFromClosestNode = _spatialDb->GetDistance(newNodeLocation, myClosesNodeLocation);
+    Distance newNodeDistanceFromClosestNode = _spatialDb->GetDistanceKm(newNodeLocation, myClosesNodeLocation);
     return myClosestNodeBubbleSize + newNodeBubbleSize > newNodeDistanceFromClosestNode;
 }
 
@@ -176,7 +176,7 @@ bool LocNetNode::SafeStoreNode(const LocNetNodeDbEntry& entry,
         {
             case LocNetRelationType::Neighbour:
                 if ( _spatialDb->GetNodeCount(LocNetRelationType::Neighbour) >= NEIGHBOURHOOD_MAX_NODE_COUNT ||
-                     _spatialDb->GetDistance( _myNodeInfo.location(), entry.location() ) >= NEIGHBOURHOOD_MAX_RANGE_KM )
+                     _spatialDb->GetDistanceKm( _myNodeInfo.location(), entry.location() ) >= NEIGHBOURHOOD_MAX_RANGE_KM )
                     { return false; }
                 break;
                 
@@ -264,7 +264,7 @@ bool LocNetNode::DiscoverWorld()
             if ( seedNodeColleagueCount > 0 && ! randomColleagueCandidates.empty() )
             {
                 // Try to add seed node to our network and step out of seed node phase
-                Distance seedNodeDistance = _spatialDb->GetDistance( _myNodeInfo.location(), selectedSeedNode.location() );
+                Distance seedNodeDistance = _spatialDb->GetDistanceKm( _myNodeInfo.location(), selectedSeedNode.location() );
                 LocNetRelationType seedNodeType = seedNodeDistance <= NEIGHBOURHOOD_MAX_RANGE_KM ?
                     LocNetRelationType::Neighbour : LocNetRelationType::Colleague;
                 SafeStoreNode( LocNetNodeDbEntry(selectedSeedNode, seedNodeType, PeerContactRoleType::Initiator) );
