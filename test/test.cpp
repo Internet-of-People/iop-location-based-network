@@ -60,6 +60,7 @@ SCENARIO("Spatial database", "")
         THEN("its initially empty") {
             REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 0 );
             REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 0 );
+            REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
         }
         
         THEN("it can measure distances") {
@@ -81,12 +82,26 @@ SCENARIO("Spatial database", "")
         }
         
         WHEN("adding nodes") {
-            NodeProfile prof("NodeId", "127.0.0.1", 6666, "", 0);
-            GpsLocation loc(1.0, 2.0);
-            LocNetNodeDbEntry entry(prof, loc, LocNetRelationType::Colleague, PeerContactRoleType::Initiator);
-            geodb.Store(entry);
-            THEN("they can be queried") {
+            LocNetNodeDbEntry entry1( NodeProfile("ColleagueNodeId1", "127.0.0.1", 6666, "", 0), GpsLocation(1.0, 1.0),
+                                      LocNetRelationType::Colleague, PeerContactRoleType::Initiator);
+            LocNetNodeDbEntry entry2( NodeProfile("NeighbourNodeId2", "127.0.0.1", 6666, "", 0), GpsLocation(2.0, 2.0),
+                                      LocNetRelationType::Neighbour, PeerContactRoleType::Acceptor);
+            
+            geodb.Store(entry1);
+            geodb.Store(entry2);
+            
+            THEN("they can be queried and removed") {
                 REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 1 );
+                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 1 );
+                REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
+                
+                geodb.Remove("ColleagueNodeId1");
+                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 0 );
+                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 1 );
+                geodb.Remove("NeighbourNodeId2");
+                
+                REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
+                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 0 );
                 REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 0 );
             }
         }

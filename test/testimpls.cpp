@@ -85,8 +85,8 @@ bool DummySpatialDatabase::Update(const LocNetNodeInfo &) const
 bool DummySpatialDatabase::Remove(const string &nodeId)
 {
     auto it = _nodes.find(nodeId);
-    if ( it != _nodes.end() ) {
-        throw runtime_error("Node is already present");
+    if ( it == _nodes.end() ) {
+        throw runtime_error("Node is not found");
     }
     _nodes.erase(nodeId);
     return true;
