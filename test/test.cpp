@@ -63,21 +63,21 @@ SCENARIO("Spatial database", "")
         }
         
         THEN("it can measure distances") {
-            GpsLocation Budapest(47.4916843,19.023606);
-            GpsLocation Kecskemet(46.885473,19.5389727);
-            GpsLocation London(51.528308,-0.3817805);
-            GpsLocation NewYork(40.705311,-74.258193);
-            GpsLocation CapeTown(-33.9135299,18.0955879);
+            GpsLocation Budapest(47.4808706,18.849426);
+            GpsLocation Kecskemet(46.8854726,19.538628);
+            GpsLocation London(51.5283063,-0.3824722);
+            GpsLocation NewYork(40.7053094,-74.2588858);
+            GpsLocation CapeTown(-33.9135236,18.0941875);
             
             Distance Budapest_Kecskemet = geodb.GetDistanceKm(Budapest, Kecskemet);
             Distance Budapest_London = geodb.GetDistanceKm(Budapest, London);
             Distance Budapest_NewYork = geodb.GetDistanceKm(Budapest, NewYork);
             Distance Budapest_CapeTown = geodb.GetDistanceKm(Budapest, CapeTown);
             
-            REQUIRE( Budapest_Kecskemet == Approx(83.56).epsilon(0.10) ); // TODO decrease epsilon here
-            REQUIRE( Budapest_London == Approx(1449.57).epsilon(0.02) );
-            REQUIRE( Budapest_NewYork == Approx(7005.61).epsilon(0.01) );
-            REQUIRE( Budapest_CapeTown == Approx(9053.66).epsilon(0.01) );
+            REQUIRE( Budapest_Kecskemet == Approx(83.56).epsilon(0.01) );
+            REQUIRE( Budapest_London == Approx(1449.57).epsilon(0.005) );
+            REQUIRE( Budapest_NewYork == Approx(7005.61).epsilon(0.003) );
+            REQUIRE( Budapest_CapeTown == Approx(9053.66).epsilon(0.003) );
         }
         
         WHEN("adding nodes") {
