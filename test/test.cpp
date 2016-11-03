@@ -1,7 +1,6 @@
 // #define CATCH_CONFIG_RUNNER
 #define CATCH_CONFIG_MAIN
-#include <catch.hpp>
-
+#include "catch.hpp"
 #include "easylogging++.h"
 #include "testimpls.hpp"
 
