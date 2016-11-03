@@ -6,7 +6,10 @@ using namespace std;
 
 
 
+namespace LocNet
+{
 
+    
 NodeProfile::NodeProfile() :
     _id(), _ipv4Address(), _ipv4Port(0), _ipv6Address(), _ipv6Port(0) {}
 
@@ -66,20 +69,23 @@ bool GpsLocation::operator==(const GpsLocation& other) const
 
 
 
-LocNetNodeInfo::LocNetNodeInfo(const LocNetNodeInfo& other) :
+NodeInfo::NodeInfo(const NodeInfo& other) :
     _profile(other._profile), _location(other._location) {}
 
-LocNetNodeInfo::LocNetNodeInfo(const NodeProfile &profile, const GpsLocation &location) :
+NodeInfo::NodeInfo(const NodeProfile &profile, const GpsLocation &location) :
     _profile(profile), _location(location) {}
 
-LocNetNodeInfo::LocNetNodeInfo(const NodeProfile &profile, GpsCoordinate latitude, GpsCoordinate longitude) :
+NodeInfo::NodeInfo(const NodeProfile &profile, GpsCoordinate latitude, GpsCoordinate longitude) :
     _profile(profile), _location(latitude, longitude) {}
 
-const NodeProfile& LocNetNodeInfo::profile() const { return _profile; }
-const GpsLocation& LocNetNodeInfo::location() const { return _location; }
+const NodeProfile& NodeInfo::profile() const { return _profile; }
+const GpsLocation& NodeInfo::location() const { return _location; }
 
-bool LocNetNodeInfo::operator==(const LocNetNodeInfo& other) const
+bool NodeInfo::operator==(const NodeInfo& other) const
 {
     return _profile  == other._profile &&
            _location == other._location;
 }
+
+
+} // namespace LocNet

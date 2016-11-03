@@ -7,10 +7,14 @@
 
 
 
+namespace LocNet
+{
+    
+
 class DummySpatialDatabase : public ISpatialDatabase
 {
     GpsLocation _myLocation;
-    std::unordered_map<std::string,LocNetNodeDbEntry> _nodes;
+    std::unordered_map<std::string,NodeDbEntry> _nodes;
     
 public:
     
@@ -18,27 +22,30 @@ public:
 
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
-    bool Store(const LocNetNodeDbEntry &node) override;
-    std::shared_ptr<LocNetNodeDbEntry> Load(const std::string &nodeId) const override;
-    bool Update(const LocNetNodeInfo &node) const override;
+    bool Store(const NodeDbEntry &node) override;
+    std::shared_ptr<NodeDbEntry> Load(const std::string &nodeId) const override;
+    bool Update(const NodeInfo &node) const override;
     bool Remove(const std::string &nodeId) override;
     
     Distance GetNeighbourhoodRadiusKm() const override;
-    size_t GetNodeCount(LocNetRelationType nodeType) const override;
-    std::vector<LocNetNodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
+    size_t GetNodeCount(NodeRelationType nodeType) const override;
+    std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
     
-    std::vector<LocNetNodeInfo> GetClosestNodes(const GpsLocation &position,
+    std::vector<NodeInfo> GetClosestNodes(const GpsLocation &position,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
 
 
 
-class DummyLocNetRemoteNodeConnectionFactory: public ILocNetRemoteNodeConnectionFactory
+class DummyLocNetRemoteNodeConnectionFactory: public IRemoteNodeConnectionFactory
 {
 public:
     
-    std::shared_ptr<ILocNetRemoteNode> ConnectTo(const NodeProfile &node) override;
+    std::shared_ptr<IRemoteNode> ConnectTo(const NodeProfile &node) override;
 };
+
+
+} // namespace LocNet
 
 
 #endif // __IMPLEMENTATIONS_FOR_TESTING_H__

@@ -6,6 +6,7 @@
 #include "testimpls.hpp"
 
 using namespace std;
+using namespace LocNet;
 
 
 
@@ -37,7 +38,7 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
     }
     
     GIVEN("A node profile + location object") {
-        LocNetNodeInfo nodeInfo(prof, loc);
+        NodeInfo nodeInfo(prof, loc);
         THEN("its fields are properly filled in") {
             REQUIRE( nodeInfo.profile().id() == prof.id() );
             REQUIRE( nodeInfo.profile().ipv4Address() == prof.ipv4Address() );
@@ -54,22 +55,22 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
 
 SCENARIO("Spatial database", "")
 {
+    GpsLocation Budapest(47.4808706,18.849426);
+    GpsLocation Kecskemet(46.8854726,19.538628);
+    GpsLocation London(51.5283063,-0.3824722);
+    GpsLocation NewYork(40.7053094,-74.2588858);
+    GpsLocation CapeTown(-33.9135236,18.0941875);
+            
     GIVEN("A spatial database implementation") {
         DummySpatialDatabase geodb( GpsLocation(0.0, 0.0) );
         
         THEN("its initially empty") {
-            REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 0 );
-            REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 0 );
+            REQUIRE( geodb.GetNodeCount(NodeRelationType::Colleague) == 0 );
+            REQUIRE( geodb.GetNodeCount(NodeRelationType::Neighbour) == 0 );
             REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
         }
         
         THEN("it can measure distances") {
-            GpsLocation Budapest(47.4808706,18.849426);
-            GpsLocation Kecskemet(46.8854726,19.538628);
-            GpsLocation London(51.5283063,-0.3824722);
-            GpsLocation NewYork(40.7053094,-74.2588858);
-            GpsLocation CapeTown(-33.9135236,18.0941875);
-            
             Distance Budapest_Kecskemet = geodb.GetDistanceKm(Budapest, Kecskemet);
             Distance Budapest_London = geodb.GetDistanceKm(Budapest, London);
             Distance Budapest_NewYork = geodb.GetDistanceKm(Budapest, NewYork);
@@ -82,28 +83,49 @@ SCENARIO("Spatial database", "")
         }
         
         WHEN("adding nodes") {
-            LocNetNodeDbEntry entry1( NodeProfile("ColleagueNodeId1", "127.0.0.1", 6666, "", 0), GpsLocation(1.0, 1.0),
-                                      LocNetRelationType::Colleague, PeerContactRoleType::Initiator);
-            LocNetNodeDbEntry entry2( NodeProfile("NeighbourNodeId2", "127.0.0.1", 6666, "", 0), GpsLocation(2.0, 2.0),
-                                      LocNetRelationType::Neighbour, PeerContactRoleType::Acceptor);
+            NodeDbEntry entry1( NodeProfile("ColleagueNodeId1", "127.0.0.1", 6666, "", 0), GpsLocation(1.0, 1.0),
+                                      NodeRelationType::Colleague, NodeContactRoleType::Initiator );
+            NodeDbEntry entry2( NodeProfile("NeighbourNodeId2", "127.0.0.1", 6666, "", 0), GpsLocation(2.0, 2.0),
+                                      NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
             
             geodb.Store(entry1);
             geodb.Store(entry2);
             
             THEN("they can be queried and removed") {
-                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 1 );
-                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 1 );
+                REQUIRE( geodb.GetNodeCount(NodeRelationType::Colleague) == 1 );
+                REQUIRE( geodb.GetNodeCount(NodeRelationType::Neighbour) == 1 );
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
                 
                 geodb.Remove("ColleagueNodeId1");
-                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 0 );
-                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 1 );
+                REQUIRE( geodb.GetNodeCount(NodeRelationType::Colleague) == 0 );
+                REQUIRE( geodb.GetNodeCount(NodeRelationType::Neighbour) == 1 );
                 geodb.Remove("NeighbourNodeId2");
                 
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
-                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Colleague) == 0 );
-                REQUIRE( geodb.GetNodeCount(LocNetRelationType::Neighbour) == 0 );
+                REQUIRE( geodb.GetNodeCount(NodeRelationType::Colleague) == 0 );
+                REQUIRE( geodb.GetNodeCount(NodeRelationType::Neighbour) == 0 );
             }
+        }
+        
+        WHEN("when having several nodes") {
+            NodeDbEntry entry1( NodeProfile("KecskemetId", "127.0.0.1", 6666, "", 0), Kecskemet,
+                                      NodeRelationType::Colleague, NodeContactRoleType::Initiator );
+            NodeDbEntry entry2( NodeProfile("LondonId", "127.0.0.1", 6666, "", 0), London,
+                                      NodeRelationType::Colleague, NodeContactRoleType::Initiator );
+            NodeDbEntry entry3( NodeProfile("NewYorkId", "127.0.0.1", 6666, "", 0), NewYork,
+                                      NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
+            NodeDbEntry entry4( NodeProfile("CapeTownId", "127.0.0.1", 6666, "", 0), CapeTown,
+                                      NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
+            
+            geodb.Store(entry4);
+            geodb.Store(entry1);
+            geodb.Store(entry3);
+            geodb.Store(entry2);
+
+// TODO implement this            
+//             THEN("closest nodes are properly selected") {
+//                 vector<NodeInfo> closestNodes = geodb.GetClosestNodes( Budapest, TODO );
+//             }
         }
     }
 }
@@ -114,10 +136,10 @@ SCENARIO("Server registration", "")
 {
     GIVEN("The location based network") {
         GpsLocation loc(1.0, 2.0);
-        LocNetNodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
+        NodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
         shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
-        shared_ptr<ILocNetRemoteNodeConnectionFactory> connectionFactory( new DummyLocNetRemoteNodeConnectionFactory() );
-        LocNetNode geonet(nodeInfo, geodb, connectionFactory, true);
+        shared_ptr<IRemoteNodeConnectionFactory> connectionFactory( new DummyLocNetRemoteNodeConnectionFactory() );
+        Node geonet(nodeInfo, geodb, connectionFactory, true);
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {

@@ -7,6 +7,10 @@ using namespace std;
 
 
 
+namespace LocNet
+{
+    
+
 DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& myLocation):
     _myLocation(myLocation) {}
 
@@ -51,19 +55,19 @@ Distance DummySpatialDatabase::GetDistanceKm(const GpsLocation &one, const GpsLo
 }
 
 
-bool DummySpatialDatabase::Store(const LocNetNodeDbEntry &node)
+bool DummySpatialDatabase::Store(const NodeDbEntry &node)
 {
     auto it = _nodes.find( node.profile().id() );
     if ( it != _nodes.end() ) {
         throw runtime_error("Node is already present");
     }
-    _nodes.emplace( unordered_map<std::string,LocNetNodeDbEntry>::value_type(
+    _nodes.emplace( unordered_map<std::string,NodeDbEntry>::value_type(
         node.profile().id(), node ) );
     return true;
 }
 
 
-shared_ptr<LocNetNodeDbEntry> DummySpatialDatabase::Load(const string &nodeId) const
+shared_ptr<NodeDbEntry> DummySpatialDatabase::Load(const string &nodeId) const
 {
     auto it = _nodes.find(nodeId);
     if ( it == _nodes.end() ) {
@@ -71,11 +75,11 @@ shared_ptr<LocNetNodeDbEntry> DummySpatialDatabase::Load(const string &nodeId) c
         //return shared_ptr<LocNetNodeDbEntry>();
     }
     
-    return shared_ptr<LocNetNodeDbEntry>( new LocNetNodeDbEntry(it->second) );
+    return shared_ptr<NodeDbEntry>( new NodeDbEntry(it->second) );
 }
 
 
-bool DummySpatialDatabase::Update(const LocNetNodeInfo &) const
+bool DummySpatialDatabase::Update(const NodeInfo &) const
 {
     // TODO
     return true;
@@ -100,7 +104,7 @@ Distance DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
 }
 
 
-size_t DummySpatialDatabase::GetNodeCount(LocNetRelationType relationType) const
+size_t DummySpatialDatabase::GetNodeCount(NodeRelationType relationType) const
 {
     return count_if( _nodes.begin(), _nodes.end(),
         [relationType] (auto const &elem) { return elem.second.relationType() == relationType; } );
@@ -108,25 +112,50 @@ size_t DummySpatialDatabase::GetNodeCount(LocNetRelationType relationType) const
 
 
 
-vector<LocNetNodeInfo> DummySpatialDatabase::GetClosestNodes(
-    const GpsLocation&, Distance, size_t, Neighbours) const
+vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
+    const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const
 {
-    // TODO
-    return vector<LocNetNodeInfo>();
+    vector<NodeInfo> result;
+    
+    // Start with all nodes
+    vector<NodeDbEntry> remainingNodes;
+    for (auto const &entry : _nodes)
+        { remainingNodes.push_back(entry.second); }
+    
+    // Remove nodes out of range
+    remove_if( remainingNodes.begin(), remainingNodes.end(),
+        [this, &location, maxRadiusKm](auto const &node) { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
+
+    // Remove nodes with wrong relationType
+    if (filter == Neighbours::Excluded) {
+        remove_if( remainingNodes.begin(), remainingNodes.end(),
+            [](auto const &node) { return node.relationType() == NodeRelationType::Neighbour; } );
+    }
+    
+    while ( ! remainingNodes.empty() && result.size() < maxNodeCount )
+    {
+        auto minElement = min_element( remainingNodes.begin(), remainingNodes.end(),
+            [this, &location](auto const &one, auto const &other) {
+                return this->GetDistanceKm( location, one.location() ) < this->GetDistanceKm( location, other.location() ); } );
+        result.push_back(*minElement);
+    }
+    return result;
 }
 
 
-std::vector<LocNetNodeInfo>DummySpatialDatabase::GetRandomNodes(size_t, Neighbours) const
+std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t, Neighbours) const
 {
     // TODO
-    return vector<LocNetNodeInfo>{ LocNetNodeInfo( NodeProfile("RandomNodeId", "", 0, "", 0),
+    return vector<NodeInfo>{ NodeInfo( NodeProfile("RandomNodeId", "", 0, "", 0),
                                        GpsLocation(0., 0.) ) };
 }
 
 
 
-shared_ptr<ILocNetRemoteNode> DummyLocNetRemoteNodeConnectionFactory::ConnectTo(const NodeProfile&)
+shared_ptr<IRemoteNode> DummyLocNetRemoteNodeConnectionFactory::ConnectTo(const NodeProfile&)
 {
-    return shared_ptr<ILocNetRemoteNode>();
+    return shared_ptr<IRemoteNode>();
 }
 
+
+} // namespace LocNet

@@ -10,6 +10,11 @@
 using namespace std;
 
 
+
+namespace LocNet
+{
+
+
 static const Distance NEIGHBOURHOOD_MAX_RANGE_KM          = 100;
 static const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT        = 100;
 
@@ -20,19 +25,19 @@ static const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT = 10;
 
 
 
-const vector<LocNetNodeInfo> LocNetNode::_seedNodes {
+const vector<NodeInfo> Node::_seedNodes {
     // TODO put some real seed nodes in here
-    LocNetNodeInfo( NodeProfile( NodeId("FirstSeedNodeId"), "1.2.3.4", 5555, "", 0 ),  GpsLocation(1.0, 2.0) ),
-    LocNetNodeInfo( NodeProfile( NodeId("SecondSeedNodeId"), "6.7.8.9", 5555, "", 0 ), GpsLocation(3.0, 4.0) ),
+    NodeInfo( NodeProfile( NodeId("FirstSeedNodeId"), "1.2.3.4", 5555, "", 0 ),  GpsLocation(1.0, 2.0) ),
+    NodeInfo( NodeProfile( NodeId("SecondSeedNodeId"), "6.7.8.9", 5555, "", 0 ), GpsLocation(3.0, 4.0) ),
 };
 
-random_device LocNetNode::_randomDevice;
+random_device Node::_randomDevice;
 
 
-LocNetNode::LocNetNode( const LocNetNodeInfo &nodeInfo,
-                        shared_ptr<ISpatialDatabase> spatialDb,
-                        std::shared_ptr<ILocNetRemoteNodeConnectionFactory> connectionFactory,
-                        bool ignoreDiscovery ) :
+Node::Node( const NodeInfo &nodeInfo,
+            shared_ptr<ISpatialDatabase> spatialDb,
+            std::shared_ptr<IRemoteNodeConnectionFactory> connectionFactory,
+            bool ignoreDiscovery ) :
     _myNodeInfo(nodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
 {
     if (spatialDb == nullptr) {
@@ -42,7 +47,7 @@ LocNetNode::LocNetNode( const LocNetNodeInfo &nodeInfo,
         throw new runtime_error("Invalid connection factory argument");
     }
     
-    if ( _spatialDb->GetNodeCount(LocNetRelationType::Colleague) == 0 && ! ignoreDiscovery )
+    if ( _spatialDb->GetNodeCount(NodeRelationType::Colleague) == 0 && ! ignoreDiscovery )
     {
         bool discoverySucceeded = DiscoverWorld() && DiscoverNeighbourhood();
         if (! discoverySucceeded)
@@ -51,10 +56,10 @@ LocNetNode::LocNetNode( const LocNetNodeInfo &nodeInfo,
 }
 
 
-const unordered_map<ServiceType,ServiceProfile,EnumHasher>& LocNetNode::services() const
+const unordered_map<ServiceType,ServiceProfile,EnumHasher>& Node::services() const
     { return _services; }
     
-void LocNetNode::RegisterService(ServiceType serviceType, const ServiceProfile& serviceInfo)
+void Node::RegisterService(ServiceType serviceType, const ServiceProfile& serviceInfo)
 {
     auto it = _services.find(serviceType);
     if ( it != _services.end() ) {
@@ -63,7 +68,7 @@ void LocNetNode::RegisterService(ServiceType serviceType, const ServiceProfile& 
     _services[serviceType] = serviceInfo;
 }
 
-void LocNetNode::RemoveService(ServiceType serviceType)
+void Node::RemoveService(ServiceType serviceType)
 {
     auto it = _services.find(serviceType);
     if ( it == _services.end() ) {
@@ -73,16 +78,16 @@ void LocNetNode::RemoveService(ServiceType serviceType)
 }
 
 
-bool LocNetNode::AcceptColleague(const LocNetNodeInfo &newNode)
+bool Node::AcceptColleague(const NodeInfo &newNode)
 {
-    return SafeStoreNode( LocNetNodeDbEntry(
-        newNode, LocNetRelationType::Colleague, PeerContactRoleType::Acceptor) );
+    return SafeStoreNode( NodeDbEntry(
+        newNode, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
 }
 
 
-bool LocNetNode::RenewNodeConnection(const LocNetNodeInfo &updatedNode)
+bool Node::RenewNodeConnection(const NodeInfo &updatedNode)
 {
-    shared_ptr<LocNetNodeInfo> storedProfile = _spatialDb->Load( updatedNode.profile().id() );
+    shared_ptr<NodeInfo> storedProfile = _spatialDb->Load( updatedNode.profile().id() );
     if (storedProfile != nullptr) {
         if ( storedProfile->location() == updatedNode.location() ) {
             return _spatialDb->Update(updatedNode);
@@ -93,34 +98,34 @@ bool LocNetNode::RenewNodeConnection(const LocNetNodeInfo &updatedNode)
 }
 
 
-bool LocNetNode::AcceptNeighbour(const LocNetNodeInfo &node)
+bool Node::AcceptNeighbour(const NodeInfo &node)
 {
-    return SafeStoreNode( LocNetNodeDbEntry(
-        node, LocNetRelationType::Neighbour, PeerContactRoleType::Acceptor) );
+    return SafeStoreNode( NodeDbEntry(
+        node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
 }
 
 
 
-size_t LocNetNode::GetNodeCount(LocNetRelationType nodeType) const
+size_t Node::GetNodeCount(NodeRelationType nodeType) const
     { return _spatialDb->GetNodeCount(nodeType); }
 
-Distance LocNetNode::GetNeighbourhoodRadiusKm() const
+Distance Node::GetNeighbourhoodRadiusKm() const
     { return _spatialDb->GetNeighbourhoodRadiusKm(); }
 
-vector<LocNetNodeInfo> LocNetNode::GetRandomNodes(
+vector<NodeInfo> Node::GetRandomNodes(
     size_t maxNodeCount, Neighbours filter) const
 {
     return _spatialDb->GetRandomNodes(maxNodeCount, filter);
 }
 
-vector<LocNetNodeInfo> LocNetNode::GetClosestNodes(const GpsLocation& location,
+vector<NodeInfo> Node::GetClosestNodes(const GpsLocation& location,
     Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
 {
     return _spatialDb->GetClosestNodes(location, radiusKm, maxNodeCount, filter);
 }
 
 
-Distance LocNetNode::GetBubbleSize(const GpsLocation& location) const
+Distance Node::GetBubbleSize(const GpsLocation& location) const
 {
     Distance distance = _spatialDb->GetDistanceKm( _myNodeInfo.location(), location );
     Distance bubbleSize = log10(distance + 2500.) * 500. - 1700.;
@@ -128,10 +133,10 @@ Distance LocNetNode::GetBubbleSize(const GpsLocation& location) const
 }
 
 
-bool LocNetNode::BubbleOverlaps(const GpsLocation& newNodeLocation) const
+bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation) const
 {
     // Get our closest node to location, no matter the radius
-    vector<LocNetNodeInfo> closestNodes = _spatialDb->GetClosestNodes(
+    vector<NodeInfo> closestNodes = _spatialDb->GetClosestNodes(
         newNodeLocation, numeric_limits<Distance>::max(), 1, Neighbours::Excluded);
     
     // If there is no such point yet (i.e. map is still empty), it cannot overlap
@@ -148,11 +153,11 @@ bool LocNetNode::BubbleOverlaps(const GpsLocation& newNodeLocation) const
 }
 
 
-shared_ptr<ILocNetRemoteNode> LocNetNode::SafeConnectTo(const NodeProfile& node)
+shared_ptr<IRemoteNode> Node::SafeConnectTo(const NodeProfile& node)
 {
     // There is no point in connecting to ourselves
     if ( node.id() == _myNodeInfo.profile().id() )
-        { return shared_ptr<ILocNetRemoteNode>(); }
+        { return shared_ptr<IRemoteNode>(); }
     
     try { return _connectionFactory->ConnectTo(node); }
     catch (exception &e)
@@ -161,26 +166,26 @@ shared_ptr<ILocNetRemoteNode> LocNetNode::SafeConnectTo(const NodeProfile& node)
         cerr << "Failed to connect to " << node.ipv4Address() << ":" << node.ipv4Port() << " / "
                                         << node.ipv6Address() << ":" << node.ipv6Port() << endl;
         cerr << "Error was: " << e.what() << endl;
-        return shared_ptr<ILocNetRemoteNode>();
+        return shared_ptr<IRemoteNode>();
     }
 }
 
 
-bool LocNetNode::SafeStoreNode(const LocNetNodeDbEntry& entry,
-    shared_ptr<ILocNetRemoteNode> nodeConnection)
+bool Node::SafeStoreNode(const NodeDbEntry& entry,
+    shared_ptr<IRemoteNode> nodeConnection)
 {
     try
     {
         // Check if node is acceptable
         switch ( entry.relationType() )
         {
-            case LocNetRelationType::Neighbour:
-                if ( _spatialDb->GetNodeCount(LocNetRelationType::Neighbour) >= NEIGHBOURHOOD_MAX_NODE_COUNT ||
+            case NodeRelationType::Neighbour:
+                if ( _spatialDb->GetNodeCount(NodeRelationType::Neighbour) >= NEIGHBOURHOOD_MAX_NODE_COUNT ||
                      _spatialDb->GetDistanceKm( _myNodeInfo.location(), entry.location() ) >= NEIGHBOURHOOD_MAX_RANGE_KM )
                     { return false; }
                 break;
                 
-            case LocNetRelationType::Colleague:
+            case NodeRelationType::Colleague:
                 if ( BubbleOverlaps( entry.location() ) )
                     { return false; }
                 break;
@@ -189,7 +194,7 @@ bool LocNetNode::SafeStoreNode(const LocNetNodeDbEntry& entry,
                 throw runtime_error("Unknown nodetype, missing implementation");
         }
         
-        if ( entry.roleType() == PeerContactRoleType::Initiator )
+        if ( entry.roleType() == NodeContactRoleType::Initiator )
         {
             // If no connection argument is specified, try connecting to candidate node
             if (nodeConnection == nullptr)
@@ -200,12 +205,12 @@ bool LocNetNode::SafeStoreNode(const LocNetNodeDbEntry& entry,
             // Ask for its permission to add it
             switch ( entry.relationType() )
             {
-                case LocNetRelationType::Colleague:
+                case NodeRelationType::Colleague:
                     if ( ! nodeConnection->AcceptColleague(_myNodeInfo) )
                         { return false; }
                     break;
                     
-                case LocNetRelationType::Neighbour:
+                case NodeRelationType::Neighbour:
                     if ( ! nodeConnection->AcceptNeighbour(_myNodeInfo) )
                         { return false; }
                     break;
@@ -227,19 +232,19 @@ bool LocNetNode::SafeStoreNode(const LocNetNodeDbEntry& entry,
 
 
 // TODO consider if this is guaranteed to stop
-bool LocNetNode::DiscoverWorld()
+bool Node::DiscoverWorld()
 {
     // Initialize random generator and utility variables
     uniform_int_distribution<int> fromRange( 0, _seedNodes.size() - 1 );
     vector<string> triedSeedNodes;
     
     size_t seedNodeColleagueCount = 0;
-    vector<LocNetNodeInfo> randomColleagueCandidates;
+    vector<NodeInfo> randomColleagueCandidates;
     while ( triedSeedNodes.size() < _seedNodes.size() )
     {
         // Select random node from hardwired seed node list
         size_t selectedSeedNodeIdx = fromRange(_randomDevice);
-        const LocNetNodeInfo& selectedSeedNode = _seedNodes[selectedSeedNodeIdx];
+        const NodeInfo& selectedSeedNode = _seedNodes[selectedSeedNodeIdx];
         
         // If node has been already tried and failed, choose another one
         auto it = find( triedSeedNodes.begin(), triedSeedNodes.end(), selectedSeedNode.profile().id() );
@@ -251,12 +256,12 @@ bool LocNetNode::DiscoverWorld()
             triedSeedNodes.push_back( selectedSeedNode.profile().id() );
             
             // Try connecting to selected seed node
-            shared_ptr<ILocNetRemoteNode> seedNodeConnection = SafeConnectTo( selectedSeedNode.profile() );
+            shared_ptr<IRemoteNode> seedNodeConnection = SafeConnectTo( selectedSeedNode.profile() );
             if (seedNodeConnection == nullptr)
                 { continue; }
             
             // And query both a target World Map size and an initial list of random nodes to start with
-            seedNodeColleagueCount = seedNodeConnection->GetNodeCount(LocNetRelationType::Colleague);
+            seedNodeColleagueCount = seedNodeConnection->GetNodeCount(NodeRelationType::Colleague);
             randomColleagueCandidates = seedNodeConnection->GetRandomNodes(
                 min(INIT_WORLD_RANDOM_NODE_COUNT, seedNodeColleagueCount), Neighbours::Excluded );
             
@@ -265,9 +270,9 @@ bool LocNetNode::DiscoverWorld()
             {
                 // Try to add seed node to our network and step out of seed node phase
                 Distance seedNodeDistance = _spatialDb->GetDistanceKm( _myNodeInfo.location(), selectedSeedNode.location() );
-                LocNetRelationType seedNodeType = seedNodeDistance <= NEIGHBOURHOOD_MAX_RANGE_KM ?
-                    LocNetRelationType::Neighbour : LocNetRelationType::Colleague;
-                SafeStoreNode( LocNetNodeDbEntry(selectedSeedNode, seedNodeType, PeerContactRoleType::Initiator) );
+                NodeRelationType seedNodeType = seedNodeDistance <= NEIGHBOURHOOD_MAX_RANGE_KM ?
+                    NodeRelationType::Neighbour : NodeRelationType::Colleague;
+                SafeStoreNode( NodeDbEntry(selectedSeedNode, seedNodeType, NodeContactRoleType::Initiator) );
                 break;
             }
         }
@@ -284,7 +289,7 @@ bool LocNetNode::DiscoverWorld()
     {
         // This still might be normal if we're the very first seed node of the whole network
         auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
-            [this] (const LocNetNodeInfo& seedProfile) { return _myNodeInfo.profile() == seedProfile.profile(); } );
+            [this] (const NodeInfo& seedProfile) { return _myNodeInfo.profile() == seedProfile.profile(); } );
         if ( seedIt == _seedNodes.end() )
         {
             // TODO reconsider error handling here, should we completely give up and maybe exit()?
@@ -300,10 +305,10 @@ bool LocNetNode::DiscoverWorld()
         if ( ! randomColleagueCandidates.empty() )
         {
             // Pick a single node from the candidate list and try to make it a colleague node
-            LocNetNodeInfo nodeInfo( randomColleagueCandidates.back() );
+            NodeInfo nodeInfo( randomColleagueCandidates.back() );
             randomColleagueCandidates.pop_back();
             
-            if ( SafeStoreNode( LocNetNodeDbEntry(nodeInfo, LocNetRelationType::Colleague, PeerContactRoleType::Initiator) ) )
+            if ( SafeStoreNode( NodeDbEntry(nodeInfo, NodeRelationType::Colleague, NodeContactRoleType::Initiator) ) )
                 { ++addedColleagueCount; }
         }
         else
@@ -323,7 +328,7 @@ bool LocNetNode::DiscoverWorld()
                 try
                 {
                     // Connect to selected random node
-                    shared_ptr<ILocNetRemoteNode> randomConnection = SafeConnectTo( randomColleagueCandidates.front().profile() );
+                    shared_ptr<IRemoteNode> randomConnection = SafeConnectTo( randomColleagueCandidates.front().profile() );
                     if (randomConnection == nullptr)
                         { continue; }
                     
@@ -344,23 +349,23 @@ bool LocNetNode::DiscoverWorld()
 
 
 
-bool LocNetNode::DiscoverNeighbourhood()
+bool Node::DiscoverNeighbourhood()
 {
     // Get the closest node known to us so far
-    vector<LocNetNodeInfo> newClosestNode = _spatialDb->GetClosestNodes(
+    vector<NodeInfo> newClosestNode = _spatialDb->GetClosestNodes(
         _myNodeInfo.location(), numeric_limits<Distance>::max(), 1, Neighbours::Included);
     if ( newClosestNode.empty() )
         { return false; }
     
     // Repeat asking (so far) closest node for an even closer node until no new node discovered
-    vector<LocNetNodeInfo> oldClosestNode;
+    vector<NodeInfo> oldClosestNode;
     while ( oldClosestNode.size() != newClosestNode.size() ||
             oldClosestNode.front().profile().id() != newClosestNode.front().profile().id() )
     {
         oldClosestNode = newClosestNode;
         try
         {
-            shared_ptr<ILocNetRemoteNode> closestNodeConnection =
+            shared_ptr<IRemoteNode> closestNodeConnection =
                 SafeConnectTo( newClosestNode.front().profile() );
             if (closestNodeConnection == nullptr) {
                 // TODO what to do if closest node is not reachable?
@@ -375,16 +380,16 @@ bool LocNetNode::DiscoverNeighbourhood()
         }
     }
     
-    deque<LocNetNodeInfo> nodesToAskQueue( newClosestNode.begin(), newClosestNode.end() );
+    deque<NodeInfo> nodesToAskQueue( newClosestNode.begin(), newClosestNode.end() );
     unordered_set<string> askedNodeIds;
     
     // Try to fill neighbourhood map until limit reached or no new nodes left to ask
-    vector<LocNetNodeInfo> neighbourCandidates;
+    vector<NodeInfo> neighbourCandidates;
     while ( neighbourCandidates.size() < NEIGHBOURHOOD_MAX_NODE_COUNT &&
             ! nodesToAskQueue.empty() )
     {
         // Get next candidate
-        LocNetNodeInfo neighbourCandidate = nodesToAskQueue.front();
+        NodeInfo neighbourCandidate = nodesToAskQueue.front();
         nodesToAskQueue.pop_front();
         
         // Skip it if has been processed already
@@ -395,15 +400,15 @@ bool LocNetNode::DiscoverNeighbourhood()
         try
         {
             // Try connecting to the node
-            shared_ptr<ILocNetRemoteNode> candidateConnection = SafeConnectTo( neighbourCandidate.profile() );
+            shared_ptr<IRemoteNode> candidateConnection = SafeConnectTo( neighbourCandidate.profile() );
             if (candidateConnection == nullptr)
                 { continue; }
                 
             // Try to add node as neighbour, reusing connection
-            SafeStoreNode( LocNetNodeDbEntry(neighbourCandidate, LocNetRelationType::Neighbour, PeerContactRoleType::Initiator), candidateConnection );
+            SafeStoreNode( NodeDbEntry(neighbourCandidate, NodeRelationType::Neighbour, NodeContactRoleType::Initiator), candidateConnection );
             
             // Get its neighbours closest to us
-            vector<LocNetNodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodes(
+            vector<NodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodes(
                 _myNodeInfo.location(), INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT, 10, Neighbours::Included );
             
             // Mark current node as processed and append its new neighbours to our todo list
@@ -419,3 +424,5 @@ bool LocNetNode::DiscoverNeighbourhood()
     return true;
 }
 
+
+} // namespace LocNet

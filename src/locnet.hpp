@@ -8,40 +8,44 @@
 
 
 
+namespace LocNet
+{
+
+
 // Interface provided for the same network instances running on remote machines
-class ILocNetRemoteNode
+class IRemoteNode
 {
 public:
     
     // TODO add operation GetColleagueNodeCount() to the specs
-    virtual size_t GetNodeCount(LocNetRelationType nodeType) const = 0;
-    virtual std::vector<LocNetNodeInfo> GetRandomNodes(
+    virtual size_t GetNodeCount(NodeRelationType relationType) const = 0;
+    virtual std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const = 0;
     
-    virtual std::vector<LocNetNodeInfo> GetClosestNodes(const GpsLocation &location,
+    virtual std::vector<NodeInfo> GetClosestNodes(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
     
-    virtual bool AcceptColleague(const LocNetNodeInfo &node) = 0;
-    virtual bool AcceptNeighbour(const LocNetNodeInfo &node) = 0;
-    virtual bool RenewNodeConnection(const LocNetNodeInfo &node) = 0;
+    virtual bool AcceptColleague(const NodeInfo &node) = 0;
+    virtual bool AcceptNeighbour(const NodeInfo &node) = 0;
+    virtual bool RenewNodeConnection(const NodeInfo &node) = 0;
 };
 
 
 // Interface provided to serve higher level services and clients
-class ILocNetClientMethods
+class IClientMethods
 {
 public:
     
     virtual const std::unordered_map<ServiceType,ServiceProfile,EnumHasher>& services() const = 0;
     // TODO same method as for remote machines, only protection may be different.
     //      Check if this might cause any diamond shape inheritance problems.
-    virtual std::vector<LocNetNodeInfo> GetClosestNodes(const GpsLocation &location,
+    virtual std::vector<NodeInfo> GetClosestNodes(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
 };
 
 
 // Local interface for services running on the same hardware
-class ILocal
+class ILocalServices
 {
 public:
     
@@ -52,28 +56,28 @@ public:
 
 
 
-class ILocNetRemoteNodeConnectionFactory
+class IRemoteNodeConnectionFactory
 {
 public:
     
-    virtual std::shared_ptr<ILocNetRemoteNode> ConnectTo(const NodeProfile &node) = 0;
+    virtual std::shared_ptr<IRemoteNode> ConnectTo(const NodeProfile &node) = 0;
 };
 
 
 
-class LocNetNode : public ILocal, public ILocNetClientMethods, public ILocNetRemoteNode
+class Node : public ILocalServices, public IClientMethods, public IRemoteNode
 {
-    static const std::vector<LocNetNodeInfo> _seedNodes;
+    static const std::vector<NodeInfo> _seedNodes;
     static std::random_device _randomDevice;
     
-    LocNetNodeInfo _myNodeInfo;
+    NodeInfo _myNodeInfo;
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     std::shared_ptr<ISpatialDatabase> _spatialDb;
-    std::shared_ptr<ILocNetRemoteNodeConnectionFactory> _connectionFactory;
+    std::shared_ptr<IRemoteNodeConnectionFactory> _connectionFactory;
     
-    std::shared_ptr<ILocNetRemoteNode> SafeConnectTo(const NodeProfile &node);
-    bool SafeStoreNode(const LocNetNodeDbEntry &entry,
-        std::shared_ptr<ILocNetRemoteNode> nodeConnection = std::shared_ptr<ILocNetRemoteNode>() );
+    std::shared_ptr<IRemoteNode> SafeConnectTo(const NodeProfile &node);
+    bool SafeStoreNode(const NodeDbEntry &entry,
+        std::shared_ptr<IRemoteNode> nodeConnection = std::shared_ptr<IRemoteNode>() );
     
     bool DiscoverWorld();
     bool DiscoverNeighbourhood();
@@ -83,10 +87,10 @@ class LocNetNode : public ILocal, public ILocNetClientMethods, public ILocNetRem
     
 public:
     
-    LocNetNode( const LocNetNodeInfo &nodeInfo,
-                std::shared_ptr<ISpatialDatabase> spatialDb,
-                std::shared_ptr<ILocNetRemoteNodeConnectionFactory> connectionFactory,
-                bool ignoreDiscovery = false );
+    Node( const NodeInfo &nodeInfo,
+          std::shared_ptr<ISpatialDatabase> spatialDb,
+          std::shared_ptr<IRemoteNodeConnectionFactory> connectionFactory,
+          bool ignoreDiscovery = false );
 
     // Interface provided to serve higher level services and clients
     const std::unordered_map<ServiceType,ServiceProfile,EnumHasher>& services() const override;
@@ -98,18 +102,20 @@ public:
     Distance GetNeighbourhoodRadiusKm() const override;
     
     // Interface provided for the same network instances running on remote machines
-    size_t GetNodeCount(LocNetRelationType nodeType) const override;
-    std::vector<LocNetNodeInfo> GetRandomNodes(
+    size_t GetNodeCount(NodeRelationType erlationType) const override;
+    std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const override;
     
-    std::vector<LocNetNodeInfo> GetClosestNodes(const GpsLocation &location,
+    std::vector<NodeInfo> GetClosestNodes(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
     
-    bool AcceptColleague(const LocNetNodeInfo &node) override;
-    bool AcceptNeighbour(const LocNetNodeInfo &node) override;
-    bool RenewNodeConnection(const LocNetNodeInfo &node) override;
+    bool AcceptColleague(const NodeInfo &node) override;
+    bool AcceptNeighbour(const NodeInfo &node) override;
+    bool RenewNodeConnection(const NodeInfo &node) override;
 };
 
+
+} // namespace LocNet
 
 
 #endif // __LOCNET_BUSINESS_LOGIC_H__

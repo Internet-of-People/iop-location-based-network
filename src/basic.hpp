@@ -5,7 +5,9 @@
 
 
 
-// TODO put all these into some namespace
+namespace LocNet
+{
+
 
 typedef std::string NodeId;
 typedef std::string Ipv4Address;
@@ -46,7 +48,7 @@ typedef NodeProfile ServiceProfile;
 
 
 
-enum class LocNetRelationType : uint8_t
+enum class NodeRelationType : uint8_t
 {
     Colleague   = 1,
     Neighbour   = 2,
@@ -74,7 +76,7 @@ public:
 
 
 
-enum class PeerContactRoleType : uint8_t
+enum class NodeContactRoleType : uint8_t
 {
     Initiator   = 1,
     Acceptor    = 2,
@@ -82,21 +84,21 @@ enum class PeerContactRoleType : uint8_t
 
 
 
-class LocNetNodeInfo
+class NodeInfo
 {
     NodeProfile _profile;
     GpsLocation _location;
     
 public:
     
-    LocNetNodeInfo(const LocNetNodeInfo &other);
-    LocNetNodeInfo(const NodeProfile &profile, const GpsLocation &location);
-    LocNetNodeInfo(const NodeProfile &profile, float latitude, float longitude);
+    NodeInfo(const NodeInfo &other);
+    NodeInfo(const NodeProfile &profile, const GpsLocation &location);
+    NodeInfo(const NodeProfile &profile, float latitude, float longitude);
     
     const NodeProfile& profile() const;
     const GpsLocation& location() const;
     
-    bool operator==(const LocNetNodeInfo &other) const;
+    bool operator==(const NodeInfo &other) const;
 };
 
 
@@ -135,6 +137,7 @@ struct EnumHasher
 // }
 
 
+} // namespace LocNet
 
 
 #endif // __LOCNET_BASIC_TYPES_H__
