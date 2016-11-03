@@ -123,21 +123,27 @@ vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
         { remainingNodes.push_back(entry.second); }
     
     // Remove nodes out of range
-    remove_if( remainingNodes.begin(), remainingNodes.end(),
+    auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
         [this, &location, maxRadiusKm](auto const &node) { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
+    remainingNodes.erase( newEnd, remainingNodes.end() );
 
     // Remove nodes with wrong relationType
     if (filter == Neighbours::Excluded) {
-        remove_if( remainingNodes.begin(), remainingNodes.end(),
+        newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
             [](auto const &node) { return node.relationType() == NodeRelationType::Neighbour; } );
+        remainingNodes.erase( newEnd, remainingNodes.end() );
     }
     
-    while ( ! remainingNodes.empty() && result.size() < maxNodeCount )
+    while ( result.size() < maxNodeCount )
     {
         auto minElement = min_element( remainingNodes.begin(), remainingNodes.end(),
             [this, &location](auto const &one, auto const &other) {
                 return this->GetDistanceKm( location, one.location() ) < this->GetDistanceKm( location, other.location() ); } );
+        if (minElement == remainingNodes.end() )
+            { break; }
+            
         result.push_back(*minElement);
+        remainingNodes.erase(minElement);
     }
     return result;
 }

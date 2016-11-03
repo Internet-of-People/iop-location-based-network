@@ -35,6 +35,8 @@ public:
     
     NodeRelationType  relationType() const;
     NodeContactRoleType roleType() const;
+    
+    bool operator==(const NodeDbEntry &other) const;
 };
 
 

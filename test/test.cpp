@@ -108,24 +108,49 @@ SCENARIO("Spatial database", "")
         }
         
         WHEN("when having several nodes") {
-            NodeDbEntry entry1( NodeProfile("KecskemetId", "127.0.0.1", 6666, "", 0), Kecskemet,
+            NodeDbEntry entryKecskemet( NodeProfile("KecskemetId", "127.0.0.1", 6666, "", 0), Kecskemet,
+                                        NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
+            NodeDbEntry entryLondon( NodeProfile("LondonId", "127.0.0.1", 6666, "", 0), London,
                                       NodeRelationType::Colleague, NodeContactRoleType::Initiator );
-            NodeDbEntry entry2( NodeProfile("LondonId", "127.0.0.1", 6666, "", 0), London,
-                                      NodeRelationType::Colleague, NodeContactRoleType::Initiator );
-            NodeDbEntry entry3( NodeProfile("NewYorkId", "127.0.0.1", 6666, "", 0), NewYork,
-                                      NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
-            NodeDbEntry entry4( NodeProfile("CapeTownId", "127.0.0.1", 6666, "", 0), CapeTown,
-                                      NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
+            NodeDbEntry entryNewYork( NodeProfile("NewYorkId", "127.0.0.1", 6666, "", 0), NewYork,
+                                      NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
+            NodeDbEntry entryCapeTown( NodeProfile("CapeTownId", "127.0.0.1", 6666, "", 0), CapeTown,
+                                      NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
             
-            geodb.Store(entry4);
-            geodb.Store(entry1);
-            geodb.Store(entry3);
-            geodb.Store(entry2);
+            geodb.Store(entryKecskemet);
+            geodb.Store(entryLondon);
+            geodb.Store(entryNewYork);
+            geodb.Store(entryCapeTown);
 
-// TODO implement this            
-//             THEN("closest nodes are properly selected") {
-//                 vector<NodeInfo> closestNodes = geodb.GetClosestNodes( Budapest, TODO );
-//             }
+            THEN("closest nodes are properly selected") {
+                {
+                    vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
+                        Budapest, 20000.0, 1, Neighbours::Included );
+                    REQUIRE( closestNodes.size() == 1 );
+                    REQUIRE( closestNodes[0] == entryKecskemet );
+                }
+                {
+                    vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
+                        Budapest, 20000.0, 1, Neighbours::Excluded );
+                    REQUIRE( closestNodes.size() == 1 );
+                    REQUIRE( closestNodes[0] == entryLondon );
+                }
+                {
+                    vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
+                        Budapest, 20000.0, 1000, Neighbours::Included );
+                    REQUIRE( closestNodes.size() == 4 );
+                    REQUIRE( closestNodes[0] == entryKecskemet );
+                    REQUIRE( closestNodes[1] == entryLondon );
+                    REQUIRE( closestNodes[2] == entryNewYork );
+                    REQUIRE( closestNodes[3] == entryCapeTown );
+                }
+                {
+                    vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
+                        Budapest, 5000.0, 1000, Neighbours::Excluded );
+                    REQUIRE( closestNodes.size() == 1 );
+                    REQUIRE( closestNodes[0] == entryLondon );
+                }
+            }
         }
     }
 }
