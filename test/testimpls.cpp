@@ -11,11 +11,146 @@ namespace LocNet
 {
     
 
+random_device DummySpatialDatabase::_randomDevice;
+
+    
 DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& myLocation):
     _myLocation(myLocation) {}
 
 
+bool DummySpatialDatabase::Store(const NodeDbEntry &node)
+{
+    // TODO consider exception strategy, bool return value vs exception consistency
+    auto it = _nodes.find( node.profile().id() );
+    if ( it != _nodes.end() ) {
+        throw runtime_error("Node is already present");
+    }
+    _nodes.emplace( unordered_map<std::string,NodeDbEntry>::value_type(
+        node.profile().id(), node ) );
+    return true;
+}
+
+
+shared_ptr<NodeDbEntry> DummySpatialDatabase::Load(const string &nodeId) const
+{
+    auto it = _nodes.find(nodeId);
+    if ( it == _nodes.end() ) {
+        throw runtime_error("Node is not found");
+        //return shared_ptr<LocNetNodeDbEntry>();
+    }
     
+    return shared_ptr<NodeDbEntry>( new NodeDbEntry(it->second) );
+}
+
+
+bool DummySpatialDatabase::Update(const NodeInfo &node)
+{
+    auto it = _nodes.find( node.profile().id() );
+    if ( it == _nodes.end() ) {
+        throw runtime_error("Node is not found");
+        // return false;
+    }
+    
+    static_cast<NodeInfo&>(it->second) = node;
+    return true;
+}
+
+
+bool DummySpatialDatabase::Remove(const string &nodeId)
+{
+    auto it = _nodes.find(nodeId);
+    if ( it == _nodes.end() ) {
+        throw runtime_error("Node is not found");
+        // return false;
+    }
+    _nodes.erase(nodeId);
+    return true;
+}
+
+
+Distance DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
+{
+    // TODO
+    return 42.;
+}
+
+
+size_t DummySpatialDatabase::GetNodeCount(NodeRelationType relationType) const
+{
+    return count_if( _nodes.begin(), _nodes.end(),
+        [relationType] (auto const &elem) { return elem.second.relationType() == relationType; } );
+}
+
+
+
+vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
+    const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const
+{
+    // Start with all nodes
+    vector<NodeDbEntry> remainingNodes;
+    for (auto const &entry : _nodes)
+        { remainingNodes.push_back(entry.second); }
+    
+    // Remove nodes out of range
+    auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
+        [this, &location, maxRadiusKm](auto const &node) { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
+    remainingNodes.erase( newEnd, remainingNodes.end() );
+
+    // Remove nodes with wrong relationType
+    if (filter == Neighbours::Excluded) {
+        newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
+            [](auto const &node) { return node.relationType() == NodeRelationType::Neighbour; } );
+        remainingNodes.erase( newEnd, remainingNodes.end() );
+    }
+    
+    vector<NodeInfo> result;
+    while ( result.size() < maxNodeCount )
+    {
+        // Select closest element
+        auto minElement = min_element( remainingNodes.begin(), remainingNodes.end(),
+            [this, &location](auto const &one, auto const &other) {
+                return this->GetDistanceKm( location, one.location() ) < this->GetDistanceKm( location, other.location() ); } );
+        if (minElement == remainingNodes.end() )
+            { break; }
+
+        // Save element to result and remove it from candidates
+        result.push_back(*minElement);
+        remainingNodes.erase(minElement);
+    }
+    return result;
+}
+
+
+std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+{
+    // Start with all nodes
+    vector<NodeDbEntry> remainingNodes;
+    for (auto const &entry : _nodes)
+        { remainingNodes.push_back(entry.second); }
+        
+    // Remove nodes with wrong relationType
+    if (filter == Neighbours::Excluded) {
+        auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
+            [](auto const &node) { return node.relationType() == NodeRelationType::Neighbour; } );
+        remainingNodes.erase( newEnd, remainingNodes.end() );
+    }
+
+    vector<NodeInfo> result;
+    while ( ! remainingNodes.empty() && result.size() < maxNodeCount )
+    {
+        // Select random element from remaining nodes
+        uniform_int_distribution<int> fromRange( 0, remainingNodes.size() - 1 );
+        size_t selectedNodeIdx = fromRange(_randomDevice);
+        
+        // Save element to result and remove it from candidates
+        result.push_back( remainingNodes[selectedNodeIdx] );
+        remainingNodes.erase( remainingNodes.begin() + selectedNodeIdx );
+    }
+    return result;
+}
+
+
+
 GpsCoordinate degreesToRadian(GpsCoordinate degrees)
 {
     //static const GpsCoordinate PI = acos(-1);
@@ -55,113 +190,12 @@ Distance DummySpatialDatabase::GetDistanceKm(const GpsLocation &one, const GpsLo
 }
 
 
-bool DummySpatialDatabase::Store(const NodeDbEntry &node)
-{
-    auto it = _nodes.find( node.profile().id() );
-    if ( it != _nodes.end() ) {
-        throw runtime_error("Node is already present");
-    }
-    _nodes.emplace( unordered_map<std::string,NodeDbEntry>::value_type(
-        node.profile().id(), node ) );
-    return true;
-}
-
-
-shared_ptr<NodeDbEntry> DummySpatialDatabase::Load(const string &nodeId) const
-{
-    auto it = _nodes.find(nodeId);
-    if ( it == _nodes.end() ) {
-        throw runtime_error("Node is not found");
-        //return shared_ptr<LocNetNodeDbEntry>();
-    }
-    
-    return shared_ptr<NodeDbEntry>( new NodeDbEntry(it->second) );
-}
-
-
-bool DummySpatialDatabase::Update(const NodeInfo &) const
-{
-    // TODO
-    return true;
-}
-
-
-bool DummySpatialDatabase::Remove(const string &nodeId)
-{
-    auto it = _nodes.find(nodeId);
-    if ( it == _nodes.end() ) {
-        throw runtime_error("Node is not found");
-    }
-    _nodes.erase(nodeId);
-    return true;
-}
-
-
-Distance DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
-{
-    // TODO
-    return 42.;
-}
-
-
-size_t DummySpatialDatabase::GetNodeCount(NodeRelationType relationType) const
-{
-    return count_if( _nodes.begin(), _nodes.end(),
-        [relationType] (auto const &elem) { return elem.second.relationType() == relationType; } );
-}
-
-
-
-vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
-    const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const
-{
-    vector<NodeInfo> result;
-    
-    // Start with all nodes
-    vector<NodeDbEntry> remainingNodes;
-    for (auto const &entry : _nodes)
-        { remainingNodes.push_back(entry.second); }
-    
-    // Remove nodes out of range
-    auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-        [this, &location, maxRadiusKm](auto const &node) { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
-    remainingNodes.erase( newEnd, remainingNodes.end() );
-
-    // Remove nodes with wrong relationType
-    if (filter == Neighbours::Excluded) {
-        newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-            [](auto const &node) { return node.relationType() == NodeRelationType::Neighbour; } );
-        remainingNodes.erase( newEnd, remainingNodes.end() );
-    }
-    
-    while ( result.size() < maxNodeCount )
-    {
-        auto minElement = min_element( remainingNodes.begin(), remainingNodes.end(),
-            [this, &location](auto const &one, auto const &other) {
-                return this->GetDistanceKm( location, one.location() ) < this->GetDistanceKm( location, other.location() ); } );
-        if (minElement == remainingNodes.end() )
-            { break; }
-            
-        result.push_back(*minElement);
-        remainingNodes.erase(minElement);
-    }
-    return result;
-}
-
-
-std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t, Neighbours) const
-{
-    // TODO
-    return vector<NodeInfo>{ NodeInfo( NodeProfile("RandomNodeId", "", 0, "", 0),
-                                       GpsLocation(0., 0.) ) };
-}
-
-
 
 shared_ptr<IRemoteNode> DummyLocNetRemoteNodeConnectionFactory::ConnectTo(const NodeProfile&)
 {
     return shared_ptr<IRemoteNode>();
 }
+
 
 
 } // namespace LocNet

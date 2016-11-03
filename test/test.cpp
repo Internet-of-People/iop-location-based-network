@@ -151,6 +151,20 @@ SCENARIO("Spatial database", "")
                     REQUIRE( closestNodes[0] == entryLondon );
                 }
             }
+            
+            THEN("random nodes are properly selected") {
+                {
+                    vector<NodeInfo> randomNodes = geodb.GetRandomNodes(2, Neighbours::Included);
+                    REQUIRE( randomNodes.size() == 2 );
+                }
+                {
+                    vector<NodeInfo> randomNodes = geodb.GetRandomNodes(10, Neighbours::Excluded);
+                    REQUIRE( randomNodes.size() == 3 );
+                    REQUIRE( find( randomNodes.begin(), randomNodes.end(), entryLondon ) != randomNodes.end() );
+                    REQUIRE( find( randomNodes.begin(), randomNodes.end(), entryNewYork ) != randomNodes.end() );
+                    REQUIRE( find( randomNodes.begin(), randomNodes.end(), entryCapeTown ) != randomNodes.end() );
+                }
+            }
         }
     }
 }

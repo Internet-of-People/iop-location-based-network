@@ -13,6 +13,8 @@ namespace LocNet
 
 class DummySpatialDatabase : public ISpatialDatabase
 {
+    static std::random_device _randomDevice;
+    
     GpsLocation _myLocation;
     std::unordered_map<std::string,NodeDbEntry> _nodes;
     
@@ -24,7 +26,7 @@ public:
 
     bool Store(const NodeDbEntry &node) override;
     std::shared_ptr<NodeDbEntry> Load(const std::string &nodeId) const override;
-    bool Update(const NodeInfo &node) const override;
+    bool Update(const NodeInfo &node) override;
     bool Remove(const std::string &nodeId) override;
     
     Distance GetNeighbourhoodRadiusKm() const override;
