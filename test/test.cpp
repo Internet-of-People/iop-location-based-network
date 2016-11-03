@@ -1,12 +1,15 @@
 // #define CATCH_CONFIG_RUNNER
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
-//#include <iostream>
 
+#include "easylogging++.h"
 #include "testimpls.hpp"
 
 using namespace std;
 using namespace LocNet;
+
+
+INITIALIZE_EASYLOGGINGPP
 
 
 
@@ -84,9 +87,9 @@ SCENARIO("Spatial database", "")
         
         WHEN("adding nodes") {
             NodeDbEntry entry1( NodeProfile("ColleagueNodeId1", "127.0.0.1", 6666, "", 0), GpsLocation(1.0, 1.0),
-                                      NodeRelationType::Colleague, NodeContactRoleType::Initiator );
+                                NodeRelationType::Colleague, NodeContactRoleType::Initiator );
             NodeDbEntry entry2( NodeProfile("NeighbourNodeId2", "127.0.0.1", 6666, "", 0), GpsLocation(2.0, 2.0),
-                                      NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
+                                NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
             
             geodb.Store(entry1);
             geodb.Store(entry2);
@@ -111,11 +114,11 @@ SCENARIO("Spatial database", "")
             NodeDbEntry entryKecskemet( NodeProfile("KecskemetId", "127.0.0.1", 6666, "", 0), Kecskemet,
                                         NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
             NodeDbEntry entryLondon( NodeProfile("LondonId", "127.0.0.1", 6666, "", 0), London,
-                                      NodeRelationType::Colleague, NodeContactRoleType::Initiator );
+                                     NodeRelationType::Colleague, NodeContactRoleType::Initiator );
             NodeDbEntry entryNewYork( NodeProfile("NewYorkId", "127.0.0.1", 6666, "", 0), NewYork,
                                       NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
             NodeDbEntry entryCapeTown( NodeProfile("CapeTownId", "127.0.0.1", 6666, "", 0), CapeTown,
-                                      NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
+                                       NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
             
             geodb.Store(entryKecskemet);
             geodb.Store(entryLondon);

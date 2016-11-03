@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "easylogging++.h"
 #include "testimpls.hpp"
 
 using namespace std;

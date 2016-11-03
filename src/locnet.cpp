@@ -1,10 +1,10 @@
 #include <algorithm>
 #include <cmath>
 #include <deque>
-#include <iostream>
 #include <limits>
 #include <unordered_set>
 
+#include "easylogging++.h"
 #include "locnet.hpp"
 
 using namespace std;
@@ -162,10 +162,9 @@ shared_ptr<IRemoteNode> Node::SafeConnectTo(const NodeProfile& node)
     try { return _connectionFactory->ConnectTo(node); }
     catch (exception &e)
     {
-        // TODO log this instead
-        cerr << "Failed to connect to " << node.ipv4Address() << ":" << node.ipv4Port() << " / "
-                                        << node.ipv6Address() << ":" << node.ipv6Port() << endl;
-        cerr << "Error was: " << e.what() << endl;
+        LOG(WARNING) << "Failed to connect to " << node.ipv4Address() << ":" << node.ipv4Port() << " / "
+                                                << node.ipv6Address() << ":" << node.ipv6Port() << endl;
+        LOG(WARNING) << "Error was: " << e.what() << endl;
         return shared_ptr<IRemoteNode>();
     }
 }
@@ -224,7 +223,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry,
     }
     catch (exception &e)
     {
-        // TODO log exception here
+        LOG(WARNING) << "Unexpected error storing node: " << e.what() << endl;
     }
     
     return false;
@@ -278,8 +277,7 @@ bool Node::DiscoverWorld()
         }
         catch (exception &e)
         {
-            // TODO use some kind of logging framework all around the file
-            cerr << "Failed to connect to seed node: " << e.what() << ", trying other seeds" << endl;
+            LOG(WARNING) << "Failed to connect to seed node: " << e.what() << ", trying other seeds" << endl;
         }
     }
     
@@ -293,7 +291,7 @@ bool Node::DiscoverWorld()
         if ( seedIt == _seedNodes.end() )
         {
             // TODO reconsider error handling here, should we completely give up and maybe exit()?
-            cerr << "All seed nodes have been tried and failed, giving up" << endl;
+            LOG(ERROR) << "All seed nodes have been tried and failed, giving up" << endl;
             return false;
         }
     }
@@ -338,7 +336,7 @@ bool Node::DiscoverWorld()
                 }
                 catch (exception &e)
                 {
-                    // TODO maybe log error here
+                    LOG(WARNING) << "Failed to fetch more random nodes: " << e.what() << endl;
                 }
             }
         }
@@ -376,7 +374,8 @@ bool Node::DiscoverNeighbourhood()
                 _myNodeInfo.location(), numeric_limits<Distance>::max(), 1, Neighbours::Included);
         }
         catch (exception &e) {
-            // TODO consider what to do besides debug logging exception here
+            LOG(WARNING) << "Failed to fetch neighbours: " << e.what() << endl;
+            // TODO consider what else to do here
         }
     }
     
@@ -417,7 +416,8 @@ bool Node::DiscoverNeighbourhood()
                 newNeighbourCandidates.begin(), newNeighbourCandidates.end() );
         }
         catch (exception &e) {
-            // TODO consider what to do besides debug logging exception here?
+            LOG(WARNING) << "Failed to add neighbour node: " << e.what() << endl;
+            // TODO consider what else to do here?
         }
     }
     
