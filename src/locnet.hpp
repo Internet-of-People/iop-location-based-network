@@ -17,7 +17,7 @@ class IRemoteNode
 {
 public:
     
-    virtual std::vector<NodeInfo> GetColleagueNodes() const = 0;
+    virtual size_t GetColleagueNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const = 0;
     
@@ -102,7 +102,7 @@ public:
     void RemoveService(ServiceType serviceType) override;
     
     // Interface provided for the same network instances running on remote machines
-    std::vector<NodeInfo> GetColleagueNodes() const override;
+    size_t GetColleagueNodeCount() const override;
     std::vector<NodeInfo> GetNeighbourNodes() const override;
     
     std::vector<NodeInfo> GetRandomNodes(

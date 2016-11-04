@@ -149,11 +149,11 @@ std::vector<NodeInfo> DummySpatialDatabase::GetNodes(NodeRelationType relationTy
 }
 
 
-vector< NodeInfo > DummySpatialDatabase::GetNeighbourNodes() const
+vector<NodeInfo> DummySpatialDatabase::GetNeighbourNodes() const
     { return GetNodes(NodeRelationType::Neighbour); }
 
-vector< NodeInfo > DummySpatialDatabase::GetColleagueNodes() const
-    { return GetNodes(NodeRelationType::Colleague); }
+size_t DummySpatialDatabase::GetColleagueNodeCount() const
+    { return GetNodes(NodeRelationType::Colleague).size(); }
 
     
 

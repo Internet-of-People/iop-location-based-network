@@ -32,8 +32,8 @@ public:
     bool Update(const NodeInfo &node) override;
     bool Remove(const std::string &nodeId) override;
     
+    size_t GetColleagueNodeCount() const override;
     std::vector<NodeInfo> GetNeighbourNodes() const override;
-    std::vector<NodeInfo> GetColleagueNodes() const override;
     std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
     
     std::vector<NodeInfo> GetClosestNodes(const GpsLocation &position,

@@ -67,8 +67,8 @@ SCENARIO("Spatial database", "")
         DummySpatialDatabase geodb( GpsLocation(0.0, 0.0) );
         
         THEN("its initially empty") {
+            REQUIRE( geodb.GetColleagueNodeCount() == 0 );
             REQUIRE( geodb.GetNeighbourNodes().empty() );
-            REQUIRE( geodb.GetColleagueNodes().empty() );
             REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
         }
         
@@ -94,17 +94,17 @@ SCENARIO("Spatial database", "")
             geodb.Store(entry2);
             
             THEN("they can be queried and removed") {
-                REQUIRE( geodb.GetColleagueNodes().size() == 1 );
+                REQUIRE( geodb.GetColleagueNodeCount() == 1 );
                 REQUIRE( geodb.GetNeighbourNodes().size() == 1 );
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
                 
                 geodb.Remove("ColleagueNodeId1");
-                REQUIRE( geodb.GetColleagueNodes().size() == 0 );
+                REQUIRE( geodb.GetColleagueNodeCount() == 0 );
                 REQUIRE( geodb.GetNeighbourNodes().size() == 1 );
                 geodb.Remove("NeighbourNodeId2");
                 
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
-                REQUIRE( geodb.GetColleagueNodes().empty() );
+                REQUIRE( geodb.GetColleagueNodeCount() == 0 );
                 REQUIRE( geodb.GetNeighbourNodes().empty() );
             }
         }

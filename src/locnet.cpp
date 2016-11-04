@@ -46,7 +46,7 @@ Node::Node( const NodeInfo &nodeInfo,
         throw new runtime_error("Invalid connection factory argument");
     }
     
-    if ( _spatialDb->GetColleagueNodes().empty() && ! ignoreDiscovery )
+    if ( GetColleagueNodeCount() == 0 && ! ignoreDiscovery )
     {
         bool discoverySucceeded = DiscoverWorld() && DiscoverNeighbourhood();
         if (! discoverySucceeded)
@@ -109,11 +109,11 @@ bool Node::AcceptNeighbour(const NodeInfo &node)
 vector<NodeInfo> Node::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
     { return _spatialDb->GetRandomNodes(maxNodeCount, filter); }
     
-vector< NodeInfo > Node::GetNeighbourNodes() const
+vector<NodeInfo> Node::GetNeighbourNodes() const
     { return _spatialDb->GetNeighbourNodes(); }
     
-vector< NodeInfo > Node::GetColleagueNodes() const
-    { return _spatialDb->GetColleagueNodes(); }
+size_t Node::GetColleagueNodeCount() const
+    { return _spatialDb->GetColleagueNodeCount(); }
     
     
 
@@ -259,7 +259,7 @@ bool Node::DiscoverWorld()
                 { continue; }
             
             // And query both a target World Map size and an initial list of random nodes to start with
-            seedNodeColleagueCount = seedNodeConnection->GetColleagueNodes().size();
+            seedNodeColleagueCount = seedNodeConnection->GetColleagueNodeCount();
             randomColleagueCandidates = seedNodeConnection->GetRandomNodes(
                 min(INIT_WORLD_RANDOM_NODE_COUNT, seedNodeColleagueCount), Neighbours::Excluded );
             

@@ -52,8 +52,8 @@ public:
     virtual bool Update(const NodeInfo &node) = 0;
     virtual bool Remove(const std::string &nodeId) = 0;
 
+    virtual size_t GetColleagueNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodes() const = 0;
-    virtual std::vector<NodeInfo> GetColleagueNodes() const = 0;
     
     virtual std::vector<NodeInfo> GetClosestNodes(const GpsLocation &position,
         Distance Km, size_t maxNodeCount, Neighbours filter) const = 0;
