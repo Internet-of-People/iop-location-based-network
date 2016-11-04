@@ -41,6 +41,7 @@ public:
     //      Check if this might cause any diamond shape inheritance problems.
     virtual std::vector<NodeInfo> GetClosestNodes(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
+    // TODO build sample client to find out if we need a method to get neighbour radius or profile list here
 };
 
 
@@ -51,6 +52,8 @@ public:
     
     virtual void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) = 0;
     virtual void RemoveService(ServiceType serviceType) = 0;
+    // TODO build a sample client to find out is this the right operation to work with
+    //      Should we give a list of neighbour profiles instead?
     virtual Distance GetNeighbourhoodRadiusKm() const = 0;
 };
 
@@ -81,6 +84,7 @@ class Node : public ILocalServices, public IClientMethods, public IRemoteNode
     
     bool DiscoverWorld();
     bool DiscoverNeighbourhood();
+    void PerformDbMaintenance();
     
     Distance GetBubbleSize(const GpsLocation &location) const;
     bool BubbleOverlaps(const GpsLocation &newNodeLocation) const;

@@ -100,6 +100,7 @@ bool Node::RenewNodeConnection(const NodeInfo &updatedNode)
 
 bool Node::AcceptNeighbour(const NodeInfo &node)
 {
+    // TODO check if neighbour size limit is exceeded and which neighbour to expire later
     return SafeStoreNode( NodeDbEntry(
         node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
 }
@@ -423,6 +424,15 @@ bool Node::DiscoverNeighbourhood()
     
     return true;
 }
+
+
+
+void Node::PerformDbMaintenance()
+{
+    // TODO implement this
+    // TODO we probably have to run this in a separate thread
+}
+
 
 
 } // namespace LocNet

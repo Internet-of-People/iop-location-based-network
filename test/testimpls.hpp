@@ -16,6 +16,7 @@ class DummySpatialDatabase : public ISpatialDatabase
     static std::random_device _randomDevice;
     
     GpsLocation _myLocation;
+    // TODO probably would be better to store nodes in a vector in ascending order of distance from myLocation
     std::unordered_map<std::string,NodeDbEntry> _nodes;
     
 public:
