@@ -69,20 +69,6 @@ bool DummySpatialDatabase::Remove(const string &nodeId)
 }
 
 
-Distance DummySpatialDatabase::GetNeighbourhoodRadiusKm() const
-{
-    // TODO
-    return 42.;
-}
-
-
-size_t DummySpatialDatabase::GetNodeCount(NodeRelationType relationType) const
-{
-    return count_if( _nodes.begin(), _nodes.end(),
-        [relationType] (auto const &elem) { return elem.second.relationType() == relationType; } );
-}
-
-
 
 vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
     const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const
@@ -151,6 +137,25 @@ std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, N
 }
 
 
+std::vector<NodeInfo> DummySpatialDatabase::GetNodes(NodeRelationType relationType) const
+{
+    vector<NodeInfo> result;
+    for (auto const &entry : _nodes)
+    {
+        if ( entry.second.relationType() == relationType )
+            { result.push_back(entry.second); }
+    }
+    return result;
+}
+
+
+vector< NodeInfo > DummySpatialDatabase::GetNeighbourNodes() const
+    { return GetNodes(NodeRelationType::Neighbour); }
+
+vector< NodeInfo > DummySpatialDatabase::GetColleagueNodes() const
+    { return GetNodes(NodeRelationType::Colleague); }
+
+    
 
 GpsCoordinate degreesToRadian(GpsCoordinate degrees)
 {

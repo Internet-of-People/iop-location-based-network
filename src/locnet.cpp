@@ -15,7 +15,6 @@ namespace LocNet
 {
 
 
-static const Distance NEIGHBOURHOOD_MAX_RANGE_KM          = 100;
 static const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT        = 100;
 
 static const size_t   INIT_WORLD_RANDOM_NODE_COUNT        = 100;
@@ -47,7 +46,7 @@ Node::Node( const NodeInfo &nodeInfo,
         throw new runtime_error("Invalid connection factory argument");
     }
     
-    if ( _spatialDb->GetNodeCount(NodeRelationType::Colleague) == 0 && ! ignoreDiscovery )
+    if ( _spatialDb->GetColleagueNodes().empty() && ! ignoreDiscovery )
     {
         bool discoverySucceeded = DiscoverWorld() && DiscoverNeighbourhood();
         if (! discoverySucceeded)
@@ -107,17 +106,16 @@ bool Node::AcceptNeighbour(const NodeInfo &node)
 
 
 
-size_t Node::GetNodeCount(NodeRelationType nodeType) const
-    { return _spatialDb->GetNodeCount(nodeType); }
-
-Distance Node::GetNeighbourhoodRadiusKm() const
-    { return _spatialDb->GetNeighbourhoodRadiusKm(); }
-
-vector<NodeInfo> Node::GetRandomNodes(
-    size_t maxNodeCount, Neighbours filter) const
-{
-    return _spatialDb->GetRandomNodes(maxNodeCount, filter);
-}
+vector<NodeInfo> Node::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+    { return _spatialDb->GetRandomNodes(maxNodeCount, filter); }
+    
+vector< NodeInfo > Node::GetNeighbourNodes() const
+    { return _spatialDb->GetNeighbourNodes(); }
+    
+vector< NodeInfo > Node::GetColleagueNodes() const
+    { return _spatialDb->GetColleagueNodes(); }
+    
+    
 
 vector<NodeInfo> Node::GetClosestNodes(const GpsLocation& location,
     Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
@@ -180,8 +178,8 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry,
         switch ( entry.relationType() )
         {
             case NodeRelationType::Neighbour:
-                if ( _spatialDb->GetNodeCount(NodeRelationType::Neighbour) >= NEIGHBOURHOOD_MAX_NODE_COUNT ||
-                     _spatialDb->GetDistanceKm( _myNodeInfo.location(), entry.location() ) >= NEIGHBOURHOOD_MAX_RANGE_KM )
+                // TODO specs require that node count limit can temporarily be broken if node is closer than other neighbours
+                if ( _spatialDb->GetNeighbourNodes().size() >= NEIGHBOURHOOD_MAX_NODE_COUNT )
                     { return false; }
                 break;
                 
@@ -261,18 +259,19 @@ bool Node::DiscoverWorld()
                 { continue; }
             
             // And query both a target World Map size and an initial list of random nodes to start with
-            seedNodeColleagueCount = seedNodeConnection->GetNodeCount(NodeRelationType::Colleague);
+            seedNodeColleagueCount = seedNodeConnection->GetColleagueNodes().size();
             randomColleagueCandidates = seedNodeConnection->GetRandomNodes(
                 min(INIT_WORLD_RANDOM_NODE_COUNT, seedNodeColleagueCount), Neighbours::Excluded );
             
             // If got a reasonable response from a seed server, stop contacting other seeds
             if ( seedNodeColleagueCount > 0 && ! randomColleagueCandidates.empty() )
             {
-                // Try to add seed node to our network and step out of seed node phase
-                Distance seedNodeDistance = _spatialDb->GetDistanceKm( _myNodeInfo.location(), selectedSeedNode.location() );
-                NodeRelationType seedNodeType = seedNodeDistance <= NEIGHBOURHOOD_MAX_RANGE_KM ?
-                    NodeRelationType::Neighbour : NodeRelationType::Colleague;
-                SafeStoreNode( NodeDbEntry(selectedSeedNode, seedNodeType, NodeContactRoleType::Initiator) );
+                // Try to add seed node to our network (no matter if fails), then step out of seed node phase
+                bool seedAsNeighbour = SafeStoreNode( NodeDbEntry(selectedSeedNode,
+                    NodeRelationType::Neighbour, NodeContactRoleType::Initiator) );
+                if (! seedAsNeighbour) {
+                    SafeStoreNode( NodeDbEntry(selectedSeedNode,
+                        NodeRelationType::Colleague, NodeContactRoleType::Initiator) ); }
                 break;
             }
         }
@@ -356,7 +355,7 @@ bool Node::DiscoverNeighbourhood()
     if ( newClosestNode.empty() )
         { return false; }
     
-    // Repeat asking (so far) closest node for an even closer node until no new node discovered
+    // Repeat asking the currently closest node for an even closer node until no new node discovered
     vector<NodeInfo> oldClosestNode;
     while ( oldClosestNode.size() != newClosestNode.size() ||
             oldClosestNode.front().profile().id() != newClosestNode.front().profile().id() )
