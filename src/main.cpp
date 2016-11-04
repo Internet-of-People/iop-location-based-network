@@ -10,6 +10,6 @@ INITIALIZE_EASYLOGGINGPP
 
 int main()
 {
-    cout << "Located works" << endl;
+    LOG(INFO) << "Located works";
     return 0;
 }

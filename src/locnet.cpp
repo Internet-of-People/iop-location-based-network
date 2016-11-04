@@ -164,8 +164,8 @@ shared_ptr<IRemoteNode> Node::SafeConnectTo(const NodeProfile& node)
     catch (exception &e)
     {
         LOG(WARNING) << "Failed to connect to " << node.ipv4Address() << ":" << node.ipv4Port() << " / "
-                                                << node.ipv6Address() << ":" << node.ipv6Port() << endl;
-        LOG(WARNING) << "Error was: " << e.what() << endl;
+                                                << node.ipv6Address() << ":" << node.ipv6Port();
+        LOG(WARNING) << "Error was: " << e.what();
         return shared_ptr<IRemoteNode>();
     }
 }
@@ -224,7 +224,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry,
     }
     catch (exception &e)
     {
-        LOG(WARNING) << "Unexpected error storing node: " << e.what() << endl;
+        LOG(WARNING) << "Unexpected error storing node: " << e.what();
     }
     
     return false;
@@ -278,7 +278,7 @@ bool Node::DiscoverWorld()
         }
         catch (exception &e)
         {
-            LOG(WARNING) << "Failed to connect to seed node: " << e.what() << ", trying other seeds" << endl;
+            LOG(WARNING) << "Failed to connect to seed node: " << e.what() << ", trying other seeds";
         }
     }
     
@@ -292,7 +292,7 @@ bool Node::DiscoverWorld()
         if ( seedIt == _seedNodes.end() )
         {
             // TODO reconsider error handling here, should we completely give up and maybe exit()?
-            LOG(ERROR) << "All seed nodes have been tried and failed, giving up" << endl;
+            LOG(ERROR) << "All seed nodes have been tried and failed, giving up";
             return false;
         }
     }
@@ -320,7 +320,7 @@ bool Node::DiscoverWorld()
                 if ( randomColleagueCandidates.empty() )
                 {
                     // TODO reconsider error handling here
-                    cerr << "After trying all random nodes returned by seed, still have no colleagues, give up" << endl;
+                    cerr << "After trying all random nodes returned by seed, still have no colleagues, give up";
                     return false;
                 }
                 
@@ -337,7 +337,7 @@ bool Node::DiscoverWorld()
                 }
                 catch (exception &e)
                 {
-                    LOG(WARNING) << "Failed to fetch more random nodes: " << e.what() << endl;
+                    LOG(WARNING) << "Failed to fetch more random nodes: " << e.what();
                 }
             }
         }
@@ -375,7 +375,7 @@ bool Node::DiscoverNeighbourhood()
                 _myNodeInfo.location(), numeric_limits<Distance>::max(), 1, Neighbours::Included);
         }
         catch (exception &e) {
-            LOG(WARNING) << "Failed to fetch neighbours: " << e.what() << endl;
+            LOG(WARNING) << "Failed to fetch neighbours: " << e.what();
             // TODO consider what else to do here
         }
     }
@@ -417,7 +417,7 @@ bool Node::DiscoverNeighbourhood()
                 newNeighbourCandidates.begin(), newNeighbourCandidates.end() );
         }
         catch (exception &e) {
-            LOG(WARNING) << "Failed to add neighbour node: " << e.what() << endl;
+            LOG(WARNING) << "Failed to add neighbour node: " << e.what();
             // TODO consider what else to do here?
         }
     }
