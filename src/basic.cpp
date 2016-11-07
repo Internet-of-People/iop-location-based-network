@@ -55,8 +55,9 @@ GpsCoordinate GpsLocation::longitude() const { return _longitude; }
 
 void GpsLocation::Validate()
 {
-    if ( _latitude < -90. || 90. < _latitude ||
-         _longitude < -180. || 180. < _longitude )
+    // Ensure latitude is from range (-90,90] and longitude is from (-180,180], note that range is exclusive at the bottom and inclusive at the top
+    if ( _latitude <= -90. || 90. < _latitude ||
+         _longitude <= -180. || 180. < _longitude )
         { throw new runtime_error("Invalid GPS location"); }
 }
 
