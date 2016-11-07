@@ -14,9 +14,6 @@ namespace LocNet
 
 random_device DummySpatialDatabase::_randomDevice;
 
-    
-DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& myLocation):
-    _myLocation(myLocation) {}
 
 
 bool DummySpatialDatabase::Store(const NodeDbEntry &node)
@@ -80,13 +77,13 @@ vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
     
     // Remove nodes out of range
     auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-        [this, &location, maxRadiusKm](auto const &node) { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
+        [this, &location, maxRadiusKm](const NodeDbEntry &node) { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
     remainingNodes.erase( newEnd, remainingNodes.end() );
 
     // Remove nodes with wrong relationType
     if (filter == Neighbours::Excluded) {
         newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-            [](auto const &node) { return node.relationType() == NodeRelationType::Neighbour; } );
+            [](const NodeDbEntry &node) { return node.relationType() == NodeRelationType::Neighbour; } );
         remainingNodes.erase( newEnd, remainingNodes.end() );
     }
     
@@ -95,7 +92,7 @@ vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
     {
         // Select closest element
         auto minElement = min_element( remainingNodes.begin(), remainingNodes.end(),
-            [this, &location](auto const &one, auto const &other) {
+            [this, &location](const NodeDbEntry &one, const NodeDbEntry &other) {
                 return this->GetDistanceKm( location, one.location() ) < this->GetDistanceKm( location, other.location() ); } );
         if (minElement == remainingNodes.end() )
             { break; }
@@ -118,7 +115,7 @@ std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, N
     // Remove nodes with wrong relationType
     if (filter == Neighbours::Excluded) {
         auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-            [](auto const &node) { return node.relationType() == NodeRelationType::Neighbour; } );
+            [](const NodeDbEntry &node) { return node.relationType() == NodeRelationType::Neighbour; } );
         remainingNodes.erase( newEnd, remainingNodes.end() );
     }
 
@@ -155,6 +152,19 @@ vector<NodeInfo> DummySpatialDatabase::GetNeighbourNodes() const
 size_t DummySpatialDatabase::GetColleagueNodeCount() const
     { return GetNodes(NodeRelationType::Colleague).size(); }
 
+Distance DummySpatialDatabase::GetFarthestNeighbourDistanceKm(const GpsLocation& fromLocation) const
+{
+    vector<NodeInfo> neighbours( GetNodes(NodeRelationType::Neighbour) );
+    if ( neighbours.empty() )
+        { return 0; }
+        
+    auto farthestNeighbourIt =  max_element( neighbours.begin(), neighbours.end(),
+        [this, &fromLocation] (const NodeInfo &one, const NodeInfo &other)
+            { return GetDistanceKm( one.location(), fromLocation ) < GetDistanceKm( other.location(), fromLocation ); } );
+    return GetDistanceKm( farthestNeighbourIt->location(), fromLocation );
+}
+
+    
     
 
 GpsCoordinate degreesToRadian(GpsCoordinate degrees)

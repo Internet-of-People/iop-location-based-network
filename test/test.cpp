@@ -59,26 +59,29 @@ SCENARIO("Spatial database", "")
 {
     GpsLocation Budapest(47.4808706,18.849426);
     GpsLocation Kecskemet(46.8854726,19.538628);
+    GpsLocation Wien(48.2205998,16.2399759);
     GpsLocation London(51.5283063,-0.3824722);
     GpsLocation NewYork(40.7053094,-74.2588858);
     GpsLocation CapeTown(-33.9135236,18.0941875);
-            
+
     GIVEN("A spatial database implementation") {
-        DummySpatialDatabase geodb( GpsLocation(0.0, 0.0) );
-        
+        DummySpatialDatabase geodb;
+
         THEN("its initially empty") {
             REQUIRE( geodb.GetColleagueNodeCount() == 0 );
             REQUIRE( geodb.GetNeighbourNodes().empty() );
             REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
         }
+
+        Distance Budapest_Kecskemet = geodb.GetDistanceKm(Budapest, Kecskemet);
+        Distance Budapest_Wien = geodb.GetDistanceKm(Budapest, Wien);
+        Distance Budapest_London = geodb.GetDistanceKm(Budapest, London);
+        Distance Budapest_NewYork = geodb.GetDistanceKm(Budapest, NewYork);
+        Distance Budapest_CapeTown = geodb.GetDistanceKm(Budapest, CapeTown);
         
         THEN("it can measure distances") {
-            Distance Budapest_Kecskemet = geodb.GetDistanceKm(Budapest, Kecskemet);
-            Distance Budapest_London = geodb.GetDistanceKm(Budapest, London);
-            Distance Budapest_NewYork = geodb.GetDistanceKm(Budapest, NewYork);
-            Distance Budapest_CapeTown = geodb.GetDistanceKm(Budapest, CapeTown);
-            
             REQUIRE( Budapest_Kecskemet == Approx(83.56).epsilon(0.01) );
+            REQUIRE( Budapest_Wien == Approx(212.24).epsilon(0.007) );
             REQUIRE( Budapest_London == Approx(1449.57).epsilon(0.005) );
             REQUIRE( Budapest_NewYork == Approx(7005.61).epsilon(0.003) );
             REQUIRE( Budapest_CapeTown == Approx(9053.66).epsilon(0.003) );
@@ -112,6 +115,8 @@ SCENARIO("Spatial database", "")
         WHEN("when having several nodes") {
             NodeDbEntry entryKecskemet( NodeProfile("KecskemetId", "127.0.0.1", 6666, "", 0), Kecskemet,
                                         NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
+            NodeDbEntry entryWien( NodeProfile("WienId", "127.0.0.1", 6666, "", 0), Wien,
+                                   NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
             NodeDbEntry entryLondon( NodeProfile("LondonId", "127.0.0.1", 6666, "", 0), London,
                                      NodeRelationType::Colleague, NodeContactRoleType::Initiator );
             NodeDbEntry entryNewYork( NodeProfile("NewYorkId", "127.0.0.1", 6666, "", 0), NewYork,
@@ -122,6 +127,7 @@ SCENARIO("Spatial database", "")
             geodb.Store(entryKecskemet);
             geodb.Store(entryLondon);
             geodb.Store(entryNewYork);
+            geodb.Store(entryWien);
             geodb.Store(entryCapeTown);
 
             THEN("closest nodes are properly selected") {
@@ -140,11 +146,12 @@ SCENARIO("Spatial database", "")
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
                         Budapest, 20000.0, 1000, Neighbours::Included );
-                    REQUIRE( closestNodes.size() == 4 );
+                    REQUIRE( closestNodes.size() == 5 );
                     REQUIRE( closestNodes[0] == entryKecskemet );
-                    REQUIRE( closestNodes[1] == entryLondon );
-                    REQUIRE( closestNodes[2] == entryNewYork );
-                    REQUIRE( closestNodes[3] == entryCapeTown );
+                    REQUIRE( closestNodes[1] == entryWien );
+                    REQUIRE( closestNodes[2] == entryLondon );
+                    REQUIRE( closestNodes[3] == entryNewYork );
+                    REQUIRE( closestNodes[4] == entryCapeTown );
                 }
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
@@ -167,6 +174,11 @@ SCENARIO("Spatial database", "")
                     REQUIRE( find( randomNodes.begin(), randomNodes.end(), entryCapeTown ) != randomNodes.end() );
                 }
             }
+            
+            THEN("farthest neighbour is properly selected") {
+                Distance farthestNeighbourDistance = geodb.GetFarthestNeighbourDistanceKm(Budapest);
+                REQUIRE( farthestNeighbourDistance == Budapest_Wien );
+            }
         }
     }
 }
@@ -176,9 +188,8 @@ SCENARIO("Spatial database", "")
 SCENARIO("Server registration", "")
 {
     GIVEN("The location based network") {
-        GpsLocation loc(1.0, 2.0);
-        NodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
-        shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
+        NodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), GpsLocation(1.0, 2.0) );
+        shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase() );
         shared_ptr<IRemoteNodeConnectionFactory> connectionFactory( new DummyLocNetRemoteNodeConnectionFactory() );
         Node geonet(nodeInfo, geodb, connectionFactory, true);
         

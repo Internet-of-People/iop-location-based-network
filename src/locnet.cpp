@@ -178,8 +178,10 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry,
         switch ( entry.relationType() )
         {
             case NodeRelationType::Neighbour:
-                // TODO specs require that node count limit can temporarily be broken if node is closer than other neighbours
-                if ( _spatialDb->GetNeighbourNodes().size() >= NEIGHBOURHOOD_MAX_NODE_COUNT )
+                if ( _spatialDb->GetNeighbourNodes().size() >= NEIGHBOURHOOD_MAX_NODE_COUNT &&
+                     _spatialDb->GetFarthestNeighbourDistanceKm( _myNodeInfo.location() ) <=
+                     _spatialDb->GetDistanceKm( _myNodeInfo.location(), entry.location() )
+                )
                     { return false; }
                 break;
                 
