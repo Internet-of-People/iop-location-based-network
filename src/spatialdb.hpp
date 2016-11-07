@@ -48,8 +48,7 @@ public:
     
     virtual bool Store(const NodeDbEntry &node) = 0;
     virtual std::shared_ptr<NodeDbEntry> Load(const std::string &nodeId) const = 0;
-    // NOTE relationtype and roletype cannot be modified during the update
-    virtual bool Update(const NodeInfo &node) = 0;
+    virtual bool Update(const NodeDbEntry &node) = 0;
     virtual bool Remove(const std::string &nodeId) = 0;
 
     virtual size_t GetColleagueNodeCount() const = 0;

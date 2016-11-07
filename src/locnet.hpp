@@ -79,9 +79,10 @@ class Node : public ILocalServices, public IClientMethods, public IRemoteNode
     bool SafeStoreNode(const NodeDbEntry &entry,
         std::shared_ptr<IRemoteNode> nodeConnection = std::shared_ptr<IRemoteNode>() );
     
-    bool DiscoverWorld();
-    bool DiscoverNeighbourhood();
-    void PerformDbMaintenance();
+    bool InitializeWorld();
+    bool InitializeNeighbourhood();
+    void RenewNodeRelations();
+    void DiscoverUnknownAreas();
     
     Distance GetBubbleSize(const GpsLocation &location) const;
     bool BubbleOverlaps(const GpsLocation &newNodeLocation) const;

@@ -48,7 +48,7 @@ Node::Node( const NodeInfo &nodeInfo,
     
     if ( GetColleagueNodeCount() == 0 && ! ignoreDiscovery )
     {
-        bool discoverySucceeded = DiscoverWorld() && DiscoverNeighbourhood();
+        bool discoverySucceeded = InitializeWorld() && InitializeNeighbourhood();
         if (! discoverySucceeded)
             { throw new runtime_error("Network discovery failed"); }
     }
@@ -89,11 +89,20 @@ bool Node::RenewColleague(const NodeInfo& node)
     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
     if (storedInfo != nullptr) {
         if ( storedInfo->location() == node.location() ) {
-            return _spatialDb->Update(node);
+            return _spatialDb->Update( NodeDbEntry(
+                node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
         }
         // TODO consider how we should handle changed location here: recalculate bubbles or simply deny renewal
     }
     return false;
+}
+
+
+
+bool Node::AcceptNeighbour(const NodeInfo &node)
+{
+    return SafeStoreNode( NodeDbEntry(
+        node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
 }
 
 
@@ -106,20 +115,12 @@ bool Node::RenewNeighbour(const NodeInfo& node)
             {
                 // TODO check if neighbour is too far to be renewed
             }
-            return _spatialDb->Update(node);
+            return _spatialDb->Update( NodeDbEntry(
+                node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
         }
         // TODO consider how we should handle changed location here: recalculate bubbles or simply deny renewal
     }
     return false;
-}
-
-
-
-bool Node::AcceptNeighbour(const NodeInfo &node)
-{
-    // TODO check if neighbour size limit is exceeded and which neighbour to expire later
-    return SafeStoreNode( NodeDbEntry(
-        node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
 }
 
 
@@ -187,12 +188,12 @@ shared_ptr<IRemoteNode> Node::SafeConnectTo(const NodeProfile& node)
 }
 
 
-bool Node::SafeStoreNode(const NodeDbEntry& entry,
-    shared_ptr<IRemoteNode> nodeConnection)
+bool Node::SafeStoreNode(const NodeDbEntry& entry, shared_ptr<IRemoteNode> nodeConnection)
 {
     try
     {
         // Check if node is acceptable
+        shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( entry.profile().id() );
         switch ( entry.relationType() )
         {
             case NodeRelationType::Neighbour:
@@ -203,13 +204,23 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry,
                      _spatialDb->GetDistanceKm( neighboursByDistance.back().location(), _myNodeInfo.location() ) <=
                      _spatialDb->GetDistanceKm( _myNodeInfo.location(), entry.location() ) )
                     { return false; }
+                    
+                // Existing colleague info may be upgraded to neighbour but not vica versa
+                if ( storedInfo != nullptr && storedInfo->relationType() == NodeRelationType::Neighbour )
+                    { return false; }
                 break;
             }
                 
             case NodeRelationType::Colleague:
+            {
                 if ( BubbleOverlaps( entry.location() ) )
                     { return false; }
+                    
+                // Existing node info may neither be duplicaed nor updated/overwritten
+                if (storedInfo != nullptr)
+                    { return false; }
                 break;
+            }
                 
             default:
                 throw runtime_error("Unknown nodetype, missing implementation");
@@ -241,7 +252,10 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry,
             }
         }
         
-        return _spatialDb->Store(entry);
+        // TODO consider all further possible sanity checks are done already
+        //      e.g. what to do if location is changed for an existing entry?
+        if (storedInfo == nullptr) { return _spatialDb->Store(entry); }
+        else                       { return _spatialDb->Update(entry); }
     }
     catch (exception &e)
     {
@@ -253,7 +267,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry,
 
 
 // TODO consider if this is guaranteed to stop
-bool Node::DiscoverWorld()
+bool Node::InitializeWorld()
 {
     // Initialize random generator and utility variables
     uniform_int_distribution<int> fromRange( 0, _seedNodes.size() - 1 );
@@ -370,7 +384,7 @@ bool Node::DiscoverWorld()
 
 
 
-bool Node::DiscoverNeighbourhood()
+bool Node::InitializeNeighbourhood()
 {
     // Get the closest node known to us so far
     vector<NodeInfo> newClosestNode = _spatialDb->GetClosestNodesByDistance(
@@ -449,7 +463,14 @@ bool Node::DiscoverNeighbourhood()
 
 
 
-void Node::PerformDbMaintenance()
+void Node::RenewNodeRelations()
+{
+    // TODO implement this
+    // TODO we probably have to run this in a separate thread
+}
+
+
+void Node::DiscoverUnknownAreas()
 {
     // TODO implement this
     // TODO we probably have to run this in a separate thread

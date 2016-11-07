@@ -45,7 +45,7 @@ shared_ptr<NodeDbEntry> DummySpatialDatabase::Load(const string &nodeId) const
 }
 
 
-bool DummySpatialDatabase::Update(const NodeInfo &node)
+bool DummySpatialDatabase::Update(const NodeDbEntry &node)
 {
     auto it = _nodes.find( node.profile().id() );
     if ( it == _nodes.end() ) {
@@ -53,7 +53,7 @@ bool DummySpatialDatabase::Update(const NodeInfo &node)
         // return false;
     }
     
-    static_cast<NodeInfo&>(it->second) = node;
+    it->second = node;
     return true;
 }
 

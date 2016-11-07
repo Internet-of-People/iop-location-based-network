@@ -29,7 +29,7 @@ public:
 
     bool Store(const NodeDbEntry &node) override;
     std::shared_ptr<NodeDbEntry> Load(const std::string &nodeId) const override;
-    bool Update(const NodeInfo &node) override;
+    bool Update(const NodeDbEntry &node) override;
     bool Remove(const std::string &nodeId) override;
     
     size_t GetColleagueNodeCount() const override;
