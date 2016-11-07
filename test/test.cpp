@@ -65,11 +65,11 @@ SCENARIO("Spatial database", "")
     GpsLocation CapeTown(-33.9135236,18.0941875);
 
     GIVEN("A spatial database implementation") {
-        DummySpatialDatabase geodb;
+        DummySpatialDatabase geodb(Budapest);
 
         THEN("its initially empty") {
             REQUIRE( geodb.GetColleagueNodeCount() == 0 );
-            REQUIRE( geodb.GetNeighbourNodes().empty() );
+            REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
         }
 
@@ -98,17 +98,17 @@ SCENARIO("Spatial database", "")
             
             THEN("they can be queried and removed") {
                 REQUIRE( geodb.GetColleagueNodeCount() == 1 );
-                REQUIRE( geodb.GetNeighbourNodes().size() == 1 );
+                REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 1 );
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
                 
                 geodb.Remove("ColleagueNodeId1");
                 REQUIRE( geodb.GetColleagueNodeCount() == 0 );
-                REQUIRE( geodb.GetNeighbourNodes().size() == 1 );
+                REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 1 );
                 geodb.Remove("NeighbourNodeId2");
                 
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
                 REQUIRE( geodb.GetColleagueNodeCount() == 0 );
-                REQUIRE( geodb.GetNeighbourNodes().empty() );
+                REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             }
         }
         
@@ -132,19 +132,19 @@ SCENARIO("Spatial database", "")
 
             THEN("closest nodes are properly selected") {
                 {
-                    vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
+                    vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
                         Budapest, 20000.0, 1, Neighbours::Included );
                     REQUIRE( closestNodes.size() == 1 );
                     REQUIRE( closestNodes[0] == entryKecskemet );
                 }
                 {
-                    vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
+                    vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
                         Budapest, 20000.0, 1, Neighbours::Excluded );
                     REQUIRE( closestNodes.size() == 1 );
                     REQUIRE( closestNodes[0] == entryLondon );
                 }
                 {
-                    vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
+                    vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
                         Budapest, 20000.0, 1000, Neighbours::Included );
                     REQUIRE( closestNodes.size() == 5 );
                     REQUIRE( closestNodes[0] == entryKecskemet );
@@ -154,7 +154,7 @@ SCENARIO("Spatial database", "")
                     REQUIRE( closestNodes[4] == entryCapeTown );
                 }
                 {
-                    vector<NodeInfo> closestNodes = geodb.GetClosestNodes(
+                    vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
                         Budapest, 5000.0, 1000, Neighbours::Excluded );
                     REQUIRE( closestNodes.size() == 1 );
                     REQUIRE( closestNodes[0] == entryLondon );
@@ -176,8 +176,10 @@ SCENARIO("Spatial database", "")
             }
             
             THEN("farthest neighbour is properly selected") {
-                Distance farthestNeighbourDistance = geodb.GetFarthestNeighbourDistanceKm(Budapest);
-                REQUIRE( farthestNeighbourDistance == Budapest_Wien );
+                vector<NodeInfo> neighboursByDistance( geodb.GetNeighbourNodesByDistance() );
+                REQUIRE( neighboursByDistance.size() == 2 );
+                REQUIRE( neighboursByDistance[0] == entryKecskemet );
+                REQUIRE( neighboursByDistance[1] == entryWien );
             }
         }
     }
@@ -188,14 +190,15 @@ SCENARIO("Spatial database", "")
 SCENARIO("Server registration", "")
 {
     GIVEN("The location based network") {
-        NodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), GpsLocation(1.0, 2.0) );
-        shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase() );
+        GpsLocation loc(1.0, 2.0);
+        NodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
+        shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
         shared_ptr<IRemoteNodeConnectionFactory> connectionFactory( new DummyLocNetRemoteNodeConnectionFactory() );
         Node geonet(nodeInfo, geodb, connectionFactory, true);
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {
-                auto services = geonet.services();
+                auto services = geonet.GetServices();
                 REQUIRE( services.empty() );
                 REQUIRE( services.find(ServiceType::Token) == services.end() );
                 REQUIRE( services.find(ServiceType::Minting) == services.end() );
@@ -207,7 +210,7 @@ SCENARIO("Server registration", "")
             geonet.RegisterService(ServiceType::Token, tokenService);
             geonet.RegisterService(ServiceType::Minting, minterService);
             THEN("added servers appear on queries") {
-                auto const &services = geonet.services();
+                auto const &services = geonet.GetServices();
                 REQUIRE( services.find(ServiceType::Relay) == services.end() );
                 REQUIRE( services.find(ServiceType::Token) != services.end() );
                 REQUIRE( services.at(ServiceType::Token) == tokenService );
@@ -221,7 +224,7 @@ SCENARIO("Server registration", "")
             geonet.RegisterService(ServiceType::Minting, minterService);
             geonet.RemoveService(ServiceType::Minting);
             THEN("they disappear from the list") {
-                auto const &services = geonet.services();
+                auto const &services = geonet.GetServices();
                 REQUIRE( services.find(ServiceType::Relay) == services.end() );
                 REQUIRE( services.find(ServiceType::Minting) == services.end() );
                 REQUIRE( services.find(ServiceType::Token) != services.end() );

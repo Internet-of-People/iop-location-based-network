@@ -55,7 +55,7 @@ Node::Node( const NodeInfo &nodeInfo,
 }
 
 
-const unordered_map<ServiceType,ServiceProfile,EnumHasher>& Node::services() const
+const unordered_map<ServiceType,ServiceProfile,EnumHasher>& Node::GetServices() const
     { return _services; }
     
 void Node::RegisterService(ServiceType serviceType, const ServiceProfile& serviceInfo)
@@ -84,17 +84,35 @@ bool Node::AcceptColleague(const NodeInfo &newNode)
 }
 
 
-bool Node::RenewNodeConnection(const NodeInfo &updatedNode)
+bool Node::RenewColleague(const NodeInfo& node)
 {
-    shared_ptr<NodeInfo> storedProfile = _spatialDb->Load( updatedNode.profile().id() );
-    if (storedProfile != nullptr) {
-        if ( storedProfile->location() == updatedNode.location() ) {
-            return _spatialDb->Update(updatedNode);
+    shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+    if (storedInfo != nullptr) {
+        if ( storedInfo->location() == node.location() ) {
+            return _spatialDb->Update(node);
         }
         // TODO consider how we should handle changed location here: recalculate bubbles or simply deny renewal
     }
     return false;
 }
+
+
+bool Node::RenewNeighbour(const NodeInfo& node)
+{
+    shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+    if (storedInfo != nullptr) {
+        if ( storedInfo->location() == node.location() ) {
+            if ( _spatialDb->GetNeighbourNodesByDistance().size() > NEIGHBOURHOOD_MAX_NODE_COUNT )
+            {
+                // TODO check if neighbour is too far to be renewed
+            }
+            return _spatialDb->Update(node);
+        }
+        // TODO consider how we should handle changed location here: recalculate bubbles or simply deny renewal
+    }
+    return false;
+}
+
 
 
 bool Node::AcceptNeighbour(const NodeInfo &node)
@@ -109,18 +127,18 @@ bool Node::AcceptNeighbour(const NodeInfo &node)
 vector<NodeInfo> Node::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
     { return _spatialDb->GetRandomNodes(maxNodeCount, filter); }
     
-vector<NodeInfo> Node::GetNeighbourNodes() const
-    { return _spatialDb->GetNeighbourNodes(); }
+vector<NodeInfo> Node::GetNeighbourNodesByDistance() const
+    { return _spatialDb->GetNeighbourNodesByDistance(); }
     
 size_t Node::GetColleagueNodeCount() const
     { return _spatialDb->GetColleagueNodeCount(); }
     
     
 
-vector<NodeInfo> Node::GetClosestNodes(const GpsLocation& location,
+vector<NodeInfo> Node::GetClosestNodesByDistance(const GpsLocation& location,
     Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
 {
-    return _spatialDb->GetClosestNodes(location, radiusKm, maxNodeCount, filter);
+    return _spatialDb->GetClosestNodesByDistance(location, radiusKm, maxNodeCount, filter);
 }
 
 
@@ -135,7 +153,7 @@ Distance Node::GetBubbleSize(const GpsLocation& location) const
 bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation) const
 {
     // Get our closest node to location, no matter the radius
-    vector<NodeInfo> closestNodes = _spatialDb->GetClosestNodes(
+    vector<NodeInfo> closestNodes = _spatialDb->GetClosestNodesByDistance(
         newNodeLocation, numeric_limits<Distance>::max(), 1, Neighbours::Excluded);
     
     // If there is no such point yet (i.e. map is still empty), it cannot overlap
@@ -178,12 +196,15 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry,
         switch ( entry.relationType() )
         {
             case NodeRelationType::Neighbour:
-                if ( _spatialDb->GetNeighbourNodes().size() >= NEIGHBOURHOOD_MAX_NODE_COUNT &&
-                     _spatialDb->GetFarthestNeighbourDistanceKm( _myNodeInfo.location() ) <=
-                     _spatialDb->GetDistanceKm( _myNodeInfo.location(), entry.location() )
-                )
+            {
+                // Neighbour limit is about to be exceeded and all present neighbours are closer
+                vector<NodeInfo> neighboursByDistance( _spatialDb->GetNeighbourNodesByDistance() );
+                if ( neighboursByDistance.size() >= NEIGHBOURHOOD_MAX_NODE_COUNT &&
+                     _spatialDb->GetDistanceKm( neighboursByDistance.back().location(), _myNodeInfo.location() ) <=
+                     _spatialDb->GetDistanceKm( _myNodeInfo.location(), entry.location() ) )
                     { return false; }
                 break;
+            }
                 
             case NodeRelationType::Colleague:
                 if ( BubbleOverlaps( entry.location() ) )
@@ -352,7 +373,7 @@ bool Node::DiscoverWorld()
 bool Node::DiscoverNeighbourhood()
 {
     // Get the closest node known to us so far
-    vector<NodeInfo> newClosestNode = _spatialDb->GetClosestNodes(
+    vector<NodeInfo> newClosestNode = _spatialDb->GetClosestNodesByDistance(
         _myNodeInfo.location(), numeric_limits<Distance>::max(), 1, Neighbours::Included);
     if ( newClosestNode.empty() )
         { return false; }
@@ -372,7 +393,7 @@ bool Node::DiscoverNeighbourhood()
                 return false;
             }
             
-            newClosestNode = closestNodeConnection->GetClosestNodes(
+            newClosestNode = closestNodeConnection->GetClosestNodesByDistance(
                 _myNodeInfo.location(), numeric_limits<Distance>::max(), 1, Neighbours::Included);
         }
         catch (exception &e) {
@@ -409,7 +430,7 @@ bool Node::DiscoverNeighbourhood()
             SafeStoreNode( NodeDbEntry(neighbourCandidate, NodeRelationType::Neighbour, NodeContactRoleType::Initiator), candidateConnection );
             
             // Get its neighbours closest to us
-            vector<NodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodes(
+            vector<NodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodesByDistance(
                 _myNodeInfo.location(), INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT, 10, Neighbours::Included );
             
             // Mark current node as processed and append its new neighbours to our todo list

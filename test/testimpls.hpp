@@ -16,11 +16,14 @@ class DummySpatialDatabase : public ISpatialDatabase
     static std::random_device _randomDevice;
     
     // TODO probably would be better to store nodes in a vector in ascending order of distance from myLocation
+    GpsLocation _myLocation;
     std::unordered_map<std::string,NodeDbEntry> _nodes;
     
     std::vector<NodeInfo> GetNodes(NodeRelationType relationType) const;
     
 public:
+    
+    DummySpatialDatabase(const GpsLocation &nodeLocation);
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
@@ -30,11 +33,11 @@ public:
     bool Remove(const std::string &nodeId) override;
     
     size_t GetColleagueNodeCount() const override;
-    std::vector<NodeInfo> GetNeighbourNodes() const override;
-    Distance GetFarthestNeighbourDistanceKm(const GpsLocation &fromLocation) const override;
+    std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
+    //Distance GetFarthestNeighbourDistanceKm() const override;
     std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
     
-    std::vector<NodeInfo> GetClosestNodes(const GpsLocation &position,
+    std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &position,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
 

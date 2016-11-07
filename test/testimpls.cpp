@@ -15,6 +15,10 @@ namespace LocNet
 random_device DummySpatialDatabase::_randomDevice;
 
 
+DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& nodeLocation) :
+    _myLocation(nodeLocation) {}
+
+
 
 bool DummySpatialDatabase::Store(const NodeDbEntry &node)
 {
@@ -67,7 +71,7 @@ bool DummySpatialDatabase::Remove(const string &nodeId)
 
 
 
-vector<NodeInfo> DummySpatialDatabase::GetClosestNodes(
+vector<NodeInfo> DummySpatialDatabase::GetClosestNodesByDistance(
     const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const
 {
     // Start with all nodes
@@ -146,24 +150,28 @@ std::vector<NodeInfo> DummySpatialDatabase::GetNodes(NodeRelationType relationTy
 }
 
 
-vector<NodeInfo> DummySpatialDatabase::GetNeighbourNodes() const
-    { return GetNodes(NodeRelationType::Neighbour); }
+// Distance DummySpatialDatabase::GetFarthestNeighbourDistanceKm() const
+// {
+//     vector<NodeInfo> neighbours( GetNodes(NodeRelationType::Neighbour) );
+//     if ( neighbours.empty() )
+//         { return 0; }
+//         
+//     auto farthestNeighbourIt =  max_element( neighbours.begin(), neighbours.end(),
+//         [this] (const NodeInfo &one, const NodeInfo &other)
+//             { return GetDistanceKm( one.location(), _myLocation ) < GetDistanceKm( other.location(), _myLocation ); } );
+//     return GetDistanceKm( farthestNeighbourIt->location(), fromLocation );
+// }
 
 size_t DummySpatialDatabase::GetColleagueNodeCount() const
     { return GetNodes(NodeRelationType::Colleague).size(); }
 
-Distance DummySpatialDatabase::GetFarthestNeighbourDistanceKm(const GpsLocation& fromLocation) const
+vector<NodeInfo> DummySpatialDatabase::GetNeighbourNodesByDistance() const
 {
     vector<NodeInfo> neighbours( GetNodes(NodeRelationType::Neighbour) );
-    if ( neighbours.empty() )
-        { return 0; }
-        
-    auto farthestNeighbourIt =  max_element( neighbours.begin(), neighbours.end(),
-        [this, &fromLocation] (const NodeInfo &one, const NodeInfo &other)
-            { return GetDistanceKm( one.location(), fromLocation ) < GetDistanceKm( other.location(), fromLocation ); } );
-    return GetDistanceKm( farthestNeighbourIt->location(), fromLocation );
+    sort( neighbours.begin(), neighbours.end(), [this] (const NodeInfo &one, const NodeInfo &other)
+        { return GetDistanceKm( one.location(), _myLocation ) < GetDistanceKm( other.location(), _myLocation ); } );
+    return neighbours;
 }
-
     
     
 
