@@ -1,8 +1,6 @@
 #ifndef __IMPLEMENTATIONS_FOR_TESTING_H__
 #define __IMPLEMENTATIONS_FOR_TESTING_H__
 
-#include <string>
-
 #include "locnet.hpp"
 
 
@@ -17,7 +15,7 @@ class DummySpatialDatabase : public ISpatialDatabase
     
     // TODO probably would be better to store nodes in a vector in ascending order of distance from myLocation
     GpsLocation _myLocation;
-    std::unordered_map<std::string,NodeDbEntry> _nodes;
+    std::unordered_map<NodeId,NodeDbEntry> _nodes;
     
     std::vector<NodeInfo> GetNodes(NodeRelationType relationType) const;
     
@@ -28,9 +26,9 @@ public:
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
     bool Store(const NodeDbEntry &node) override;
-    std::shared_ptr<NodeDbEntry> Load(const std::string &nodeId) const override;
+    std::shared_ptr<NodeDbEntry> Load(const NodeId &nodeId) const override;
     bool Update(const NodeDbEntry &node) override;
-    bool Remove(const std::string &nodeId) override;
+    bool Remove(const NodeId &nodeId) override;
     
     size_t GetColleagueNodeCount() const override;
     std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
