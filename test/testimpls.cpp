@@ -150,20 +150,9 @@ std::vector<NodeInfo> DummySpatialDatabase::GetNodes(NodeRelationType relationTy
 }
 
 
-// Distance DummySpatialDatabase::GetFarthestNeighbourDistanceKm() const
-// {
-//     vector<NodeInfo> neighbours( GetNodes(NodeRelationType::Neighbour) );
-//     if ( neighbours.empty() )
-//         { return 0; }
-//         
-//     auto farthestNeighbourIt =  max_element( neighbours.begin(), neighbours.end(),
-//         [this] (const NodeInfo &one, const NodeInfo &other)
-//             { return GetDistanceKm( one.location(), _myLocation ) < GetDistanceKm( other.location(), _myLocation ); } );
-//     return GetDistanceKm( farthestNeighbourIt->location(), fromLocation );
-// }
-
 size_t DummySpatialDatabase::GetColleagueNodeCount() const
     { return GetNodes(NodeRelationType::Colleague).size(); }
+
 
 vector<NodeInfo> DummySpatialDatabase::GetNeighbourNodesByDistance() const
 {

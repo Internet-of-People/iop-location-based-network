@@ -34,7 +34,6 @@ public:
     
     size_t GetColleagueNodeCount() const override;
     std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
-    //Distance GetFarthestNeighbourDistanceKm() const override;
     std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
     
     std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &position,

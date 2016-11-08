@@ -53,10 +53,9 @@ public:
 
     virtual size_t GetColleagueNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
-    //virtual Distance GetFarthestNeighbourDistanceKm() const = 0;
     
-    virtual std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &position,
-        Distance Km, size_t maxNodeCount, Neighbours filter) const = 0;
+    virtual std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
+        Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
 
     virtual std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const = 0;

@@ -465,8 +465,43 @@ bool Node::InitializeNeighbourhood()
 
 void Node::RenewNodeRelations()
 {
-    // TODO implement this
     // TODO we probably have to run this in a separate thread
+    vector<NodeDbEntry> contactedNodes; // TODO = _spatialDb->GetNodes(NodeContactRoleType::Initiator);
+    for (auto const &node : contactedNodes)
+    {
+        try
+        {
+            shared_ptr<IRemoteNode> connection = SafeConnectTo( node.profile() );
+            if (connection == nullptr)
+            {
+                LOG(WARNING) << "Failed to contact node " << node.profile().id();
+                continue;
+            }
+            
+            bool renewed = false;
+            switch ( node.relationType() )
+            {
+                case NodeRelationType::Colleague:
+                    renewed = connection->RenewColleague(_myNodeInfo);
+                    break;
+                    
+                case NodeRelationType::Neighbour:
+                    renewed = connection->RenewNeighbour(_myNodeInfo);
+                    break;
+                    
+                default:
+                    throw runtime_error("Unknown relation type");
+            }
+            
+            if (! renewed)
+                { _spatialDb->Remove( node.profile().id() ); }
+        }
+        catch (exception &e)
+        {
+            LOG(WARNING) << "Unexpected error while contacting node "
+                << node.profile().id() << " : " << e.what();
+        }
+    }
 }
 
 
