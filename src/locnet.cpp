@@ -146,7 +146,7 @@ vector<NodeInfo> Node::GetClosestNodesByDistance(const GpsLocation& location,
 Distance Node::GetBubbleSize(const GpsLocation& location) const
 {
     Distance distance = _spatialDb->GetDistanceKm( _myNodeInfo.location(), location );
-    Distance bubbleSize = log10(distance + 2500.) * 500. - 1700.;
+    Distance bubbleSize = log10(distance + 2500.) * 501. - 1700.;
     return bubbleSize;
 }
 

@@ -28,10 +28,10 @@ class NodeDbEntry : public NodeInfo
 public:
     
     NodeDbEntry(const NodeDbEntry& other);
-    NodeDbEntry( const NodeProfile& profile, const GpsLocation& location,
-                       NodeRelationType relationType, NodeContactRoleType roleType );
     NodeDbEntry( const NodeInfo& info,
-                       NodeRelationType relationType, NodeContactRoleType roleType );
+                 NodeRelationType relationType, NodeContactRoleType roleType );
+    NodeDbEntry( const NodeProfile& profile, const GpsLocation& location,
+                 NodeRelationType relationType, NodeContactRoleType roleType );
     
     NodeRelationType  relationType() const;
     NodeContactRoleType roleType() const;
