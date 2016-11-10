@@ -222,7 +222,7 @@ SCENARIO("Server registration", "")
             ServiceProfile minterService("Minter", "127.0.0.1", 2222, "", 0);
             geonet.RegisterService(ServiceType::Token, tokenService);
             geonet.RegisterService(ServiceType::Minting, minterService);
-            geonet.RemoveService(ServiceType::Minting);
+            geonet.DeregisterService(ServiceType::Minting);
             THEN("they disappear from the list") {
                 auto const &services = geonet.GetServices();
                 REQUIRE( services.find(ServiceType::Relay) == services.end() );

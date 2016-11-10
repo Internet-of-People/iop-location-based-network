@@ -67,7 +67,7 @@ void Node::RegisterService(ServiceType serviceType, const ServiceProfile& servic
     _services[serviceType] = serviceInfo;
 }
 
-void Node::RemoveService(ServiceType serviceType)
+void Node::DeregisterService(ServiceType serviceType)
 {
     auto it = _services.find(serviceType);
     if ( it == _services.end() ) {

@@ -50,7 +50,7 @@ class ILocalServices
 public:
     
     virtual void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) = 0;
-    virtual void RemoveService(ServiceType serviceType) = 0;
+    virtual void DeregisterService(ServiceType serviceType) = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
 };
 
@@ -100,7 +100,7 @@ public:
     
     // Local interface for services running on the same hardware
     void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) override;
-    void RemoveService(ServiceType serviceType) override;
+    void DeregisterService(ServiceType serviceType) override;
     
     // Interface provided for the same network instances running on remote machines
     size_t GetColleagueNodeCount() const override;
