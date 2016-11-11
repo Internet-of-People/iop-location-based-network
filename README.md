@@ -4,4 +4,5 @@
 [![Build Status](https://travis-ci.org/Fermat-ORG/iop-location-based-network.svg?branch=master)](https://travis-ci.org/Fermat-ORG/iop-location-based-network)
 
 Dependencies:
-- So far only header only libraries are used, so everything (catch and easylogging++) is included within the repository
+- C++ library dependencies are header only, catch and easylogging++ are included in directory "extlib"
+- protoc-compiler package, preferably 3.x, but also should work with 2.x
