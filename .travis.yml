@@ -9,10 +9,7 @@ language: cpp
 
 # Build steps
 script:
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_CXX_COMPILER=$COMPILER .. && make
-  - ./test/tests
+  - ./build.sh
 
 # Custom packages for different target compilers
 matrix:
