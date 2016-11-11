@@ -28,27 +28,22 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
         }
     }
     
-    NodeProfile prof("NodeId", "127.0.0.1", 6666, "", 0);
+    NodeProfile prof("NodeId", { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } );
     GIVEN("A node profile object") {
         THEN("its fields are properly filled in") {
             REQUIRE( prof.id() == "NodeId" );
-            REQUIRE( prof.ipv4Address() == "127.0.0.1" );
-            REQUIRE( prof.ipv4Port() == 6666 );
-            REQUIRE( prof.ipv6Address() == "" );
-            REQUIRE( prof.ipv6Port() == 0 );
+            REQUIRE( prof.contacts().size() == 1 );
+            REQUIRE( prof.contacts()[0].addressType() == AddressType::Ipv4 );
+            REQUIRE( prof.contacts()[0].address() == "127.0.0.1" );
+            REQUIRE( prof.contacts()[0].port() == 6666 );
         }
     }
     
-    GIVEN("A node profile + location object") {
+    GIVEN("A node info object") {
         NodeInfo nodeInfo(prof, loc);
         THEN("its fields are properly filled in") {
-            REQUIRE( nodeInfo.profile().id() == prof.id() );
-            REQUIRE( nodeInfo.profile().ipv4Address() == prof.ipv4Address() );
-            REQUIRE( nodeInfo.profile().ipv4Port() == prof.ipv4Port() );
-            REQUIRE( nodeInfo.profile().ipv6Address() == prof.ipv6Address() );
-            REQUIRE( nodeInfo.profile().ipv6Port() == prof.ipv6Port() );
-            REQUIRE( nodeInfo.location().latitude() == loc.latitude() );
-            REQUIRE( nodeInfo.location().longitude() == loc.longitude() );
+            REQUIRE( nodeInfo.profile() == prof );
+            REQUIRE( nodeInfo.location() == loc );
         }
     }
 }
@@ -88,10 +83,12 @@ SCENARIO("Spatial database", "")
         }
         
         WHEN("adding nodes") {
-            NodeDbEntry entry1( NodeProfile("ColleagueNodeId1", "127.0.0.1", 6666, "", 0), GpsLocation(1.0, 1.0),
-                                NodeRelationType::Colleague, NodeContactRoleType::Initiator );
-            NodeDbEntry entry2( NodeProfile("NeighbourNodeId2", "127.0.0.1", 6666, "", 0), GpsLocation(2.0, 2.0),
-                                NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
+            NodeDbEntry entry1( NodeProfile( "ColleagueNodeId1",
+                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
+                GpsLocation(1.0, 1.0), NodeRelationType::Colleague, NodeContactRoleType::Initiator );
+            NodeDbEntry entry2( NodeProfile( "NeighbourNodeId2",
+                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
+                GpsLocation(2.0, 2.0), NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
             
             geodb.Store(entry1);
             geodb.Store(entry2);
@@ -113,16 +110,21 @@ SCENARIO("Spatial database", "")
         }
         
         WHEN("when having several nodes") {
-            NodeDbEntry entryKecskemet( NodeProfile("KecskemetId", "127.0.0.1", 6666, "", 0), Kecskemet,
-                                        NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
-            NodeDbEntry entryWien( NodeProfile("WienId", "127.0.0.1", 6666, "", 0), Wien,
-                                   NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
-            NodeDbEntry entryLondon( NodeProfile("LondonId", "127.0.0.1", 6666, "", 0), London,
-                                     NodeRelationType::Colleague, NodeContactRoleType::Initiator );
-            NodeDbEntry entryNewYork( NodeProfile("NewYorkId", "127.0.0.1", 6666, "", 0), NewYork,
-                                      NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
-            NodeDbEntry entryCapeTown( NodeProfile("CapeTownId", "127.0.0.1", 6666, "", 0), CapeTown,
-                                       NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
+            NodeDbEntry entryKecskemet( NodeProfile("KecskemetId",
+                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
+                Kecskemet, NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
+            NodeDbEntry entryWien( NodeProfile("WienId",
+                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
+                Wien, NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
+            NodeDbEntry entryLondon( NodeProfile("LondonId",
+                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
+                London, NodeRelationType::Colleague, NodeContactRoleType::Initiator );
+            NodeDbEntry entryNewYork( NodeProfile("NewYorkId",
+                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
+                NewYork, NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
+            NodeDbEntry entryCapeTown( NodeProfile("CapeTownId",
+                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
+                CapeTown, NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
             
             geodb.Store(entryKecskemet);
             geodb.Store(entryLondon);
@@ -191,7 +193,8 @@ SCENARIO("Server registration", "")
 {
     GIVEN("The location based network") {
         GpsLocation loc(1.0, 2.0);
-        NodeInfo nodeInfo( NodeProfile("NodeId", "127.0.0.1", 6666, "", 0), loc );
+        NodeInfo nodeInfo( NodeProfile("NodeId",
+            { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), loc );
         shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
         shared_ptr<IRemoteNodeConnectionFactory> connectionFactory( new DummyLocNetRemoteNodeConnectionFactory() );
         Node geonet(nodeInfo, geodb, connectionFactory, true);
@@ -204,9 +207,11 @@ SCENARIO("Server registration", "")
                 REQUIRE( services.find(ServiceType::Minting) == services.end() );
             }
         }
-        ServiceProfile tokenService("Token", "127.0.0.1", 1111, "", 0);
+        ServiceProfile tokenService("Token",
+            { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 1111) } );
         WHEN("adding services") {
-            ServiceProfile minterService("Minter", "127.0.0.1", 2222, "", 0);
+            ServiceProfile minterService("Minter",
+                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 2222) } );
             geonet.RegisterService(ServiceType::Token, tokenService);
             geonet.RegisterService(ServiceType::Minting, minterService);
             THEN("added servers appear on queries") {
@@ -219,7 +224,8 @@ SCENARIO("Server registration", "")
             }
         }
         WHEN("removing servers") {
-            ServiceProfile minterService("Minter", "127.0.0.1", 2222, "", 0);
+            ServiceProfile minterService("Minter",
+                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 2222) } );
             geonet.RegisterService(ServiceType::Token, tokenService);
             geonet.RegisterService(ServiceType::Minting, minterService);
             geonet.DeregisterService(ServiceType::Minting);

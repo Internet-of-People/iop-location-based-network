@@ -2,6 +2,8 @@
 #define __LOCNET_BASIC_TYPES_H__
 
 #include <string>
+#include <vector>
+#include <iostream>
 
 
 
@@ -10,35 +12,57 @@ namespace LocNet
 
 
 typedef std::string NodeId;
-typedef std::string Ipv4Address;
-typedef std::string Ipv6Address;
+typedef std::string Address;
 typedef uint16_t    TcpPort;
 typedef float       GpsCoordinate;
 typedef float       Distance;
 
 
 
+enum class AddressType : uint8_t
+{
+    Ipv4 = 1,
+    Ipv6 = 2,
+};
+
+
+class NetworkInterface
+{
+    AddressType _addressType;
+    Address     _address;
+    TcpPort     _port;
+    
+public:
+    
+    NetworkInterface();
+    NetworkInterface(const NetworkInterface &other);
+    NetworkInterface(AddressType addressType, const Address &address, TcpPort port);
+    
+    AddressType addressType() const;
+    const Address& address() const;
+    TcpPort port() const;
+    
+    bool operator==(const NetworkInterface &other) const;
+};
+
+
+std::ostream& operator<<(std::ostream& out, const NetworkInterface &value);
+
+
 class NodeProfile
 {
-    NodeId      _id;
-    Ipv4Address _ipv4Address;
-    TcpPort     _ipv4Port;
-    Ipv6Address _ipv6Address;
-    TcpPort     _ipv6Port;
+    NodeId _id;
+    // TODO will we also need a public key here?
+    std::vector<NetworkInterface> _contacts;
     
 public:
     
     NodeProfile();
     NodeProfile(const NodeProfile &other);
-    NodeProfile(const NodeId &id,
-                const Ipv4Address &ipv4Address, TcpPort ipv4Port,
-                const Ipv6Address &ipv6Address, TcpPort ipv6Port);
+    NodeProfile(const NodeId &id, const std::vector<NetworkInterface> _contacts);
     
     const NodeId& id() const;
-    const Ipv4Address& ipv4Address() const;
-    TcpPort ipv4Port() const;
-    const Ipv6Address& ipv6Address() const;
-    TcpPort ipv6Port() const;
+    const std::vector<NetworkInterface>& contacts() const;
     
     bool operator==(const NodeProfile &other) const;
 };

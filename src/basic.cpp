@@ -9,35 +9,49 @@ using namespace std;
 namespace LocNet
 {
 
+NetworkInterface::NetworkInterface() {}
     
+NetworkInterface::NetworkInterface(const NetworkInterface& other) :
+    _addressType(other._addressType), _address(other._address), _port(other._port) {}
+
+NetworkInterface::NetworkInterface(AddressType addressType, const Address& address, TcpPort port) :
+    _addressType(addressType), _address(address), _port(port) {}
+
+AddressType NetworkInterface::addressType() const { return _addressType; }
+const Address& NetworkInterface::address() const { return _address; }
+TcpPort NetworkInterface::port() const { return _port; }
+
+bool NetworkInterface::operator==(const NetworkInterface& other) const
+{
+    return  _addressType == other._addressType &&
+            _address == other._address &&
+            _port == other._port;
+}
+
+
+std::ostream& operator<<(std::ostream& out, const NetworkInterface &value)
+{
+    return out << value.address() << ":" << value.port();
+}
+
+
+
 NodeProfile::NodeProfile() :
-    _id(), _ipv4Address(), _ipv4Port(0), _ipv6Address(), _ipv6Port(0) {}
+    _id(), _contacts() {}
 
 NodeProfile::NodeProfile(const NodeProfile& other) :
-    _id(other._id),
-    _ipv4Address(other._ipv4Address), _ipv4Port(other._ipv4Port),
-    _ipv6Address(other._ipv6Address), _ipv6Port(other._ipv6Port) {}
+    _id(other._id), _contacts(other._contacts) {}
 
-NodeProfile::NodeProfile(const NodeId& id,
-                         const Ipv4Address& ipv4Address, TcpPort ipv4Port,
-                         const Ipv6Address& ipv6Address, TcpPort ipv6Port) :
-    _id(id),
-    _ipv4Address(ipv4Address), _ipv4Port(ipv4Port),
-    _ipv6Address(ipv6Address), _ipv6Port(ipv6Port) {}
+NodeProfile::NodeProfile(const NodeId& id, vector<NetworkInterface> contacts) :
+    _id(id), _contacts(contacts) {}
 
 const NodeId& NodeProfile::id() const { return _id; }
-const Ipv4Address& NodeProfile::ipv4Address() const { return _ipv4Address; }
-TcpPort NodeProfile::ipv4Port() const { return _ipv4Port; }
-const Ipv6Address& NodeProfile::ipv6Address() const { return _ipv6Address; }
-TcpPort NodeProfile::ipv6Port() const { return _ipv6Port; }
+const vector<NetworkInterface>& NodeProfile::contacts() const { return _contacts; }
 
 bool NodeProfile::operator==(const NodeProfile& other) const
 {
     return  _id == other._id &&
-            _ipv4Address == other._ipv4Address &&
-            _ipv4Port == other._ipv4Port &&
-            _ipv6Address == other._ipv6Address &&
-            _ipv6Port == other._ipv6Port;
+            _contacts == other._contacts;
 }
 
 

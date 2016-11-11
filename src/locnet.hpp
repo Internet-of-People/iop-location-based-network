@@ -11,6 +11,17 @@
 namespace LocNet
 {
 
+    
+// Local interface for services running on the same hardware
+class ILocalServices
+{
+public:
+    
+    virtual void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) = 0;
+    virtual void DeregisterService(ServiceType serviceType) = 0;
+    virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
+};
+
 
 // Interface provided for the same network instances running on remote machines
 class IRemoteNode
@@ -41,17 +52,6 @@ public:
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     virtual std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
-};
-
-
-// Local interface for services running on the same hardware
-class ILocalServices
-{
-public:
-    
-    virtual void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) = 0;
-    virtual void DeregisterService(ServiceType serviceType) = 0;
-    virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
 };
 
 

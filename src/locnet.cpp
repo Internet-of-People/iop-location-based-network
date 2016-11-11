@@ -26,8 +26,10 @@ static const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT = 10;
 
 const vector<NodeInfo> Node::_seedNodes {
     // TODO put some real seed nodes in here
-    NodeInfo( NodeProfile( NodeId("FirstSeedNodeId"), "1.2.3.4", 5555, "", 0 ),  GpsLocation(1.0, 2.0) ),
-    NodeInfo( NodeProfile( NodeId("SecondSeedNodeId"), "6.7.8.9", 5555, "", 0 ), GpsLocation(3.0, 4.0) ),
+    NodeInfo( NodeProfile( NodeId("FirstSeedNodeId"),
+        { NetworkInterface(AddressType::Ipv4, "1.2.3.4", 5555) } ), GpsLocation(1.0, 2.0) ),
+    NodeInfo( NodeProfile( NodeId("SecondSeedNodeId"),
+        { NetworkInterface(AddressType::Ipv4, "6.7.8.9", 5555) } ), GpsLocation(3.0, 4.0) ),
 };
 
 random_device Node::_randomDevice;
@@ -179,12 +181,8 @@ shared_ptr<IRemoteNode> Node::SafeConnectTo(const NodeProfile& node)
     
     try { return _connectionFactory->ConnectTo(node); }
     catch (exception &e)
-    {
-        LOG(WARNING) << "Failed to connect to " << node.ipv4Address() << ":" << node.ipv4Port() << " / "
-                                                << node.ipv6Address() << ":" << node.ipv6Port();
-        LOG(WARNING) << "Error was: " << e.what();
-        return shared_ptr<IRemoteNode>();
-    }
+        { LOG(INFO) << "Failed to connect to " << node.id() << ", error was: " << e.what(); }
+    return shared_ptr<IRemoteNode>();
 }
 
 
