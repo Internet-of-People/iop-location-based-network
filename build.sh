@@ -1,10 +1,10 @@
 rm -rf generated/*
 mkdir /tmp/IopLocNet
 echo Downloading Protobuf protocol definitions
-wget --quiet --output-document /tmp/IopLocNet/IopLocNet.proto3 \
+wget --quiet --output-document /tmp/IopLocNet/IopLocNet \
     https://raw.githubusercontent.com/Internet-of-People/message-protocol/master/IopLocNet.proto3
 echo Generating C++ sources from protocol definitions
-protoc -I=/tmp/IopLocNet --cpp_out=generated /tmp/IopLocNet/IopLocNet.proto3
+protoc -I=/tmp/IopLocNet --cpp_out=generated /tmp/IopLocNet/IopLocNet
 rm -rf /tmp/IopLocNet
 
 echo Generating makefiles
