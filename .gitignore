@@ -1,4 +1,5 @@
 .kdev*
 *.kdev*
-build*
+build
+generated/*
 logs
