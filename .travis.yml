@@ -5,7 +5,7 @@ dist: trusty
 language: cpp
 
 #before_install:
-#  - sudo apt-get install -y some_package
+  - sudo apt-get install -y protobuf-compiler
 
 # Build steps
 script:
