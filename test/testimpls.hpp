@@ -30,6 +30,8 @@ public:
     bool Update(const NodeDbEntry &node) override;
     bool Remove(const NodeId &nodeId) override;
     
+    void ExpireOldNodes() override;
+    
     size_t GetColleagueNodeCount() const override;
     std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
     std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;

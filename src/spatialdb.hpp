@@ -50,6 +50,8 @@ public:
     virtual std::shared_ptr<NodeDbEntry> Load(const NodeId &nodeId) const = 0;
     virtual bool Update(const NodeDbEntry &node) = 0;
     virtual bool Remove(const NodeId &nodeId) = 0;
+    
+    virtual void ExpireOldNodes() = 0;
 
     virtual size_t GetColleagueNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;

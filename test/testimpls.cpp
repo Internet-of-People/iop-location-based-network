@@ -70,6 +70,12 @@ bool DummySpatialDatabase::Remove(const string &nodeId)
 }
 
 
+void DummySpatialDatabase::ExpireOldNodes()
+{
+    // TODO maybe we could implement it here, but this class is useful for testing, not production
+}
+
+
 
 vector<NodeInfo> DummySpatialDatabase::GetClosestNodesByDistance(
     const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const

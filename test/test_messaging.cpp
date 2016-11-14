@@ -1,7 +1,7 @@
 #include "catch.hpp"
 #include "easylogging++.h"
+#include "messaging.hpp"
 #include "testimpls.hpp"
-#include "IopLocNet.pb.h"
 
 using namespace std;
 using namespace LocNet;
@@ -10,4 +10,5 @@ using namespace LocNet;
 
 SCENARIO("Messaging definitions", "[messaging]")
 {
+    
 }
