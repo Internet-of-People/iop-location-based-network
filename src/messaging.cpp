@@ -251,10 +251,95 @@ iop::locnet::LocalServiceResponse* MessageDispatcher::DispatchLocalService(
 
 
 iop::locnet::RemoteNodeResponse* MessageDispatcher::DispatchRemoteNode(
-    const iop::locnet::RemoteNodeRequest& request)
+    const iop::locnet::RemoteNodeRequest& nodeRequest)
 {
-    // TODO
-    return nullptr;
+    switch ( nodeRequest.RemoteNodeRequestType_case() )
+    {
+        case iop::locnet::RemoteNodeRequest::kAcceptColleague:
+        {
+            auto acceptColleagueReq = nodeRequest.acceptcolleague();
+            bool accepted = _iRemoteNode.AcceptColleague( Converter::FromProtoBuf( acceptColleagueReq.nodeinfo() ) );
+            auto response = new iop::locnet::RemoteNodeResponse();
+            response->mutable_acceptcolleague()->set_accepted(accepted);
+            return response;
+        }
+        
+        case iop::locnet::RemoteNodeRequest::kRenewColleague:
+        {
+            auto renewColleagueReq = nodeRequest.renewcolleague();
+            bool accepted = _iRemoteNode.RenewColleague( Converter::FromProtoBuf( renewColleagueReq.nodeinfo() ) );
+            auto response = new iop::locnet::RemoteNodeResponse();
+            response->mutable_renewcolleague()->set_accepted(accepted);
+            return response;
+        }
+        
+        case iop::locnet::RemoteNodeRequest::kAcceptNeighbour:
+        {
+            auto acceptNeighbourReq = nodeRequest.acceptneighbour();
+            bool accepted = _iRemoteNode.AcceptNeighbour( Converter::FromProtoBuf( acceptNeighbourReq.nodeinfo() ) );
+            auto response = new iop::locnet::RemoteNodeResponse();
+            response->mutable_acceptneighbour()->set_accepted(accepted);
+            return response;
+        }
+        
+        case iop::locnet::RemoteNodeRequest::kRenewNeighbour:
+        {
+            auto renewNeighbourReq = nodeRequest.renewneighbour();
+            bool accepted = _iRemoteNode.RenewNeighbour( Converter::FromProtoBuf( renewNeighbourReq.nodeinfo() ) );
+            auto response = new iop::locnet::RemoteNodeResponse();
+            response->mutable_renewneighbour()->set_accepted(accepted);
+            return response;
+        }
+
+        case iop::locnet::RemoteNodeRequest::kGetColleagueNodeCount:
+        {
+            size_t counter = _iRemoteNode.GetColleagueNodeCount();
+            auto response = new iop::locnet::RemoteNodeResponse();
+            response->mutable_getcolleaguenodecount()->set_nodecount(counter);
+            return response;
+        }
+        
+        case iop::locnet::RemoteNodeRequest::kGetRandomNodes:
+        {
+            auto randomNodesReq = nodeRequest.getrandomnodes();
+            Neighbours neighbourFilter = randomNodesReq.includeneighbours() ?
+                Neighbours::Included : Neighbours::Excluded;
+                
+            vector<NodeInfo> randomNodes = _iRemoteNode.GetRandomNodes(
+                randomNodesReq.maxnodecount(), neighbourFilter );
+            
+            auto result = new iop::locnet::RemoteNodeResponse();
+            auto response = result->mutable_getrandomnodes();
+            for (auto const &node : randomNodes)
+            {
+                iop::locnet::NodeInfo *info = response->add_nodes();
+                Converter::FillProtoBuf(info, node);
+            }
+            return result;
+        }
+        
+        case iop::locnet::RemoteNodeRequest::kGetClosestNodes:
+        {
+            auto const &closestRequest = nodeRequest.getclosestnodes();
+            GpsLocation location = Converter::FromProtoBuf( closestRequest.location() );
+            Neighbours neighbourFilter = closestRequest.includeneighbours() ?
+                Neighbours::Included : Neighbours::Excluded;
+            
+            vector<NodeInfo> closeNodes( _iRemoteNode.GetClosestNodesByDistance( location,
+                closestRequest.maxradiuskm(), closestRequest.maxnodecount(), neighbourFilter) );
+            
+            auto result = new iop::locnet::RemoteNodeResponse();
+            auto response = result->mutable_getclosestnodes();
+            for (auto const &node : closeNodes)
+            {
+                iop::locnet::NodeInfo *info = response->add_nodes();
+                Converter::FillProtoBuf(info, node);
+            }
+            return result;
+        }
+        
+        default: throw runtime_error("Missing or unknown remote node operation");
+    }
 }
 
 
@@ -305,10 +390,10 @@ iop::locnet::ClientResponse* MessageDispatcher::DispatchClient(
             
             auto result = new iop::locnet::ClientResponse();
             auto response = result->mutable_getclosestnodes();
-            for (auto const &neighbour : closeNodes)
+            for (auto const &node : closeNodes)
             {
                 iop::locnet::NodeInfo *info = response->add_nodes();
-                Converter::FillProtoBuf(info, neighbour);
+                Converter::FillProtoBuf(info, node);
             }
             return result;
         }
