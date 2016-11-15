@@ -129,14 +129,19 @@ public:
 
 enum class ServiceType : uint8_t
 {
-    // TODO are low level "networks" directly reachable by clients?
-    //      If so, should be included here
-    Token       = 1,
-    Profile     = 2,
-    Proximity   = 3,
-    Relay       = 4,
-    Reputation  = 5,
-    Minting     = 6,
+    // Low level networks
+    Unstructured = 0,
+    Content      = 1,
+    Latency      = 2,
+    Location     = 3,
+
+    // High level servers
+    Token       = 11,
+    Profile     = 12,
+    Proximity   = 13,
+    Relay       = 14,
+    Reputation  = 15,
+    Minting     = 16,
 };
 
 // Utility class to enable hash classes to be used as a hash key until fixed in C++ standard

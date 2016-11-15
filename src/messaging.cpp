@@ -43,15 +43,38 @@ ServiceType Converter::FromProtoBuf(iop::locnet::ServiceType value)
 {
     switch(value)
     {
-        case iop::locnet::ServiceType::Token:      return ServiceType::Token;
-        case iop::locnet::ServiceType::Profile:    return ServiceType::Profile;
-        case iop::locnet::ServiceType::Proximity:  return ServiceType::Proximity;
-        case iop::locnet::ServiceType::Relay:      return ServiceType::Relay;
-        case iop::locnet::ServiceType::Reputation: return ServiceType::Reputation;
-        case iop::locnet::ServiceType::Minting:    return ServiceType::Minting;
-        default: throw runtime_error("Unknown service type");
+        case iop::locnet::ServiceType::Unstructured:return ServiceType::Unstructured;
+        case iop::locnet::ServiceType::Content:     return ServiceType::Content;
+        case iop::locnet::ServiceType::Latency:     return ServiceType::Latency;
+        case iop::locnet::ServiceType::Location:    return ServiceType::Location;
+        case iop::locnet::ServiceType::Token:       return ServiceType::Token;
+        case iop::locnet::ServiceType::Profile:     return ServiceType::Profile;
+        case iop::locnet::ServiceType::Proximity:   return ServiceType::Proximity;
+        case iop::locnet::ServiceType::Relay:       return ServiceType::Relay;
+        case iop::locnet::ServiceType::Reputation:  return ServiceType::Reputation;
+        case iop::locnet::ServiceType::Minting:     return ServiceType::Minting;
+        default: throw runtime_error("Missing or unknown service type");
     }
 }
+
+iop::locnet::ServiceType Converter::ToProtoBuf(ServiceType value)
+{
+    switch(value)
+    {
+        case ServiceType::Unstructured: return iop::locnet::ServiceType::Unstructured;
+        case ServiceType::Content:      return iop::locnet::ServiceType::Content;
+        case ServiceType::Latency:      return iop::locnet::ServiceType::Latency;
+        case ServiceType::Location:     return iop::locnet::ServiceType::Location;
+        case ServiceType::Token:        return iop::locnet::ServiceType::Token;
+        case ServiceType::Profile:      return iop::locnet::ServiceType::Profile;
+        case ServiceType::Proximity:    return iop::locnet::ServiceType::Proximity;
+        case ServiceType::Relay:        return iop::locnet::ServiceType::Relay;
+        case ServiceType::Reputation:   return iop::locnet::ServiceType::Reputation;
+        case ServiceType::Minting:      return iop::locnet::ServiceType::Minting;
+        default: throw runtime_error("Missing or unknown service type");
+    }
+}
+
 
 
 NodeProfile Converter::FromProtoBuf(const iop::locnet::NodeProfile& value)
@@ -105,7 +128,7 @@ void Converter::FillProtoBuf(
                 outputContact->set_allocated_ipv6(address);
                 break;
             }
-            default: throw runtime_error("Unknown address type");
+            default: throw runtime_error("Missing or unknown address type");
         }
     }
 }
@@ -148,7 +171,7 @@ shared_ptr<iop::locnet::Response> MessageDispatcher::Dispatch(const iop::locnet:
 {
     // TODO implement better version checks
     if ( request.version().empty() || request.version()[0] != '1' )
-        { throw runtime_error("Unknown request version"); }
+        { throw runtime_error("Missing or unknown request version"); }
     
     shared_ptr<iop::locnet::Response> result( new iop::locnet::Response() );
     auto &response = *result;
@@ -170,7 +193,7 @@ shared_ptr<iop::locnet::Response> MessageDispatcher::Dispatch(const iop::locnet:
                 DispatchClient( request.client() ) );
             break;
             
-        default: throw runtime_error("Unknown request type");
+        default: throw runtime_error("Missing or unknown request type");
     }
     
     return result;
@@ -207,23 +230,24 @@ iop::locnet::LocalServiceResponse* MessageDispatcher::DispatchLocalService(
             return result;
         }
             
-        case iop::locnet::LocalServiceRequest::kGetNeighbours:
+        case iop::locnet::LocalServiceRequest::kGetNeighbourNodes:
         {
             vector<NodeInfo> neighbours = _iLocalService.GetNeighbourNodesByDistance();
             
             auto result = new iop::locnet::LocalServiceResponse();
-            auto response = result->mutable_getneighbours();
+            auto response = result->mutable_getneighbournodes();
             for (auto const &neighbour : neighbours)
             {
-                iop::locnet::NodeInfo *info = response->add_nodeinfo();
+                iop::locnet::NodeInfo *info = response->add_nodes();
                 Converter::FillProtoBuf(info, neighbour);
             }
             return result;
         }
             
-        default: throw runtime_error("Unknown local service operation");
+        default: throw runtime_error("Missing or unknown local service operation");
     }
 }
+
 
 
 iop::locnet::RemoteNodeResponse* MessageDispatcher::DispatchRemoteNode(
@@ -234,11 +258,63 @@ iop::locnet::RemoteNodeResponse* MessageDispatcher::DispatchRemoteNode(
 }
 
 
+
 iop::locnet::ClientResponse* MessageDispatcher::DispatchClient(
-    const iop::locnet::ClientRequest& request)
+    const iop::locnet::ClientRequest& clientRequest)
 {
-    // TODO
-    return nullptr;
+    switch ( clientRequest.ClientRequestType_case() )
+    {
+        case iop::locnet::ClientRequest::kGetServices:
+        {
+            auto const &services = _iClient.GetServices();
+            
+            auto result = new iop::locnet::ClientResponse();
+            auto response = result->mutable_getservices();
+            for (auto const &service : services)
+            {
+                iop::locnet::ServiceProfile *entry = response->add_services();
+                entry->set_servicetype( Converter::ToProtoBuf(service.first) );
+                entry->set_allocated_profile( Converter::ToProtoBuf(service.second) );
+            }
+            return result;
+        }
+        
+        case iop::locnet::ClientRequest::kGetNeighbourNodes:
+        {
+            vector<NodeInfo> neighbours = _iClient.GetNeighbourNodesByDistance();
+            
+            auto result = new iop::locnet::ClientResponse();
+            auto response = result->mutable_getneighbournodes();
+            for (auto const &neighbour : neighbours)
+            {
+                iop::locnet::NodeInfo *info = response->add_nodes();
+                Converter::FillProtoBuf(info, neighbour);
+            }
+            return result;
+        }
+        
+        case iop::locnet::ClientRequest::kGetClosestNodes:
+        {
+            auto const &closestRequest = clientRequest.getclosestnodes();
+            GpsLocation location = Converter::FromProtoBuf( closestRequest.location() );
+            Neighbours neighbourFilter = closestRequest.includeneighbours() ?
+                Neighbours::Included : Neighbours::Excluded;
+            
+            vector<NodeInfo> closeNodes( _iClient.GetClosestNodesByDistance( location,
+                closestRequest.maxradiuskm(), closestRequest.maxnodecount(), neighbourFilter) );
+            
+            auto result = new iop::locnet::ClientResponse();
+            auto response = result->mutable_getclosestnodes();
+            for (auto const &neighbour : closeNodes)
+            {
+                iop::locnet::NodeInfo *info = response->add_nodes();
+                Converter::FillProtoBuf(info, neighbour);
+            }
+            return result;
+        }
+        
+        default: throw runtime_error("Missing or unknown client operation");
+    }
 }
 
 

@@ -14,10 +14,10 @@ void f()
 }
 
 
-SCENARIO("Messaging definitions", "[messaging]")
+SCENARIO("ProtoBuf messaging", "[messaging]")
 {
     GIVEN("A GPS location") {
-        THEN("It's properly transformed to and back from ProtoBuf") {
+        THEN("Its coordinates are properly transformed to and back from ProtoBuf int representation") {
             iop::locnet::GpsLocation protoBufBudapest;
             Converter::FillProtoBuf(&protoBufBudapest, TestData::Budapest);
             
@@ -43,23 +43,23 @@ SCENARIO("Messaging definitions", "[messaging]")
         Node node( TestData::NodeBudapest, geodb, connectionFactory );
         MessageDispatcher dispatcher(node);
         
-        THEN("Local service GetNeighbourhood requests are properly served") {
+        THEN("Local service GetNeighbours requests are properly served") {
             iop::locnet::Request request;
             request.set_version("1");
             iop::locnet::GetNeighbourNodesByDistanceRequest *getNeighboursReq =
-                request.mutable_localservice()->mutable_getneighbours();
+                request.mutable_localservice()->mutable_getneighbournodes();
                 
             shared_ptr<iop::locnet::Response> response = dispatcher.Dispatch(request);
             REQUIRE( response->has_localservice() );
-            REQUIRE( response->localservice().has_getneighbours() );
+            REQUIRE( response->localservice().has_getneighbournodes() );
             
             const iop::locnet::GetNeighbourNodesByDistanceResponse &getNeighboursResp =
-                response->localservice().getneighbours();
-            REQUIRE( getNeighboursResp.nodeinfo_size() == 2 );
+                response->localservice().getneighbournodes();
+            REQUIRE( getNeighboursResp.nodes_size() == 2 );
             
-            NodeInfo closestNeighbour( Converter::FromProtoBuf( getNeighboursResp.nodeinfo(0) ) );
+            NodeInfo closestNeighbour( Converter::FromProtoBuf( getNeighboursResp.nodes(0) ) );
             REQUIRE( closestNeighbour == TestData::NodeKecskemet );
-            NodeInfo secondNeighbour( Converter::FromProtoBuf( getNeighboursResp.nodeinfo(1) ) );
+            NodeInfo secondNeighbour( Converter::FromProtoBuf( getNeighboursResp.nodes(1) ) );
             REQUIRE( secondNeighbour == TestData::NodeWien );
         }
     }
