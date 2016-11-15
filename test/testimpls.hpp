@@ -1,5 +1,5 @@
-#ifndef __IMPLEMENTATIONS_FOR_TESTING_H__
-#define __IMPLEMENTATIONS_FOR_TESTING_H__
+#ifndef __LOCNET_TEST_IMPLEMENTATIONS_H__
+#define __LOCNET_TEST_IMPLEMENTATIONS_H__
 
 #include "locnet.hpp"
 
@@ -42,7 +42,7 @@ public:
 
 
 
-class DummyLocNetRemoteNodeConnectionFactory: public IRemoteNodeConnectionFactory
+class DummyRemoteNodeConnectionFactory: public IRemoteNodeConnectionFactory
 {
 public:
     
@@ -53,4 +53,4 @@ public:
 } // namespace LocNet
 
 
-#endif // __IMPLEMENTATIONS_FOR_TESTING_H__
+#endif // __LOCNET_TEST_IMPLEMENTATIONS_H__

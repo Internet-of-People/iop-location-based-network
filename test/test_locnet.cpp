@@ -2,6 +2,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "easylogging++.h"
+#include "testdata.hpp"
 #include "testimpls.hpp"
 
 using namespace std;
@@ -52,15 +53,8 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
 
 SCENARIO("Spatial database", "")
 {
-    GpsLocation Budapest(47.4808706,18.849426);
-    GpsLocation Kecskemet(46.8854726,19.538628);
-    GpsLocation Wien(48.2205998,16.2399759);
-    GpsLocation London(51.5283063,-0.3824722);
-    GpsLocation NewYork(40.7053094,-74.2588858);
-    GpsLocation CapeTown(-33.9135236,18.0941875);
-
     GIVEN("A spatial database implementation") {
-        DummySpatialDatabase geodb(Budapest);
+        DummySpatialDatabase geodb(TestData::Budapest);
 
         THEN("its initially empty") {
             REQUIRE( geodb.GetColleagueNodeCount() == 0 );
@@ -68,11 +62,11 @@ SCENARIO("Spatial database", "")
             REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
         }
 
-        Distance Budapest_Kecskemet = geodb.GetDistanceKm(Budapest, Kecskemet);
-        Distance Budapest_Wien = geodb.GetDistanceKm(Budapest, Wien);
-        Distance Budapest_London = geodb.GetDistanceKm(Budapest, London);
-        Distance Budapest_NewYork = geodb.GetDistanceKm(Budapest, NewYork);
-        Distance Budapest_CapeTown = geodb.GetDistanceKm(Budapest, CapeTown);
+        Distance Budapest_Kecskemet = geodb.GetDistanceKm(TestData::Budapest, TestData::Kecskemet);
+        Distance Budapest_Wien = geodb.GetDistanceKm(TestData::Budapest, TestData::Wien);
+        Distance Budapest_London = geodb.GetDistanceKm(TestData::Budapest, TestData::London);
+        Distance Budapest_NewYork = geodb.GetDistanceKm(TestData::Budapest, TestData::NewYork);
+        Distance Budapest_CapeTown = geodb.GetDistanceKm(TestData::Budapest, TestData::CapeTown);
         
         THEN("it can measure distances") {
             REQUIRE( Budapest_Kecskemet == Approx(83.56).epsilon(0.01) );
@@ -110,56 +104,40 @@ SCENARIO("Spatial database", "")
         }
         
         WHEN("when having several nodes") {
-            NodeDbEntry entryKecskemet( NodeProfile("KecskemetId",
-                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
-                Kecskemet, NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
-            NodeDbEntry entryWien( NodeProfile("WienId",
-                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
-                Wien, NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
-            NodeDbEntry entryLondon( NodeProfile("LondonId",
-                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
-                London, NodeRelationType::Colleague, NodeContactRoleType::Initiator );
-            NodeDbEntry entryNewYork( NodeProfile("NewYorkId",
-                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
-                NewYork, NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
-            NodeDbEntry entryCapeTown( NodeProfile("CapeTownId",
-                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
-                CapeTown, NodeRelationType::Colleague, NodeContactRoleType::Acceptor );
-            
-            geodb.Store(entryKecskemet);
-            geodb.Store(entryLondon);
-            geodb.Store(entryNewYork);
-            geodb.Store(entryWien);
-            geodb.Store(entryCapeTown);
+            geodb.Store(TestData::EntryKecskemet);
+            geodb.Store(TestData::EntryLondon);
+            geodb.Store(TestData::EntryNewYork);
+            geodb.Store(TestData::EntryWien);
+            geodb.Store(TestData::EntryCapeTown);
 
             THEN("closest nodes are properly selected") {
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
-                        Budapest, 20000.0, 1, Neighbours::Included );
+                        TestData::Budapest, 20000.0, 1, Neighbours::Included );
                     REQUIRE( closestNodes.size() == 1 );
-                    REQUIRE( closestNodes[0] == entryKecskemet );
+                    REQUIRE( closestNodes[0] == TestData::EntryKecskemet );
                 }
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
-                        Budapest, 20000.0, 1, Neighbours::Excluded );
+                        TestData::Budapest, 20000.0, 1, Neighbours::Excluded );
                     REQUIRE( closestNodes.size() == 1 );
-                    REQUIRE( closestNodes[0] == entryLondon );
+                    REQUIRE( closestNodes[0] == TestData::EntryLondon );
                 }
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
-                        Budapest, 20000.0, 1000, Neighbours::Included );
+                        TestData::Budapest, 20000.0, 1000, Neighbours::Included );
                     REQUIRE( closestNodes.size() == 5 );
-                    REQUIRE( closestNodes[0] == entryKecskemet );
-                    REQUIRE( closestNodes[1] == entryWien );
-                    REQUIRE( closestNodes[2] == entryLondon );
-                    REQUIRE( closestNodes[3] == entryNewYork );
-                    REQUIRE( closestNodes[4] == entryCapeTown );
+                    REQUIRE( closestNodes[0] == TestData::EntryKecskemet );
+                    REQUIRE( closestNodes[1] == TestData::EntryWien );
+                    REQUIRE( closestNodes[2] == TestData::EntryLondon );
+                    REQUIRE( closestNodes[3] == TestData::EntryNewYork );
+                    REQUIRE( closestNodes[4] == TestData::EntryCapeTown );
                 }
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
-                        Budapest, 5000.0, 1000, Neighbours::Excluded );
+                        TestData::Budapest, 5000.0, 1000, Neighbours::Excluded );
                     REQUIRE( closestNodes.size() == 1 );
-                    REQUIRE( closestNodes[0] == entryLondon );
+                    REQUIRE( closestNodes[0] == TestData::EntryLondon );
                 }
             }
             
@@ -171,17 +149,17 @@ SCENARIO("Spatial database", "")
                 {
                     vector<NodeInfo> randomNodes = geodb.GetRandomNodes(10, Neighbours::Excluded);
                     REQUIRE( randomNodes.size() == 3 );
-                    REQUIRE( find( randomNodes.begin(), randomNodes.end(), entryLondon ) != randomNodes.end() );
-                    REQUIRE( find( randomNodes.begin(), randomNodes.end(), entryNewYork ) != randomNodes.end() );
-                    REQUIRE( find( randomNodes.begin(), randomNodes.end(), entryCapeTown ) != randomNodes.end() );
+                    REQUIRE( find( randomNodes.begin(), randomNodes.end(), TestData::EntryLondon ) != randomNodes.end() );
+                    REQUIRE( find( randomNodes.begin(), randomNodes.end(), TestData::EntryNewYork ) != randomNodes.end() );
+                    REQUIRE( find( randomNodes.begin(), randomNodes.end(), TestData::EntryCapeTown ) != randomNodes.end() );
                 }
             }
             
             THEN("farthest neighbour is properly selected") {
                 vector<NodeInfo> neighboursByDistance( geodb.GetNeighbourNodesByDistance() );
                 REQUIRE( neighboursByDistance.size() == 2 );
-                REQUIRE( neighboursByDistance[0] == entryKecskemet );
-                REQUIRE( neighboursByDistance[1] == entryWien );
+                REQUIRE( neighboursByDistance[0] == TestData::EntryKecskemet );
+                REQUIRE( neighboursByDistance[1] == TestData::EntryWien );
             }
         }
     }
@@ -196,7 +174,7 @@ SCENARIO("Server registration", "")
         NodeInfo nodeInfo( NodeProfile("NodeId",
             { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), loc );
         shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
-        shared_ptr<IRemoteNodeConnectionFactory> connectionFactory( new DummyLocNetRemoteNodeConnectionFactory() );
+        shared_ptr<IRemoteNodeConnectionFactory> connectionFactory( new DummyRemoteNodeConnectionFactory() );
         Node geonet(nodeInfo, geodb, connectionFactory, true);
         
         WHEN("it's newly created") {

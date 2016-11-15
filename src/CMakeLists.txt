@@ -8,4 +8,4 @@ set_source_files_properties(../generated/IopLocNet.pb.cc PROPERTIES COMPILE_FLAG
 add_executable (iop-locnetd main.cpp)
 target_include_directories (iop-locnetd PUBLIC
     "${CMAKE_SOURCE_DIR}/extlib" "${CMAKE_SOURCE_DIR}/generated")
-target_link_libraries (iop-locnetd LINK_PUBLIC iop-locnet)
+target_link_libraries (iop-locnetd LINK_PUBLIC iop-locnet protobuf)

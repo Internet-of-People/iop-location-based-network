@@ -11,9 +11,28 @@ namespace LocNet
 {
 
 
+struct Converter
+{
+    static GpsLocation FromProtoBuf(const iop::locnet::GpsLocation &value);
+    static ServiceType FromProtoBuf(iop::locnet::ServiceType value);
+    
+    static void FillProtoBuf(iop::locnet::GpsLocation *target, const GpsLocation &source);
+    static void FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile &source);
+    static void FillProtoBuf(iop::locnet::NodeInfo *target, const NodeInfo &source);
+    
+    static iop::locnet::GpsLocation* ToProtoBuf(const GpsLocation &location);
+    static iop::locnet::NodeProfile* ToProtoBuf(const NodeProfile &profile);
+    static iop::locnet::NodeInfo* ToProtoBuf(const NodeInfo &info);
+    
+};
+    
+    
 class MessageDispatcher
 {
-    Node& _node;
+    //Node& _node;
+    ILocalServices &_iLocalService;
+    IRemoteNode    &_iRemoteNode;
+    IClientMethods &_iClient;
     
     iop::locnet::LocalServiceResponse* DispatchLocalService(const iop::locnet::LocalServiceRequest &request);
     iop::locnet::RemoteNodeResponse* DispatchRemoteNode(const iop::locnet::RemoteNodeRequest &request);
@@ -22,6 +41,7 @@ class MessageDispatcher
 public:
     
     MessageDispatcher(Node &node);
+    MessageDispatcher(ILocalServices &iLocalServices, IRemoteNode &iRemoteNode, IClientMethods &iClient);
     
     std::shared_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request);
 };

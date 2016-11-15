@@ -210,7 +210,7 @@ Distance DummySpatialDatabase::GetDistanceKm(const GpsLocation &one, const GpsLo
 
 
 
-shared_ptr<IRemoteNode> DummyLocNetRemoteNodeConnectionFactory::ConnectTo(const NodeProfile&)
+shared_ptr<IRemoteNode> DummyRemoteNodeConnectionFactory::ConnectTo(const NodeProfile&)
 {
     return shared_ptr<IRemoteNode>();
 }

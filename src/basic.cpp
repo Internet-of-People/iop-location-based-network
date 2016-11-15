@@ -77,6 +77,7 @@ void GpsLocation::Validate()
 
 bool GpsLocation::operator==(const GpsLocation& other) const
 {
+    // TODO maybe we should enable some minimal error range here
     return _latitude  == other._latitude &&
            _longitude == other._longitude;
 }
