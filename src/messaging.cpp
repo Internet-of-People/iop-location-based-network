@@ -54,6 +54,31 @@ ServiceType Converter::FromProtoBuf(iop::locnet::ServiceType value)
 }
 
 
+NodeProfile Converter::FromProtoBuf(const iop::locnet::NodeProfile& value)
+{
+    vector<NetworkInterface> addresses;
+    for (int idx = 0; idx < value.contacts_size(); ++idx)
+    {
+        auto const &inputAddr = value.contacts(idx);
+        if ( inputAddr.has_ipv4() )
+            { addresses.emplace_back( AddressType::Ipv4,
+                inputAddr.ipv4().host(), inputAddr.ipv4().port() ); }
+        else if ( inputAddr.has_ipv6() )
+            { addresses.emplace_back( AddressType::Ipv6,
+                inputAddr.ipv6().host(), inputAddr.ipv6().port() ); }
+        else { throw runtime_error("Unknown address type"); }
+    }
+    
+    return NodeProfile( value.nodeid(), addresses );
+}
+
+
+NodeInfo Converter::FromProtoBuf(const iop::locnet::NodeInfo& value)
+{
+    return NodeInfo( FromProtoBuf( value.profile() ), FromProtoBuf( value.location() ) );
+}
+
+
 
 void Converter::FillProtoBuf(
     iop::locnet::NodeProfile *target, const NodeProfile &source)
@@ -163,24 +188,10 @@ iop::locnet::LocalServiceResponse* MessageDispatcher::DispatchLocalService(
             auto const &registerRequest = localServiceRequest.registerservice();
             ServiceType serviceType = Converter::FromProtoBuf( registerRequest.servicetype() );
             
-            auto const &inputProfile = registerRequest.nodeprofile();
-            vector<NetworkInterface> addresses;
-            for (int idx = 0; idx < inputProfile.contacts_size(); ++idx)
-            {
-                auto const &inputAddr = inputProfile.contacts(idx);
-                if ( inputAddr.has_ipv4() )
-                    { addresses.emplace_back( AddressType::Ipv4,
-                        inputAddr.ipv4().host(), inputAddr.ipv4().port() ); }
-                else if ( inputAddr.has_ipv6() )
-                    { addresses.emplace_back( AddressType::Ipv6,
-                        inputAddr.ipv6().host(), inputAddr.ipv6().port() ); }
-                else { throw runtime_error("Unknown address type"); }
-            }
-            
-            _iLocalService.RegisterService( serviceType, NodeProfile( inputProfile.nodeid(), addresses ) );
+            _iLocalService.RegisterService( serviceType, Converter::FromProtoBuf( registerRequest.nodeprofile() ) );
             
             auto response = new iop::locnet::LocalServiceResponse();
-            response->set_allocated_registerservice( new iop::locnet::RegisterServiceResponse() );
+            response->mutable_registerservice();
             return response;
         }
             
@@ -192,7 +203,7 @@ iop::locnet::LocalServiceResponse* MessageDispatcher::DispatchLocalService(
             _iLocalService.DeregisterService(serviceType);
             
             auto result = new iop::locnet::LocalServiceResponse();
-            result->set_allocated_deregisterservice( new iop::locnet::DeregisterServiceResponse() );
+            result->mutable_deregisterservice();
             return result;
         }
             
@@ -201,13 +212,12 @@ iop::locnet::LocalServiceResponse* MessageDispatcher::DispatchLocalService(
             vector<NodeInfo> neighbours = _iLocalService.GetNeighbourNodesByDistance();
             
             auto result = new iop::locnet::LocalServiceResponse();
-            auto response = new iop::locnet::GetNeighbourNodesByDistanceResponse();
+            auto response = result->mutable_getneighbours();
             for (auto const &neighbour : neighbours)
             {
                 iop::locnet::NodeInfo *info = response->add_nodeinfo();
                 Converter::FillProtoBuf(info, neighbour);
             }
-            result->set_allocated_getneighbours(response);
             return result;
         }
             

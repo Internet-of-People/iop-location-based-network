@@ -13,8 +13,10 @@ namespace LocNet
 
 struct Converter
 {
-    static GpsLocation FromProtoBuf(const iop::locnet::GpsLocation &value);
     static ServiceType FromProtoBuf(iop::locnet::ServiceType value);
+    static GpsLocation FromProtoBuf(const iop::locnet::GpsLocation &value);
+    static NodeProfile FromProtoBuf(const iop::locnet::NodeProfile &value);
+    static NodeInfo FromProtoBuf(const iop::locnet::NodeInfo &value);
     
     static void FillProtoBuf(iop::locnet::GpsLocation *target, const GpsLocation &source);
     static void FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile &source);

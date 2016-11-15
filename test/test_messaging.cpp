@@ -57,10 +57,10 @@ SCENARIO("Messaging definitions", "[messaging]")
                 response->localservice().getneighbours();
             REQUIRE( getNeighboursResp.nodeinfo_size() == 2 );
             
-//             NodeProfile closestNeighbour = Converter::FromProtoBuf( getNeighboursResp.nodeinfo(0) );
-//             REQUIRE( closestNeighbour.profile().id() == TestData::NodeKecskemet.id() );
-//             NodeProfile secondNeighbour = Converter::FromProtoBuf( getNeighboursResp.nodeinfo(1) );
-//             REQUIRE( secondNeighbour.profile().id() == TestData::NodeWien.id() );
+            NodeInfo closestNeighbour( Converter::FromProtoBuf( getNeighboursResp.nodeinfo(0) ) );
+            REQUIRE( closestNeighbour == TestData::NodeKecskemet );
+            NodeInfo secondNeighbour( Converter::FromProtoBuf( getNeighboursResp.nodeinfo(1) ) );
+            REQUIRE( secondNeighbour == TestData::NodeWien );
         }
     }
     

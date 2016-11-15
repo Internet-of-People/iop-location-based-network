@@ -5,4 +5,4 @@
 
 Dependencies:
 - C++ library dependencies are header only, catch and easylogging++ are included in directory "extlib"
-- protoc-compiler package, preferably 3.x, but also should work with 2.x
+- protoc-compiler package, preferably 3.x, but also should work with 2.x after minimal changes on the protocol definition
