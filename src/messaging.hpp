@@ -26,10 +26,9 @@ struct Converter
     static iop::locnet::GpsLocation* ToProtoBuf(const GpsLocation &location);
     static iop::locnet::NodeProfile* ToProtoBuf(const NodeProfile &profile);
     static iop::locnet::NodeInfo* ToProtoBuf(const NodeInfo &info);
-    
 };
-    
-    
+
+
 class MessageDispatcher
 {
     //Node& _node;
