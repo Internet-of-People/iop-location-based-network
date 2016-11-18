@@ -8,11 +8,6 @@ using namespace std;
 using namespace LocNet;
 
 
-void f()
-{
-    
-}
-
 
 SCENARIO("ProtoBuf messaging", "[messaging]")
 {
