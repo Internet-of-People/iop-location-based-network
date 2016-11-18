@@ -3,7 +3,12 @@
 # location-based-network
 [![Build Status](https://travis-ci.org/Fermat-ORG/iop-location-based-network.svg?branch=master)](https://travis-ci.org/Fermat-ORG/iop-location-based-network)
 
-Dependencies:
-- asio, easylogging++ and catch C++ library dependencies are header only, they are included in directory "extlib"
+Header-only dependencies already included in extlib:
+- easylogging++ 9.83 (logging in the whole source)
+- asio 1.11.0 (used for networking)
+- catch 1.5.0 (used only for testing)
+
+Dependencies to be installed:
 - protoc-compiler package, preferably 3.x, but also should work with 2.x after minimal changes on the protocol definition
-- libssl-dev
+
+# TODO - libssl-dev
