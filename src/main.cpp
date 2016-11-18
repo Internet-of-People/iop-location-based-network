@@ -15,6 +15,11 @@ int main()
 {
     NetworkInterface listenOn(AddressType::Ipv4, "127.0.0.1", 4567);
     TcpNetwork network(listenOn);
+    
+    SyncProtoBufNetworkSession session( network.acceptor() );
+    session.ReceiveMessage();
+    session.SendMessage( iop::locnet::MessageWithHeader() );
+    
     string line;
     getline(cin, line);
     LOG(INFO) << "Located works";

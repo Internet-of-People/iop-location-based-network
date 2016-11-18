@@ -13,30 +13,14 @@ namespace LocNet
 
     
 TcpNetwork::TcpNetwork(NetworkInterface &listenOn, size_t threadPoolSize) :
-    _threadPool(), _ioService(), _keepThreadPoolBusy( new asio::io_service::work(_ioService) )
+    _threadPool(), _ioService(), _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
+    _acceptor( _ioService, tcp::endpoint( make_address( listenOn.address() ), listenOn.port() ) )
 {
-    //tcp::socket serverSocket(_ioService);
-    tcp::endpoint endpoint( make_address( listenOn.address() ), listenOn.port() );
-    tcp::acceptor acceptor(_ioService, endpoint);
-    
     // Start the specified number of job processor threads
     for (size_t idx = 0; idx < threadPoolSize; ++idx)
     {
         _threadPool.push_back( thread(
             [this] { _ioService.run(); } ) );
-    }
-    
-    tcp::iostream stream;
-    asio::error_code ec;
-    acceptor.accept( *stream.rdbuf(), ec );
-    if (! ec)
-    {
-        string line;
-        stream >> line;
-        stream << line;
-    }
-    else {
-        LOG(ERROR) << ec.message();
     }
 }
 
@@ -72,6 +56,44 @@ TcpNetwork::~TcpNetwork()
     for (auto &thr : _threadPool)
         { thr.join(); }
 }
+
+
+tcp::acceptor& TcpNetwork::acceptor() { return _acceptor; }
+
+
+
+SyncProtoBufNetworkSession::SyncProtoBufNetworkSession(tcp::acceptor& acceptor) :
+    _acceptor(acceptor), _stream()
+{
+    asio::error_code ec;
+    _acceptor.accept( *_stream.rdbuf() );
+}
+
+
+iop::locnet::MessageWithHeader* SyncProtoBufNetworkSession::ReceiveMessage()
+{
+    unique_ptr<iop::locnet::MessageWithHeader> message(
+        new iop::locnet::MessageWithHeader() );
+    
+    string line;
+    _stream >> line;
+    return nullptr;
+    
+    // TODO
+    //message.ParseFromIStream(_stream);
+    //return message.release();
+}
+
+
+void SyncProtoBufNetworkSession::SendMessage(const iop::locnet::MessageWithHeader& message)
+{
+    _stream << "Response" << endl;
+    
+    // TODO
+    // message->SerializeToOstream(_stream);
+}
+
+
 
 
 } // namespace LocNet
