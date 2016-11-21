@@ -17,8 +17,10 @@ int main()
     TcpNetwork network(listenOn);
     
     SyncProtoBufNetworkSession session( network.acceptor() );
-    session.ReceiveMessage();
-    session.SendMessage( iop::locnet::MessageWithHeader() );
+    shared_ptr<iop::locnet::MessageWithHeader> msgReceived( session.ReceiveMessage() );
+    
+    iop::locnet::MessageWithHeader msgToSend;
+    session.SendMessage(msgToSend);
     
     string line;
     getline(cin, line);

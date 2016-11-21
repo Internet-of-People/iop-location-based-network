@@ -57,7 +57,7 @@ class IProtoBufNetworkSession
 public:
     
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
-    virtual void SendMessage(const iop::locnet::MessageWithHeader &message) = 0;
+    virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
 };
 
 
@@ -72,7 +72,7 @@ public:
     SyncProtoBufNetworkSession(asio::ip::tcp::acceptor &acceptor);
     
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
-    void SendMessage(const iop::locnet::MessageWithHeader &message) override;
+    void SendMessage(iop::locnet::MessageWithHeader &message) override;
 };
 
 
