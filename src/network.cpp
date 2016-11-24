@@ -96,12 +96,10 @@ iop::locnet::MessageWithHeader* SyncProtoBufNetworkSession::ReceiveMessage()
     
     // Extend buffer to fit remaining message size and read it
     messageBytes.resize(MessageHeaderSize + bodySize, 0);
-    LOG(DEBUG) << "Message buffer size: " << messageBytes.size();
     _stream.read( &messageBytes[0] + MessageHeaderSize, bodySize );
 
-    // Deserialize message from receive buffer
-    unique_ptr<iop::locnet::MessageWithHeader> message(
-        new iop::locnet::MessageWithHeader() );
+    // Deserialize message from receive buffer, avoid leaks for failing cases with RAII-based unique_ptr
+    unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );
     message->ParseFromString(messageBytes);
     return message.release();
 }

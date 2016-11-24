@@ -1,9 +1,11 @@
 #include <iostream>
+#include <string>
 
 #include "easylogging++.h"
 #include "asio.hpp"
 #include "network.hpp"
 #include "IopLocNet.pb.h"
+#include "testdata.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -17,25 +19,30 @@ const size_t MessageHeaderSize = 5;
 
 uint32_t GetMessageSizeFromHeader(const char *bytes)
 {
+    // Adapt big endian value from network to local format
     const uint8_t *data = reinterpret_cast<const uint8_t*>(bytes);
-    return data[MessageSizeOffset + 0] +
-          (data[MessageSizeOffset + 1] << 8) +
-          (data[MessageSizeOffset + 2] << 16) +
-          (data[MessageSizeOffset + 3] << 24);
+    return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
 }
 
 
-iop::locnet::MessageWithHeader ReceiveMessage(tcp::iostream &conn)
+iop::locnet::MessageWithHeader* ReceiveMessage(tcp::iostream &conn)
 {
+    // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
     conn.read( &messageBytes[0], MessageHeaderSize );
-    uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[0] );
-    messageBytes.reserve(MessageHeaderSize + bodySize);
+    
+    // Extract message size from the header to know how many bytes to read
+    uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
+    
+    // Extend buffer to fit remaining message size and read it
+    messageBytes.resize(MessageHeaderSize + bodySize, 0);
+    LOG(DEBUG) << "Message buffer size: " << messageBytes.size();
     conn.read( &messageBytes[0] + MessageHeaderSize, bodySize );
 
-    iop::locnet::MessageWithHeader message;
-    message.ParseFromString(messageBytes);
-    return message;
+    // Deserialize message from receive buffer
+    unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );
+    message->ParseFromString(messageBytes);
+    return message.release();
 }
 
 
@@ -45,7 +52,8 @@ int main()
     try
     {
         LOG(INFO) << "Connecting to location based network";
-        tcp::iostream conn("127.0.0.1", "4567");
+        const LocNet::NetworkInterface &BudapestNodeContact( LocNet::TestData::NodeBudapest.profile().contacts().front() );
+        tcp::iostream conn( BudapestNodeContact.address(), to_string( BudapestNodeContact.port() ) );
         if( !conn ) {
             throw std::runtime_error("Could not connect to server.");
         }
@@ -65,8 +73,8 @@ int main()
         conn << reqStr;
         
         LOG(INFO) << "Message sent, reading response";
-        iop::locnet::MessageWithHeader msgReceived( ReceiveMessage(conn) );
-        LOG(INFO) << "Got " << msgReceived.body().response().client().getneighbournodes().nodes_size()
+        unique_ptr<iop::locnet::MessageWithHeader> msgReceived( ReceiveMessage(conn) );
+        LOG(INFO) << "Got " << msgReceived->body().response().localservice().getneighbournodes().nodes_size()
                   << " neighbours in the reponse";
         
         return 0;

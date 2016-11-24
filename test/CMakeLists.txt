@@ -6,7 +6,7 @@ target_include_directories (tests PUBLIC
 target_link_libraries (tests LINK_PUBLIC iop-locnet protobuf)
 
 
-add_executable (sampleclient sampleclient.cpp)
+add_executable (sampleclient sampleclient.cpp testdata.cpp)
 target_include_directories (sampleclient PUBLIC
     "${CMAKE_SOURCE_DIR}/extlib" "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/generated")
 target_link_libraries (sampleclient LINK_PUBLIC iop-locnet protobuf pthread)

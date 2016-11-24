@@ -27,12 +27,12 @@ int main()
         
         shared_ptr<IRemoteNodeConnectionFactory> connectionFactory(
             new DummyRemoteNodeConnectionFactory() );
-        NodeInfo NodeBudapest( NodeProfile("BudapestId",
-            { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 4567) } ), TestData::Budapest );
-        Node node( NodeBudapest, geodb, connectionFactory );
+        Node node( TestData::NodeBudapest, geodb, connectionFactory );
         MessageDispatcher dispatcher(node);
         
-        TcpNetwork network( NodeBudapest.profile().contacts().front() );
+        const LocNet::NetworkInterface &BudapestNodeContact(
+            LocNet::TestData::NodeBudapest.profile().contacts().front() );
+        TcpNetwork network(BudapestNodeContact);
         
         LOG(INFO) << "Reading request";
         SyncProtoBufNetworkSession session( network.acceptor() );
@@ -47,8 +47,9 @@ int main()
         LOG(INFO) << "Sending response";
         iop::locnet::MessageWithHeader responseMsg;
         responseMsg.mutable_body()->set_allocated_response( response.release() );
-        responseMsg.set_header( responseMsg.body().ByteSize() );
         session.SendMessage(responseMsg);
+        LOG(INFO) << "Response node count: " << responseMsg.body().response().localservice().getneighbournodes().nodes_size()
+                  << ", body length " << responseMsg.header();
         
         LOG(INFO) << "Finished successfully";
         return 0;
