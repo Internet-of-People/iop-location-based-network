@@ -26,7 +26,7 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
     }
     
     GIVEN("A message dispatcher") {
-        shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(TestData::Budapest) );
+        shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(TestData::Budapest) );
         geodb->Store(TestData::EntryKecskemet);
         geodb->Store(TestData::EntryLondon);
         geodb->Store(TestData::EntryNewYork);
@@ -41,8 +41,7 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
         THEN("Local service GetNeighbours requests are properly served") {
             iop::locnet::Request request;
             request.set_version("1");
-            iop::locnet::GetNeighbourNodesByDistanceRequest *getNeighboursReq =
-                request.mutable_localservice()->mutable_getneighbournodes();
+            request.mutable_localservice()->mutable_getneighbournodes();
                 
             shared_ptr<iop::locnet::Response> response = dispatcher.Dispatch(request);
             REQUIRE( response->has_localservice() );

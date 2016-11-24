@@ -42,17 +42,17 @@ Node::Node( const NodeInfo &nodeInfo,
     _myNodeInfo(nodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
 {
     if (spatialDb == nullptr) {
-        throw new runtime_error("Invalid spatial database argument");
+        throw runtime_error("Invalid spatial database argument");
     }
     if (connectionFactory == nullptr) {
-        throw new runtime_error("Invalid connection factory argument");
+        throw runtime_error("Invalid connection factory argument");
     }
     
     if ( GetColleagueNodeCount() == 0 && ! ignoreDiscovery )
     {
         bool discoverySucceeded = InitializeWorld() && InitializeNeighbourhood();
         if (! discoverySucceeded)
-            { throw new runtime_error("Network discovery failed"); }
+            { throw runtime_error("Network discovery failed"); }
     }
 }
 

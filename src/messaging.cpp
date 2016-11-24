@@ -167,13 +167,13 @@ MessageDispatcher::MessageDispatcher(ILocalServices& iLocalServices,
     
 
 
-shared_ptr<iop::locnet::Response> MessageDispatcher::Dispatch(const iop::locnet::Request& request)
+unique_ptr<iop::locnet::Response> MessageDispatcher::Dispatch(const iop::locnet::Request& request)
 {
     // TODO implement better version checks
     if ( request.version().empty() || request.version()[0] != '1' )
         { throw runtime_error("Missing or unknown request version"); }
     
-    shared_ptr<iop::locnet::Response> result( new iop::locnet::Response() );
+    unique_ptr<iop::locnet::Response> result( new iop::locnet::Response() );
     auto &response = *result;
     
     switch ( request.RequestType_case() )
@@ -243,7 +243,7 @@ iop::locnet::LocalServiceResponse* MessageDispatcher::DispatchLocalService(
             }
             return result;
         }
-            
+        
         default: throw runtime_error("Missing or unknown local service operation");
     }
 }

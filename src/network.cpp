@@ -12,13 +12,13 @@ namespace LocNet
 {
 
 
-const size_t MessageHeaderSize = 5;
 const size_t MessageSizeOffset = 1;
 const size_t MaxMessageSize = 1024 * 1024;
 
+const size_t IProtoBufNetworkSession::MessageHeaderSize = 5;
 
 
-TcpNetwork::TcpNetwork(NetworkInterface &listenOn, size_t threadPoolSize) :
+TcpNetwork::TcpNetwork(const NetworkInterface &listenOn, size_t threadPoolSize) :
     _threadPool(), _ioService(), _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
     _acceptor( _ioService, tcp::endpoint( make_address( listenOn.address() ), listenOn.port() ) )
 {
@@ -79,25 +79,29 @@ SyncProtoBufNetworkSession::SyncProtoBufNetworkSession(tcp::acceptor& acceptor) 
 
 uint32_t GetMessageSizeFromHeader(const char *bytes)
 {
+    // Adapt big endian value from network to local format
     const uint8_t *data = reinterpret_cast<const uint8_t*>(bytes);
-    return data[MessageSizeOffset + 0] +
-          (data[MessageSizeOffset + 1] << 8) +
-          (data[MessageSizeOffset + 2] << 16) +
-          (data[MessageSizeOffset + 3] << 24);
+    return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
 }
 
 
 iop::locnet::MessageWithHeader* SyncProtoBufNetworkSession::ReceiveMessage()
 {
-    unique_ptr<iop::locnet::MessageWithHeader> message(
-        new iop::locnet::MessageWithHeader() );
-
+    // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
     _stream.read( &messageBytes[0], MessageHeaderSize );
-    uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[0] );
-    messageBytes.reserve(MessageHeaderSize + bodySize);
+    
+    // Extract message size from the header to know how many bytes to read
+    uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
+    
+    // Extend buffer to fit remaining message size and read it
+    messageBytes.resize(MessageHeaderSize + bodySize, 0);
+    LOG(DEBUG) << "Message buffer size: " << messageBytes.size();
     _stream.read( &messageBytes[0] + MessageHeaderSize, bodySize );
 
+    // Deserialize message from receive buffer
+    unique_ptr<iop::locnet::MessageWithHeader> message(
+        new iop::locnet::MessageWithHeader() );
     message->ParseFromString(messageBytes);
     return message.release();
 }
@@ -105,7 +109,8 @@ iop::locnet::MessageWithHeader* SyncProtoBufNetworkSession::ReceiveMessage()
 
 void SyncProtoBufNetworkSession::SendMessage(iop::locnet::MessageWithHeader& message)
 {
-    message.set_header( message.body().ByteSize() );
+    message.set_header(1);
+    message.set_header( message.ByteSize() - MessageHeaderSize );
     _stream << message.SerializeAsString() << endl;
 }
 

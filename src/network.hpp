@@ -42,7 +42,7 @@ class TcpNetwork
     
 public:
     
-    TcpNetwork(NetworkInterface &listenOn, size_t threadPoolSize = 1);
+    TcpNetwork(const NetworkInterface &listenOn, size_t threadPoolSize = 1);
     //TcpNetwork(const std::vector<NetworkInterface> &listenOn, size_t threadPoolSize = 1);
     ~TcpNetwork();
     
@@ -55,6 +55,8 @@ public:
 class IProtoBufNetworkSession
 {
 public:
+ 
+    static const size_t MessageHeaderSize;
     
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
     virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;

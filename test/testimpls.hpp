@@ -7,9 +7,10 @@
 
 namespace LocNet
 {
-    
 
-class DummySpatialDatabase : public ISpatialDatabase
+
+// NOTE NOT PERSISTENT, suited for development only
+class InMemorySpatialDatabase : public ISpatialDatabase
 {
     static std::random_device _randomDevice;
     
@@ -21,7 +22,7 @@ class DummySpatialDatabase : public ISpatialDatabase
     
 public:
     
-    DummySpatialDatabase(const GpsLocation &nodeLocation);
+    InMemorySpatialDatabase(const GpsLocation &nodeLocation);
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
@@ -40,7 +41,7 @@ public:
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
 
-
+    
 
 class DummyRemoteNodeConnectionFactory: public IRemoteNodeConnectionFactory
 {

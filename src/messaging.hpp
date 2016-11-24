@@ -45,7 +45,7 @@ public:
     MessageDispatcher(Node &node);
     MessageDispatcher(ILocalServices &iLocalServices, IRemoteNode &iRemoteNode, IClientMethods &iClient);
     
-    std::shared_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request);
+    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request);
 };
 
 

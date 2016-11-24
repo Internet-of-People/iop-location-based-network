@@ -1,6 +1,3 @@
-#include <algorithm>
-#include <cmath>
-
 #include "easylogging++.h"
 #include "testimpls.hpp"
 
@@ -10,17 +7,25 @@ using namespace std;
 
 namespace LocNet
 {
-    
-
-random_device DummySpatialDatabase::_randomDevice;
 
 
-DummySpatialDatabase::DummySpatialDatabase(const GpsLocation& nodeLocation) :
+
+shared_ptr<IRemoteNode> DummyRemoteNodeConnectionFactory::ConnectTo(const NodeProfile&)
+{
+    return shared_ptr<IRemoteNode>();
+}
+
+
+
+random_device InMemorySpatialDatabase::_randomDevice;
+
+
+InMemorySpatialDatabase::InMemorySpatialDatabase(const GpsLocation& nodeLocation) :
     _myLocation(nodeLocation) {}
 
 
 
-bool DummySpatialDatabase::Store(const NodeDbEntry &node)
+bool InMemorySpatialDatabase::Store(const NodeDbEntry &node)
 {
     // TODO consider exception strategy, bool return value vs exception consistency
     auto it = _nodes.find( node.profile().id() );
@@ -33,7 +38,7 @@ bool DummySpatialDatabase::Store(const NodeDbEntry &node)
 }
 
 
-shared_ptr<NodeDbEntry> DummySpatialDatabase::Load(const string &nodeId) const
+shared_ptr<NodeDbEntry> InMemorySpatialDatabase::Load(const string &nodeId) const
 {
     auto it = _nodes.find(nodeId);
     if ( it == _nodes.end() ) {
@@ -45,7 +50,7 @@ shared_ptr<NodeDbEntry> DummySpatialDatabase::Load(const string &nodeId) const
 }
 
 
-bool DummySpatialDatabase::Update(const NodeDbEntry &node)
+bool InMemorySpatialDatabase::Update(const NodeDbEntry &node)
 {
     auto it = _nodes.find( node.profile().id() );
     if ( it == _nodes.end() ) {
@@ -58,7 +63,7 @@ bool DummySpatialDatabase::Update(const NodeDbEntry &node)
 }
 
 
-bool DummySpatialDatabase::Remove(const string &nodeId)
+bool InMemorySpatialDatabase::Remove(const string &nodeId)
 {
     auto it = _nodes.find(nodeId);
     if ( it == _nodes.end() ) {
@@ -70,14 +75,14 @@ bool DummySpatialDatabase::Remove(const string &nodeId)
 }
 
 
-void DummySpatialDatabase::ExpireOldNodes()
+void InMemorySpatialDatabase::ExpireOldNodes()
 {
     // TODO maybe we could implement it here, but this class is useful for testing, not production
 }
 
 
 
-vector<NodeInfo> DummySpatialDatabase::GetClosestNodesByDistance(
+vector<NodeInfo> InMemorySpatialDatabase::GetClosestNodesByDistance(
     const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const
 {
     // Start with all nodes
@@ -115,7 +120,7 @@ vector<NodeInfo> DummySpatialDatabase::GetClosestNodesByDistance(
 }
 
 
-std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+std::vector<NodeInfo>InMemorySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
 {
     // Start with all nodes
     vector<NodeDbEntry> remainingNodes;
@@ -144,7 +149,7 @@ std::vector<NodeInfo>DummySpatialDatabase::GetRandomNodes(size_t maxNodeCount, N
 }
 
 
-std::vector<NodeInfo> DummySpatialDatabase::GetNodes(NodeRelationType relationType) const
+std::vector<NodeInfo> InMemorySpatialDatabase::GetNodes(NodeRelationType relationType) const
 {
     vector<NodeInfo> result;
     for (auto const &entry : _nodes)
@@ -156,11 +161,11 @@ std::vector<NodeInfo> DummySpatialDatabase::GetNodes(NodeRelationType relationTy
 }
 
 
-size_t DummySpatialDatabase::GetColleagueNodeCount() const
+size_t InMemorySpatialDatabase::GetColleagueNodeCount() const
     { return GetNodes(NodeRelationType::Colleague).size(); }
 
 
-vector<NodeInfo> DummySpatialDatabase::GetNeighbourNodesByDistance() const
+vector<NodeInfo> InMemorySpatialDatabase::GetNeighbourNodesByDistance() const
 {
     vector<NodeInfo> neighbours( GetNodes(NodeRelationType::Neighbour) );
     sort( neighbours.begin(), neighbours.end(), [this] (const NodeInfo &one, const NodeInfo &other)
@@ -192,7 +197,7 @@ GpsCoordinate degreesToRadian(GpsCoordinate degrees)
 // 
 // var d = R * c;
 
-Distance DummySpatialDatabase::GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const
+Distance InMemorySpatialDatabase::GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const
 {
     static const double EARTH_RADIUS = 6371.;
     
@@ -206,13 +211,6 @@ Distance DummySpatialDatabase::GetDistanceKm(const GpsLocation &one, const GpsLo
 
     Distance c = 2 * atan2( sqrt(a), sqrt(1-a) );
     return EARTH_RADIUS * c;
-}
-
-
-
-shared_ptr<IRemoteNode> DummyRemoteNodeConnectionFactory::ConnectTo(const NodeProfile&)
-{
-    return shared_ptr<IRemoteNode>();
 }
 
 

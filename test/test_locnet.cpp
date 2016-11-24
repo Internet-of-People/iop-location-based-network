@@ -54,7 +54,7 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
 SCENARIO("Spatial database", "")
 {
     GIVEN("A spatial database implementation") {
-        DummySpatialDatabase geodb(TestData::Budapest);
+        InMemorySpatialDatabase geodb(TestData::Budapest);
 
         THEN("its initially empty") {
             REQUIRE( geodb.GetColleagueNodeCount() == 0 );
@@ -173,7 +173,7 @@ SCENARIO("Server registration", "")
         GpsLocation loc(1.0, 2.0);
         NodeInfo nodeInfo( NodeProfile("NodeId",
             { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), loc );
-        shared_ptr<ISpatialDatabase> geodb( new DummySpatialDatabase(loc) );
+        shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(loc) );
         shared_ptr<IRemoteNodeConnectionFactory> connectionFactory( new DummyRemoteNodeConnectionFactory() );
         Node geonet(nodeInfo, geodb, connectionFactory, true);
         
