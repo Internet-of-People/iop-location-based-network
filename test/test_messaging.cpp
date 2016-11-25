@@ -36,7 +36,7 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
         shared_ptr<IRemoteNodeConnectionFactory> connectionFactory(
             new DummyRemoteNodeConnectionFactory() );
         Node node( TestData::NodeBudapest, geodb, connectionFactory );
-        MessageDispatcher dispatcher(node);
+        ServerMessageDispatcher dispatcher(node);
         
         THEN("Local service GetNeighbours requests are properly served") {
             iop::locnet::Request request;

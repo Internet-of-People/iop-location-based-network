@@ -28,7 +28,7 @@ SCENARIO("TCP networking", "[network]")
         shared_ptr<IRemoteNodeConnectionFactory> connectionFactory(
             new DummyRemoteNodeConnectionFactory() );
         Node node( TestData::NodeBudapest, geodb, connectionFactory );
-        MessageDispatcher dispatcher(node);
+        ServerMessageDispatcher dispatcher(node);
         
         const LocNet::NetworkInterface &BudapestNodeContact(
             LocNet::TestData::NodeBudapest.profile().contacts().front() );

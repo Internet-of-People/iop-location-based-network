@@ -40,8 +40,6 @@ class IProtoBufNetworkSession
 {
 public:
  
-    static const size_t MessageHeaderSize;
-    
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
     virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
 };
@@ -59,6 +57,17 @@ public:
     
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
     void SendMessage(iop::locnet::MessageWithHeader &message) override;
+};
+
+
+
+class ClientMessageDispatcher : public IMessageDispatcher
+{
+    std::shared_ptr<IProtoBufNetworkSession> session;
+    
+public:
+    
+    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
 };
 
 

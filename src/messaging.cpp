@@ -158,16 +158,16 @@ iop::locnet::NodeInfo* Converter::ToProtoBuf(const NodeInfo &info)
 
 
 
-MessageDispatcher::MessageDispatcher(LocNet::Node& node) :
+ServerMessageDispatcher::ServerMessageDispatcher(LocNet::Node& node) :
     _iLocalService(node), _iRemoteNode(node), _iClient(node) {}
 
-MessageDispatcher::MessageDispatcher(ILocalServices& iLocalServices,
+ServerMessageDispatcher::ServerMessageDispatcher(ILocalServices& iLocalServices,
                                      IRemoteNode& iRemoteNode, IClientMethods& iClient) :
     _iLocalService(iLocalServices), _iRemoteNode(iRemoteNode), _iClient(iClient) {}
     
 
 
-unique_ptr<iop::locnet::Response> MessageDispatcher::Dispatch(const iop::locnet::Request& request)
+unique_ptr<iop::locnet::Response> ServerMessageDispatcher::Dispatch(const iop::locnet::Request& request)
 {
     // TODO implement better version checks
     if ( request.version().empty() || request.version()[0] != '1' )
@@ -201,7 +201,7 @@ unique_ptr<iop::locnet::Response> MessageDispatcher::Dispatch(const iop::locnet:
 
 
 
-iop::locnet::LocalServiceResponse* MessageDispatcher::DispatchLocalService(
+iop::locnet::LocalServiceResponse* ServerMessageDispatcher::DispatchLocalService(
     const iop::locnet::LocalServiceRequest& localServiceRequest)
 {
     switch ( localServiceRequest.LocalServiceRequestType_case() )
@@ -250,7 +250,7 @@ iop::locnet::LocalServiceResponse* MessageDispatcher::DispatchLocalService(
 
 
 
-iop::locnet::RemoteNodeResponse* MessageDispatcher::DispatchRemoteNode(
+iop::locnet::RemoteNodeResponse* ServerMessageDispatcher::DispatchRemoteNode(
     const iop::locnet::RemoteNodeRequest& nodeRequest)
 {
     switch ( nodeRequest.RemoteNodeRequestType_case() )
@@ -344,7 +344,7 @@ iop::locnet::RemoteNodeResponse* MessageDispatcher::DispatchRemoteNode(
 
 
 
-iop::locnet::ClientResponse* MessageDispatcher::DispatchClient(
+iop::locnet::ClientResponse* ServerMessageDispatcher::DispatchClient(
     const iop::locnet::ClientRequest& clientRequest)
 {
     switch ( clientRequest.ClientRequestType_case() )
@@ -400,6 +400,135 @@ iop::locnet::ClientResponse* MessageDispatcher::DispatchClient(
         
         default: throw runtime_error("Missing or unknown client operation");
     }
+}
+
+
+
+
+ProtobufRemoteNode::ProtobufRemoteNode(std::shared_ptr<IMessageDispatcher> dispatcher) :
+    _dispatcher(dispatcher)
+{
+    if (! _dispatcher)
+        { throw runtime_error("Invalid dispatcher argument"); }
+}
+
+
+
+size_t ProtobufRemoteNode::GetColleagueNodeCount() const
+{
+    iop::locnet::Request request;
+    request.mutable_remotenode()->mutable_getcolleaguenodecount();
+    
+    unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
+    if (! response || ! response->has_remotenode() || ! response->remotenode().has_getcolleaguenodecount() )
+        { throw runtime_error("Failed to get expected response"); }
+        
+    return response->remotenode().getcolleaguenodecount().nodecount();
+}
+
+
+
+bool ProtobufRemoteNode::AcceptColleague(const NodeInfo& node)
+{
+    iop::locnet::Request request;
+    request.mutable_remotenode()->mutable_acceptcolleague()->set_allocated_nodeinfo(
+        Converter::ToProtoBuf(node) );
+    
+    unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
+    if (! response || ! response->has_remotenode() || ! response->remotenode().has_acceptcolleague() )
+        { throw runtime_error("Failed to get expected response"); }
+    
+    return response->remotenode().acceptcolleague().accepted();
+}
+
+
+
+bool ProtobufRemoteNode::RenewColleague(const NodeInfo& node)
+{
+    iop::locnet::Request request;
+    request.mutable_remotenode()->mutable_renewcolleague()->set_allocated_nodeinfo(
+        Converter::ToProtoBuf(node) );
+    
+    unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
+    if (! response || ! response->has_remotenode() || ! response->remotenode().has_renewcolleague() )
+        { throw runtime_error("Failed to get expected response"); }
+    
+    return response->remotenode().renewcolleague().accepted();
+}
+
+
+
+bool ProtobufRemoteNode::AcceptNeighbour(const NodeInfo& node)
+{
+    iop::locnet::Request request;
+    request.mutable_remotenode()->mutable_acceptneighbour()->set_allocated_nodeinfo(
+        Converter::ToProtoBuf(node) );
+    
+    unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
+    if (! response || ! response->has_remotenode() || ! response->remotenode().has_acceptneighbour() )
+        { throw runtime_error("Failed to get expected response"); }
+    
+    return response->remotenode().acceptneighbour().accepted();
+}
+
+
+
+bool ProtobufRemoteNode::RenewNeighbour(const NodeInfo& node)
+{
+    iop::locnet::Request request;
+    request.mutable_remotenode()->mutable_renewneighbour()->set_allocated_nodeinfo(
+        Converter::ToProtoBuf(node) );
+    
+    unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
+    if (! response || ! response->has_remotenode() || ! response->remotenode().has_renewneighbour() )
+        { throw runtime_error("Failed to get expected response"); }
+    
+    return response->remotenode().renewneighbour().accepted();
+}
+
+
+
+vector<NodeInfo> ProtobufRemoteNode::GetRandomNodes(
+    size_t maxNodeCount, Neighbours filter) const
+{
+    iop::locnet::Request request;
+    iop::locnet::GetRandomNodesRequest *getRandReq = request.mutable_remotenode()->mutable_getrandomnodes();
+    getRandReq->set_maxnodecount(maxNodeCount);
+    getRandReq->set_includeneighbours( filter == Neighbours::Included );
+    
+    unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
+    if (! response || ! response->has_remotenode() || ! response->remotenode().has_getrandomnodes() )
+        { throw runtime_error("Failed to get expected response"); }
+    
+    const iop::locnet::GetRandomNodesResponse &getRandResp = response->remotenode().getrandomnodes();
+    vector<NodeInfo> result;
+    for (int32_t idx = 0; idx < getRandResp.nodes_size(); ++idx)
+        { result.push_back( Converter::FromProtoBuf( getRandResp.nodes(idx) ) ); }
+    return result;
+}
+
+
+
+vector<NodeInfo> ProtobufRemoteNode::GetClosestNodesByDistance(
+    const GpsLocation& location, Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
+{
+    iop::locnet::Request request;
+    iop::locnet::GetClosestNodesByDistanceRequest *getNodeReq =
+        request.mutable_remotenode()->mutable_getclosestnodes();
+    getNodeReq->set_allocated_location( Converter::ToProtoBuf(location) );
+    getNodeReq->set_maxradiuskm(radiusKm);
+    getNodeReq->set_maxnodecount(maxNodeCount);
+    getNodeReq->set_includeneighbours( filter == Neighbours::Included );
+    
+    unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
+    if (! response || ! response->has_remotenode() || ! response->remotenode().has_getclosestnodes() )
+        { throw runtime_error("Failed to get expected response"); }
+    
+    const iop::locnet::GetClosestNodesByDistanceResponse &getNodeResp = response->remotenode().getclosestnodes();
+    vector<NodeInfo> result;
+    for (int32_t idx = 0; idx < getNodeResp.nodes_size(); ++idx)
+        { result.push_back( Converter::FromProtoBuf( getNodeResp.nodes(idx) ) ); }
+    return result;
 }
 
 

@@ -29,9 +29,19 @@ struct Converter
 };
 
 
-class MessageDispatcher
+
+class IMessageDispatcher
 {
-    //Node& _node;
+public:
+    
+    virtual std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) = 0;
+};
+
+
+
+class ServerMessageDispatcher : public IMessageDispatcher
+{
+    // TODO should we use some smart pointers here instead?
     ILocalServices &_iLocalService;
     IRemoteNode    &_iRemoteNode;
     IClientMethods &_iClient;
@@ -42,11 +52,35 @@ class MessageDispatcher
     
 public:
     
-    MessageDispatcher(Node &node);
-    MessageDispatcher(ILocalServices &iLocalServices, IRemoteNode &iRemoteNode, IClientMethods &iClient);
+    ServerMessageDispatcher(Node &node);
+    ServerMessageDispatcher(ILocalServices &iLocalServices, IRemoteNode &iRemoteNode, IClientMethods &iClient);
     
-    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request);
+    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
 };
+
+
+
+class ProtobufRemoteNode : public IRemoteNode
+{
+    std::shared_ptr<IMessageDispatcher> _dispatcher;
+    
+public:
+    
+    ProtobufRemoteNode(std::shared_ptr<IMessageDispatcher> dispatcher);
+    
+    size_t GetColleagueNodeCount() const override;
+    std::vector<NodeInfo> GetRandomNodes(
+        size_t maxNodeCount, Neighbours filter) const override;
+    
+    std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
+        Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
+    
+    bool AcceptColleague(const NodeInfo &node) override;
+    bool RenewColleague(const NodeInfo &node) override;
+    bool AcceptNeighbour(const NodeInfo &node) override;
+    bool RenewNeighbour(const NodeInfo &node) override;
+};
+
 
 
 } // namespace LocNet

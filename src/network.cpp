@@ -12,10 +12,9 @@ namespace LocNet
 {
 
 
+const size_t MessageHeaderSize = 5;
 const size_t MessageSizeOffset = 1;
 const size_t MaxMessageSize = 1024 * 1024;
-
-const size_t IProtoBufNetworkSession::MessageHeaderSize = 5;
 
 
 
@@ -104,7 +103,6 @@ void SyncProtoBufNetworkSession::SendMessage(iop::locnet::MessageWithHeader& mes
     message.set_header( message.ByteSize() - MessageHeaderSize );
     _stream << message.SerializeAsString() << endl;
 }
-
 
 
 
