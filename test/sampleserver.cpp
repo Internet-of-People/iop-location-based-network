@@ -35,11 +35,8 @@ int main()
         TcpNetwork network(BudapestNodeContact);
         
         LOG(INFO) << "Reading request";
-        SyncProtoBufNetworkSession session( network.acceptor() );
+        SyncProtoBufNetworkSession session(network);
         shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
-        LOG(INFO) << "Got request body length: " << requestMsg->header()
-                  << ", version " << requestMsg->body().request().version()
-                  << ", local service operation: " << requestMsg->body().request().localservice().LocalServiceRequestType_case();
         
         LOG(INFO) << "Serving request";
         unique_ptr<iop::locnet::Response> response( dispatcher.Dispatch( requestMsg->body().request() ) );
@@ -48,8 +45,6 @@ int main()
         iop::locnet::MessageWithHeader responseMsg;
         responseMsg.mutable_body()->set_allocated_response( response.release() );
         session.SendMessage(responseMsg);
-        LOG(INFO) << "Response node count: " << responseMsg.body().response().localservice().getneighbournodes().nodes_size()
-                  << ", body length " << responseMsg.header();
         
         LOG(INFO) << "Finished successfully";
         return 0;

@@ -20,17 +20,16 @@ int main()
         TcpNetwork network( NetworkInterface(AddressType::Ipv4, "127.0.0.1", 4567) );
         
         LOG(INFO) << "Reading request";
-        SyncProtoBufNetworkSession session( network.acceptor() );
+        SyncProtoBufNetworkSession session(network);
         shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
         
         LOG(INFO) << "Serving request";
         unique_ptr<iop::locnet::Response> response;
-            // TODO dispatcher.Dispatch( requestMsg->body().request() ) );
+        // TODO dispatcher.Dispatch( requestMsg->body().request() ) );
         
         LOG(INFO) << "Sending response";
         iop::locnet::MessageWithHeader responseMsg;
         // TODO responseMsg.mutable_body()->set_allocated_response( response.release() );
-        responseMsg.set_header( responseMsg.body().ByteSize() );
         session.SendMessage(responseMsg);
         
         LOG(INFO) << "Finished successfully";

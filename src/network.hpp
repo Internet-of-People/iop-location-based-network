@@ -16,21 +16,6 @@ namespace LocNet
 
 
 
-// class INetworkSession
-// {
-// public:
-//     virtual void ServeClient() = 0;
-// };
-// 
-// 
-// class INetworkSessionFactory
-// {
-// public:
-//     
-//     virtual std::shared_ptr<INetworkSession> CreateSession(asio::ip::tcp::socket &clientSocket) = 0;
-// };
-
-
 class TcpNetwork
 {
     std::vector<std::thread> _threadPool;
@@ -46,7 +31,6 @@ public:
     //TcpNetwork(const std::vector<NetworkInterface> &listenOn, size_t threadPoolSize = 1);
     ~TcpNetwork();
     
-    // TODO this probably will not be here after testing
     asio::ip::tcp::acceptor& acceptor();
 };
 
@@ -66,12 +50,12 @@ public:
 
 class SyncProtoBufNetworkSession : public IProtoBufNetworkSession
 {
-    asio::ip::tcp::acceptor &_acceptor;
     asio::ip::tcp::iostream _stream;
     
 public:
     
-    SyncProtoBufNetworkSession(asio::ip::tcp::acceptor &acceptor);
+    SyncProtoBufNetworkSession(TcpNetwork &network);
+    SyncProtoBufNetworkSession(const NetworkInterface &contact);
     
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
     void SendMessage(iop::locnet::MessageWithHeader &message) override;

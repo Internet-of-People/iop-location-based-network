@@ -18,6 +18,7 @@ const size_t MaxMessageSize = 1024 * 1024;
 const size_t IProtoBufNetworkSession::MessageHeaderSize = 5;
 
 
+
 TcpNetwork::TcpNetwork(const NetworkInterface &listenOn, size_t threadPoolSize) :
     _threadPool(), _ioService(), _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
     _acceptor( _ioService, tcp::endpoint( make_address( listenOn.address() ), listenOn.port() ) )
@@ -29,27 +30,6 @@ TcpNetwork::TcpNetwork(const NetworkInterface &listenOn, size_t threadPoolSize) 
             [this] { _ioService.run(); } ) );
     }
 }
-
-
-
-// TcpNetwork::TcpNetwork(const vector<NetworkInterface> &listenOn, size_t threadPoolSize) :
-//     _threadPool(), _ioService(), _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
-//     _sessionFactories()
-// {
-//     for (auto const &netIf : listenOn)
-//     {
-//         //tcp::socket serverSocket(_ioService);
-//         tcp::endpoint endpoint( make_address( netIf.address() ), netIf.port() );
-//         tcp::acceptor acceptor(_ioService, endpoint);
-//     }
-//     
-//     // Start the specified number of job processor threads
-//     for (size_t idx = 0; idx < threadPoolSize; ++idx)
-//     {
-//         _threadPool.push_back( thread(
-//             [this] { _ioService.run(); } ) );
-//     }
-// }
 
 
 
@@ -68,11 +48,19 @@ tcp::acceptor& TcpNetwork::acceptor() { return _acceptor; }
 
 
 
-SyncProtoBufNetworkSession::SyncProtoBufNetworkSession(tcp::acceptor& acceptor) :
-    _acceptor(acceptor), _stream()
+
+SyncProtoBufNetworkSession::SyncProtoBufNetworkSession(TcpNetwork &network) :
+    _stream()
 {
-    asio::error_code ec;
-    _acceptor.accept( *_stream.rdbuf() );
+    network.acceptor().accept( *_stream.rdbuf() );
+}
+
+
+SyncProtoBufNetworkSession::SyncProtoBufNetworkSession(const NetworkInterface &contact) :
+    _stream( contact.address(), to_string( contact.port() ) )
+{
+    if (! _stream)
+        { throw runtime_error("Failed to connect"); }
 }
 
 
@@ -85,6 +73,7 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 }
 
 
+
 iop::locnet::MessageWithHeader* SyncProtoBufNetworkSession::ReceiveMessage()
 {
     // Allocate a buffer for the message header and read it
@@ -93,6 +82,9 @@ iop::locnet::MessageWithHeader* SyncProtoBufNetworkSession::ReceiveMessage()
     
     // Extract message size from the header to know how many bytes to read
     uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
+    
+    if (bodySize > MaxMessageSize)
+        { throw runtime_error( "Message size is over limit: " + to_string(bodySize) ); }
     
     // Extend buffer to fit remaining message size and read it
     messageBytes.resize(MessageHeaderSize + bodySize, 0);
@@ -103,6 +95,7 @@ iop::locnet::MessageWithHeader* SyncProtoBufNetworkSession::ReceiveMessage()
     message->ParseFromString(messageBytes);
     return message.release();
 }
+
 
 
 void SyncProtoBufNetworkSession::SendMessage(iop::locnet::MessageWithHeader& message)
