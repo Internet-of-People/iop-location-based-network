@@ -42,6 +42,9 @@ public:
  
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
     virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
+    
+    //virtual bool IsAlive() const = 0;
+    virtual void Close() = 0;
 };
 
 
@@ -57,16 +60,20 @@ public:
     
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
     void SendMessage(iop::locnet::MessageWithHeader &message) override;
+    
+    //bool IsAlive() const override;
+    void Close() override;
 };
 
 
 
 class ProtoBufRequestNetworkDispatcher : public IProtoBufRequestDispatcher
 {
-    std::shared_ptr<IProtoBufNetworkSession> session;
+    std::shared_ptr<IProtoBufNetworkSession> _session;
     
 public:
-    
+
+    ProtoBufRequestNetworkDispatcher(std::shared_ptr<IProtoBufNetworkSession> session);
     std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
 };
 

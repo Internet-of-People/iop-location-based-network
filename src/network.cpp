@@ -101,7 +101,45 @@ void SyncProtoBufNetworkSession::SendMessage(iop::locnet::MessageWithHeader& mes
 {
     message.set_header(1);
     message.set_header( message.ByteSize() - MessageHeaderSize );
-    _stream << message.SerializeAsString() << endl;
+    _stream << message.SerializeAsString();
+}
+
+
+// bool SyncProtoBufNetworkSession::IsAlive() const
+// {
+//     This doesn't really seems to work as on :normal" std::streamss
+//     return static_cast<bool>(_stream);
+// }
+
+
+void SyncProtoBufNetworkSession::Close()
+{
+    _stream.close();
+}
+
+
+
+ProtoBufRequestNetworkDispatcher::ProtoBufRequestNetworkDispatcher(shared_ptr<IProtoBufNetworkSession> session) :
+    _session(session) {}
+
+    
+
+unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(const iop::locnet::Request& request)
+{
+    iop::locnet::Request *clonedReq = new iop::locnet::Request(request);
+    clonedReq->set_version("1");
+    
+    iop::locnet::MessageWithHeader reqMsg;
+    reqMsg.mutable_body()->set_allocated_request(clonedReq);
+    
+    _session->SendMessage(reqMsg);
+    iop::locnet::MessageWithHeader *respMsg = _session->ReceiveMessage();
+    if ( ! respMsg || ! respMsg->has_body() || ! respMsg->body().has_response() )
+        { throw runtime_error("Got invalid response from remote node"); }
+        
+    iop::locnet::Response *response = respMsg->mutable_body()->mutable_response();
+    respMsg->mutable_body()->set_allocated_response(nullptr);
+    return unique_ptr<iop::locnet::Response>(response);
 }
 
 

@@ -417,6 +417,7 @@ NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRe
 size_t NodeMethodsProtoBufClient::GetColleagueNodeCount() const
 {
     iop::locnet::Request request;
+    //request.set_version("1");
     request.mutable_remotenode()->mutable_getcolleaguenodecount();
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
@@ -431,6 +432,7 @@ size_t NodeMethodsProtoBufClient::GetColleagueNodeCount() const
 bool NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& node)
 {
     iop::locnet::Request request;
+    //request.set_version("1");
     request.mutable_remotenode()->mutable_acceptcolleague()->set_allocated_nodeinfo(
         Converter::ToProtoBuf(node) );
     
@@ -446,6 +448,7 @@ bool NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& node)
 bool NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& node)
 {
     iop::locnet::Request request;
+    //request.set_version("1");
     request.mutable_remotenode()->mutable_renewcolleague()->set_allocated_nodeinfo(
         Converter::ToProtoBuf(node) );
     
@@ -461,6 +464,7 @@ bool NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& node)
 bool NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& node)
 {
     iop::locnet::Request request;
+    //request.set_version("1");
     request.mutable_remotenode()->mutable_acceptneighbour()->set_allocated_nodeinfo(
         Converter::ToProtoBuf(node) );
     
@@ -476,6 +480,7 @@ bool NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& node)
 bool NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& node)
 {
     iop::locnet::Request request;
+    //request.set_version("1");
     request.mutable_remotenode()->mutable_renewneighbour()->set_allocated_nodeinfo(
         Converter::ToProtoBuf(node) );
     
@@ -492,6 +497,7 @@ vector<NodeInfo> NodeMethodsProtoBufClient::GetRandomNodes(
     size_t maxNodeCount, Neighbours filter) const
 {
     iop::locnet::Request request;
+    //request.set_version("1");
     iop::locnet::GetRandomNodesRequest *getRandReq = request.mutable_remotenode()->mutable_getrandomnodes();
     getRandReq->set_maxnodecount(maxNodeCount);
     getRandReq->set_includeneighbours( filter == Neighbours::Included );
@@ -513,6 +519,7 @@ vector<NodeInfo> NodeMethodsProtoBufClient::GetClosestNodesByDistance(
     const GpsLocation& location, Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
 {
     iop::locnet::Request request;
+    //request.set_version("1");
     iop::locnet::GetClosestNodesByDistanceRequest *getNodeReq =
         request.mutable_remotenode()->mutable_getclosestnodes();
     getNodeReq->set_allocated_location( Converter::ToProtoBuf(location) );
