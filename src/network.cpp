@@ -133,13 +133,13 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
     reqMsg.mutable_body()->set_allocated_request(clonedReq);
     
     _session->SendMessage(reqMsg);
-    iop::locnet::MessageWithHeader *respMsg = _session->ReceiveMessage();
+    unique_ptr<iop::locnet::MessageWithHeader> respMsg( _session->ReceiveMessage() );
     if ( ! respMsg || ! respMsg->has_body() || ! respMsg->body().has_response() )
         { throw runtime_error("Got invalid response from remote node"); }
         
-    iop::locnet::Response *response = respMsg->mutable_body()->mutable_response();
-    respMsg->mutable_body()->set_allocated_response(nullptr);
-    return unique_ptr<iop::locnet::Response>(response);
+    unique_ptr<iop::locnet::Response> result(
+        new iop::locnet::Response( respMsg->body().response() ) );
+    return result;
 }
 
 

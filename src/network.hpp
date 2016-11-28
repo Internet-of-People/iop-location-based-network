@@ -40,6 +40,8 @@ class IProtoBufNetworkSession
 {
 public:
  
+    virtual ~IProtoBufNetworkSession() {}
+    
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
     virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
     
@@ -74,6 +76,8 @@ class ProtoBufRequestNetworkDispatcher : public IProtoBufRequestDispatcher
 public:
 
     ProtoBufRequestNetworkDispatcher(std::shared_ptr<IProtoBufNetworkSession> session);
+    virtual ~ProtoBufRequestNetworkDispatcher() {}
+    
     std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
 };
 

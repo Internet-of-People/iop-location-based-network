@@ -17,6 +17,8 @@ class ILocalServiceMethods
 {
 public:
     
+    virtual ~ILocalServiceMethods() {}
+    
     virtual void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) = 0;
     virtual void DeregisterService(ServiceType serviceType) = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
@@ -27,6 +29,8 @@ public:
 class INodeMethods
 {
 public:
+    
+    virtual ~INodeMethods() {}
     
     virtual size_t GetColleagueNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetRandomNodes(
@@ -46,6 +50,8 @@ public:
 class IClientMethods
 {
 public:
+    
+    virtual ~IClientMethods() {}
 
     virtual const std::unordered_map<ServiceType,ServiceProfile,EnumHasher>& GetServices() const = 0;
     
@@ -59,6 +65,8 @@ public:
 class INodeConnectionFactory
 {
 public:
+    
+    virtual ~INodeConnectionFactory() {}
     
     virtual std::shared_ptr<INodeMethods> ConnectTo(const NodeProfile &node) = 0;
 };

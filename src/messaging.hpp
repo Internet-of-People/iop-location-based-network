@@ -34,6 +34,8 @@ class IProtoBufRequestDispatcher
 {
 public:
     
+    virtual ~IProtoBufRequestDispatcher() {}
+    
     virtual std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) = 0;
 };
 
@@ -54,6 +56,8 @@ public:
     
     IncomingRequestDispatcher(Node &node);
     IncomingRequestDispatcher(ILocalServiceMethods &iLocalServices, INodeMethods &iRemoteNode, IClientMethods &iClient);
+    
+    virtual ~IncomingRequestDispatcher() {}
     
     std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
 };

@@ -44,6 +44,8 @@ public:
 class ISpatialDatabase
 {
 public:
+    virtual ~ISpatialDatabase() {}
+    
     virtual Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const = 0;
     
     virtual bool Store(const NodeDbEntry &node) = 0;

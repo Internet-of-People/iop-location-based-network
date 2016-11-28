@@ -20,19 +20,25 @@ int main()
     try
     {
         LOG(INFO) << "Connecting to location based network";
-        const LocNet::NetworkInterface &BudapestNodeContact( LocNet::TestData::NodeBudapest.profile().contacts().front() );
-        SyncProtoBufNetworkSession session(BudapestNodeContact);
+        const NetworkInterface &BudapestNodeContact( TestData::NodeBudapest.profile().contacts().front() );
+        shared_ptr<IProtoBufNetworkSession> session( new SyncProtoBufNetworkSession(BudapestNodeContact) );
 
-        LOG(INFO) << "Sending getneighbournodes request";
-        iop::locnet::MessageWithHeader requestMsg;
-        requestMsg.mutable_body()->mutable_request()->mutable_localservice()->mutable_getneighbournodes();
-        requestMsg.mutable_body()->mutable_request()->set_version("1");
-        session.SendMessage(requestMsg);
+        LOG(INFO) << "Sending getcolleaguenodecount request";
+        shared_ptr<IProtoBufRequestDispatcher> netDispatcher( new ProtoBufRequestNetworkDispatcher(session) );
+        NodeMethodsProtoBufClient client(netDispatcher);
+        size_t colleagueCount = client.GetColleagueNodeCount();
+        LOG(INFO) << "Get colleague node count " << colleagueCount;
         
-        unique_ptr<iop::locnet::MessageWithHeader> msgReceived( session.ReceiveMessage() );
-        
-        LOG(INFO) << "Got " << msgReceived->body().response().localservice().getneighbournodes().nodes_size()
-                  << " neighbours in the reponse";
+//         LOG(INFO) << "Sending getneighbournodes request";
+//         iop::locnet::MessageWithHeader requestMsg;
+//         requestMsg.mutable_body()->mutable_request()->mutable_localservice()->mutable_getneighbournodes();
+//         requestMsg.mutable_body()->mutable_request()->set_version("1");
+//         session->SendMessage(requestMsg);
+//         
+//         unique_ptr<iop::locnet::MessageWithHeader> msgReceived( session->ReceiveMessage() );
+//         
+//         LOG(INFO) << "Got " << msgReceived->body().response().localservice().getneighbournodes().nodes_size()
+//                   << " neighbours in the reponse";
         
         return 0;
     }
