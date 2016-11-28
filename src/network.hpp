@@ -61,7 +61,7 @@ public:
 
 
 
-class ClientMessageDispatcher : public IMessageDispatcher
+class ProtoBufRequestNetworkDispatcher : public IProtoBufRequestDispatcher
 {
     std::shared_ptr<IProtoBufNetworkSession> session;
     

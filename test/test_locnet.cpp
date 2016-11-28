@@ -174,7 +174,7 @@ SCENARIO("Server registration", "")
         NodeInfo nodeInfo( NodeProfile("NodeId",
             { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), loc );
         shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(loc) );
-        shared_ptr<IRemoteNodeConnectionFactory> connectionFactory( new DummyRemoteNodeConnectionFactory() );
+        shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
         Node geonet(nodeInfo, geodb, connectionFactory, true);
         
         WHEN("it's newly created") {

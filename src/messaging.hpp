@@ -30,7 +30,7 @@ struct Converter
 
 
 
-class IMessageDispatcher
+class IProtoBufRequestDispatcher
 {
 public:
     
@@ -39,12 +39,12 @@ public:
 
 
 
-class ServerMessageDispatcher : public IMessageDispatcher
+class IncomingRequestDispatcher : public IProtoBufRequestDispatcher
 {
     // TODO should we use some smart pointers here instead?
-    ILocalServices &_iLocalService;
-    IRemoteNode    &_iRemoteNode;
-    IClientMethods &_iClient;
+    ILocalServiceMethods &_iLocalService;
+    INodeMethods         &_iRemoteNode;
+    IClientMethods       &_iClient;
     
     iop::locnet::LocalServiceResponse* DispatchLocalService(const iop::locnet::LocalServiceRequest &request);
     iop::locnet::RemoteNodeResponse* DispatchRemoteNode(const iop::locnet::RemoteNodeRequest &request);
@@ -52,21 +52,21 @@ class ServerMessageDispatcher : public IMessageDispatcher
     
 public:
     
-    ServerMessageDispatcher(Node &node);
-    ServerMessageDispatcher(ILocalServices &iLocalServices, IRemoteNode &iRemoteNode, IClientMethods &iClient);
+    IncomingRequestDispatcher(Node &node);
+    IncomingRequestDispatcher(ILocalServiceMethods &iLocalServices, INodeMethods &iRemoteNode, IClientMethods &iClient);
     
     std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
 };
 
 
 
-class ProtobufRemoteNode : public IRemoteNode
+class NodeMethodsProtoBufClient : public INodeMethods
 {
-    std::shared_ptr<IMessageDispatcher> _dispatcher;
+    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
     
 public:
     
-    ProtobufRemoteNode(std::shared_ptr<IMessageDispatcher> dispatcher);
+    NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher);
     
     size_t GetColleagueNodeCount() const override;
     std::vector<NodeInfo> GetRandomNodes(

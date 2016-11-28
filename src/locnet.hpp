@@ -13,7 +13,7 @@ namespace LocNet
 
     
 // Local interface for services running on the same hardware
-class ILocalServices
+class ILocalServiceMethods
 {
 public:
     
@@ -24,7 +24,7 @@ public:
 
 
 // Interface provided for the same network instances running on remote machines
-class IRemoteNode
+class INodeMethods
 {
 public:
     
@@ -56,16 +56,16 @@ public:
 
 
 
-class IRemoteNodeConnectionFactory
+class INodeConnectionFactory
 {
 public:
     
-    virtual std::shared_ptr<IRemoteNode> ConnectTo(const NodeProfile &node) = 0;
+    virtual std::shared_ptr<INodeMethods> ConnectTo(const NodeProfile &node) = 0;
 };
 
 
 
-class Node : public ILocalServices, public IClientMethods, public IRemoteNode
+class Node : public ILocalServiceMethods, public IClientMethods, public INodeMethods
 {
     static const std::vector<NodeInfo> _seedNodes;
     static std::random_device _randomDevice;
@@ -73,11 +73,11 @@ class Node : public ILocalServices, public IClientMethods, public IRemoteNode
     NodeInfo _myNodeInfo;
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     std::shared_ptr<ISpatialDatabase> _spatialDb;
-    std::shared_ptr<IRemoteNodeConnectionFactory> _connectionFactory;
+    std::shared_ptr<INodeConnectionFactory> _connectionFactory;
     
-    std::shared_ptr<IRemoteNode> SafeConnectTo(const NodeProfile &node);
+    std::shared_ptr<INodeMethods> SafeConnectTo(const NodeProfile &node);
     bool SafeStoreNode(const NodeDbEntry &entry,
-        std::shared_ptr<IRemoteNode> nodeConnection = std::shared_ptr<IRemoteNode>() );
+        std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
     
     bool InitializeWorld();
     bool InitializeNeighbourhood();
@@ -91,7 +91,7 @@ public:
     
     Node( const NodeInfo &nodeInfo,
           std::shared_ptr<ISpatialDatabase> spatialDb,
-          std::shared_ptr<IRemoteNodeConnectionFactory> connectionFactory,
+          std::shared_ptr<INodeConnectionFactory> connectionFactory,
           bool ignoreDiscovery = false );
 
     // Interface provided to serve higher level services and clients

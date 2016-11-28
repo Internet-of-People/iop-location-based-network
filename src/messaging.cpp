@@ -158,16 +158,16 @@ iop::locnet::NodeInfo* Converter::ToProtoBuf(const NodeInfo &info)
 
 
 
-ServerMessageDispatcher::ServerMessageDispatcher(LocNet::Node& node) :
+IncomingRequestDispatcher::IncomingRequestDispatcher(LocNet::Node& node) :
     _iLocalService(node), _iRemoteNode(node), _iClient(node) {}
 
-ServerMessageDispatcher::ServerMessageDispatcher(ILocalServices& iLocalServices,
-                                     IRemoteNode& iRemoteNode, IClientMethods& iClient) :
+IncomingRequestDispatcher::IncomingRequestDispatcher(ILocalServiceMethods& iLocalServices,
+                                     INodeMethods& iRemoteNode, IClientMethods& iClient) :
     _iLocalService(iLocalServices), _iRemoteNode(iRemoteNode), _iClient(iClient) {}
     
 
 
-unique_ptr<iop::locnet::Response> ServerMessageDispatcher::Dispatch(const iop::locnet::Request& request)
+unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(const iop::locnet::Request& request)
 {
     // TODO implement better version checks
     if ( request.version().empty() || request.version()[0] != '1' )
@@ -201,7 +201,7 @@ unique_ptr<iop::locnet::Response> ServerMessageDispatcher::Dispatch(const iop::l
 
 
 
-iop::locnet::LocalServiceResponse* ServerMessageDispatcher::DispatchLocalService(
+iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalService(
     const iop::locnet::LocalServiceRequest& localServiceRequest)
 {
     switch ( localServiceRequest.LocalServiceRequestType_case() )
@@ -250,7 +250,7 @@ iop::locnet::LocalServiceResponse* ServerMessageDispatcher::DispatchLocalService
 
 
 
-iop::locnet::RemoteNodeResponse* ServerMessageDispatcher::DispatchRemoteNode(
+iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
     const iop::locnet::RemoteNodeRequest& nodeRequest)
 {
     switch ( nodeRequest.RemoteNodeRequestType_case() )
@@ -344,7 +344,7 @@ iop::locnet::RemoteNodeResponse* ServerMessageDispatcher::DispatchRemoteNode(
 
 
 
-iop::locnet::ClientResponse* ServerMessageDispatcher::DispatchClient(
+iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
     const iop::locnet::ClientRequest& clientRequest)
 {
     switch ( clientRequest.ClientRequestType_case() )
@@ -405,7 +405,7 @@ iop::locnet::ClientResponse* ServerMessageDispatcher::DispatchClient(
 
 
 
-ProtobufRemoteNode::ProtobufRemoteNode(std::shared_ptr<IMessageDispatcher> dispatcher) :
+NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher) :
     _dispatcher(dispatcher)
 {
     if (! _dispatcher)
@@ -414,7 +414,7 @@ ProtobufRemoteNode::ProtobufRemoteNode(std::shared_ptr<IMessageDispatcher> dispa
 
 
 
-size_t ProtobufRemoteNode::GetColleagueNodeCount() const
+size_t NodeMethodsProtoBufClient::GetColleagueNodeCount() const
 {
     iop::locnet::Request request;
     request.mutable_remotenode()->mutable_getcolleaguenodecount();
@@ -428,7 +428,7 @@ size_t ProtobufRemoteNode::GetColleagueNodeCount() const
 
 
 
-bool ProtobufRemoteNode::AcceptColleague(const NodeInfo& node)
+bool NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& node)
 {
     iop::locnet::Request request;
     request.mutable_remotenode()->mutable_acceptcolleague()->set_allocated_nodeinfo(
@@ -443,7 +443,7 @@ bool ProtobufRemoteNode::AcceptColleague(const NodeInfo& node)
 
 
 
-bool ProtobufRemoteNode::RenewColleague(const NodeInfo& node)
+bool NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& node)
 {
     iop::locnet::Request request;
     request.mutable_remotenode()->mutable_renewcolleague()->set_allocated_nodeinfo(
@@ -458,7 +458,7 @@ bool ProtobufRemoteNode::RenewColleague(const NodeInfo& node)
 
 
 
-bool ProtobufRemoteNode::AcceptNeighbour(const NodeInfo& node)
+bool NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& node)
 {
     iop::locnet::Request request;
     request.mutable_remotenode()->mutable_acceptneighbour()->set_allocated_nodeinfo(
@@ -473,7 +473,7 @@ bool ProtobufRemoteNode::AcceptNeighbour(const NodeInfo& node)
 
 
 
-bool ProtobufRemoteNode::RenewNeighbour(const NodeInfo& node)
+bool NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& node)
 {
     iop::locnet::Request request;
     request.mutable_remotenode()->mutable_renewneighbour()->set_allocated_nodeinfo(
@@ -488,7 +488,7 @@ bool ProtobufRemoteNode::RenewNeighbour(const NodeInfo& node)
 
 
 
-vector<NodeInfo> ProtobufRemoteNode::GetRandomNodes(
+vector<NodeInfo> NodeMethodsProtoBufClient::GetRandomNodes(
     size_t maxNodeCount, Neighbours filter) const
 {
     iop::locnet::Request request;
@@ -509,7 +509,7 @@ vector<NodeInfo> ProtobufRemoteNode::GetRandomNodes(
 
 
 
-vector<NodeInfo> ProtobufRemoteNode::GetClosestNodesByDistance(
+vector<NodeInfo> NodeMethodsProtoBufClient::GetClosestNodesByDistance(
     const GpsLocation& location, Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
 {
     iop::locnet::Request request;

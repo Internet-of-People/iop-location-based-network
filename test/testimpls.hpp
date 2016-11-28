@@ -43,11 +43,11 @@ public:
 
     
 
-class DummyRemoteNodeConnectionFactory: public IRemoteNodeConnectionFactory
+class DummyNodeConnectionFactory: public INodeConnectionFactory
 {
 public:
     
-    std::shared_ptr<IRemoteNode> ConnectTo(const NodeProfile &node) override;
+    std::shared_ptr<INodeMethods> ConnectTo(const NodeProfile &node) override;
 };
 
 

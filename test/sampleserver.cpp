@@ -25,10 +25,10 @@ int main()
         geodb->Store(TestData::EntryWien);
         geodb->Store(TestData::EntryCapeTown);
         
-        shared_ptr<IRemoteNodeConnectionFactory> connectionFactory(
-            new DummyRemoteNodeConnectionFactory() );
+        shared_ptr<INodeConnectionFactory> connectionFactory(
+            new DummyNodeConnectionFactory() );
         Node node( TestData::NodeBudapest, geodb, connectionFactory );
-        ServerMessageDispatcher dispatcher(node);
+        IncomingRequestDispatcher dispatcher(node);
         
         const LocNet::NetworkInterface &BudapestNodeContact(
             LocNet::TestData::NodeBudapest.profile().contacts().front() );

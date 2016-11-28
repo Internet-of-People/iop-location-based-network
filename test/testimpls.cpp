@@ -10,9 +10,9 @@ namespace LocNet
 
 
 
-shared_ptr<IRemoteNode> DummyRemoteNodeConnectionFactory::ConnectTo(const NodeProfile&)
+shared_ptr<INodeMethods> DummyNodeConnectionFactory::ConnectTo(const NodeProfile&)
 {
-    return shared_ptr<IRemoteNode>();
+    return shared_ptr<INodeMethods>();
 }
 
 

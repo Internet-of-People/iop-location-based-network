@@ -37,7 +37,7 @@ random_device Node::_randomDevice;
 
 Node::Node( const NodeInfo &nodeInfo,
             shared_ptr<ISpatialDatabase> spatialDb,
-            std::shared_ptr<IRemoteNodeConnectionFactory> connectionFactory,
+            std::shared_ptr<INodeConnectionFactory> connectionFactory,
             bool ignoreDiscovery ) :
     _myNodeInfo(nodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
 {
@@ -173,20 +173,20 @@ bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation) const
 }
 
 
-shared_ptr<IRemoteNode> Node::SafeConnectTo(const NodeProfile& node)
+shared_ptr<INodeMethods> Node::SafeConnectTo(const NodeProfile& node)
 {
     // There is no point in connecting to ourselves
     if ( node.id() == _myNodeInfo.profile().id() )
-        { return shared_ptr<IRemoteNode>(); }
+        { return shared_ptr<INodeMethods>(); }
     
     try { return _connectionFactory->ConnectTo(node); }
     catch (exception &e)
         { LOG(INFO) << "Failed to connect to " << node.id() << ", error was: " << e.what(); }
-    return shared_ptr<IRemoteNode>();
+    return shared_ptr<INodeMethods>();
 }
 
 
-bool Node::SafeStoreNode(const NodeDbEntry& entry, shared_ptr<IRemoteNode> nodeConnection)
+bool Node::SafeStoreNode(const NodeDbEntry& entry, shared_ptr<INodeMethods> nodeConnection)
 {
     try
     {
@@ -289,7 +289,7 @@ bool Node::InitializeWorld()
             triedSeedNodes.push_back( selectedSeedNode.profile().id() );
             
             // Try connecting to selected seed node
-            shared_ptr<IRemoteNode> seedNodeConnection = SafeConnectTo( selectedSeedNode.profile() );
+            shared_ptr<INodeMethods> seedNodeConnection = SafeConnectTo( selectedSeedNode.profile() );
             if (seedNodeConnection == nullptr)
                 { continue; }
             
@@ -361,7 +361,7 @@ bool Node::InitializeWorld()
                 try
                 {
                     // Connect to selected random node
-                    shared_ptr<IRemoteNode> randomConnection = SafeConnectTo( randomColleagueCandidates.front().profile() );
+                    shared_ptr<INodeMethods> randomConnection = SafeConnectTo( randomColleagueCandidates.front().profile() );
                     if (randomConnection == nullptr)
                         { continue; }
                     
@@ -398,7 +398,7 @@ bool Node::InitializeNeighbourhood()
         oldClosestNode = newClosestNode;
         try
         {
-            shared_ptr<IRemoteNode> closestNodeConnection =
+            shared_ptr<INodeMethods> closestNodeConnection =
                 SafeConnectTo( newClosestNode.front().profile() );
             if (closestNodeConnection == nullptr) {
                 // TODO what to do if closest node is not reachable?
@@ -434,7 +434,7 @@ bool Node::InitializeNeighbourhood()
         try
         {
             // Try connecting to the node
-            shared_ptr<IRemoteNode> candidateConnection = SafeConnectTo( neighbourCandidate.profile() );
+            shared_ptr<INodeMethods> candidateConnection = SafeConnectTo( neighbourCandidate.profile() );
             if (candidateConnection == nullptr)
                 { continue; }
                 
@@ -469,7 +469,7 @@ void Node::RenewNodeRelations()
     {
         try
         {
-            shared_ptr<IRemoteNode> connection = SafeConnectTo( node.profile() );
+            shared_ptr<INodeMethods> connection = SafeConnectTo( node.profile() );
             if (connection == nullptr)
             {
                 LOG(WARNING) << "Failed to contact node " << node.profile().id();
