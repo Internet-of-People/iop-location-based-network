@@ -1,4 +1,5 @@
 #include <iostream>
+#include <csignal>
 
 #include "easylogging++.h"
 #include "locnet.hpp"
@@ -13,8 +14,19 @@ using namespace LocNet;
 
 
 
+bool ShutdownRequested = false;
+
+void ShutdownSignalHandler(int)
+{
+    ShutdownRequested = true;
+}
+
+
 int main()
 {
+    std::signal(SIGINT,  ShutdownSignalHandler);
+    std::signal(SIGTERM, ShutdownSignalHandler);
+    
     try
     {
         LOG(INFO) << "Initializing server";
@@ -34,17 +46,24 @@ int main()
             LocNet::TestData::NodeBudapest.profile().contacts().front() );
         TcpNetwork network(BudapestNodeContact);
         
-        LOG(INFO) << "Reading request";
-        SyncProtoBufNetworkSession session(network);
-        shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
-        
-        LOG(INFO) << "Serving request";
-        unique_ptr<iop::locnet::Response> response( dispatcher.Dispatch( requestMsg->body().request() ) );
-        
-        LOG(INFO) << "Sending response";
-        iop::locnet::MessageWithHeader responseMsg;
-        responseMsg.mutable_body()->set_allocated_response( response.release() );
-        session.SendMessage(responseMsg);
+        while (! ShutdownRequested)
+        {
+            // TODO CTRL-C should break this loop immediately instead of after finishing next request
+            SyncProtoBufNetworkSession session(network);
+            
+            LOG(INFO) << "Reading request";
+            shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
+            
+            LOG(INFO) << "Serving request";
+            unique_ptr<iop::locnet::Response> response( dispatcher.Dispatch( requestMsg->body().request() ) );
+            
+            LOG(INFO) << "Sending response";
+            iop::locnet::MessageWithHeader responseMsg;
+            responseMsg.mutable_body()->set_allocated_response( response.release() );
+            session.SendMessage(responseMsg);
+            
+            session.Close();
+        }
         
         LOG(INFO) << "Finished successfully";
         return 0;
