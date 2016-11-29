@@ -221,6 +221,11 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
             
         case iop::locnet::LocalServiceRequest::kGetNeighbourNodes:
         {
+            auto const &getneighboursRequest = localServiceRequest.getneighbournodes();
+            bool keepAlive = getneighboursRequest.keepaliveandsendupdates();
+            
+            // TODO how to handle here if keepAlive flag is set?
+            //      It effects thw lower network layer, but we're unaware of that here.
             vector<NodeInfo> neighbours = _iLocalService.GetNeighbourNodesByDistance();
             
             auto result = new iop::locnet::LocalServiceResponse();
