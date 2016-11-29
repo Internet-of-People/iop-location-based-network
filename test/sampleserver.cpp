@@ -44,7 +44,7 @@ int main()
         IncomingRequestDispatcher dispatcher(node);
         
         const LocNet::NetworkInterface &BudapestNodeContact(
-            LocNet::TestData::NodeBudapest.profile().contacts().front() );
+            LocNet::TestData::NodeBudapest.profile().contact() );
         TcpNetwork network(BudapestNodeContact);
         
         while (! ShutdownRequested)

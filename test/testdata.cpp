@@ -14,17 +14,17 @@ GpsLocation TestData::CapeTown(-33.9135236,18.0941875);
 
 
 NodeInfo TestData::NodeBudapest( NodeProfile("BudapestId",
-    { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), Budapest );
+    NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) ), Budapest );
 NodeInfo TestData::NodeKecskemet( NodeProfile("KecskemetId",
-    { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), Kecskemet );
+    NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) ), Kecskemet );
 NodeInfo TestData::NodeWien( NodeProfile("WienId",
-    { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), Wien );
+    NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) ), Wien );
 NodeInfo TestData::NodeLondon( NodeProfile("LondonId",
-    { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), London );
+    NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) ), London );
 NodeInfo TestData::NodeNewYork( NodeProfile("NewYorkId",
-    { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), NewYork );
+    NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) ), NewYork );
 NodeInfo TestData::NodeCapeTown( NodeProfile("CapeTownId",
-    { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), CapeTown );
+    NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) ), CapeTown );
 
 NodeDbEntry TestData::EntryKecskemet( NodeKecskemet,
     NodeRelationType::Neighbour, NodeContactRoleType::Initiator );

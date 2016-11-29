@@ -120,7 +120,8 @@ void SpatiaLiteDatabase::QuerySql(const string& sql)
 
 
 
-Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation& one, const GpsLocation& other) const
+//Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation& one, const GpsLocation& other) const
+Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation&, const GpsLocation&) const
 {
     // TODO
     return 0;
@@ -128,7 +129,8 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation& one, const GpsLoca
 
 
 
-bool SpatiaLiteDatabase::Store(const NodeDbEntry& node)
+//bool SpatiaLiteDatabase::Store(const NodeDbEntry& node)
+bool SpatiaLiteDatabase::Store(const NodeDbEntry&)
 {
     // TODO
     return false;
@@ -136,7 +138,8 @@ bool SpatiaLiteDatabase::Store(const NodeDbEntry& node)
 
 
 
-shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
+//shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
+shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId&) const
 {
     // TODO
     return shared_ptr<NodeDbEntry>();
@@ -144,7 +147,8 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
 
 
 
-bool SpatiaLiteDatabase::Update(const NodeDbEntry& node)
+//bool SpatiaLiteDatabase::Update(const NodeDbEntry& node)
+bool SpatiaLiteDatabase::Update(const NodeDbEntry&)
 {
     // TODO
     return false;
@@ -152,7 +156,8 @@ bool SpatiaLiteDatabase::Update(const NodeDbEntry& node)
 
 
 
-bool SpatiaLiteDatabase::Remove(const NodeId& nodeId)
+//bool SpatiaLiteDatabase::Remove(const NodeId& nodeId)
+bool SpatiaLiteDatabase::Remove(const NodeId&)
 {
     // TODO
     return false;
@@ -183,7 +188,8 @@ vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 
 
 
-vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+//vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t, Neighbours) const
 {
     // TODO
     return {};
@@ -191,7 +197,8 @@ vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbo
 
 
 
-vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(const GpsLocation& position, Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
+//vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(const GpsLocation& position, Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
+vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(const GpsLocation&, Distance, size_t, Neighbours) const
 {
     // TODO
     return {};

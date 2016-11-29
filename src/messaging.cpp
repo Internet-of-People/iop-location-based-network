@@ -79,20 +79,17 @@ iop::locnet::ServiceType Converter::ToProtoBuf(ServiceType value)
 
 NodeProfile Converter::FromProtoBuf(const iop::locnet::NodeProfile& value)
 {
-    vector<NetworkInterface> addresses;
-    for (int idx = 0; idx < value.contacts_size(); ++idx)
-    {
-        auto const &inputAddr = value.contacts(idx);
-        if ( inputAddr.has_ipv4() )
-            { addresses.emplace_back( AddressType::Ipv4,
-                inputAddr.ipv4().host(), inputAddr.ipv4().port() ); }
-        else if ( inputAddr.has_ipv6() )
-            { addresses.emplace_back( AddressType::Ipv6,
-                inputAddr.ipv6().host(), inputAddr.ipv6().port() ); }
-        else { throw runtime_error("Unknown address type"); }
-    }
+    if ( ! value.has_contact() )
+        { throw runtime_error("No contact information for profile"); }
     
-    return NodeProfile( value.nodeid(), addresses );
+    const iop::locnet::Contact &contact = value.contact();
+    if ( contact.has_ipv4() )
+        { return NodeProfile( value.nodeid(), NetworkInterface( AddressType::Ipv4,
+            contact.ipv4().host(), contact.ipv4().port() ) ); }
+    else if ( contact.has_ipv6() )
+        { return NodeProfile( value.nodeid(), NetworkInterface( AddressType::Ipv6,
+            contact.ipv6().host(), contact.ipv6().port() ) ); }
+    else { throw runtime_error("Unknown address type"); }
 }
 
 
@@ -103,33 +100,25 @@ NodeInfo Converter::FromProtoBuf(const iop::locnet::NodeInfo& value)
 
 
 
-void Converter::FillProtoBuf(
-    iop::locnet::NodeProfile *target, const NodeProfile &source)
+void Converter::FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile &source)
 {
+    const NetworkInterface &sourceContact = source.contact();
+    
     target->set_nodeid( source.id() );
-    for ( auto const &contact : source.contacts() )
+    iop::locnet::Contact *targetContact = target->mutable_contact();
+    switch( sourceContact.addressType() )
     {
-        auto outputContact = target->add_contacts();
-        switch( contact.addressType() )
-        {
-            case AddressType::Ipv4:
-            {
-                auto address = new iop::locnet::Ipv4Address();
-                address->set_host( contact.address() );
-                address->set_port( contact.port() );
-                outputContact->set_allocated_ipv4(address);
-                break;
-            }
-            case AddressType::Ipv6:
-            {
-                auto address = new iop::locnet::Ipv6Address();
-                address->set_host( contact.address() );
-                address->set_port( contact.port() );
-                outputContact->set_allocated_ipv6(address);
-                break;
-            }
-            default: throw runtime_error("Missing or unknown address type");
-        }
+        case AddressType::Ipv4:
+            targetContact->mutable_ipv4()->set_host( sourceContact.address() );
+            targetContact->mutable_ipv4()->set_port( sourceContact.port() );
+            break;
+
+        case AddressType::Ipv6:
+            targetContact->mutable_ipv6()->set_host( sourceContact.address() );
+            targetContact->mutable_ipv6()->set_port( sourceContact.port() );
+            break;
+
+        default: throw runtime_error("Missing or unknown address type");
     }
 }
 

@@ -33,10 +33,9 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
     GIVEN("A node profile object") {
         THEN("its fields are properly filled in") {
             REQUIRE( prof.id() == "NodeId" );
-            REQUIRE( prof.contacts().size() == 1 );
-            REQUIRE( prof.contacts()[0].addressType() == AddressType::Ipv4 );
-            REQUIRE( prof.contacts()[0].address() == "127.0.0.1" );
-            REQUIRE( prof.contacts()[0].port() == 6666 );
+            REQUIRE( prof.contact().addressType() == AddressType::Ipv4 );
+            REQUIRE( prof.contact().address() == "127.0.0.1" );
+            REQUIRE( prof.contact().port() == 6666 );
         }
     }
     

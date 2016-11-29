@@ -37,21 +37,21 @@ std::ostream& operator<<(std::ostream& out, const NetworkInterface &value)
 
 
 NodeProfile::NodeProfile() :
-    _id(), _contacts() {}
+    _id(), _contact() {}
 
 NodeProfile::NodeProfile(const NodeProfile& other) :
-    _id(other._id), _contacts(other._contacts) {}
+    _id(other._id), _contact(other._contact) {}
 
-NodeProfile::NodeProfile(const NodeId& id, vector<NetworkInterface> contacts) :
-    _id(id), _contacts(contacts) {}
+NodeProfile::NodeProfile(const NodeId& id, const NetworkInterface &contact) :
+    _id(id), _contact(contact) {}
 
 const NodeId& NodeProfile::id() const { return _id; }
-const vector<NetworkInterface>& NodeProfile::contacts() const { return _contacts; }
+const NetworkInterface& NodeProfile::contact() const { return _contact; }
 
 bool NodeProfile::operator==(const NodeProfile& other) const
 {
     return  _id == other._id &&
-            _contacts == other._contacts;
+            _contact == other._contact;
 }
 
 

@@ -2,7 +2,6 @@
 #define __LOCNET_BASIC_TYPES_H__
 
 #include <string>
-#include <vector>
 #include <iostream>
 
 
@@ -53,16 +52,16 @@ class NodeProfile
 {
     NodeId _id;
     // TODO will we also need a public key here?
-    std::vector<NetworkInterface> _contacts;
+    NetworkInterface _contact;
     
 public:
     
     NodeProfile();
     NodeProfile(const NodeProfile &other);
-    NodeProfile(const NodeId &id, const std::vector<NetworkInterface> _contacts);
+    NodeProfile(const NodeId &id, const NetworkInterface &contact);
     
     const NodeId& id() const;
-    const std::vector<NetworkInterface>& contacts() const;
+    const NetworkInterface& contact() const;
     
     bool operator==(const NodeProfile &other) const;
 };

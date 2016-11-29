@@ -16,7 +16,7 @@ using namespace asio::ip;
 unique_ptr<std::thread> StartServerThread()
 {
     const NetworkInterface &BudapestNodeContact(
-        TestData::NodeBudapest.profile().contacts().front() );
+        TestData::NodeBudapest.profile().contact() );
     TcpNetwork network(BudapestNodeContact);
     
     thread *serverThread = new thread( [&network]
@@ -51,6 +51,9 @@ unique_ptr<std::thread> StartServerThread()
         }
     } );
     
+    // TODO proper synchronization to make sure the port is already open when client tries to connect
+    this_thread::sleep_for( chrono::milliseconds(10) );
+    
     return unique_ptr<thread>(serverThread);
 }
 
@@ -65,7 +68,7 @@ SCENARIO("TCP networking", "[network]")
         THEN("It serves clients via sync TCP")
         {
             const NetworkInterface &BudapestNodeContact(
-                TestData::NodeBudapest.profile().contacts().front() );
+                TestData::NodeBudapest.profile().contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
                 new SyncProtoBufNetworkSession(BudapestNodeContact) );
             
@@ -113,7 +116,7 @@ SCENARIO("Transparent remote node client", "[network]") {
         THEN("It serves transparent clients using ProtoBuf/TCP protocol")
         {
             const NetworkInterface &BudapestNodeContact(
-                TestData::NodeBudapest.profile().contacts().front() );
+                TestData::NodeBudapest.profile().contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
                 new SyncProtoBufNetworkSession(BudapestNodeContact) );
             

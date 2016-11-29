@@ -20,7 +20,7 @@ int main()
     try
     {
         LOG(INFO) << "Connecting to location based network";
-        const NetworkInterface &BudapestNodeContact( TestData::NodeBudapest.profile().contacts().front() );
+        const NetworkInterface &BudapestNodeContact( TestData::NodeBudapest.profile().contact() );
         shared_ptr<IProtoBufNetworkSession> session( new SyncProtoBufNetworkSession(BudapestNodeContact) );
 
         LOG(INFO) << "Sending getcolleaguenodecount request";

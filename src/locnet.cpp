@@ -27,9 +27,9 @@ static const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT = 10;
 const vector<NodeInfo> Node::_seedNodes {
     // TODO put some real seed nodes in here
     NodeInfo( NodeProfile( NodeId("FirstSeedNodeId"),
-        { NetworkInterface(AddressType::Ipv4, "1.2.3.4", 5555) } ), GpsLocation(1.0, 2.0) ),
+        NetworkInterface(AddressType::Ipv4, "1.2.3.4", 5555) ), GpsLocation(1.0, 2.0) ),
     NodeInfo( NodeProfile( NodeId("SecondSeedNodeId"),
-        { NetworkInterface(AddressType::Ipv4, "6.7.8.9", 5555) } ), GpsLocation(3.0, 4.0) ),
+        NetworkInterface(AddressType::Ipv4, "6.7.8.9", 5555) ), GpsLocation(3.0, 4.0) ),
 };
 
 random_device Node::_randomDevice;
