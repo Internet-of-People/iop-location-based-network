@@ -31,6 +31,7 @@ int main()
     {
         LOG(INFO) << "Initializing server";
         shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(TestData::Budapest) );
+//        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(TestData::Budapest) );
         geodb->Store(TestData::EntryKecskemet);
         geodb->Store(TestData::EntryLondon);
         geodb->Store(TestData::EntryNewYork);

@@ -2,6 +2,7 @@
 #define __LOCNET_SPATIAL_DATABASE_H__
 
 #include <memory>
+#include <sqlite3.h>
 #include <vector>
 
 #include "basic.hpp"
@@ -65,6 +66,37 @@ public:
         size_t maxNodeCount, Neighbours filter) const = 0;
 };
 
+
+
+class SpatiaLiteDatabase : public ISpatialDatabase
+{
+    GpsLocation  _myLocation;
+    sqlite3     *_dbHandle;
+    
+    void ExecuteSql(const std::string &sql);
+    void QuerySql(const std::string &sql);
+    
+public:
+    
+    SpatiaLiteDatabase(const GpsLocation &nodeLocation);
+    virtual ~SpatiaLiteDatabase();
+    
+    Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
+
+    bool Store(const NodeDbEntry &node) override;
+    std::shared_ptr<NodeDbEntry> Load(const NodeId &nodeId) const override;
+    bool Update(const NodeDbEntry &node) override;
+    bool Remove(const NodeId &nodeId) override;
+    
+    void ExpireOldNodes() override;
+    
+    size_t GetColleagueNodeCount() const override;
+    std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
+    std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
+    
+    std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &position,
+        Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
+};
 
 
 } // namespace LocNet

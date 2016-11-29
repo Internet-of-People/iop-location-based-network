@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Needed to convince Travis to use proper compiler options
 if ( CMAKE_COMPILER_IS_GNUCXX )
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Wall -Wextra -pedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Wall -Wextra -pedantic -ansi")
 endif ( CMAKE_COMPILER_IS_GNUCXX )
 
 add_subdirectory(src)
