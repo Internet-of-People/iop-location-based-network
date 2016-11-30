@@ -19,7 +19,8 @@ unique_ptr<std::thread> StartServerThread()
         TestData::NodeBudapest.profile().contact() );
     TcpNetwork network(BudapestNodeContact);
     
-    thread *serverThread = new thread( [&network]
+    bool initialized = false;
+    thread *serverThread = new thread( [&network, &initialized]()
     {
         try {
             shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(TestData::Budapest) );
@@ -34,6 +35,7 @@ unique_ptr<std::thread> StartServerThread()
             Node node( TestData::NodeBudapest, geodb, connectionFactory );
             IncomingRequestDispatcher dispatcher(node);
             
+            initialized = true;
             SyncProtoBufNetworkSession serverSession(network);
             while (true)
             {
@@ -51,8 +53,8 @@ unique_ptr<std::thread> StartServerThread()
         }
     } );
     
-    // TODO proper synchronization to make sure the port is already open when client tries to connect
-    this_thread::sleep_for( chrono::milliseconds(10) );
+    while (! initialized)
+        { this_thread::sleep_for( chrono::milliseconds(1) ); }
     
     return unique_ptr<thread>(serverThread);
 }
