@@ -74,7 +74,7 @@ class SpatiaLiteDatabase : public ISpatialDatabase
     sqlite3     *_dbHandle;
     
     void ExecuteSql(const std::string &sql);
-    void QuerySql(const std::string &sql);
+    //void QuerySql(const std::string &sql);
     
 public:
     

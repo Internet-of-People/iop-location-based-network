@@ -16,8 +16,8 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
             iop::locnet::GpsLocation protoBufBudapest;
             Converter::FillProtoBuf(&protoBufBudapest, TestData::Budapest);
             
-            REQUIRE( abs( protoBufBudapest.latitude() - 47480870 ) < 10 );
-            REQUIRE( abs( protoBufBudapest.longitude() - 18849426 ) < 10 );
+            REQUIRE( abs( protoBufBudapest.latitude() - 47497912 ) < 10 );
+            REQUIRE( abs( protoBufBudapest.longitude() - 19040235 ) < 10 );
             
             GpsLocation locnetBudapest( Converter::FromProtoBuf(protoBufBudapest) );
             REQUIRE( locnetBudapest.latitude() == Approx( TestData::Budapest.latitude() ) );

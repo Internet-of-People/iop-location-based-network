@@ -1,3 +1,4 @@
+#include <cmath>
 #include <stdexcept>
 
 #include "basic.hpp"
@@ -77,9 +78,8 @@ void GpsLocation::Validate()
 
 bool GpsLocation::operator==(const GpsLocation& other) const
 {
-    // TODO maybe we should enable some minimal error range here
-    return _latitude  == other._latitude &&
-           _longitude == other._longitude;
+    return abs(_latitude  - other._latitude)  < 0.00001 &&
+           abs(_longitude - other._longitude) < 0.00001;
 }
 
 

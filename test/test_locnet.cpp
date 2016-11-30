@@ -68,10 +68,10 @@ SCENARIO("Spatial database", "")
         Distance Budapest_CapeTown = geodb.GetDistanceKm(TestData::Budapest, TestData::CapeTown);
         
         THEN("it can measure distances") {
-            REQUIRE( Budapest_Kecskemet == Approx(83.56).epsilon(0.01) );
-            REQUIRE( Budapest_Wien == Approx(212.24).epsilon(0.007) );
-            REQUIRE( Budapest_London == Approx(1449.57).epsilon(0.005) );
-            REQUIRE( Budapest_NewYork == Approx(7005.61).epsilon(0.003) );
+            REQUIRE( Budapest_Kecskemet == Approx(83.03).epsilon(0.01) );
+            REQUIRE( Budapest_Wien == Approx(214.59).epsilon(0.007) );
+            REQUIRE( Budapest_London == Approx(1453.28).epsilon(0.005) );
+            REQUIRE( Budapest_NewYork == Approx(7023.15).epsilon(0.003) );
             REQUIRE( Budapest_CapeTown == Approx(9053.66).epsilon(0.003) );
         }
         

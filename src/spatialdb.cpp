@@ -18,11 +18,14 @@ const string DatabaseFile = "file:locnet.sqlite"; // NOTE this may be any file U
 
 const vector<string> DatabaseInitCommands = {
     "CREATE TABLE IF NOT EXISTS nodes ( "
-    "  id       VARCHAR(255) PRIMARY KEY, "
-    "  location BLOB NOT NULL, "
-    "  ipaddr   VARCHAR(255) NOT NULL, "
-    "  port     INT NOT NULL "
+    "  id           TEXT PRIMARY KEY, "
+    "  ipaddr       TEXT NOT NULL, "
+    "  port         INT NOT NULL, "
+    "  relationType INT NOT NULL, "
+    "  roleType     INT NOT NULL, "
+    "  expiresAt    INTEGER NOT NULL " // Unix timestamp
     ");",
+// TODO    "SELECT AddGeometryColumn('nodes', 'location', 4326, 'POINT', 'XY', 1);",
 };
 
 
@@ -54,6 +57,18 @@ bool NodeDbEntry::operator==(const NodeDbEntry& other) const
 
 
 
+// NOTE SQLite works fine without this as sqlite3_open also calls init()
+// struct StaticDatabaseInitializer {
+//     StaticDatabaseInitializer() {
+//         if ( sqlite3_initialize() != SQLITE_OK )
+//             { throw new runtime_error("Failed to initialize SQLite environment"); }
+//     }
+// };
+// 
+// StaticDatabaseInitializer SqlLiteInitializer;
+
+
+
 SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
     _myLocation(nodeLocation), _dbHandle(nullptr)
 {
@@ -67,8 +82,8 @@ SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
         throw runtime_error("Failed to open SQLite database");
     }
     
-    LOG(INFO) << "SQLite version: " << sqlite3_libversion();
-    LOG(INFO) << "SpatiaLite version: " << spatialite_version();
+//     LOG(INFO) << "SQLite version: " << sqlite3_libversion();
+//     LOG(INFO) << "SpatiaLite version: " << spatialite_version();
     
     for (const string &command : DatabaseInitCommands)
     {
@@ -87,7 +102,7 @@ SpatiaLiteDatabase::~SpatiaLiteDatabase()
 void SpatiaLiteDatabase::ExecuteSql(const string& sql)
 {
     char *errorMessage;
-    int execResult = sqlite3_exec(_dbHandle, sql.c_str(), nullptr, nullptr, &errorMessage);
+    int execResult = sqlite3_exec( _dbHandle, sql.c_str(), nullptr, nullptr, &errorMessage );
     if (execResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to execute command: " << sql;
@@ -100,23 +115,23 @@ void SpatiaLiteDatabase::ExecuteSql(const string& sql)
 
 
 
-void SpatiaLiteDatabase::QuerySql(const string& sql)
-{
-    char **results;
-    int rows;
-    int columns;
-    char *errorMessage;
-    int execResult = sqlite3_get_table(_dbHandle, sql.c_str(), &results, &rows, &columns, &errorMessage);
-    if (execResult != SQLITE_OK)
-    {
-        LOG(ERROR) << "Failed to execute command: " << sql;
-        LOG(ERROR) << "Error was: " << errorMessage;
-        runtime_error ex(errorMessage);
-        sqlite3_free(errorMessage);
-        throw ex;
-    }
-    sqlite3_free_table(results);
-}
+// void SpatiaLiteDatabase::QuerySql(const string& sql)
+// {
+//     char **results;
+//     int rows;
+//     int columns;
+//     char *errorMessage;
+//     int execResult = sqlite3_get_table( _dbHandle, sql.c_str(), &results, &rows, &columns, &errorMessage );
+//     if (execResult != SQLITE_OK)
+//     {
+//         LOG(ERROR) << "Failed to execute command: " << sql;
+//         LOG(ERROR) << "Error was: " << errorMessage;
+//         runtime_error ex(errorMessage);
+//         sqlite3_free(errorMessage);
+//         throw ex;
+//     }
+//     sqlite3_free_table(results);
+// }
 
 
 

@@ -5,12 +5,12 @@
 namespace LocNet
 {
 
-GpsLocation TestData::Budapest(47.4808706,18.849426);
-GpsLocation TestData::Kecskemet(46.8854726,19.538628);
-GpsLocation TestData::Wien(48.2205998,16.2399759);
-GpsLocation TestData::London(51.5283063,-0.3824722);
-GpsLocation TestData::NewYork(40.7053094,-74.2588858);
-GpsLocation TestData::CapeTown(-33.9135236,18.0941875);
+GpsLocation TestData::Budapest(47.497912,19.040235);
+GpsLocation TestData::Kecskemet(46.8963711,19.6896861);
+GpsLocation TestData::Wien(48.2081743,16.3738189);
+GpsLocation TestData::London(51.5073509,-0.1277583);
+GpsLocation TestData::NewYork(40.741895,-73.989308);
+GpsLocation TestData::CapeTown(-33.9248685,18.4240553);
 
 
 NodeInfo TestData::NodeBudapest( NodeProfile("BudapestId",
