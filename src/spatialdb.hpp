@@ -72,6 +72,7 @@ class SpatiaLiteDatabase : public ISpatialDatabase
 {
     GpsLocation  _myLocation;
     sqlite3     *_dbHandle;
+    void        *_spatialiteConnection;
     
     void ExecuteSql(const std::string &sql);
     //void QuerySql(const std::string &sql);
