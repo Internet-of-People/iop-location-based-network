@@ -15,6 +15,39 @@ INITIALIZE_EASYLOGGINGPP
 
 SCENARIO("Construction and behaviour of data holder types", "[types]")
 {
+    GIVEN("A successful code block") {
+        bool onExit     = false;
+        bool onSuccess  = false;
+        bool onError    = false;
+        THEN("Scope guards work fine") {
+            {
+                scope_exit    ex(  [&onExit]    { onExit    = true; } );
+                scope_error   err( [&onError]   { onError   = true; } );
+                scope_success suc( [&onSuccess] { onSuccess = true; } );
+            }
+            REQUIRE( onExit );
+            REQUIRE( onSuccess );
+            REQUIRE( ! onError );
+        }
+    }
+
+    GIVEN("A failing code block") {
+        bool onExit     = false;
+        bool onSuccess  = false;
+        bool onError    = false;
+        THEN("Scope guards work fine") {
+            try {
+                scope_exit    ex(  [&onExit]    { onExit    = true; } );
+                scope_error   err( [&onError]   { onError   = true; } );
+                scope_success suc( [&onSuccess] { onSuccess = true; } );
+                throw runtime_error("Some error occured in this block");
+            } catch (...) {} // We don't care about the exception, it's just used for testing scope guards
+            REQUIRE( onExit );
+            REQUIRE( ! onSuccess );
+            REQUIRE( onError );
+        }
+    }
+    
     GpsLocation loc(1.0, 2.0);
     GIVEN("A location object") {
         THEN("its fields are properly filled in") {

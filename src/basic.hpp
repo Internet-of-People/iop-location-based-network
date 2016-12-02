@@ -1,7 +1,8 @@
 #ifndef __LOCNET_BASIC_TYPES_H__
 #define __LOCNET_BASIC_TYPES_H__
 
-#include <string>
+#include <exception>
+#include <functional>
 #include <iostream>
 
 
@@ -152,6 +153,38 @@ struct EnumHasher
         { return static_cast<std::size_t>(e); }
 };
 
+
+
+// RAII-style scope guard with a custom functor to avoid creating a new class for every resource release action.
+// based on http://stackoverflow.com/questions/36644263/is-there-a-c-standard-class-to-set-a-variable-to-a-value-at-scope-exit
+// a more complete example of the same concept http://stackoverflow.com/questions/31365013/what-is-scopeguard-in-c
+struct scope_exit
+{
+    std::function<void()> _fun;
+    
+    // Store function and execute it on destruction, ie. when end of scope is reached
+    explicit scope_exit(std::function<void()> fun) :
+        _fun( std::move(fun) ) {}
+    ~scope_exit() { if (_fun) { _fun(); } }
+    
+    // Disable copies
+    scope_exit(scope_exit const&) = delete;
+    scope_exit& operator=(const scope_exit&) = delete;
+    scope_exit& operator=(scope_exit&& rhs) = delete;
+};
+
+
+struct scope_error : public scope_exit
+{
+    explicit scope_error(std::function<void()> fun) :
+        scope_exit( [fun] { if( std::uncaught_exception() ) { fun(); } } ) {}
+};
+
+struct scope_success : public scope_exit
+{
+    explicit scope_success(std::function<void()> fun) :
+        scope_exit( [fun] { if( ! std::uncaught_exception() ) { fun(); } } ) {}
+};
 
 
 

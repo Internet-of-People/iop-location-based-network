@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <sqlite3.h>
 #include <spatialite.h>
 
@@ -13,6 +14,8 @@ namespace LocNet
 {
 
 
+const chrono::duration<uint32_t> ExpirationPeriod = chrono::hours(24);
+
 //const string DatabaseFile = ":memory:"; // NOTE in-memory storage without a db file
 //const string DatabaseFile = "file:locnet.sqlite"; // NOTE this may be any file URL
 const string DatabaseFilePath = "locnet.sqlite";
@@ -25,9 +28,9 @@ const vector<string> DatabaseInitCommands = {
     "  port         INT NOT NULL, "
     "  relationType INT NOT NULL, "
     "  roleType     INT NOT NULL, "
-    "  expiresAt    INTEGER NOT NULL " // Unix timestamp
+    "  location     POINT NOT NULL, "
+    "  expiresAt    INT NOT NULL" // Unix timestamp
     ");",
-    "SELECT AddGeometryColumn('nodes', 'location', 4326, 'POINT', 'XY', 1);",
 };
 
 
@@ -69,21 +72,6 @@ bool NodeDbEntry::operator==(const NodeDbEntry& other) const
 // 
 // StaticDatabaseInitializer SqlLiteInitializer;
 
-// based on http://stackoverflow.com/questions/36644263/is-there-a-c-standard-class-to-set-a-variable-to-a-value-at-scope-exit
-// a more complete example http://stackoverflow.com/questions/31365013/what-is-scopeguard-in-c
-struct scope_exit
-{
-    std::function<void()> _fun;
-    
-    explicit scope_exit(std::function<void()> fun) :
-        _fun( std::move(fun) ) {}
-    ~scope_exit() { if (_fun) { _fun(); } }
-    
-    // Disable copies
-    scope_exit(scope_exit const&) = delete;
-    scope_exit& operator=(const scope_exit&) = delete;
-    scope_exit& operator=(scope_exit&& rhs) = delete;
-};
 
 
 bool FileExist(const string &fileName)
@@ -94,18 +82,20 @@ bool FileExist(const string &fileName)
 
 
 
+// SpatiaLite initialization/shutdown sequence is documented here: https://groups.google.com/forum/#!msg/spatialite-users/83SOajOJ2JU/sgi5fuYAVVkJ
 SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
     _myLocation(nodeLocation), _dbHandle(nullptr)
 {
     _spatialiteConnection = spatialite_alloc_connection();
     
-    // TODO check if SQLITE_OPEN_NOMUTEX multithread mode is really what we need here
     bool creatingDb = ! FileExist(DatabaseFilePath);
+    
+    // TODO check if SQLITE_OPEN_NOMUTEX multithread mode is really what we need here
     int openResult = sqlite3_open_v2 ( DatabaseFilePath.c_str(), &_dbHandle,
          SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_URI, nullptr);
+    scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
     if (openResult != SQLITE_OK)
     {
-        sqlite3_close(_dbHandle);
         LOG(ERROR) << "Failed to open existing SpatiaLite database file " << DatabaseFilePath;
         throw runtime_error("Failed to open SpatiaLite database");
     }
@@ -114,9 +104,11 @@ SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
 //     LOG(INFO) << "SpatiaLite version: " << spatialite_version();
     
     spatialite_init_ex(_dbHandle, _spatialiteConnection, 0);
+    scope_error cleanupOnError( [this] { spatialite_cleanup_ex(_spatialiteConnection); } );
+    
     if (creatingDb)
     {
-        LOG(INFO) << "No database found, creating new SpatiaLite database: " << DatabaseFilePath;
+        LOG(INFO) << "No database found, generating SpatiaLite database: " << DatabaseFilePath;
         for (const string &command : DatabaseInitCommands)
         {
             ExecuteSql(command);
@@ -130,6 +122,8 @@ SpatiaLiteDatabase::~SpatiaLiteDatabase()
 {
     sqlite3_close (_dbHandle);
     spatialite_cleanup_ex(_spatialiteConnection);
+    // TODO there is no free cache function in current version despite description
+    // spatialite_free_internal_cache();
     // TODO is this needed?
     //spatialite_shutdown();
 }
@@ -212,10 +206,52 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
 
 
 //bool SpatiaLiteDatabase::Store(const NodeDbEntry& node)
-bool SpatiaLiteDatabase::Store(const NodeDbEntry&)
+bool SpatiaLiteDatabase::Store(const NodeDbEntry &entry)
 {
-    // TODO
-    return false;
+    try
+    {
+        sqlite3_stmt *statement;
+        const char *insertStr =
+            "INSERT INTO nodes "
+            "(id, ipaddr, port, relationType, roleType, expiresAt, location) VALUES "
+            "(?, ?, ?, ?, ?, ?, MakePoint(?, ?))";
+        int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr, -1, &statement, nullptr );
+        if (prepResult != SQLITE_OK)
+        {
+            LOG(ERROR) << "Failed to prepare statement: " << insertStr;
+            throw runtime_error("Failed to prepare statement for storing node entry");
+        }
+
+        scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
+        
+        time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + ExpirationPeriod );
+        const NetworkInterface &contact = entry.profile().contact();
+        if ( sqlite3_bind_text(   statement, 1, entry.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
+             sqlite3_bind_text(   statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )    != SQLITE_OK ||
+             sqlite3_bind_int(    statement, 3, contact.port() )                                  != SQLITE_OK ||
+             sqlite3_bind_int(    statement, 4, static_cast<int>( entry.relationType() ) )        != SQLITE_OK ||
+             sqlite3_bind_int(    statement, 5, static_cast<int>( entry.roleType() ) )            != SQLITE_OK ||
+             sqlite3_bind_int(    statement, 6, expiresAt )                                       != SQLITE_OK ||
+             sqlite3_bind_double( statement, 7, entry.location().longitude() )                    != SQLITE_OK ||
+             sqlite3_bind_double( statement, 8, entry.location().latitude() )                     != SQLITE_OK )
+        {
+            LOG(ERROR) << "Failed to bind node store statement params";
+            throw runtime_error("Failed to bind node store statement params");
+        }
+        
+        int execResult = sqlite3_step(statement);
+        if (execResult != SQLITE_DONE)
+        {
+            LOG(ERROR) << "Failed to run node store statement, error code: " << execResult;
+            throw runtime_error("Failed to run node store statement");
+        }
+    }
+    catch (exception &e)
+    {
+        return false;
+    }
+    
+    return true;
 }
 
 
