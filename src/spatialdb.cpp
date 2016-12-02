@@ -145,27 +145,6 @@ void SpatiaLiteDatabase::ExecuteSql(const string& sql)
 
 
 
-// void SpatiaLiteDatabase::QuerySql(const string& sql)
-// {
-//     char **results;
-//     int rows;
-//     int columns;
-//     char *errorMessage;
-//     int execResult = sqlite3_get_table( _dbHandle, sql.c_str(), &results, &rows, &columns, &errorMessage );
-//     if (execResult != SQLITE_OK)
-//     {
-//         LOG(ERROR) << "Failed to execute command: " << sql;
-//         LOG(ERROR) << "Error was: " << errorMessage;
-//         runtime_error ex(errorMessage);
-//         sqlite3_free(errorMessage);
-//         throw ex;
-//     }
-//     sqlite3_free_table(results);
-// }
-
-
-
-//Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation& one, const GpsLocation& other) const
 Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const
 {
     sqlite3_stmt *statement;
@@ -205,53 +184,43 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
 
 
 
-//bool SpatiaLiteDatabase::Store(const NodeDbEntry& node)
-bool SpatiaLiteDatabase::Store(const NodeDbEntry &entry)
+void SpatiaLiteDatabase::Store(const NodeDbEntry &node)
 {
-    try
+    sqlite3_stmt *statement;
+    const char *insertStr =
+        "INSERT INTO nodes "
+        "(id, ipaddr, port, relationType, roleType, expiresAt, location) VALUES "
+        "(?, ?, ?, ?, ?, ?, MakePoint(?, ?))";
+    int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr, -1, &statement, nullptr );
+    if (prepResult != SQLITE_OK)
     {
-        sqlite3_stmt *statement;
-        const char *insertStr =
-            "INSERT INTO nodes "
-            "(id, ipaddr, port, relationType, roleType, expiresAt, location) VALUES "
-            "(?, ?, ?, ?, ?, ?, MakePoint(?, ?))";
-        int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr, -1, &statement, nullptr );
-        if (prepResult != SQLITE_OK)
-        {
-            LOG(ERROR) << "Failed to prepare statement: " << insertStr;
-            throw runtime_error("Failed to prepare statement for storing node entry");
-        }
-
-        scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-        
-        time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + ExpirationPeriod );
-        const NetworkInterface &contact = entry.profile().contact();
-        if ( sqlite3_bind_text(   statement, 1, entry.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
-             sqlite3_bind_text(   statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )    != SQLITE_OK ||
-             sqlite3_bind_int(    statement, 3, contact.port() )                                  != SQLITE_OK ||
-             sqlite3_bind_int(    statement, 4, static_cast<int>( entry.relationType() ) )        != SQLITE_OK ||
-             sqlite3_bind_int(    statement, 5, static_cast<int>( entry.roleType() ) )            != SQLITE_OK ||
-             sqlite3_bind_int(    statement, 6, expiresAt )                                       != SQLITE_OK ||
-             sqlite3_bind_double( statement, 7, entry.location().longitude() )                    != SQLITE_OK ||
-             sqlite3_bind_double( statement, 8, entry.location().latitude() )                     != SQLITE_OK )
-        {
-            LOG(ERROR) << "Failed to bind node store statement params";
-            throw runtime_error("Failed to bind node store statement params");
-        }
-        
-        int execResult = sqlite3_step(statement);
-        if (execResult != SQLITE_DONE)
-        {
-            LOG(ERROR) << "Failed to run node store statement, error code: " << execResult;
-            throw runtime_error("Failed to run node store statement");
-        }
+        LOG(ERROR) << "Failed to prepare statement: " << insertStr;
+        throw runtime_error("Failed to prepare statement for storing node entry");
     }
-    catch (exception &e)
+
+    scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
+    
+    time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + ExpirationPeriod );
+    const NetworkInterface &contact = node.profile().contact();
+    if ( sqlite3_bind_text(   statement, 1, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
+            sqlite3_bind_text(   statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
+            sqlite3_bind_int(    statement, 3, contact.port() )                                 != SQLITE_OK ||
+            sqlite3_bind_int(    statement, 4, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
+            sqlite3_bind_int(    statement, 5, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
+            sqlite3_bind_int(    statement, 6, expiresAt )                                      != SQLITE_OK ||
+            sqlite3_bind_double( statement, 7, node.location().longitude() )                    != SQLITE_OK ||
+            sqlite3_bind_double( statement, 8, node.location().latitude() )                     != SQLITE_OK )
     {
-        return false;
+        LOG(ERROR) << "Failed to bind node store statement params";
+        throw runtime_error("Failed to bind node store statement params");
     }
     
-    return true;
+    int execResult = sqlite3_step(statement);
+    if (execResult != SQLITE_DONE)
+    {
+        LOG(ERROR) << "Failed to run node store statement, error code: " << execResult;
+        throw runtime_error("Failed to run node store statement");
+    }
 }
 
 
@@ -266,26 +235,27 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId&) const
 
 
 //bool SpatiaLiteDatabase::Update(const NodeDbEntry& node)
-bool SpatiaLiteDatabase::Update(const NodeDbEntry&)
+void SpatiaLiteDatabase::Update(const NodeDbEntry&)
 {
     // TODO
-    return false;
 }
 
 
 
-//bool SpatiaLiteDatabase::Remove(const NodeId& nodeId)
-bool SpatiaLiteDatabase::Remove(const NodeId&)
+void SpatiaLiteDatabase::Remove(const NodeId&) // nodeId
 {
     // TODO
-    return false;
 }
 
 
 
 void SpatiaLiteDatabase::ExpireOldNodes()
 {
-    // TODO
+    time_t now = chrono::system_clock::to_time_t( chrono::system_clock::now() );
+    string expireStr(
+        "DELETE FROM nodes "
+        "WHERE expiresAt <= " + to_string(now) ); // NOTE int-based number, no string or user input, so no SQL injection vulnerability
+    ExecuteSql(expireStr);
 }
 
 
@@ -301,6 +271,22 @@ size_t SpatiaLiteDatabase::GetColleagueNodeCount() const
 vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 {
     // TODO
+    
+//     char **results;
+//     int rows;
+//     int columns;
+//     char *errorMessage;
+//     int execResult = sqlite3_get_table( _dbHandle, sql.c_str(), &results, &rows, &columns, &errorMessage );
+//     if (execResult != SQLITE_OK)
+//     {
+//         LOG(ERROR) << "Failed to execute command: " << sql;
+//         LOG(ERROR) << "Error was: " << errorMessage;
+//         runtime_error ex(errorMessage);
+//         sqlite3_free(errorMessage);
+//         throw ex;
+//     }
+//     sqlite3_free_table(results);
+    
     return {};
 }
 

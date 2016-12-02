@@ -26,10 +26,10 @@ public:
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
-    bool Store(const NodeDbEntry &node) override;
+    void Store(const NodeDbEntry &node) override;
     std::shared_ptr<NodeDbEntry> Load(const NodeId &nodeId) const override;
-    bool Update(const NodeDbEntry &node) override;
-    bool Remove(const NodeId &nodeId) override;
+    void Update(const NodeDbEntry &node) override;
+    void Remove(const NodeId &nodeId) override;
     
     void ExpireOldNodes() override;
     

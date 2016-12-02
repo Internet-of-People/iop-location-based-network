@@ -89,10 +89,13 @@ bool Node::AcceptColleague(const NodeInfo &newNode)
 bool Node::RenewColleague(const NodeInfo& node)
 {
     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
-    if (storedInfo != nullptr) {
-        if ( storedInfo->location() == node.location() ) {
-            return _spatialDb->Update( NodeDbEntry(
+    if (storedInfo != nullptr)
+    {
+        if ( storedInfo->location() == node.location() )
+        {
+            _spatialDb->Update( NodeDbEntry(
                 node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
+            return true;
         }
         // TODO consider how we should handle changed location here: recalculate bubbles or simply deny renewal
     }
@@ -111,14 +114,18 @@ bool Node::AcceptNeighbour(const NodeInfo &node)
 bool Node::RenewNeighbour(const NodeInfo& node)
 {
     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
-    if (storedInfo != nullptr) {
-        if ( storedInfo->location() == node.location() ) {
+    if (storedInfo != nullptr)
+    {
+        if ( storedInfo->location() == node.location() )
+        {
             if ( _spatialDb->GetNeighbourNodesByDistance().size() > NEIGHBOURHOOD_MAX_NODE_COUNT )
             {
                 // TODO check if neighbour is too far to be renewed
             }
-            return _spatialDb->Update( NodeDbEntry(
+            
+            _spatialDb->Update( NodeDbEntry(
                 node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
+            return true;
         }
         // TODO consider how we should handle changed location here: recalculate bubbles or simply deny renewal
     }
@@ -250,14 +257,15 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry, shared_ptr<INodeMethods> node
             }
         }
         
-        // TODO consider all further possible sanity checks are done already
+        // TODO consider if all further possible sanity checks are done already
         //      e.g. what to do if location is changed for an existing entry?
-        if (storedInfo == nullptr) { return _spatialDb->Store(entry); }
-        else                       { return _spatialDb->Update(entry); }
+        if (storedInfo == nullptr) { _spatialDb->Store(entry); }
+        else                       { _spatialDb->Update(entry); }
+        return true;
     }
     catch (exception &e)
     {
-        LOG(WARNING) << "Unexpected error storing node: " << e.what();
+        LOG(ERROR) << "Unexpected error storing node: " << e.what();
     }
     
     return false;
@@ -490,9 +498,7 @@ void Node::RenewNodeRelations()
                 default:
                     throw runtime_error("Unknown relation type");
             }
-            
-            if (! renewed)
-                { _spatialDb->Remove( node.profile().id() ); }
+            LOG(TRACE) << "Renewing relation with node " << node.profile().id() << " status: " << renewed;
         }
         catch (exception &e)
         {

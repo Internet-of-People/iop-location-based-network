@@ -25,7 +25,7 @@ InMemorySpatialDatabase::InMemorySpatialDatabase(const GpsLocation& nodeLocation
 
 
 
-bool InMemorySpatialDatabase::Store(const NodeDbEntry &node)
+void InMemorySpatialDatabase::Store(const NodeDbEntry &node)
 {
     // TODO consider exception strategy, bool return value vs exception consistency
     auto it = _nodes.find( node.profile().id() );
@@ -34,7 +34,6 @@ bool InMemorySpatialDatabase::Store(const NodeDbEntry &node)
     }
     _nodes.emplace( unordered_map<std::string,NodeDbEntry>::value_type(
         node.profile().id(), node ) );
-    return true;
 }
 
 
@@ -50,7 +49,7 @@ shared_ptr<NodeDbEntry> InMemorySpatialDatabase::Load(const string &nodeId) cons
 }
 
 
-bool InMemorySpatialDatabase::Update(const NodeDbEntry &node)
+void InMemorySpatialDatabase::Update(const NodeDbEntry &node)
 {
     auto it = _nodes.find( node.profile().id() );
     if ( it == _nodes.end() ) {
@@ -59,11 +58,10 @@ bool InMemorySpatialDatabase::Update(const NodeDbEntry &node)
     }
     
     it->second = node;
-    return true;
 }
 
 
-bool InMemorySpatialDatabase::Remove(const string &nodeId)
+void InMemorySpatialDatabase::Remove(const string &nodeId)
 {
     auto it = _nodes.find(nodeId);
     if ( it == _nodes.end() ) {
@@ -71,7 +69,6 @@ bool InMemorySpatialDatabase::Remove(const string &nodeId)
         // return false;
     }
     _nodes.erase(nodeId);
-    return true;
 }
 
 

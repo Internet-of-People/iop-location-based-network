@@ -49,10 +49,10 @@ public:
     
     virtual Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const = 0;
     
-    virtual bool Store(const NodeDbEntry &node) = 0;
+    virtual void Store(const NodeDbEntry &node) = 0;
     virtual std::shared_ptr<NodeDbEntry> Load(const NodeId &nodeId) const = 0;
-    virtual bool Update(const NodeDbEntry &node) = 0;
-    virtual bool Remove(const NodeId &nodeId) = 0;
+    virtual void Update(const NodeDbEntry &node) = 0;
+    virtual void Remove(const NodeId &nodeId) = 0;
     
     virtual void ExpireOldNodes() = 0;
 
@@ -75,7 +75,6 @@ class SpatiaLiteDatabase : public ISpatialDatabase
     void        *_spatialiteConnection;
     
     void ExecuteSql(const std::string &sql);
-    //void QuerySql(const std::string &sql);
     
 public:
     
@@ -84,10 +83,10 @@ public:
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
-    bool Store(const NodeDbEntry &node) override;
+    void Store(const NodeDbEntry &node) override;
     std::shared_ptr<NodeDbEntry> Load(const NodeId &nodeId) const override;
-    bool Update(const NodeDbEntry &node) override;
-    bool Remove(const NodeId &nodeId) override;
+    void Update(const NodeDbEntry &node) override;
+    void Remove(const NodeId &nodeId) override;
     
     void ExpireOldNodes() override;
     
