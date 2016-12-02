@@ -117,7 +117,7 @@ public:
     
     NodeInfo(const NodeInfo &other);
     NodeInfo(const NodeProfile &profile, const GpsLocation &location);
-    NodeInfo(const NodeProfile &profile, float latitude, float longitude);
+    NodeInfo(const NodeProfile &profile, GpsCoordinate latitude, GpsCoordinate longitude);
     
     const NodeProfile& profile() const;
     const GpsLocation& location() const;

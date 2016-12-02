@@ -32,11 +32,17 @@ int main()
         LOG(INFO) << "Initializing server";
 //        shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(TestData::Budapest) );
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(TestData::Budapest) );
+//        LOG(INFO) << "Distance: " << geodb->GetDistanceKm(TestData::Budapest, TestData::Kecskemet);
         geodb->Store(TestData::EntryKecskemet);
         geodb->Store(TestData::EntryLondon);
         geodb->Store(TestData::EntryNewYork);
         geodb->Store(TestData::EntryWien);
         geodb->Store(TestData::EntryCapeTown);
+//         vector<NodeInfo> neighbours = geodb->GetNeighbourNodesByDistance();
+//         LOG(INFO) << "Neighbours: " << neighbours.size();
+//         LOG(DEBUG) << ( neighbours[0] == TestData::NodeKecskemet );
+//         LOG(DEBUG) << ( neighbours[1] == TestData::NodeWien );
+//         geodb->ExpireOldNodes();
         
         shared_ptr<INodeConnectionFactory> connectionFactory(
             new DummyNodeConnectionFactory() );

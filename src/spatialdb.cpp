@@ -24,6 +24,7 @@ const vector<string> DatabaseInitCommands = {
     "SELECT InitSpatialMetadata();",
     "CREATE TABLE IF NOT EXISTS nodes ( "
     "  id           TEXT PRIMARY KEY, "
+    "  addrtype     INT NOT NULL, "
     "  ipaddr       TEXT NOT NULL, "
     "  port         INT NOT NULL, "
     "  relationType INT NOT NULL, "
@@ -143,18 +144,43 @@ void SpatiaLiteDatabase::ExecuteSql(const string& sql)
     }
 }
 
+//     char **results;
+//     int rows;
+//     int columns;
+//     char *errorMessage;
+//     int execResult = sqlite3_get_table( _dbHandle, queryStr.c_str(), &results, &rows, &columns, &errorMessage );
+//     if (execResult != SQLITE_OK)
+//     {
+//         scope_exit freeMsg( [errorMessage] { sqlite3_free(errorMessage); } );
+//         LOG(ERROR) << "Failed to query neighbours by distance: " << errorMessage;
+//         throw runtime_error(errorMessage);
+//     }
+//     
+//     scope_exit freeMsg( [results] { sqlite3_free_table(results); } );
+
+
+
+string SpatiaLiteDatabase::LocationPointSql(const GpsLocation &location) const
+{
+    // NOTE int-based numbers, no string or user input, so no SQL injection vulnerability
+    return string( "MakePoint(" +
+        to_string( location.longitude() ) + "," + 
+        to_string( location.latitude()  ) + ")" );
+}
+
 
 
 Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const
 {
     sqlite3_stmt *statement;
-    const char *queryStr =
-        "SELECT Distance("
-            "MakePoint(?, ?),"
-            "MakePoint(?, ?),"
+    string queryStr(
+        "SELECT Distance(" +
+            LocationPointSql(one) + "," +
+            LocationPointSql(other) + "," +
             "1" // Needed for GPS distance, without this SpatiaLite calculates only Euclidean distance
-        ") / 1000 AS dist_km;";
-    int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr, -1, &statement, nullptr );
+        ") / 1000 AS dist_km;" );
+            
+    int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << queryStr;
@@ -162,15 +188,6 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-    
-    if ( sqlite3_bind_double( statement, 1, one.longitude() )   != SQLITE_OK ||
-         sqlite3_bind_double( statement, 2, one.latitude() )    != SQLITE_OK ||
-         sqlite3_bind_double( statement, 3, other.longitude() ) != SQLITE_OK ||
-         sqlite3_bind_double( statement, 4, other.latitude() )  != SQLITE_OK )
-    {
-        LOG(ERROR) << "Failed to bind distance query params";
-        throw runtime_error("Failed to bind distance query params");
-    }
     
     if ( sqlite3_step(statement) != SQLITE_ROW )
     {
@@ -187,11 +204,11 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
 void SpatiaLiteDatabase::Store(const NodeDbEntry &node)
 {
     sqlite3_stmt *statement;
-    const char *insertStr =
+    string insertStr(
         "INSERT INTO nodes "
-        "(id, ipaddr, port, relationType, roleType, expiresAt, location) VALUES "
-        "(?, ?, ?, ?, ?, ?, MakePoint(?, ?))";
-    int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr, -1, &statement, nullptr );
+        "(id, addrtype, ipaddr, port, relationType, roleType, expiresAt, location) VALUES "
+        "(?, ?, ?, ?, ?, ?, ?, " + LocationPointSql( node.location() ) + ")" );
+    int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << insertStr;
@@ -202,14 +219,13 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node)
     
     time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + ExpirationPeriod );
     const NetworkInterface &contact = node.profile().contact();
-    if ( sqlite3_bind_text(   statement, 1, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
-            sqlite3_bind_text(   statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
-            sqlite3_bind_int(    statement, 3, contact.port() )                                 != SQLITE_OK ||
-            sqlite3_bind_int(    statement, 4, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
-            sqlite3_bind_int(    statement, 5, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
-            sqlite3_bind_int(    statement, 6, expiresAt )                                      != SQLITE_OK ||
-            sqlite3_bind_double( statement, 7, node.location().longitude() )                    != SQLITE_OK ||
-            sqlite3_bind_double( statement, 8, node.location().latitude() )                     != SQLITE_OK )
+    if ( sqlite3_bind_text( statement, 1, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 2, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||
+         sqlite3_bind_text( statement, 3, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 4, contact.port() )                                 != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 5, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 6, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 7, expiresAt )                                      != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind node store statement params";
         throw runtime_error("Failed to bind node store statement params");
@@ -251,10 +267,11 @@ void SpatiaLiteDatabase::Remove(const NodeId&) // nodeId
 
 void SpatiaLiteDatabase::ExpireOldNodes()
 {
+    // NOTE int-based number, no string or user input, so no SQL injection vulnerability
     time_t now = chrono::system_clock::to_time_t( chrono::system_clock::now() );
     string expireStr(
         "DELETE FROM nodes "
-        "WHERE expiresAt <= " + to_string(now) ); // NOTE int-based number, no string or user input, so no SQL injection vulnerability
+        "WHERE expiresAt <= " + to_string(now) );
     ExecuteSql(expireStr);
 }
 
@@ -270,24 +287,40 @@ size_t SpatiaLiteDatabase::GetColleagueNodeCount() const
 
 vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 {
-    // TODO
+    sqlite3_stmt *statement;
+    string queryStr =
+        "SELECT id, addrtype, ipaddr, port, X(location), Y(location), "
+            "Distance(location, " + LocationPointSql(_myLocation) + ", 1) AS dist_km "
+        "FROM nodes "
+        "WHERE relationType = " + to_string( static_cast<int>(NodeRelationType::Neighbour) ) + " " +
+        "ORDER BY dist_km";
     
-//     char **results;
-//     int rows;
-//     int columns;
-//     char *errorMessage;
-//     int execResult = sqlite3_get_table( _dbHandle, sql.c_str(), &results, &rows, &columns, &errorMessage );
-//     if (execResult != SQLITE_OK)
-//     {
-//         LOG(ERROR) << "Failed to execute command: " << sql;
-//         LOG(ERROR) << "Error was: " << errorMessage;
-//         runtime_error ex(errorMessage);
-//         sqlite3_free(errorMessage);
-//         throw ex;
-//     }
-//     sqlite3_free_table(results);
+    int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
+    if (prepResult != SQLITE_OK)
+    {
+        LOG(ERROR) << "Failed to prepare statement: " << queryStr;
+        throw runtime_error("Failed to prepare statement to get neighbourhood");
+    }
+
+    scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
     
-    return {};
+    vector<NodeInfo> result;
+    while ( sqlite3_step(statement) == SQLITE_ROW )
+    {
+        const uint8_t *idPtr     = sqlite3_column_text  (statement, 0);
+        int            addrType  = sqlite3_column_int   (statement, 1);
+        const uint8_t *ipAddrPtr = sqlite3_column_text  (statement, 2);
+        int            port      = sqlite3_column_int   (statement, 3);
+        double         longitude = sqlite3_column_double(statement, 4);
+        double         latitude  = sqlite3_column_double(statement, 5);
+        
+        NetworkInterface contact( static_cast<AddressType>(addrType),
+            reinterpret_cast<const char*>(ipAddrPtr), static_cast<TcpPort>(port) );
+        GpsLocation location(latitude, longitude);
+        result.emplace_back( NodeProfile( reinterpret_cast<const char*>(idPtr), contact ), location );
+    }
+    
+    return result;
 }
 
 
