@@ -36,7 +36,7 @@ unique_ptr<std::thread> StartServerThread()
             IncomingRequestDispatcher dispatcher(node);
             
             initialized = true;
-            SyncProtoBufNetworkSession serverSession(network);
+            ProtoBufSyncTcpSession serverSession(network);
             while (true)
             {
                 shared_ptr<iop::locnet::MessageWithHeader> requestMsg( serverSession.ReceiveMessage() );
@@ -72,7 +72,7 @@ SCENARIO("TCP networking", "[network]")
             const NetworkInterface &BudapestNodeContact(
                 TestData::NodeBudapest.profile().contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
-                new SyncProtoBufNetworkSession(BudapestNodeContact) );
+                new ProtoBufSyncTcpSession(BudapestNodeContact) );
             
             {
                 iop::locnet::MessageWithHeader requestMsg;
@@ -120,7 +120,7 @@ SCENARIO("Transparent remote node client", "[network]") {
             const NetworkInterface &BudapestNodeContact(
                 TestData::NodeBudapest.profile().contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
-                new SyncProtoBufNetworkSession(BudapestNodeContact) );
+                new ProtoBufSyncTcpSession(BudapestNodeContact) );
             
             shared_ptr<IProtoBufRequestDispatcher> netDispatcher(
                 new ProtoBufRequestNetworkDispatcher(clientSession) );

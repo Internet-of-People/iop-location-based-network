@@ -21,7 +21,7 @@ int main()
     {
         LOG(INFO) << "Connecting to location based network";
         const NetworkInterface &BudapestNodeContact( TestData::NodeBudapest.profile().contact() );
-        shared_ptr<IProtoBufNetworkSession> session( new SyncProtoBufNetworkSession(BudapestNodeContact) );
+        shared_ptr<IProtoBufNetworkSession> session( new ProtoBufSyncTcpSession(BudapestNodeContact) );
 
         LOG(INFO) << "Sending getcolleaguenodecount request";
         shared_ptr<IProtoBufRequestDispatcher> netDispatcher( new ProtoBufRequestNetworkDispatcher(session) );

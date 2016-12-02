@@ -50,7 +50,7 @@ int main()
         while (! ShutdownRequested)
         {
             // TODO CTRL-C should break this loop immediately instead of after finishing next request
-            SyncProtoBufNetworkSession session(network);
+            ProtoBufSyncTcpSession session(network);
             
             LOG(INFO) << "Reading request";
             shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );

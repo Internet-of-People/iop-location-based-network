@@ -20,7 +20,7 @@ int main()
         TcpNetwork network( NetworkInterface(AddressType::Ipv4, "127.0.0.1", 4567) );
         
         LOG(INFO) << "Reading request";
-        SyncProtoBufNetworkSession session(network);
+        ProtoBufSyncTcpSession session(network);
         shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
         
         LOG(INFO) << "Serving request";

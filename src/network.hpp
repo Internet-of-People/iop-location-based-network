@@ -51,14 +51,14 @@ public:
 
 
 
-class SyncProtoBufNetworkSession : public IProtoBufNetworkSession
+class ProtoBufSyncTcpSession : public IProtoBufNetworkSession
 {
     asio::ip::tcp::iostream _stream;
     
 public:
     
-    SyncProtoBufNetworkSession(TcpNetwork &network);
-    SyncProtoBufNetworkSession(const NetworkInterface &contact);
+    ProtoBufSyncTcpSession(TcpNetwork &network);
+    ProtoBufSyncTcpSession(const NetworkInterface &contact);
     
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
     void SendMessage(iop::locnet::MessageWithHeader &message) override;

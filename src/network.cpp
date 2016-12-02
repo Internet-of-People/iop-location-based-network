@@ -48,14 +48,14 @@ tcp::acceptor& TcpNetwork::acceptor() { return _acceptor; }
 
 
 
-SyncProtoBufNetworkSession::SyncProtoBufNetworkSession(TcpNetwork &network) :
+ProtoBufSyncTcpSession::ProtoBufSyncTcpSession(TcpNetwork &network) :
     _stream()
 {
     network.acceptor().accept( *_stream.rdbuf() );
 }
 
 
-SyncProtoBufNetworkSession::SyncProtoBufNetworkSession(const NetworkInterface &contact) :
+ProtoBufSyncTcpSession::ProtoBufSyncTcpSession(const NetworkInterface &contact) :
     _stream( contact.address(), to_string( contact.port() ) )
 {
     if (! _stream)
@@ -73,7 +73,7 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 
 
 
-iop::locnet::MessageWithHeader* SyncProtoBufNetworkSession::ReceiveMessage()
+iop::locnet::MessageWithHeader* ProtoBufSyncTcpSession::ReceiveMessage()
 {
     // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
@@ -97,7 +97,7 @@ iop::locnet::MessageWithHeader* SyncProtoBufNetworkSession::ReceiveMessage()
 
 
 
-void SyncProtoBufNetworkSession::SendMessage(iop::locnet::MessageWithHeader& message)
+void ProtoBufSyncTcpSession::SendMessage(iop::locnet::MessageWithHeader& message)
 {
     message.set_header(1);
     message.set_header( message.ByteSize() - MessageHeaderSize );
@@ -112,7 +112,7 @@ void SyncProtoBufNetworkSession::SendMessage(iop::locnet::MessageWithHeader& mes
 // }
 
 
-void SyncProtoBufNetworkSession::Close()
+void ProtoBufSyncTcpSession::Close()
 {
     _stream.close();
 }
