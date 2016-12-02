@@ -74,9 +74,6 @@ class SpatiaLiteDatabase : public ISpatialDatabase
     sqlite3     *_dbHandle;
     void        *_spatialiteConnection;
     
-    void ExecuteSql(const std::string &sql);
-    std::string LocationPointSql(const GpsLocation &location) const;
-    
 public:
     
     SpatiaLiteDatabase(const GpsLocation &nodeLocation);
@@ -95,7 +92,7 @@ public:
     std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
     std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
     
-    std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &position,
+    std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
 

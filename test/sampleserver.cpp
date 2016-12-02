@@ -40,9 +40,14 @@ int main()
         geodb->Store(TestData::EntryCapeTown);
 //         vector<NodeInfo> neighbours = geodb->GetNeighbourNodesByDistance();
 //         LOG(INFO) << "Neighbours: " << neighbours.size();
+//         for (const NodeInfo &node : neighbours)
+//             { LOG(DEBUG) << "  Neighbour Id: " << node.profile().id(); }
 //         LOG(DEBUG) << ( neighbours[0] == TestData::NodeKecskemet );
 //         LOG(DEBUG) << ( neighbours[1] == TestData::NodeWien );
 //         geodb->ExpireOldNodes();
+//         vector<NodeInfo> nodes = geodb->GetClosestNodesByDistance(TestData::NewYork, 20000, 100, Neighbours::Included);
+//         for (const NodeInfo &node : nodes)
+//             { LOG(DEBUG) << "  Close node Id: " << node.profile().id(); }
         
         shared_ptr<INodeConnectionFactory> connectionFactory(
             new DummyNodeConnectionFactory() );

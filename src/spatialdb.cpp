@@ -24,8 +24,8 @@ const vector<string> DatabaseInitCommands = {
     "SELECT InitSpatialMetadata();",
     "CREATE TABLE IF NOT EXISTS nodes ( "
     "  id           TEXT PRIMARY KEY, "
-    "  addrtype     INT NOT NULL, "
-    "  ipaddr       TEXT NOT NULL, "
+    "  addressType  INT NOT NULL, "
+    "  ipAddress    TEXT NOT NULL, "
     "  port         INT NOT NULL, "
     "  relationType INT NOT NULL, "
     "  roleType     INT NOT NULL, "
@@ -82,6 +82,20 @@ bool FileExist(const string &fileName)
 }
 
 
+void ExecuteSql(sqlite3 *dbHandle, const string &sql)
+{
+    char *errorMessage;
+    scope_exit freeMsg( [&errorMessage] { sqlite3_free(errorMessage); } );
+    int execResult = sqlite3_exec( dbHandle, sql.c_str(), nullptr, nullptr, &errorMessage );
+    if (execResult != SQLITE_OK)
+    {
+        LOG(ERROR) << "Failed to execute command: " << sql;
+        LOG(ERROR) << "Error was: " << errorMessage;
+        throw runtime_error(errorMessage);
+    }
+}
+
+
 
 // SpatiaLite initialization/shutdown sequence is documented here: https://groups.google.com/forum/#!msg/spatialite-users/83SOajOJ2JU/sgi5fuYAVVkJ
 SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
@@ -112,7 +126,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
         LOG(INFO) << "No database found, generating SpatiaLite database: " << DatabaseFilePath;
         for (const string &command : DatabaseInitCommands)
         {
-            ExecuteSql(command);
+            ExecuteSql(_dbHandle, command);
         }
         LOG(INFO) << "Database initialized";
     }
@@ -131,19 +145,6 @@ SpatiaLiteDatabase::~SpatiaLiteDatabase()
 
 
 
-void SpatiaLiteDatabase::ExecuteSql(const string& sql)
-{
-    char *errorMessage;
-    scope_exit freeMsg( [&errorMessage] { sqlite3_free(errorMessage); } );
-    int execResult = sqlite3_exec( _dbHandle, sql.c_str(), nullptr, nullptr, &errorMessage );
-    if (execResult != SQLITE_OK)
-    {
-        LOG(ERROR) << "Failed to execute command: " << sql;
-        LOG(ERROR) << "Error was: " << errorMessage;
-        throw runtime_error(errorMessage);
-    }
-}
-
 //     char **results;
 //     int rows;
 //     int columns;
@@ -160,7 +161,7 @@ void SpatiaLiteDatabase::ExecuteSql(const string& sql)
 
 
 
-string SpatiaLiteDatabase::LocationPointSql(const GpsLocation &location) const
+string LocationPointSql(const GpsLocation &location)
 {
     // NOTE int-based numbers, no string or user input, so no SQL injection vulnerability
     return string( "MakePoint(" +
@@ -206,7 +207,7 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node)
     sqlite3_stmt *statement;
     string insertStr(
         "INSERT INTO nodes "
-        "(id, addrtype, ipaddr, port, relationType, roleType, expiresAt, location) VALUES "
+        "(id, addressType, ipAddress, port, relationType, roleType, expiresAt, location) VALUES "
         "(?, ?, ?, ?, ?, ?, ?, " + LocationPointSql( node.location() ) + ")" );
     int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
@@ -272,7 +273,7 @@ void SpatiaLiteDatabase::ExpireOldNodes()
     string expireStr(
         "DELETE FROM nodes "
         "WHERE expiresAt <= " + to_string(now) );
-    ExecuteSql(expireStr);
+    ExecuteSql(_dbHandle, expireStr);
 }
 
 
@@ -285,17 +286,21 @@ size_t SpatiaLiteDatabase::GetColleagueNodeCount() const
 
 
 
-vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
+vector<NodeInfo> ListNodesByDistance(sqlite3 *dbHandle, const GpsLocation &location,
+    const string &whereCondition = "", const string orderBy = "", const string &limit = "")
 {
     sqlite3_stmt *statement;
     string queryStr =
-        "SELECT id, addrtype, ipaddr, port, X(location), Y(location), "
-            "Distance(location, " + LocationPointSql(_myLocation) + ", 1) AS dist_km "
-        "FROM nodes "
-        "WHERE relationType = " + to_string( static_cast<int>(NodeRelationType::Neighbour) ) + " " +
-        "ORDER BY dist_km";
+        "SELECT id, addressType, ipAddress, port, X(location), Y(location), "
+            "Distance(location, " + LocationPointSql(location) + ", 1) / 1000 AS dist_km "
+        "FROM nodes " +
+        whereCondition + " " +
+        orderBy + " " +
+        limit;
     
-    int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
+    LOG(DEBUG) << "Running query: " << queryStr;
+    
+    int prepResult = sqlite3_prepare_v2( dbHandle, queryStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << queryStr;
@@ -325,20 +330,38 @@ vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 
 
 
-//vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
-vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t, Neighbours) const
+vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 {
-    // TODO
-    return {};
+    return ListNodesByDistance(_dbHandle, _myLocation,
+        "WHERE relationType = " + to_string( static_cast<int>(NodeRelationType::Neighbour) ),
+        "ORDER BY dist_km" );
 }
 
 
 
-//vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(const GpsLocation& position, Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
-vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(const GpsLocation&, Distance, size_t, Neighbours) const
+//vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t, Neighbours) const
 {
-    // TODO
-    return {};
+    return ListNodesByDistance(_dbHandle, _myLocation, "",
+        "ORDER BY RANDOM()" );
+}
+
+
+
+vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(
+    const GpsLocation& location, Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
+{
+    string whereCondition = "WHERE (dist_km IS NULL OR dist_km <= " + to_string(radiusKm) + ")";
+    if (filter == Neighbours::Excluded)
+    {
+        whereCondition += " AND relationType != " +
+            to_string( static_cast<int>(NodeRelationType::Neighbour) );
+    }
+    
+    return ListNodesByDistance(_dbHandle, location,
+        whereCondition,
+        "ORDER BY dist_km "
+        "LIMIT " + to_string(maxNodeCount) );
 }
 
 
