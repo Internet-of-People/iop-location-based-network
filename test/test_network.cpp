@@ -90,15 +90,15 @@ SCENARIO("TCP networking", "[network]")
             }
             {
                 iop::locnet::MessageWithHeader requestMsg;
-                requestMsg.mutable_body()->mutable_request()->mutable_remotenode()->mutable_getcolleaguenodecount();
+                requestMsg.mutable_body()->mutable_request()->mutable_remotenode()->mutable_getnodecount();
                 requestMsg.mutable_body()->mutable_request()->set_version("1");
                 clientSession->SendMessage(requestMsg);
                 
                 unique_ptr<iop::locnet::MessageWithHeader> msgReceived( clientSession->ReceiveMessage() );
                 
-                const iop::locnet::GetColleagueNodeCountResponse &response =
-                    msgReceived->body().response().remotenode().getcolleaguenodecount();
-                REQUIRE( response.nodecount() == 3 );
+                const iop::locnet::GetNodeCountResponse &response =
+                    msgReceived->body().response().remotenode().getnodecount();
+                REQUIRE( response.nodecount() == 5 );
             }
             
             clientSession->Close();
@@ -126,8 +126,8 @@ SCENARIO("Transparent remote node client", "[network]") {
                 new ProtoBufRequestNetworkDispatcher(clientSession) );
             NodeMethodsProtoBufClient client(netDispatcher);
             
-            size_t colleagueCount = client.GetColleagueNodeCount();
-            REQUIRE( colleagueCount == 3 );
+            size_t nodeCount = client.GetNodeCount();
+            REQUIRE( nodeCount == 5 );
         }
         
         serverThread->join();

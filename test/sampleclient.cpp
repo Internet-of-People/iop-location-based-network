@@ -26,8 +26,8 @@ int main()
         LOG(INFO) << "Sending getcolleaguenodecount request";
         shared_ptr<IProtoBufRequestDispatcher> netDispatcher( new ProtoBufRequestNetworkDispatcher(session) );
         NodeMethodsProtoBufClient client(netDispatcher);
-        size_t colleagueCount = client.GetColleagueNodeCount();
-        LOG(INFO) << "Get colleague node count " << colleagueCount;
+        size_t colleagueCount = client.GetNodeCount();
+        LOG(INFO) << "Get node count " << colleagueCount;
         
 //         LOG(INFO) << "Sending getneighbournodes request";
 //         iop::locnet::MessageWithHeader requestMsg;

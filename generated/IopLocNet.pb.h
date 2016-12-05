@@ -47,11 +47,11 @@ class DeregisterServiceRequest;
 class DeregisterServiceResponse;
 class GetClosestNodesByDistanceRequest;
 class GetClosestNodesByDistanceResponse;
-class GetColleagueNodeCountRequest;
-class GetColleagueNodeCountResponse;
 class GetNeighbourNodesByDistanceClientRequest;
 class GetNeighbourNodesByDistanceLocalRequest;
 class GetNeighbourNodesByDistanceResponse;
+class GetNodeCountRequest;
+class GetNodeCountResponse;
 class GetRandomNodesRequest;
 class GetRandomNodesResponse;
 class GetServicesRequest;
@@ -2202,7 +2202,7 @@ class RemoteNodeRequest : public ::google::protobuf::Message /* @@protoc_inserti
     kRenewColleague = 2,
     kAcceptNeighbour = 3,
     kRenewNeighbour = 4,
-    kGetColleagueNodeCount = 5,
+    kGetNodeCount = 5,
     kGetRandomNodes = 6,
     kGetClosestNodes = 7,
     REMOTENODEREQUESTTYPE_NOT_SET = 0,
@@ -2289,14 +2289,14 @@ class RemoteNodeRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::iop::locnet::BuildNetworkRequest* release_renewneighbour();
   void set_allocated_renewneighbour(::iop::locnet::BuildNetworkRequest* renewneighbour);
 
-  // optional .iop.locnet.GetColleagueNodeCountRequest getColleagueNodeCount = 5;
-  bool has_getcolleaguenodecount() const;
-  void clear_getcolleaguenodecount();
-  static const int kGetColleagueNodeCountFieldNumber = 5;
-  const ::iop::locnet::GetColleagueNodeCountRequest& getcolleaguenodecount() const;
-  ::iop::locnet::GetColleagueNodeCountRequest* mutable_getcolleaguenodecount();
-  ::iop::locnet::GetColleagueNodeCountRequest* release_getcolleaguenodecount();
-  void set_allocated_getcolleaguenodecount(::iop::locnet::GetColleagueNodeCountRequest* getcolleaguenodecount);
+  // optional .iop.locnet.GetNodeCountRequest getNodeCount = 5;
+  bool has_getnodecount() const;
+  void clear_getnodecount();
+  static const int kGetNodeCountFieldNumber = 5;
+  const ::iop::locnet::GetNodeCountRequest& getnodecount() const;
+  ::iop::locnet::GetNodeCountRequest* mutable_getnodecount();
+  ::iop::locnet::GetNodeCountRequest* release_getnodecount();
+  void set_allocated_getnodecount(::iop::locnet::GetNodeCountRequest* getnodecount);
 
   // optional .iop.locnet.GetRandomNodesRequest getRandomNodes = 6;
   bool has_getrandomnodes() const;
@@ -2323,7 +2323,7 @@ class RemoteNodeRequest : public ::google::protobuf::Message /* @@protoc_inserti
   inline void set_has_renewcolleague();
   inline void set_has_acceptneighbour();
   inline void set_has_renewneighbour();
-  inline void set_has_getcolleaguenodecount();
+  inline void set_has_getnodecount();
   inline void set_has_getrandomnodes();
   inline void set_has_getclosestnodes();
 
@@ -2339,7 +2339,7 @@ class RemoteNodeRequest : public ::google::protobuf::Message /* @@protoc_inserti
     ::iop::locnet::BuildNetworkRequest* renewcolleague_;
     ::iop::locnet::BuildNetworkRequest* acceptneighbour_;
     ::iop::locnet::BuildNetworkRequest* renewneighbour_;
-    ::iop::locnet::GetColleagueNodeCountRequest* getcolleaguenodecount_;
+    ::iop::locnet::GetNodeCountRequest* getnodecount_;
     ::iop::locnet::GetRandomNodesRequest* getrandomnodes_;
     ::iop::locnet::GetClosestNodesByDistanceRequest* getclosestnodes_;
   } RemoteNodeRequestType_;
@@ -2375,7 +2375,7 @@ class RemoteNodeResponse : public ::google::protobuf::Message /* @@protoc_insert
     kRenewColleague = 2,
     kAcceptNeighbour = 3,
     kRenewNeighbour = 4,
-    kGetColleagueNodeCount = 5,
+    kGetNodeCount = 5,
     kGetRandomNodes = 6,
     kGetClosestNodes = 7,
     REMOTENODERESPONSETYPE_NOT_SET = 0,
@@ -2462,14 +2462,14 @@ class RemoteNodeResponse : public ::google::protobuf::Message /* @@protoc_insert
   ::iop::locnet::BuildNetworkResponse* release_renewneighbour();
   void set_allocated_renewneighbour(::iop::locnet::BuildNetworkResponse* renewneighbour);
 
-  // optional .iop.locnet.GetColleagueNodeCountResponse getColleagueNodeCount = 5;
-  bool has_getcolleaguenodecount() const;
-  void clear_getcolleaguenodecount();
-  static const int kGetColleagueNodeCountFieldNumber = 5;
-  const ::iop::locnet::GetColleagueNodeCountResponse& getcolleaguenodecount() const;
-  ::iop::locnet::GetColleagueNodeCountResponse* mutable_getcolleaguenodecount();
-  ::iop::locnet::GetColleagueNodeCountResponse* release_getcolleaguenodecount();
-  void set_allocated_getcolleaguenodecount(::iop::locnet::GetColleagueNodeCountResponse* getcolleaguenodecount);
+  // optional .iop.locnet.GetNodeCountResponse getNodeCount = 5;
+  bool has_getnodecount() const;
+  void clear_getnodecount();
+  static const int kGetNodeCountFieldNumber = 5;
+  const ::iop::locnet::GetNodeCountResponse& getnodecount() const;
+  ::iop::locnet::GetNodeCountResponse* mutable_getnodecount();
+  ::iop::locnet::GetNodeCountResponse* release_getnodecount();
+  void set_allocated_getnodecount(::iop::locnet::GetNodeCountResponse* getnodecount);
 
   // optional .iop.locnet.GetRandomNodesResponse getRandomNodes = 6;
   bool has_getrandomnodes() const;
@@ -2496,7 +2496,7 @@ class RemoteNodeResponse : public ::google::protobuf::Message /* @@protoc_insert
   inline void set_has_renewcolleague();
   inline void set_has_acceptneighbour();
   inline void set_has_renewneighbour();
-  inline void set_has_getcolleaguenodecount();
+  inline void set_has_getnodecount();
   inline void set_has_getrandomnodes();
   inline void set_has_getclosestnodes();
 
@@ -2512,7 +2512,7 @@ class RemoteNodeResponse : public ::google::protobuf::Message /* @@protoc_insert
     ::iop::locnet::BuildNetworkResponse* renewcolleague_;
     ::iop::locnet::BuildNetworkResponse* acceptneighbour_;
     ::iop::locnet::BuildNetworkResponse* renewneighbour_;
-    ::iop::locnet::GetColleagueNodeCountResponse* getcolleaguenodecount_;
+    ::iop::locnet::GetNodeCountResponse* getnodecount_;
     ::iop::locnet::GetRandomNodesResponse* getrandomnodes_;
     ::iop::locnet::GetClosestNodesByDistanceResponse* getclosestnodes_;
   } RemoteNodeResponseType_;
@@ -2695,32 +2695,32 @@ class BuildNetworkResponse : public ::google::protobuf::Message /* @@protoc_inse
 };
 // -------------------------------------------------------------------
 
-class GetColleagueNodeCountRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.GetColleagueNodeCountRequest) */ {
+class GetNodeCountRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.GetNodeCountRequest) */ {
  public:
-  GetColleagueNodeCountRequest();
-  virtual ~GetColleagueNodeCountRequest();
+  GetNodeCountRequest();
+  virtual ~GetNodeCountRequest();
 
-  GetColleagueNodeCountRequest(const GetColleagueNodeCountRequest& from);
+  GetNodeCountRequest(const GetNodeCountRequest& from);
 
-  inline GetColleagueNodeCountRequest& operator=(const GetColleagueNodeCountRequest& from) {
+  inline GetNodeCountRequest& operator=(const GetNodeCountRequest& from) {
     CopyFrom(from);
     return *this;
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const GetColleagueNodeCountRequest& default_instance();
+  static const GetNodeCountRequest& default_instance();
 
-  void Swap(GetColleagueNodeCountRequest* other);
+  void Swap(GetNodeCountRequest* other);
 
   // implements Message ----------------------------------------------
 
-  inline GetColleagueNodeCountRequest* New() const { return New(NULL); }
+  inline GetNodeCountRequest* New() const { return New(NULL); }
 
-  GetColleagueNodeCountRequest* New(::google::protobuf::Arena* arena) const;
+  GetNodeCountRequest* New(::google::protobuf::Arena* arena) const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const GetColleagueNodeCountRequest& from);
-  void MergeFrom(const GetColleagueNodeCountRequest& from);
+  void CopyFrom(const GetNodeCountRequest& from);
+  void MergeFrom(const GetNodeCountRequest& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -2739,7 +2739,7 @@ class GetColleagueNodeCountRequest : public ::google::protobuf::Message /* @@pro
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(GetColleagueNodeCountRequest* other);
+  void InternalSwap(GetNodeCountRequest* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return _internal_metadata_.arena();
@@ -2755,7 +2755,7 @@ class GetColleagueNodeCountRequest : public ::google::protobuf::Message /* @@pro
 
   // accessors -------------------------------------------------------
 
-  // @@protoc_insertion_point(class_scope:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(class_scope:iop.locnet.GetNodeCountRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -2766,36 +2766,36 @@ class GetColleagueNodeCountRequest : public ::google::protobuf::Message /* @@pro
   friend void protobuf_ShutdownFile_IopLocNet_2eproto();
 
   void InitAsDefaultInstance();
-  static GetColleagueNodeCountRequest* default_instance_;
+  static GetNodeCountRequest* default_instance_;
 };
 // -------------------------------------------------------------------
 
-class GetColleagueNodeCountResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.GetColleagueNodeCountResponse) */ {
+class GetNodeCountResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.GetNodeCountResponse) */ {
  public:
-  GetColleagueNodeCountResponse();
-  virtual ~GetColleagueNodeCountResponse();
+  GetNodeCountResponse();
+  virtual ~GetNodeCountResponse();
 
-  GetColleagueNodeCountResponse(const GetColleagueNodeCountResponse& from);
+  GetNodeCountResponse(const GetNodeCountResponse& from);
 
-  inline GetColleagueNodeCountResponse& operator=(const GetColleagueNodeCountResponse& from) {
+  inline GetNodeCountResponse& operator=(const GetNodeCountResponse& from) {
     CopyFrom(from);
     return *this;
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const GetColleagueNodeCountResponse& default_instance();
+  static const GetNodeCountResponse& default_instance();
 
-  void Swap(GetColleagueNodeCountResponse* other);
+  void Swap(GetNodeCountResponse* other);
 
   // implements Message ----------------------------------------------
 
-  inline GetColleagueNodeCountResponse* New() const { return New(NULL); }
+  inline GetNodeCountResponse* New() const { return New(NULL); }
 
-  GetColleagueNodeCountResponse* New(::google::protobuf::Arena* arena) const;
+  GetNodeCountResponse* New(::google::protobuf::Arena* arena) const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const GetColleagueNodeCountResponse& from);
-  void MergeFrom(const GetColleagueNodeCountResponse& from);
+  void CopyFrom(const GetNodeCountResponse& from);
+  void MergeFrom(const GetNodeCountResponse& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -2814,7 +2814,7 @@ class GetColleagueNodeCountResponse : public ::google::protobuf::Message /* @@pr
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(GetColleagueNodeCountResponse* other);
+  void InternalSwap(GetNodeCountResponse* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return _internal_metadata_.arena();
@@ -2836,7 +2836,7 @@ class GetColleagueNodeCountResponse : public ::google::protobuf::Message /* @@pr
   ::google::protobuf::uint32 nodecount() const;
   void set_nodecount(::google::protobuf::uint32 value);
 
-  // @@protoc_insertion_point(class_scope:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(class_scope:iop.locnet.GetNodeCountResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -2848,7 +2848,7 @@ class GetColleagueNodeCountResponse : public ::google::protobuf::Message /* @@pr
   friend void protobuf_ShutdownFile_IopLocNet_2eproto();
 
   void InitAsDefaultInstance();
-  static GetColleagueNodeCountResponse* default_instance_;
+  static GetNodeCountResponse* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -5751,52 +5751,52 @@ inline void RemoteNodeRequest::set_allocated_renewneighbour(::iop::locnet::Build
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeRequest.renewNeighbour)
 }
 
-// optional .iop.locnet.GetColleagueNodeCountRequest getColleagueNodeCount = 5;
-inline bool RemoteNodeRequest::has_getcolleaguenodecount() const {
-  return RemoteNodeRequestType_case() == kGetColleagueNodeCount;
+// optional .iop.locnet.GetNodeCountRequest getNodeCount = 5;
+inline bool RemoteNodeRequest::has_getnodecount() const {
+  return RemoteNodeRequestType_case() == kGetNodeCount;
 }
-inline void RemoteNodeRequest::set_has_getcolleaguenodecount() {
-  _oneof_case_[0] = kGetColleagueNodeCount;
+inline void RemoteNodeRequest::set_has_getnodecount() {
+  _oneof_case_[0] = kGetNodeCount;
 }
-inline void RemoteNodeRequest::clear_getcolleaguenodecount() {
-  if (has_getcolleaguenodecount()) {
-    delete RemoteNodeRequestType_.getcolleaguenodecount_;
+inline void RemoteNodeRequest::clear_getnodecount() {
+  if (has_getnodecount()) {
+    delete RemoteNodeRequestType_.getnodecount_;
     clear_has_RemoteNodeRequestType();
   }
 }
-inline  const ::iop::locnet::GetColleagueNodeCountRequest& RemoteNodeRequest::getcolleaguenodecount() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.RemoteNodeRequest.getColleagueNodeCount)
-  return has_getcolleaguenodecount()
-      ? *RemoteNodeRequestType_.getcolleaguenodecount_
-      : ::iop::locnet::GetColleagueNodeCountRequest::default_instance();
+inline  const ::iop::locnet::GetNodeCountRequest& RemoteNodeRequest::getnodecount() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.RemoteNodeRequest.getNodeCount)
+  return has_getnodecount()
+      ? *RemoteNodeRequestType_.getnodecount_
+      : ::iop::locnet::GetNodeCountRequest::default_instance();
 }
-inline ::iop::locnet::GetColleagueNodeCountRequest* RemoteNodeRequest::mutable_getcolleaguenodecount() {
-  if (!has_getcolleaguenodecount()) {
+inline ::iop::locnet::GetNodeCountRequest* RemoteNodeRequest::mutable_getnodecount() {
+  if (!has_getnodecount()) {
     clear_RemoteNodeRequestType();
-    set_has_getcolleaguenodecount();
-    RemoteNodeRequestType_.getcolleaguenodecount_ = new ::iop::locnet::GetColleagueNodeCountRequest;
+    set_has_getnodecount();
+    RemoteNodeRequestType_.getnodecount_ = new ::iop::locnet::GetNodeCountRequest;
   }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.RemoteNodeRequest.getColleagueNodeCount)
-  return RemoteNodeRequestType_.getcolleaguenodecount_;
+  // @@protoc_insertion_point(field_mutable:iop.locnet.RemoteNodeRequest.getNodeCount)
+  return RemoteNodeRequestType_.getnodecount_;
 }
-inline ::iop::locnet::GetColleagueNodeCountRequest* RemoteNodeRequest::release_getcolleaguenodecount() {
-  // @@protoc_insertion_point(field_release:iop.locnet.RemoteNodeRequest.getColleagueNodeCount)
-  if (has_getcolleaguenodecount()) {
+inline ::iop::locnet::GetNodeCountRequest* RemoteNodeRequest::release_getnodecount() {
+  // @@protoc_insertion_point(field_release:iop.locnet.RemoteNodeRequest.getNodeCount)
+  if (has_getnodecount()) {
     clear_has_RemoteNodeRequestType();
-    ::iop::locnet::GetColleagueNodeCountRequest* temp = RemoteNodeRequestType_.getcolleaguenodecount_;
-    RemoteNodeRequestType_.getcolleaguenodecount_ = NULL;
+    ::iop::locnet::GetNodeCountRequest* temp = RemoteNodeRequestType_.getnodecount_;
+    RemoteNodeRequestType_.getnodecount_ = NULL;
     return temp;
   } else {
     return NULL;
   }
 }
-inline void RemoteNodeRequest::set_allocated_getcolleaguenodecount(::iop::locnet::GetColleagueNodeCountRequest* getcolleaguenodecount) {
+inline void RemoteNodeRequest::set_allocated_getnodecount(::iop::locnet::GetNodeCountRequest* getnodecount) {
   clear_RemoteNodeRequestType();
-  if (getcolleaguenodecount) {
-    set_has_getcolleaguenodecount();
-    RemoteNodeRequestType_.getcolleaguenodecount_ = getcolleaguenodecount;
+  if (getnodecount) {
+    set_has_getnodecount();
+    RemoteNodeRequestType_.getnodecount_ = getnodecount;
   }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeRequest.getColleagueNodeCount)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeRequest.getNodeCount)
 }
 
 // optional .iop.locnet.GetRandomNodesRequest getRandomNodes = 6;
@@ -6100,52 +6100,52 @@ inline void RemoteNodeResponse::set_allocated_renewneighbour(::iop::locnet::Buil
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeResponse.renewNeighbour)
 }
 
-// optional .iop.locnet.GetColleagueNodeCountResponse getColleagueNodeCount = 5;
-inline bool RemoteNodeResponse::has_getcolleaguenodecount() const {
-  return RemoteNodeResponseType_case() == kGetColleagueNodeCount;
+// optional .iop.locnet.GetNodeCountResponse getNodeCount = 5;
+inline bool RemoteNodeResponse::has_getnodecount() const {
+  return RemoteNodeResponseType_case() == kGetNodeCount;
 }
-inline void RemoteNodeResponse::set_has_getcolleaguenodecount() {
-  _oneof_case_[0] = kGetColleagueNodeCount;
+inline void RemoteNodeResponse::set_has_getnodecount() {
+  _oneof_case_[0] = kGetNodeCount;
 }
-inline void RemoteNodeResponse::clear_getcolleaguenodecount() {
-  if (has_getcolleaguenodecount()) {
-    delete RemoteNodeResponseType_.getcolleaguenodecount_;
+inline void RemoteNodeResponse::clear_getnodecount() {
+  if (has_getnodecount()) {
+    delete RemoteNodeResponseType_.getnodecount_;
     clear_has_RemoteNodeResponseType();
   }
 }
-inline  const ::iop::locnet::GetColleagueNodeCountResponse& RemoteNodeResponse::getcolleaguenodecount() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.RemoteNodeResponse.getColleagueNodeCount)
-  return has_getcolleaguenodecount()
-      ? *RemoteNodeResponseType_.getcolleaguenodecount_
-      : ::iop::locnet::GetColleagueNodeCountResponse::default_instance();
+inline  const ::iop::locnet::GetNodeCountResponse& RemoteNodeResponse::getnodecount() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.RemoteNodeResponse.getNodeCount)
+  return has_getnodecount()
+      ? *RemoteNodeResponseType_.getnodecount_
+      : ::iop::locnet::GetNodeCountResponse::default_instance();
 }
-inline ::iop::locnet::GetColleagueNodeCountResponse* RemoteNodeResponse::mutable_getcolleaguenodecount() {
-  if (!has_getcolleaguenodecount()) {
+inline ::iop::locnet::GetNodeCountResponse* RemoteNodeResponse::mutable_getnodecount() {
+  if (!has_getnodecount()) {
     clear_RemoteNodeResponseType();
-    set_has_getcolleaguenodecount();
-    RemoteNodeResponseType_.getcolleaguenodecount_ = new ::iop::locnet::GetColleagueNodeCountResponse;
+    set_has_getnodecount();
+    RemoteNodeResponseType_.getnodecount_ = new ::iop::locnet::GetNodeCountResponse;
   }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.RemoteNodeResponse.getColleagueNodeCount)
-  return RemoteNodeResponseType_.getcolleaguenodecount_;
+  // @@protoc_insertion_point(field_mutable:iop.locnet.RemoteNodeResponse.getNodeCount)
+  return RemoteNodeResponseType_.getnodecount_;
 }
-inline ::iop::locnet::GetColleagueNodeCountResponse* RemoteNodeResponse::release_getcolleaguenodecount() {
-  // @@protoc_insertion_point(field_release:iop.locnet.RemoteNodeResponse.getColleagueNodeCount)
-  if (has_getcolleaguenodecount()) {
+inline ::iop::locnet::GetNodeCountResponse* RemoteNodeResponse::release_getnodecount() {
+  // @@protoc_insertion_point(field_release:iop.locnet.RemoteNodeResponse.getNodeCount)
+  if (has_getnodecount()) {
     clear_has_RemoteNodeResponseType();
-    ::iop::locnet::GetColleagueNodeCountResponse* temp = RemoteNodeResponseType_.getcolleaguenodecount_;
-    RemoteNodeResponseType_.getcolleaguenodecount_ = NULL;
+    ::iop::locnet::GetNodeCountResponse* temp = RemoteNodeResponseType_.getnodecount_;
+    RemoteNodeResponseType_.getnodecount_ = NULL;
     return temp;
   } else {
     return NULL;
   }
 }
-inline void RemoteNodeResponse::set_allocated_getcolleaguenodecount(::iop::locnet::GetColleagueNodeCountResponse* getcolleaguenodecount) {
+inline void RemoteNodeResponse::set_allocated_getnodecount(::iop::locnet::GetNodeCountResponse* getnodecount) {
   clear_RemoteNodeResponseType();
-  if (getcolleaguenodecount) {
-    set_has_getcolleaguenodecount();
-    RemoteNodeResponseType_.getcolleaguenodecount_ = getcolleaguenodecount;
+  if (getnodecount) {
+    set_has_getnodecount();
+    RemoteNodeResponseType_.getnodecount_ = getnodecount;
   }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeResponse.getColleagueNodeCount)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeResponse.getNodeCount)
 }
 
 // optional .iop.locnet.GetRandomNodesResponse getRandomNodes = 6;
@@ -6315,24 +6315,24 @@ inline void BuildNetworkResponse::set_accepted(bool value) {
 
 // -------------------------------------------------------------------
 
-// GetColleagueNodeCountRequest
+// GetNodeCountRequest
 
 // -------------------------------------------------------------------
 
-// GetColleagueNodeCountResponse
+// GetNodeCountResponse
 
 // optional uint32 nodeCount = 1;
-inline void GetColleagueNodeCountResponse::clear_nodecount() {
+inline void GetNodeCountResponse::clear_nodecount() {
   nodecount_ = 0u;
 }
-inline ::google::protobuf::uint32 GetColleagueNodeCountResponse::nodecount() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.GetColleagueNodeCountResponse.nodeCount)
+inline ::google::protobuf::uint32 GetNodeCountResponse::nodecount() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.GetNodeCountResponse.nodeCount)
   return nodecount_;
 }
-inline void GetColleagueNodeCountResponse::set_nodecount(::google::protobuf::uint32 value) {
+inline void GetNodeCountResponse::set_nodecount(::google::protobuf::uint32 value) {
   
   nodecount_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.GetColleagueNodeCountResponse.nodeCount)
+  // @@protoc_insertion_point(field_set:iop.locnet.GetNodeCountResponse.nodeCount)
 }
 
 // -------------------------------------------------------------------

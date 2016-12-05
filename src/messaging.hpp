@@ -72,7 +72,7 @@ public:
     
     NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher);
     
-    size_t GetColleagueNodeCount() const override;
+    size_t GetNodeCount() const override;
     std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const override;
     

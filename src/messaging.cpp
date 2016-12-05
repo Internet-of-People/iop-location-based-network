@@ -285,11 +285,11 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             return response;
         }
 
-        case iop::locnet::RemoteNodeRequest::kGetColleagueNodeCount:
+        case iop::locnet::RemoteNodeRequest::kGetNodeCount:
         {
-            size_t counter = _iRemoteNode.GetColleagueNodeCount();
+            size_t counter = _iRemoteNode.GetNodeCount();
             auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_getcolleaguenodecount()->set_nodecount(counter);
+            response->mutable_getnodecount()->set_nodecount(counter);
             return response;
         }
         
@@ -408,17 +408,17 @@ NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRe
 
 
 
-size_t NodeMethodsProtoBufClient::GetColleagueNodeCount() const
+size_t NodeMethodsProtoBufClient::GetNodeCount() const
 {
     iop::locnet::Request request;
     //request.set_version("1");
-    request.mutable_remotenode()->mutable_getcolleaguenodecount();
+    request.mutable_remotenode()->mutable_getnodecount();
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
-    if (! response || ! response->has_remotenode() || ! response->remotenode().has_getcolleaguenodecount() )
+    if (! response || ! response->has_remotenode() || ! response->remotenode().has_getnodecount() )
         { throw runtime_error("Failed to get expected response"); }
         
-    return response->remotenode().getcolleaguenodecount().nodecount();
+    return response->remotenode().getnodecount().nodecount();
 }
 
 

@@ -32,7 +32,7 @@ public:
     
     virtual ~INodeMethods() {}
     
-    virtual size_t GetColleagueNodeCount() const = 0;
+    virtual size_t GetNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const = 0;
     
@@ -111,7 +111,7 @@ public:
     void DeregisterService(ServiceType serviceType) override;
     
     // Interface provided for the same network instances running on remote machines
-    size_t GetColleagueNodeCount() const override;
+    size_t GetNodeCount() const override;
     std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
     
     std::vector<NodeInfo> GetRandomNodes(

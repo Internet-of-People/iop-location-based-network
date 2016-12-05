@@ -48,7 +48,7 @@ Node::Node( const NodeInfo &nodeInfo,
         throw runtime_error("Invalid connection factory argument");
     }
     
-    if ( GetColleagueNodeCount() == 0 && ! ignoreDiscovery )
+    if ( GetNodeCount() == 0 && ! ignoreDiscovery )
     {
         bool discoverySucceeded = InitializeWorld() && InitializeNeighbourhood();
         if (! discoverySucceeded)
@@ -140,8 +140,8 @@ vector<NodeInfo> Node::GetRandomNodes(size_t maxNodeCount, Neighbours filter) co
 vector<NodeInfo> Node::GetNeighbourNodesByDistance() const
     { return _spatialDb->GetNeighbourNodesByDistance(); }
     
-size_t Node::GetColleagueNodeCount() const
-    { return _spatialDb->GetColleagueNodeCount(); }
+size_t Node::GetNodeCount() const
+    { return _spatialDb->GetNodeCount(); }
     
     
 
@@ -279,7 +279,7 @@ bool Node::InitializeWorld()
     uniform_int_distribution<int> fromRange( 0, _seedNodes.size() - 1 );
     vector<string> triedSeedNodes;
     
-    size_t seedNodeColleagueCount = 0;
+    size_t nodeCountAtSeed = 0;
     vector<NodeInfo> randomColleagueCandidates;
     while ( triedSeedNodes.size() < _seedNodes.size() )
     {
@@ -302,12 +302,12 @@ bool Node::InitializeWorld()
                 { continue; }
             
             // And query both a target World Map size and an initial list of random nodes to start with
-            seedNodeColleagueCount = seedNodeConnection->GetColleagueNodeCount();
+            nodeCountAtSeed = seedNodeConnection->GetNodeCount();
             randomColleagueCandidates = seedNodeConnection->GetRandomNodes(
-                min(INIT_WORLD_RANDOM_NODE_COUNT, seedNodeColleagueCount), Neighbours::Excluded );
+                min(INIT_WORLD_RANDOM_NODE_COUNT, nodeCountAtSeed), Neighbours::Excluded );
             
             // If got a reasonable response from a seed server, stop contacting other seeds
-            if ( seedNodeColleagueCount > 0 && ! randomColleagueCandidates.empty() )
+            if ( nodeCountAtSeed > 0 && ! randomColleagueCandidates.empty() )
             {
                 // Try to add seed node to our network (no matter if fails), then step out of seed node phase
                 bool seedAsNeighbour = SafeStoreNode( NodeDbEntry(selectedSeedNode,
@@ -325,7 +325,7 @@ bool Node::InitializeWorld()
     }
     
     // Check if all seed nodes tried and failed
-    if ( seedNodeColleagueCount == 0 && randomColleagueCandidates.empty() &&
+    if ( nodeCountAtSeed == 0 && randomColleagueCandidates.empty() &&
          triedSeedNodes.size() == _seedNodes.size() )
     {
         // This still might be normal if we're the very first seed node of the whole network
@@ -340,8 +340,9 @@ bool Node::InitializeWorld()
     }
     
     // We received a reasonable random node list from a seed, try to fill in our world map
-    size_t targetColleageCound = INIT_WORLD_NODE_FILL_TARGET_RATE * seedNodeColleagueCount;
-    for (size_t addedColleagueCount = 0; addedColleagueCount < targetColleageCound; )
+    size_t targetNodeCound = nodeCountAtSeed <= NEIGHBOURHOOD_MAX_NODE_COUNT ?
+        nodeCountAtSeed : INIT_WORLD_NODE_FILL_TARGET_RATE * nodeCountAtSeed;
+    for (size_t addedColleagueCount = 0; addedColleagueCount < targetNodeCound; )
     {
         if ( ! randomColleagueCandidates.empty() )
         {
@@ -451,7 +452,8 @@ bool Node::InitializeNeighbourhood()
             
             // Get its neighbours closest to us
             vector<NodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodesByDistance(
-                _myNodeInfo.location(), INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT, 10, Neighbours::Included );
+                _myNodeInfo.location(), numeric_limits<Distance>::max(),
+                INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT, Neighbours::Included );
             
             // Mark current node as processed and append its new neighbours to our todo list
             askedNodeIds.insert( neighbourCandidate.profile().id() );

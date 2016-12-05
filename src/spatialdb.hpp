@@ -56,7 +56,7 @@ public:
     
     virtual void ExpireOldNodes() = 0;
 
-    virtual size_t GetColleagueNodeCount() const = 0;
+    virtual size_t GetNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     
     virtual std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
@@ -88,7 +88,7 @@ public:
     
     void ExpireOldNodes() override;
     
-    size_t GetColleagueNodeCount() const override;
+    size_t GetNodeCount() const override;
     std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
     std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
     

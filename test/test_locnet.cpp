@@ -89,7 +89,7 @@ SCENARIO("Spatial database", "")
         InMemorySpatialDatabase geodb(TestData::Budapest);
 
         THEN("its initially empty") {
-            REQUIRE( geodb.GetColleagueNodeCount() == 0 );
+            REQUIRE( geodb.GetNodeCount() == 0 );
             REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
         }
@@ -120,17 +120,17 @@ SCENARIO("Spatial database", "")
             geodb.Store(entry2);
             
             THEN("they can be queried and removed") {
-                REQUIRE( geodb.GetColleagueNodeCount() == 1 );
+                REQUIRE( geodb.GetNodeCount() == 2 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 1 );
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
                 
                 geodb.Remove("ColleagueNodeId1");
-                REQUIRE( geodb.GetColleagueNodeCount() == 0 );
+                REQUIRE( geodb.GetNodeCount() == 1 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 1 );
                 geodb.Remove("NeighbourNodeId2");
                 
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
-                REQUIRE( geodb.GetColleagueNodeCount() == 0 );
+                REQUIRE( geodb.GetNodeCount() == 0 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             }
         }

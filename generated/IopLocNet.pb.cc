@@ -125,7 +125,7 @@ struct RemoteNodeRequestOneofInstance {
   const ::iop::locnet::BuildNetworkRequest* renewcolleague_;
   const ::iop::locnet::BuildNetworkRequest* acceptneighbour_;
   const ::iop::locnet::BuildNetworkRequest* renewneighbour_;
-  const ::iop::locnet::GetColleagueNodeCountRequest* getcolleaguenodecount_;
+  const ::iop::locnet::GetNodeCountRequest* getnodecount_;
   const ::iop::locnet::GetRandomNodesRequest* getrandomnodes_;
   const ::iop::locnet::GetClosestNodesByDistanceRequest* getclosestnodes_;
 }* RemoteNodeRequest_default_oneof_instance_ = NULL;
@@ -137,7 +137,7 @@ struct RemoteNodeResponseOneofInstance {
   const ::iop::locnet::BuildNetworkResponse* renewcolleague_;
   const ::iop::locnet::BuildNetworkResponse* acceptneighbour_;
   const ::iop::locnet::BuildNetworkResponse* renewneighbour_;
-  const ::iop::locnet::GetColleagueNodeCountResponse* getcolleaguenodecount_;
+  const ::iop::locnet::GetNodeCountResponse* getnodecount_;
   const ::iop::locnet::GetRandomNodesResponse* getrandomnodes_;
   const ::iop::locnet::GetClosestNodesByDistanceResponse* getclosestnodes_;
 }* RemoteNodeResponse_default_oneof_instance_ = NULL;
@@ -147,12 +147,12 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* BuildNetworkResponse_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   BuildNetworkResponse_reflection_ = NULL;
-const ::google::protobuf::Descriptor* GetColleagueNodeCountRequest_descriptor_ = NULL;
+const ::google::protobuf::Descriptor* GetNodeCountRequest_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
-  GetColleagueNodeCountRequest_reflection_ = NULL;
-const ::google::protobuf::Descriptor* GetColleagueNodeCountResponse_descriptor_ = NULL;
+  GetNodeCountRequest_reflection_ = NULL;
+const ::google::protobuf::Descriptor* GetNodeCountResponse_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
-  GetColleagueNodeCountResponse_reflection_ = NULL;
+  GetNodeCountResponse_reflection_ = NULL;
 const ::google::protobuf::Descriptor* GetRandomNodesRequest_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   GetRandomNodesRequest_reflection_ = NULL;
@@ -555,7 +555,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeRequest_default_oneof_instance_, renewcolleague_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeRequest_default_oneof_instance_, acceptneighbour_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeRequest_default_oneof_instance_, renewneighbour_),
-    PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeRequest_default_oneof_instance_, getcolleaguenodecount_),
+    PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeRequest_default_oneof_instance_, getnodecount_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeRequest_default_oneof_instance_, getrandomnodes_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeRequest_default_oneof_instance_, getclosestnodes_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RemoteNodeRequest, RemoteNodeRequestType_),
@@ -579,7 +579,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeResponse_default_oneof_instance_, renewcolleague_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeResponse_default_oneof_instance_, acceptneighbour_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeResponse_default_oneof_instance_, renewneighbour_),
-    PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeResponse_default_oneof_instance_, getcolleaguenodecount_),
+    PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeResponse_default_oneof_instance_, getnodecount_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeResponse_default_oneof_instance_, getrandomnodes_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeResponse_default_oneof_instance_, getclosestnodes_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RemoteNodeResponse, RemoteNodeResponseType_),
@@ -627,35 +627,35 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(BuildNetworkResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkResponse, _is_default_instance_));
-  GetColleagueNodeCountRequest_descriptor_ = file->message_type(24);
-  static const int GetColleagueNodeCountRequest_offsets_[1] = {
+  GetNodeCountRequest_descriptor_ = file->message_type(24);
+  static const int GetNodeCountRequest_offsets_[1] = {
   };
-  GetColleagueNodeCountRequest_reflection_ =
+  GetNodeCountRequest_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
-      GetColleagueNodeCountRequest_descriptor_,
-      GetColleagueNodeCountRequest::default_instance_,
-      GetColleagueNodeCountRequest_offsets_,
+      GetNodeCountRequest_descriptor_,
+      GetNodeCountRequest::default_instance_,
+      GetNodeCountRequest_offsets_,
       -1,
       -1,
       -1,
-      sizeof(GetColleagueNodeCountRequest),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetColleagueNodeCountRequest, _internal_metadata_),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetColleagueNodeCountRequest, _is_default_instance_));
-  GetColleagueNodeCountResponse_descriptor_ = file->message_type(25);
-  static const int GetColleagueNodeCountResponse_offsets_[1] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetColleagueNodeCountResponse, nodecount_),
+      sizeof(GetNodeCountRequest),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountRequest, _internal_metadata_),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountRequest, _is_default_instance_));
+  GetNodeCountResponse_descriptor_ = file->message_type(25);
+  static const int GetNodeCountResponse_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountResponse, nodecount_),
   };
-  GetColleagueNodeCountResponse_reflection_ =
+  GetNodeCountResponse_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
-      GetColleagueNodeCountResponse_descriptor_,
-      GetColleagueNodeCountResponse::default_instance_,
-      GetColleagueNodeCountResponse_offsets_,
+      GetNodeCountResponse_descriptor_,
+      GetNodeCountResponse::default_instance_,
+      GetNodeCountResponse_offsets_,
       -1,
       -1,
       -1,
-      sizeof(GetColleagueNodeCountResponse),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetColleagueNodeCountResponse, _internal_metadata_),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetColleagueNodeCountResponse, _is_default_instance_));
+      sizeof(GetNodeCountResponse),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountResponse, _internal_metadata_),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountResponse, _is_default_instance_));
   GetRandomNodesRequest_descriptor_ = file->message_type(26);
   static const int GetRandomNodesRequest_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRandomNodesRequest, maxnodecount_),
@@ -883,9 +883,9 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
       BuildNetworkResponse_descriptor_, &BuildNetworkResponse::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-      GetColleagueNodeCountRequest_descriptor_, &GetColleagueNodeCountRequest::default_instance());
+      GetNodeCountRequest_descriptor_, &GetNodeCountRequest::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-      GetColleagueNodeCountResponse_descriptor_, &GetColleagueNodeCountResponse::default_instance());
+      GetNodeCountResponse_descriptor_, &GetNodeCountResponse::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
       GetRandomNodesRequest_descriptor_, &GetRandomNodesRequest::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
@@ -968,10 +968,10 @@ void protobuf_ShutdownFile_IopLocNet_2eproto() {
   delete BuildNetworkRequest_reflection_;
   delete BuildNetworkResponse::default_instance_;
   delete BuildNetworkResponse_reflection_;
-  delete GetColleagueNodeCountRequest::default_instance_;
-  delete GetColleagueNodeCountRequest_reflection_;
-  delete GetColleagueNodeCountResponse::default_instance_;
-  delete GetColleagueNodeCountResponse_reflection_;
+  delete GetNodeCountRequest::default_instance_;
+  delete GetNodeCountRequest_reflection_;
+  delete GetNodeCountResponse::default_instance_;
+  delete GetNodeCountResponse_reflection_;
   delete GetRandomNodesRequest::default_instance_;
   delete GetRandomNodesRequest_reflection_;
   delete GetRandomNodesResponse::default_instance_;
@@ -1064,73 +1064,72 @@ void protobuf_AddDesc_IopLocNet_2eproto() {
     "(\014H\000B\014\n\nChangeType\"[\n\'NeighbourhoodChang"
     "edNotificationRequest\0220\n\007changes\030\001 \003(\0132\037"
     ".iop.locnet.NeighbourhoodChange\"*\n(Neigh"
-    "bourhoodChangedNotificationResponse\"\353\003\n\021"
+    "bourhoodChangedNotificationResponse\"\331\003\n\021"
     "RemoteNodeRequest\022:\n\017acceptColleague\030\001 \001"
     "(\0132\037.iop.locnet.BuildNetworkRequestH\000\0229\n"
     "\016renewColleague\030\002 \001(\0132\037.iop.locnet.Build"
     "NetworkRequestH\000\022:\n\017acceptNeighbour\030\003 \001("
     "\0132\037.iop.locnet.BuildNetworkRequestH\000\0229\n\016"
     "renewNeighbour\030\004 \001(\0132\037.iop.locnet.BuildN"
-    "etworkRequestH\000\022I\n\025getColleagueNodeCount"
-    "\030\005 \001(\0132(.iop.locnet.GetColleagueNodeCoun"
-    "tRequestH\000\022;\n\016getRandomNodes\030\006 \001(\0132!.iop"
-    ".locnet.GetRandomNodesRequestH\000\022G\n\017getCl"
-    "osestNodes\030\007 \001(\0132,.iop.locnet.GetClosest"
-    "NodesByDistanceRequestH\000B\027\n\025RemoteNodeRe"
-    "questType\"\364\003\n\022RemoteNodeResponse\022;\n\017acce"
-    "ptColleague\030\001 \001(\0132 .iop.locnet.BuildNetw"
-    "orkResponseH\000\022:\n\016renewColleague\030\002 \001(\0132 ."
-    "iop.locnet.BuildNetworkResponseH\000\022;\n\017acc"
-    "eptNeighbour\030\003 \001(\0132 .iop.locnet.BuildNet"
-    "workResponseH\000\022:\n\016renewNeighbour\030\004 \001(\0132 "
-    ".iop.locnet.BuildNetworkResponseH\000\022J\n\025ge"
-    "tColleagueNodeCount\030\005 \001(\0132).iop.locnet.G"
-    "etColleagueNodeCountResponseH\000\022<\n\016getRan"
-    "domNodes\030\006 \001(\0132\".iop.locnet.GetRandomNod"
-    "esResponseH\000\022H\n\017getClosestNodes\030\007 \001(\0132-."
-    "iop.locnet.GetClosestNodesByDistanceResp"
-    "onseH\000B\030\n\026RemoteNodeResponseType\"=\n\023Buil"
-    "dNetworkRequest\022&\n\010nodeInfo\030\001 \001(\0132\024.iop."
-    "locnet.NodeInfo\"(\n\024BuildNetworkResponse\022"
-    "\020\n\010accepted\030\001 \001(\010\"\036\n\034GetColleagueNodeCou"
-    "ntRequest\"2\n\035GetColleagueNodeCountRespon"
-    "se\022\021\n\tnodeCount\030\001 \001(\r\"H\n\025GetRandomNodesR"
-    "equest\022\024\n\014maxNodeCount\030\001 \001(\r\022\031\n\021includeN"
-    "eighbours\030\002 \001(\010\"=\n\026GetRandomNodesRespons"
-    "e\022#\n\005nodes\030\001 \003(\0132\024.iop.locnet.NodeInfo\"\223"
-    "\001\n GetClosestNodesByDistanceRequest\022)\n\010l"
-    "ocation\030\001 \001(\0132\027.iop.locnet.GpsLocation\022\023"
-    "\n\013maxRadiusKm\030\002 \001(\002\022\024\n\014maxNodeCount\030\003 \001("
-    "\r\022\031\n\021includeNeighbours\030\004 \001(\010\"H\n!GetClose"
-    "stNodesByDistanceResponse\022#\n\005nodes\030\001 \003(\013"
-    "2\024.iop.locnet.NodeInfo\"\367\001\n\rClientRequest"
-    "\0225\n\013getServices\030\001 \001(\0132\036.iop.locnet.GetSe"
-    "rvicesRequestH\000\022Q\n\021getNeighbourNodes\030\002 \001"
-    "(\01324.iop.locnet.GetNeighbourNodesByDista"
-    "nceClientRequestH\000\022G\n\017getClosestNodes\030\003 "
-    "\001(\0132,.iop.locnet.GetClosestNodesByDistan"
-    "ceRequestH\000B\023\n\021ClientRequestType\"\366\001\n\016Cli"
-    "entResponse\0226\n\013getServices\030\001 \001(\0132\037.iop.l"
-    "ocnet.GetServicesResponseH\000\022L\n\021getNeighb"
-    "ourNodes\030\002 \001(\0132/.iop.locnet.GetNeighbour"
-    "NodesByDistanceResponseH\000\022H\n\017getClosestN"
-    "odes\030\003 \001(\0132-.iop.locnet.GetClosestNodesB"
-    "yDistanceResponseH\000B\024\n\022ClientResponseTyp"
-    "e\"\024\n\022GetServicesRequest\"h\n\016ServiceProfil"
-    "e\022,\n\013serviceType\030\001 \001(\0162\027.iop.locnet.Serv"
-    "iceType\022(\n\007profile\030\002 \001(\0132\027.iop.locnet.No"
-    "deProfile\"C\n\023GetServicesResponse\022,\n\010serv"
-    "ices\030\001 \003(\0132\032.iop.locnet.ServiceProfile\"*"
-    "\n(GetNeighbourNodesByDistanceClientReque"
-    "st*\302\001\n\006Status\022\r\n\tSTATUS_OK\020\000\022\034\n\030ERROR_PR"
-    "OTOCOL_VIOLATION\020\001\022\025\n\021ERROR_UNSUPPORTED\020"
-    "\002\022\026\n\022ERROR_UNAUTHORIZED\020\005\022\022\n\016ERROR_BAD_R"
-    "OLE\020\006\022\022\n\016ERROR_INTERNAL\020\010\022\033\n\027ERROR_INVAL"
-    "ID_SIGNATURE\0204\022\027\n\023ERROR_INVALID_VALUE\0206*"
-    "\226\001\n\013ServiceType\022\020\n\014Unstructured\020\000\022\013\n\007Con"
-    "tent\020\001\022\013\n\007Latency\020\002\022\014\n\010Location\020\003\022\t\n\005Tok"
-    "en\020\n\022\013\n\007Profile\020\013\022\r\n\tProximity\020\014\022\t\n\005Rela"
-    "y\020\r\022\016\n\nReputation\020\016\022\013\n\007Minting\020\017b\006proto3", 5080);
+    "etworkRequestH\000\0227\n\014getNodeCount\030\005 \001(\0132\037."
+    "iop.locnet.GetNodeCountRequestH\000\022;\n\016getR"
+    "andomNodes\030\006 \001(\0132!.iop.locnet.GetRandomN"
+    "odesRequestH\000\022G\n\017getClosestNodes\030\007 \001(\0132,"
+    ".iop.locnet.GetClosestNodesByDistanceReq"
+    "uestH\000B\027\n\025RemoteNodeRequestType\"\342\003\n\022Remo"
+    "teNodeResponse\022;\n\017acceptColleague\030\001 \001(\0132"
+    " .iop.locnet.BuildNetworkResponseH\000\022:\n\016r"
+    "enewColleague\030\002 \001(\0132 .iop.locnet.BuildNe"
+    "tworkResponseH\000\022;\n\017acceptNeighbour\030\003 \001(\013"
+    "2 .iop.locnet.BuildNetworkResponseH\000\022:\n\016"
+    "renewNeighbour\030\004 \001(\0132 .iop.locnet.BuildN"
+    "etworkResponseH\000\0228\n\014getNodeCount\030\005 \001(\0132 "
+    ".iop.locnet.GetNodeCountResponseH\000\022<\n\016ge"
+    "tRandomNodes\030\006 \001(\0132\".iop.locnet.GetRando"
+    "mNodesResponseH\000\022H\n\017getClosestNodes\030\007 \001("
+    "\0132-.iop.locnet.GetClosestNodesByDistance"
+    "ResponseH\000B\030\n\026RemoteNodeResponseType\"=\n\023"
+    "BuildNetworkRequest\022&\n\010nodeInfo\030\001 \001(\0132\024."
+    "iop.locnet.NodeInfo\"(\n\024BuildNetworkRespo"
+    "nse\022\020\n\010accepted\030\001 \001(\010\"\025\n\023GetNodeCountReq"
+    "uest\")\n\024GetNodeCountResponse\022\021\n\tnodeCoun"
+    "t\030\001 \001(\r\"H\n\025GetRandomNodesRequest\022\024\n\014maxN"
+    "odeCount\030\001 \001(\r\022\031\n\021includeNeighbours\030\002 \001("
+    "\010\"=\n\026GetRandomNodesResponse\022#\n\005nodes\030\001 \003"
+    "(\0132\024.iop.locnet.NodeInfo\"\223\001\n GetClosestN"
+    "odesByDistanceRequest\022)\n\010location\030\001 \001(\0132"
+    "\027.iop.locnet.GpsLocation\022\023\n\013maxRadiusKm\030"
+    "\002 \001(\002\022\024\n\014maxNodeCount\030\003 \001(\r\022\031\n\021includeNe"
+    "ighbours\030\004 \001(\010\"H\n!GetClosestNodesByDista"
+    "nceResponse\022#\n\005nodes\030\001 \003(\0132\024.iop.locnet."
+    "NodeInfo\"\367\001\n\rClientRequest\0225\n\013getService"
+    "s\030\001 \001(\0132\036.iop.locnet.GetServicesRequestH"
+    "\000\022Q\n\021getNeighbourNodes\030\002 \001(\01324.iop.locne"
+    "t.GetNeighbourNodesByDistanceClientReque"
+    "stH\000\022G\n\017getClosestNodes\030\003 \001(\0132,.iop.locn"
+    "et.GetClosestNodesByDistanceRequestH\000B\023\n"
+    "\021ClientRequestType\"\366\001\n\016ClientResponse\0226\n"
+    "\013getServices\030\001 \001(\0132\037.iop.locnet.GetServi"
+    "cesResponseH\000\022L\n\021getNeighbourNodes\030\002 \001(\013"
+    "2/.iop.locnet.GetNeighbourNodesByDistanc"
+    "eResponseH\000\022H\n\017getClosestNodes\030\003 \001(\0132-.i"
+    "op.locnet.GetClosestNodesByDistanceRespo"
+    "nseH\000B\024\n\022ClientResponseType\"\024\n\022GetServic"
+    "esRequest\"h\n\016ServiceProfile\022,\n\013serviceTy"
+    "pe\030\001 \001(\0162\027.iop.locnet.ServiceType\022(\n\007pro"
+    "file\030\002 \001(\0132\027.iop.locnet.NodeProfile\"C\n\023G"
+    "etServicesResponse\022,\n\010services\030\001 \003(\0132\032.i"
+    "op.locnet.ServiceProfile\"*\n(GetNeighbour"
+    "NodesByDistanceClientRequest*\302\001\n\006Status\022"
+    "\r\n\tSTATUS_OK\020\000\022\034\n\030ERROR_PROTOCOL_VIOLATI"
+    "ON\020\001\022\025\n\021ERROR_UNSUPPORTED\020\002\022\026\n\022ERROR_UNA"
+    "UTHORIZED\020\005\022\022\n\016ERROR_BAD_ROLE\020\006\022\022\n\016ERROR"
+    "_INTERNAL\020\010\022\033\n\027ERROR_INVALID_SIGNATURE\0204"
+    "\022\027\n\023ERROR_INVALID_VALUE\0206*\226\001\n\013ServiceTyp"
+    "e\022\020\n\014Unstructured\020\000\022\013\n\007Content\020\001\022\013\n\007Late"
+    "ncy\020\002\022\014\n\010Location\020\003\022\t\n\005Token\020\n\022\013\n\007Profil"
+    "e\020\013\022\r\n\tProximity\020\014\022\t\n\005Relay\020\r\022\016\n\nReputat"
+    "ion\020\016\022\013\n\007Minting\020\017b\006proto3", 5026);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IopLocNet.proto", &protobuf_RegisterTypes);
   MessageWithHeader::default_instance_ = new MessageWithHeader();
@@ -1166,8 +1165,8 @@ void protobuf_AddDesc_IopLocNet_2eproto() {
   RemoteNodeResponse_default_oneof_instance_ = new RemoteNodeResponseOneofInstance();
   BuildNetworkRequest::default_instance_ = new BuildNetworkRequest();
   BuildNetworkResponse::default_instance_ = new BuildNetworkResponse();
-  GetColleagueNodeCountRequest::default_instance_ = new GetColleagueNodeCountRequest();
-  GetColleagueNodeCountResponse::default_instance_ = new GetColleagueNodeCountResponse();
+  GetNodeCountRequest::default_instance_ = new GetNodeCountRequest();
+  GetNodeCountResponse::default_instance_ = new GetNodeCountResponse();
   GetRandomNodesRequest::default_instance_ = new GetRandomNodesRequest();
   GetRandomNodesResponse::default_instance_ = new GetRandomNodesResponse();
   GetClosestNodesByDistanceRequest::default_instance_ = new GetClosestNodesByDistanceRequest();
@@ -1204,8 +1203,8 @@ void protobuf_AddDesc_IopLocNet_2eproto() {
   RemoteNodeResponse::default_instance_->InitAsDefaultInstance();
   BuildNetworkRequest::default_instance_->InitAsDefaultInstance();
   BuildNetworkResponse::default_instance_->InitAsDefaultInstance();
-  GetColleagueNodeCountRequest::default_instance_->InitAsDefaultInstance();
-  GetColleagueNodeCountResponse::default_instance_->InitAsDefaultInstance();
+  GetNodeCountRequest::default_instance_->InitAsDefaultInstance();
+  GetNodeCountResponse::default_instance_->InitAsDefaultInstance();
   GetRandomNodesRequest::default_instance_->InitAsDefaultInstance();
   GetRandomNodesResponse::default_instance_->InitAsDefaultInstance();
   GetClosestNodesByDistanceRequest::default_instance_->InitAsDefaultInstance();
@@ -8623,7 +8622,7 @@ const int RemoteNodeRequest::kAcceptColleagueFieldNumber;
 const int RemoteNodeRequest::kRenewColleagueFieldNumber;
 const int RemoteNodeRequest::kAcceptNeighbourFieldNumber;
 const int RemoteNodeRequest::kRenewNeighbourFieldNumber;
-const int RemoteNodeRequest::kGetColleagueNodeCountFieldNumber;
+const int RemoteNodeRequest::kGetNodeCountFieldNumber;
 const int RemoteNodeRequest::kGetRandomNodesFieldNumber;
 const int RemoteNodeRequest::kGetClosestNodesFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -8640,7 +8639,7 @@ void RemoteNodeRequest::InitAsDefaultInstance() {
   RemoteNodeRequest_default_oneof_instance_->renewcolleague_ = const_cast< ::iop::locnet::BuildNetworkRequest*>(&::iop::locnet::BuildNetworkRequest::default_instance());
   RemoteNodeRequest_default_oneof_instance_->acceptneighbour_ = const_cast< ::iop::locnet::BuildNetworkRequest*>(&::iop::locnet::BuildNetworkRequest::default_instance());
   RemoteNodeRequest_default_oneof_instance_->renewneighbour_ = const_cast< ::iop::locnet::BuildNetworkRequest*>(&::iop::locnet::BuildNetworkRequest::default_instance());
-  RemoteNodeRequest_default_oneof_instance_->getcolleaguenodecount_ = const_cast< ::iop::locnet::GetColleagueNodeCountRequest*>(&::iop::locnet::GetColleagueNodeCountRequest::default_instance());
+  RemoteNodeRequest_default_oneof_instance_->getnodecount_ = const_cast< ::iop::locnet::GetNodeCountRequest*>(&::iop::locnet::GetNodeCountRequest::default_instance());
   RemoteNodeRequest_default_oneof_instance_->getrandomnodes_ = const_cast< ::iop::locnet::GetRandomNodesRequest*>(&::iop::locnet::GetRandomNodesRequest::default_instance());
   RemoteNodeRequest_default_oneof_instance_->getclosestnodes_ = const_cast< ::iop::locnet::GetClosestNodesByDistanceRequest*>(&::iop::locnet::GetClosestNodesByDistanceRequest::default_instance());
 }
@@ -8716,8 +8715,8 @@ void RemoteNodeRequest::clear_RemoteNodeRequestType() {
       delete RemoteNodeRequestType_.renewneighbour_;
       break;
     }
-    case kGetColleagueNodeCount: {
-      delete RemoteNodeRequestType_.getcolleaguenodecount_;
+    case kGetNodeCount: {
+      delete RemoteNodeRequestType_.getnodecount_;
       break;
     }
     case kGetRandomNodes: {
@@ -8798,16 +8797,16 @@ bool RemoteNodeRequest::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(42)) goto parse_getColleagueNodeCount;
+        if (input->ExpectTag(42)) goto parse_getNodeCount;
         break;
       }
 
-      // optional .iop.locnet.GetColleagueNodeCountRequest getColleagueNodeCount = 5;
+      // optional .iop.locnet.GetNodeCountRequest getNodeCount = 5;
       case 5: {
         if (tag == 42) {
-         parse_getColleagueNodeCount:
+         parse_getNodeCount:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_getcolleaguenodecount()));
+               input, mutable_getnodecount()));
         } else {
           goto handle_unusual;
         }
@@ -8889,10 +8888,10 @@ void RemoteNodeRequest::SerializeWithCachedSizes(
       4, *RemoteNodeRequestType_.renewneighbour_, output);
   }
 
-  // optional .iop.locnet.GetColleagueNodeCountRequest getColleagueNodeCount = 5;
-  if (has_getcolleaguenodecount()) {
+  // optional .iop.locnet.GetNodeCountRequest getNodeCount = 5;
+  if (has_getnodecount()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      5, *RemoteNodeRequestType_.getcolleaguenodecount_, output);
+      5, *RemoteNodeRequestType_.getnodecount_, output);
   }
 
   // optional .iop.locnet.GetRandomNodesRequest getRandomNodes = 6;
@@ -8941,11 +8940,11 @@ void RemoteNodeRequest::SerializeWithCachedSizes(
         4, *RemoteNodeRequestType_.renewneighbour_, false, target);
   }
 
-  // optional .iop.locnet.GetColleagueNodeCountRequest getColleagueNodeCount = 5;
-  if (has_getcolleaguenodecount()) {
+  // optional .iop.locnet.GetNodeCountRequest getNodeCount = 5;
+  if (has_getnodecount()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        5, *RemoteNodeRequestType_.getcolleaguenodecount_, false, target);
+        5, *RemoteNodeRequestType_.getnodecount_, false, target);
   }
 
   // optional .iop.locnet.GetRandomNodesRequest getRandomNodes = 6;
@@ -8999,11 +8998,11 @@ int RemoteNodeRequest::ByteSize() const {
           *RemoteNodeRequestType_.renewneighbour_);
       break;
     }
-    // optional .iop.locnet.GetColleagueNodeCountRequest getColleagueNodeCount = 5;
-    case kGetColleagueNodeCount: {
+    // optional .iop.locnet.GetNodeCountRequest getNodeCount = 5;
+    case kGetNodeCount: {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          *RemoteNodeRequestType_.getcolleaguenodecount_);
+          *RemoteNodeRequestType_.getnodecount_);
       break;
     }
     // optional .iop.locnet.GetRandomNodesRequest getRandomNodes = 6;
@@ -9069,8 +9068,8 @@ void RemoteNodeRequest::MergeFrom(const RemoteNodeRequest& from) {
       mutable_renewneighbour()->::iop::locnet::BuildNetworkRequest::MergeFrom(from.renewneighbour());
       break;
     }
-    case kGetColleagueNodeCount: {
-      mutable_getcolleaguenodecount()->::iop::locnet::GetColleagueNodeCountRequest::MergeFrom(from.getcolleaguenodecount());
+    case kGetNodeCount: {
+      mutable_getnodecount()->::iop::locnet::GetNodeCountRequest::MergeFrom(from.getnodecount());
       break;
     }
     case kGetRandomNodes: {
@@ -9320,52 +9319,52 @@ void RemoteNodeRequest::set_allocated_renewneighbour(::iop::locnet::BuildNetwork
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeRequest.renewNeighbour)
 }
 
-// optional .iop.locnet.GetColleagueNodeCountRequest getColleagueNodeCount = 5;
-bool RemoteNodeRequest::has_getcolleaguenodecount() const {
-  return RemoteNodeRequestType_case() == kGetColleagueNodeCount;
+// optional .iop.locnet.GetNodeCountRequest getNodeCount = 5;
+bool RemoteNodeRequest::has_getnodecount() const {
+  return RemoteNodeRequestType_case() == kGetNodeCount;
 }
-void RemoteNodeRequest::set_has_getcolleaguenodecount() {
-  _oneof_case_[0] = kGetColleagueNodeCount;
+void RemoteNodeRequest::set_has_getnodecount() {
+  _oneof_case_[0] = kGetNodeCount;
 }
-void RemoteNodeRequest::clear_getcolleaguenodecount() {
-  if (has_getcolleaguenodecount()) {
-    delete RemoteNodeRequestType_.getcolleaguenodecount_;
+void RemoteNodeRequest::clear_getnodecount() {
+  if (has_getnodecount()) {
+    delete RemoteNodeRequestType_.getnodecount_;
     clear_has_RemoteNodeRequestType();
   }
 }
- const ::iop::locnet::GetColleagueNodeCountRequest& RemoteNodeRequest::getcolleaguenodecount() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.RemoteNodeRequest.getColleagueNodeCount)
-  return has_getcolleaguenodecount()
-      ? *RemoteNodeRequestType_.getcolleaguenodecount_
-      : ::iop::locnet::GetColleagueNodeCountRequest::default_instance();
+ const ::iop::locnet::GetNodeCountRequest& RemoteNodeRequest::getnodecount() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.RemoteNodeRequest.getNodeCount)
+  return has_getnodecount()
+      ? *RemoteNodeRequestType_.getnodecount_
+      : ::iop::locnet::GetNodeCountRequest::default_instance();
 }
-::iop::locnet::GetColleagueNodeCountRequest* RemoteNodeRequest::mutable_getcolleaguenodecount() {
-  if (!has_getcolleaguenodecount()) {
+::iop::locnet::GetNodeCountRequest* RemoteNodeRequest::mutable_getnodecount() {
+  if (!has_getnodecount()) {
     clear_RemoteNodeRequestType();
-    set_has_getcolleaguenodecount();
-    RemoteNodeRequestType_.getcolleaguenodecount_ = new ::iop::locnet::GetColleagueNodeCountRequest;
+    set_has_getnodecount();
+    RemoteNodeRequestType_.getnodecount_ = new ::iop::locnet::GetNodeCountRequest;
   }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.RemoteNodeRequest.getColleagueNodeCount)
-  return RemoteNodeRequestType_.getcolleaguenodecount_;
+  // @@protoc_insertion_point(field_mutable:iop.locnet.RemoteNodeRequest.getNodeCount)
+  return RemoteNodeRequestType_.getnodecount_;
 }
-::iop::locnet::GetColleagueNodeCountRequest* RemoteNodeRequest::release_getcolleaguenodecount() {
-  // @@protoc_insertion_point(field_release:iop.locnet.RemoteNodeRequest.getColleagueNodeCount)
-  if (has_getcolleaguenodecount()) {
+::iop::locnet::GetNodeCountRequest* RemoteNodeRequest::release_getnodecount() {
+  // @@protoc_insertion_point(field_release:iop.locnet.RemoteNodeRequest.getNodeCount)
+  if (has_getnodecount()) {
     clear_has_RemoteNodeRequestType();
-    ::iop::locnet::GetColleagueNodeCountRequest* temp = RemoteNodeRequestType_.getcolleaguenodecount_;
-    RemoteNodeRequestType_.getcolleaguenodecount_ = NULL;
+    ::iop::locnet::GetNodeCountRequest* temp = RemoteNodeRequestType_.getnodecount_;
+    RemoteNodeRequestType_.getnodecount_ = NULL;
     return temp;
   } else {
     return NULL;
   }
 }
-void RemoteNodeRequest::set_allocated_getcolleaguenodecount(::iop::locnet::GetColleagueNodeCountRequest* getcolleaguenodecount) {
+void RemoteNodeRequest::set_allocated_getnodecount(::iop::locnet::GetNodeCountRequest* getnodecount) {
   clear_RemoteNodeRequestType();
-  if (getcolleaguenodecount) {
-    set_has_getcolleaguenodecount();
-    RemoteNodeRequestType_.getcolleaguenodecount_ = getcolleaguenodecount;
+  if (getnodecount) {
+    set_has_getnodecount();
+    RemoteNodeRequestType_.getnodecount_ = getnodecount;
   }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeRequest.getColleagueNodeCount)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeRequest.getNodeCount)
 }
 
 // optional .iop.locnet.GetRandomNodesRequest getRandomNodes = 6;
@@ -9482,7 +9481,7 @@ const int RemoteNodeResponse::kAcceptColleagueFieldNumber;
 const int RemoteNodeResponse::kRenewColleagueFieldNumber;
 const int RemoteNodeResponse::kAcceptNeighbourFieldNumber;
 const int RemoteNodeResponse::kRenewNeighbourFieldNumber;
-const int RemoteNodeResponse::kGetColleagueNodeCountFieldNumber;
+const int RemoteNodeResponse::kGetNodeCountFieldNumber;
 const int RemoteNodeResponse::kGetRandomNodesFieldNumber;
 const int RemoteNodeResponse::kGetClosestNodesFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -9499,7 +9498,7 @@ void RemoteNodeResponse::InitAsDefaultInstance() {
   RemoteNodeResponse_default_oneof_instance_->renewcolleague_ = const_cast< ::iop::locnet::BuildNetworkResponse*>(&::iop::locnet::BuildNetworkResponse::default_instance());
   RemoteNodeResponse_default_oneof_instance_->acceptneighbour_ = const_cast< ::iop::locnet::BuildNetworkResponse*>(&::iop::locnet::BuildNetworkResponse::default_instance());
   RemoteNodeResponse_default_oneof_instance_->renewneighbour_ = const_cast< ::iop::locnet::BuildNetworkResponse*>(&::iop::locnet::BuildNetworkResponse::default_instance());
-  RemoteNodeResponse_default_oneof_instance_->getcolleaguenodecount_ = const_cast< ::iop::locnet::GetColleagueNodeCountResponse*>(&::iop::locnet::GetColleagueNodeCountResponse::default_instance());
+  RemoteNodeResponse_default_oneof_instance_->getnodecount_ = const_cast< ::iop::locnet::GetNodeCountResponse*>(&::iop::locnet::GetNodeCountResponse::default_instance());
   RemoteNodeResponse_default_oneof_instance_->getrandomnodes_ = const_cast< ::iop::locnet::GetRandomNodesResponse*>(&::iop::locnet::GetRandomNodesResponse::default_instance());
   RemoteNodeResponse_default_oneof_instance_->getclosestnodes_ = const_cast< ::iop::locnet::GetClosestNodesByDistanceResponse*>(&::iop::locnet::GetClosestNodesByDistanceResponse::default_instance());
 }
@@ -9575,8 +9574,8 @@ void RemoteNodeResponse::clear_RemoteNodeResponseType() {
       delete RemoteNodeResponseType_.renewneighbour_;
       break;
     }
-    case kGetColleagueNodeCount: {
-      delete RemoteNodeResponseType_.getcolleaguenodecount_;
+    case kGetNodeCount: {
+      delete RemoteNodeResponseType_.getnodecount_;
       break;
     }
     case kGetRandomNodes: {
@@ -9657,16 +9656,16 @@ bool RemoteNodeResponse::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(42)) goto parse_getColleagueNodeCount;
+        if (input->ExpectTag(42)) goto parse_getNodeCount;
         break;
       }
 
-      // optional .iop.locnet.GetColleagueNodeCountResponse getColleagueNodeCount = 5;
+      // optional .iop.locnet.GetNodeCountResponse getNodeCount = 5;
       case 5: {
         if (tag == 42) {
-         parse_getColleagueNodeCount:
+         parse_getNodeCount:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_getcolleaguenodecount()));
+               input, mutable_getnodecount()));
         } else {
           goto handle_unusual;
         }
@@ -9748,10 +9747,10 @@ void RemoteNodeResponse::SerializeWithCachedSizes(
       4, *RemoteNodeResponseType_.renewneighbour_, output);
   }
 
-  // optional .iop.locnet.GetColleagueNodeCountResponse getColleagueNodeCount = 5;
-  if (has_getcolleaguenodecount()) {
+  // optional .iop.locnet.GetNodeCountResponse getNodeCount = 5;
+  if (has_getnodecount()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      5, *RemoteNodeResponseType_.getcolleaguenodecount_, output);
+      5, *RemoteNodeResponseType_.getnodecount_, output);
   }
 
   // optional .iop.locnet.GetRandomNodesResponse getRandomNodes = 6;
@@ -9800,11 +9799,11 @@ void RemoteNodeResponse::SerializeWithCachedSizes(
         4, *RemoteNodeResponseType_.renewneighbour_, false, target);
   }
 
-  // optional .iop.locnet.GetColleagueNodeCountResponse getColleagueNodeCount = 5;
-  if (has_getcolleaguenodecount()) {
+  // optional .iop.locnet.GetNodeCountResponse getNodeCount = 5;
+  if (has_getnodecount()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        5, *RemoteNodeResponseType_.getcolleaguenodecount_, false, target);
+        5, *RemoteNodeResponseType_.getnodecount_, false, target);
   }
 
   // optional .iop.locnet.GetRandomNodesResponse getRandomNodes = 6;
@@ -9858,11 +9857,11 @@ int RemoteNodeResponse::ByteSize() const {
           *RemoteNodeResponseType_.renewneighbour_);
       break;
     }
-    // optional .iop.locnet.GetColleagueNodeCountResponse getColleagueNodeCount = 5;
-    case kGetColleagueNodeCount: {
+    // optional .iop.locnet.GetNodeCountResponse getNodeCount = 5;
+    case kGetNodeCount: {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          *RemoteNodeResponseType_.getcolleaguenodecount_);
+          *RemoteNodeResponseType_.getnodecount_);
       break;
     }
     // optional .iop.locnet.GetRandomNodesResponse getRandomNodes = 6;
@@ -9928,8 +9927,8 @@ void RemoteNodeResponse::MergeFrom(const RemoteNodeResponse& from) {
       mutable_renewneighbour()->::iop::locnet::BuildNetworkResponse::MergeFrom(from.renewneighbour());
       break;
     }
-    case kGetColleagueNodeCount: {
-      mutable_getcolleaguenodecount()->::iop::locnet::GetColleagueNodeCountResponse::MergeFrom(from.getcolleaguenodecount());
+    case kGetNodeCount: {
+      mutable_getnodecount()->::iop::locnet::GetNodeCountResponse::MergeFrom(from.getnodecount());
       break;
     }
     case kGetRandomNodes: {
@@ -10179,52 +10178,52 @@ void RemoteNodeResponse::set_allocated_renewneighbour(::iop::locnet::BuildNetwor
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeResponse.renewNeighbour)
 }
 
-// optional .iop.locnet.GetColleagueNodeCountResponse getColleagueNodeCount = 5;
-bool RemoteNodeResponse::has_getcolleaguenodecount() const {
-  return RemoteNodeResponseType_case() == kGetColleagueNodeCount;
+// optional .iop.locnet.GetNodeCountResponse getNodeCount = 5;
+bool RemoteNodeResponse::has_getnodecount() const {
+  return RemoteNodeResponseType_case() == kGetNodeCount;
 }
-void RemoteNodeResponse::set_has_getcolleaguenodecount() {
-  _oneof_case_[0] = kGetColleagueNodeCount;
+void RemoteNodeResponse::set_has_getnodecount() {
+  _oneof_case_[0] = kGetNodeCount;
 }
-void RemoteNodeResponse::clear_getcolleaguenodecount() {
-  if (has_getcolleaguenodecount()) {
-    delete RemoteNodeResponseType_.getcolleaguenodecount_;
+void RemoteNodeResponse::clear_getnodecount() {
+  if (has_getnodecount()) {
+    delete RemoteNodeResponseType_.getnodecount_;
     clear_has_RemoteNodeResponseType();
   }
 }
- const ::iop::locnet::GetColleagueNodeCountResponse& RemoteNodeResponse::getcolleaguenodecount() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.RemoteNodeResponse.getColleagueNodeCount)
-  return has_getcolleaguenodecount()
-      ? *RemoteNodeResponseType_.getcolleaguenodecount_
-      : ::iop::locnet::GetColleagueNodeCountResponse::default_instance();
+ const ::iop::locnet::GetNodeCountResponse& RemoteNodeResponse::getnodecount() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.RemoteNodeResponse.getNodeCount)
+  return has_getnodecount()
+      ? *RemoteNodeResponseType_.getnodecount_
+      : ::iop::locnet::GetNodeCountResponse::default_instance();
 }
-::iop::locnet::GetColleagueNodeCountResponse* RemoteNodeResponse::mutable_getcolleaguenodecount() {
-  if (!has_getcolleaguenodecount()) {
+::iop::locnet::GetNodeCountResponse* RemoteNodeResponse::mutable_getnodecount() {
+  if (!has_getnodecount()) {
     clear_RemoteNodeResponseType();
-    set_has_getcolleaguenodecount();
-    RemoteNodeResponseType_.getcolleaguenodecount_ = new ::iop::locnet::GetColleagueNodeCountResponse;
+    set_has_getnodecount();
+    RemoteNodeResponseType_.getnodecount_ = new ::iop::locnet::GetNodeCountResponse;
   }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.RemoteNodeResponse.getColleagueNodeCount)
-  return RemoteNodeResponseType_.getcolleaguenodecount_;
+  // @@protoc_insertion_point(field_mutable:iop.locnet.RemoteNodeResponse.getNodeCount)
+  return RemoteNodeResponseType_.getnodecount_;
 }
-::iop::locnet::GetColleagueNodeCountResponse* RemoteNodeResponse::release_getcolleaguenodecount() {
-  // @@protoc_insertion_point(field_release:iop.locnet.RemoteNodeResponse.getColleagueNodeCount)
-  if (has_getcolleaguenodecount()) {
+::iop::locnet::GetNodeCountResponse* RemoteNodeResponse::release_getnodecount() {
+  // @@protoc_insertion_point(field_release:iop.locnet.RemoteNodeResponse.getNodeCount)
+  if (has_getnodecount()) {
     clear_has_RemoteNodeResponseType();
-    ::iop::locnet::GetColleagueNodeCountResponse* temp = RemoteNodeResponseType_.getcolleaguenodecount_;
-    RemoteNodeResponseType_.getcolleaguenodecount_ = NULL;
+    ::iop::locnet::GetNodeCountResponse* temp = RemoteNodeResponseType_.getnodecount_;
+    RemoteNodeResponseType_.getnodecount_ = NULL;
     return temp;
   } else {
     return NULL;
   }
 }
-void RemoteNodeResponse::set_allocated_getcolleaguenodecount(::iop::locnet::GetColleagueNodeCountResponse* getcolleaguenodecount) {
+void RemoteNodeResponse::set_allocated_getnodecount(::iop::locnet::GetNodeCountResponse* getnodecount) {
   clear_RemoteNodeResponseType();
-  if (getcolleaguenodecount) {
-    set_has_getcolleaguenodecount();
-    RemoteNodeResponseType_.getcolleaguenodecount_ = getcolleaguenodecount;
+  if (getnodecount) {
+    set_has_getnodecount();
+    RemoteNodeResponseType_.getnodecount_ = getnodecount;
   }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeResponse.getColleagueNodeCount)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RemoteNodeResponse.getNodeCount)
 }
 
 // optional .iop.locnet.GetRandomNodesResponse getRandomNodes = 6;
@@ -10841,73 +10840,73 @@ void BuildNetworkResponse::clear_accepted() {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-GetColleagueNodeCountRequest::GetColleagueNodeCountRequest()
+GetNodeCountRequest::GetNodeCountRequest()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(constructor:iop.locnet.GetNodeCountRequest)
 }
 
-void GetColleagueNodeCountRequest::InitAsDefaultInstance() {
+void GetNodeCountRequest::InitAsDefaultInstance() {
   _is_default_instance_ = true;
 }
 
-GetColleagueNodeCountRequest::GetColleagueNodeCountRequest(const GetColleagueNodeCountRequest& from)
+GetNodeCountRequest::GetNodeCountRequest(const GetNodeCountRequest& from)
   : ::google::protobuf::Message(),
     _internal_metadata_(NULL) {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(copy_constructor:iop.locnet.GetNodeCountRequest)
 }
 
-void GetColleagueNodeCountRequest::SharedCtor() {
+void GetNodeCountRequest::SharedCtor() {
     _is_default_instance_ = false;
   _cached_size_ = 0;
 }
 
-GetColleagueNodeCountRequest::~GetColleagueNodeCountRequest() {
-  // @@protoc_insertion_point(destructor:iop.locnet.GetColleagueNodeCountRequest)
+GetNodeCountRequest::~GetNodeCountRequest() {
+  // @@protoc_insertion_point(destructor:iop.locnet.GetNodeCountRequest)
   SharedDtor();
 }
 
-void GetColleagueNodeCountRequest::SharedDtor() {
+void GetNodeCountRequest::SharedDtor() {
   if (this != default_instance_) {
   }
 }
 
-void GetColleagueNodeCountRequest::SetCachedSize(int size) const {
+void GetNodeCountRequest::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* GetColleagueNodeCountRequest::descriptor() {
+const ::google::protobuf::Descriptor* GetNodeCountRequest::descriptor() {
   protobuf_AssignDescriptorsOnce();
-  return GetColleagueNodeCountRequest_descriptor_;
+  return GetNodeCountRequest_descriptor_;
 }
 
-const GetColleagueNodeCountRequest& GetColleagueNodeCountRequest::default_instance() {
+const GetNodeCountRequest& GetNodeCountRequest::default_instance() {
   if (default_instance_ == NULL) protobuf_AddDesc_IopLocNet_2eproto();
   return *default_instance_;
 }
 
-GetColleagueNodeCountRequest* GetColleagueNodeCountRequest::default_instance_ = NULL;
+GetNodeCountRequest* GetNodeCountRequest::default_instance_ = NULL;
 
-GetColleagueNodeCountRequest* GetColleagueNodeCountRequest::New(::google::protobuf::Arena* arena) const {
-  GetColleagueNodeCountRequest* n = new GetColleagueNodeCountRequest;
+GetNodeCountRequest* GetNodeCountRequest::New(::google::protobuf::Arena* arena) const {
+  GetNodeCountRequest* n = new GetNodeCountRequest;
   if (arena != NULL) {
     arena->Own(n);
   }
   return n;
 }
 
-void GetColleagueNodeCountRequest::Clear() {
-// @@protoc_insertion_point(message_clear_start:iop.locnet.GetColleagueNodeCountRequest)
+void GetNodeCountRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:iop.locnet.GetNodeCountRequest)
 }
 
-bool GetColleagueNodeCountRequest::MergePartialFromCodedStream(
+bool GetNodeCountRequest::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(parse_start:iop.locnet.GetNodeCountRequest)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
@@ -10921,29 +10920,29 @@ bool GetColleagueNodeCountRequest::MergePartialFromCodedStream(
     DO_(::google::protobuf::internal::WireFormatLite::SkipField(input, tag));
   }
 success:
-  // @@protoc_insertion_point(parse_success:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(parse_success:iop.locnet.GetNodeCountRequest)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(parse_failure:iop.locnet.GetNodeCountRequest)
   return false;
 #undef DO_
 }
 
-void GetColleagueNodeCountRequest::SerializeWithCachedSizes(
+void GetNodeCountRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:iop.locnet.GetColleagueNodeCountRequest)
-  // @@protoc_insertion_point(serialize_end:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(serialize_start:iop.locnet.GetNodeCountRequest)
+  // @@protoc_insertion_point(serialize_end:iop.locnet.GetNodeCountRequest)
 }
 
-::google::protobuf::uint8* GetColleagueNodeCountRequest::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* GetNodeCountRequest::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:iop.locnet.GetColleagueNodeCountRequest)
-  // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(serialize_to_array_start:iop.locnet.GetNodeCountRequest)
+  // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.GetNodeCountRequest)
   return target;
 }
 
-int GetColleagueNodeCountRequest::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:iop.locnet.GetColleagueNodeCountRequest)
+int GetNodeCountRequest::ByteSize() const {
+// @@protoc_insertion_point(message_byte_size_start:iop.locnet.GetNodeCountRequest)
   int total_size = 0;
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -10952,146 +10951,146 @@ int GetColleagueNodeCountRequest::ByteSize() const {
   return total_size;
 }
 
-void GetColleagueNodeCountRequest::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:iop.locnet.GetColleagueNodeCountRequest)
+void GetNodeCountRequest::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:iop.locnet.GetNodeCountRequest)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
-  const GetColleagueNodeCountRequest* source = 
-      ::google::protobuf::internal::DynamicCastToGenerated<const GetColleagueNodeCountRequest>(
+  const GetNodeCountRequest* source = 
+      ::google::protobuf::internal::DynamicCastToGenerated<const GetNodeCountRequest>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:iop.locnet.GetNodeCountRequest)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:iop.locnet.GetColleagueNodeCountRequest)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:iop.locnet.GetNodeCountRequest)
     MergeFrom(*source);
   }
 }
 
-void GetColleagueNodeCountRequest::MergeFrom(const GetColleagueNodeCountRequest& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:iop.locnet.GetColleagueNodeCountRequest)
+void GetNodeCountRequest::MergeFrom(const GetNodeCountRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:iop.locnet.GetNodeCountRequest)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
 }
 
-void GetColleagueNodeCountRequest::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:iop.locnet.GetColleagueNodeCountRequest)
+void GetNodeCountRequest::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:iop.locnet.GetNodeCountRequest)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void GetColleagueNodeCountRequest::CopyFrom(const GetColleagueNodeCountRequest& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:iop.locnet.GetColleagueNodeCountRequest)
+void GetNodeCountRequest::CopyFrom(const GetNodeCountRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:iop.locnet.GetNodeCountRequest)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool GetColleagueNodeCountRequest::IsInitialized() const {
+bool GetNodeCountRequest::IsInitialized() const {
 
   return true;
 }
 
-void GetColleagueNodeCountRequest::Swap(GetColleagueNodeCountRequest* other) {
+void GetNodeCountRequest::Swap(GetNodeCountRequest* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void GetColleagueNodeCountRequest::InternalSwap(GetColleagueNodeCountRequest* other) {
+void GetNodeCountRequest::InternalSwap(GetNodeCountRequest* other) {
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
 
-::google::protobuf::Metadata GetColleagueNodeCountRequest::GetMetadata() const {
+::google::protobuf::Metadata GetNodeCountRequest::GetMetadata() const {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::Metadata metadata;
-  metadata.descriptor = GetColleagueNodeCountRequest_descriptor_;
-  metadata.reflection = GetColleagueNodeCountRequest_reflection_;
+  metadata.descriptor = GetNodeCountRequest_descriptor_;
+  metadata.reflection = GetNodeCountRequest_reflection_;
   return metadata;
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
-// GetColleagueNodeCountRequest
+// GetNodeCountRequest
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
 
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int GetColleagueNodeCountResponse::kNodeCountFieldNumber;
+const int GetNodeCountResponse::kNodeCountFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-GetColleagueNodeCountResponse::GetColleagueNodeCountResponse()
+GetNodeCountResponse::GetNodeCountResponse()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(constructor:iop.locnet.GetNodeCountResponse)
 }
 
-void GetColleagueNodeCountResponse::InitAsDefaultInstance() {
+void GetNodeCountResponse::InitAsDefaultInstance() {
   _is_default_instance_ = true;
 }
 
-GetColleagueNodeCountResponse::GetColleagueNodeCountResponse(const GetColleagueNodeCountResponse& from)
+GetNodeCountResponse::GetNodeCountResponse(const GetNodeCountResponse& from)
   : ::google::protobuf::Message(),
     _internal_metadata_(NULL) {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(copy_constructor:iop.locnet.GetNodeCountResponse)
 }
 
-void GetColleagueNodeCountResponse::SharedCtor() {
+void GetNodeCountResponse::SharedCtor() {
     _is_default_instance_ = false;
   _cached_size_ = 0;
   nodecount_ = 0u;
 }
 
-GetColleagueNodeCountResponse::~GetColleagueNodeCountResponse() {
-  // @@protoc_insertion_point(destructor:iop.locnet.GetColleagueNodeCountResponse)
+GetNodeCountResponse::~GetNodeCountResponse() {
+  // @@protoc_insertion_point(destructor:iop.locnet.GetNodeCountResponse)
   SharedDtor();
 }
 
-void GetColleagueNodeCountResponse::SharedDtor() {
+void GetNodeCountResponse::SharedDtor() {
   if (this != default_instance_) {
   }
 }
 
-void GetColleagueNodeCountResponse::SetCachedSize(int size) const {
+void GetNodeCountResponse::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* GetColleagueNodeCountResponse::descriptor() {
+const ::google::protobuf::Descriptor* GetNodeCountResponse::descriptor() {
   protobuf_AssignDescriptorsOnce();
-  return GetColleagueNodeCountResponse_descriptor_;
+  return GetNodeCountResponse_descriptor_;
 }
 
-const GetColleagueNodeCountResponse& GetColleagueNodeCountResponse::default_instance() {
+const GetNodeCountResponse& GetNodeCountResponse::default_instance() {
   if (default_instance_ == NULL) protobuf_AddDesc_IopLocNet_2eproto();
   return *default_instance_;
 }
 
-GetColleagueNodeCountResponse* GetColleagueNodeCountResponse::default_instance_ = NULL;
+GetNodeCountResponse* GetNodeCountResponse::default_instance_ = NULL;
 
-GetColleagueNodeCountResponse* GetColleagueNodeCountResponse::New(::google::protobuf::Arena* arena) const {
-  GetColleagueNodeCountResponse* n = new GetColleagueNodeCountResponse;
+GetNodeCountResponse* GetNodeCountResponse::New(::google::protobuf::Arena* arena) const {
+  GetNodeCountResponse* n = new GetNodeCountResponse;
   if (arena != NULL) {
     arena->Own(n);
   }
   return n;
 }
 
-void GetColleagueNodeCountResponse::Clear() {
-// @@protoc_insertion_point(message_clear_start:iop.locnet.GetColleagueNodeCountResponse)
+void GetNodeCountResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:iop.locnet.GetNodeCountResponse)
   nodecount_ = 0u;
 }
 
-bool GetColleagueNodeCountResponse::MergePartialFromCodedStream(
+bool GetNodeCountResponse::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(parse_start:iop.locnet.GetNodeCountResponse)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
@@ -11124,39 +11123,39 @@ bool GetColleagueNodeCountResponse::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(parse_success:iop.locnet.GetNodeCountResponse)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(parse_failure:iop.locnet.GetNodeCountResponse)
   return false;
 #undef DO_
 }
 
-void GetColleagueNodeCountResponse::SerializeWithCachedSizes(
+void GetNodeCountResponse::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(serialize_start:iop.locnet.GetNodeCountResponse)
   // optional uint32 nodeCount = 1;
   if (this->nodecount() != 0) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->nodecount(), output);
   }
 
-  // @@protoc_insertion_point(serialize_end:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(serialize_end:iop.locnet.GetNodeCountResponse)
 }
 
-::google::protobuf::uint8* GetColleagueNodeCountResponse::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* GetNodeCountResponse::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(serialize_to_array_start:iop.locnet.GetNodeCountResponse)
   // optional uint32 nodeCount = 1;
   if (this->nodecount() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->nodecount(), target);
   }
 
-  // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.GetNodeCountResponse)
   return target;
 }
 
-int GetColleagueNodeCountResponse::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:iop.locnet.GetColleagueNodeCountResponse)
+int GetNodeCountResponse::ByteSize() const {
+// @@protoc_insertion_point(message_byte_size_start:iop.locnet.GetNodeCountResponse)
   int total_size = 0;
 
   // optional uint32 nodeCount = 1;
@@ -11172,25 +11171,25 @@ int GetColleagueNodeCountResponse::ByteSize() const {
   return total_size;
 }
 
-void GetColleagueNodeCountResponse::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:iop.locnet.GetColleagueNodeCountResponse)
+void GetNodeCountResponse::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:iop.locnet.GetNodeCountResponse)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
-  const GetColleagueNodeCountResponse* source = 
-      ::google::protobuf::internal::DynamicCastToGenerated<const GetColleagueNodeCountResponse>(
+  const GetNodeCountResponse* source = 
+      ::google::protobuf::internal::DynamicCastToGenerated<const GetNodeCountResponse>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:iop.locnet.GetNodeCountResponse)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:iop.locnet.GetColleagueNodeCountResponse)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:iop.locnet.GetNodeCountResponse)
     MergeFrom(*source);
   }
 }
 
-void GetColleagueNodeCountResponse::MergeFrom(const GetColleagueNodeCountResponse& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:iop.locnet.GetColleagueNodeCountResponse)
+void GetNodeCountResponse::MergeFrom(const GetNodeCountResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:iop.locnet.GetNodeCountResponse)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -11199,58 +11198,58 @@ void GetColleagueNodeCountResponse::MergeFrom(const GetColleagueNodeCountRespons
   }
 }
 
-void GetColleagueNodeCountResponse::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:iop.locnet.GetColleagueNodeCountResponse)
+void GetNodeCountResponse::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:iop.locnet.GetNodeCountResponse)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void GetColleagueNodeCountResponse::CopyFrom(const GetColleagueNodeCountResponse& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:iop.locnet.GetColleagueNodeCountResponse)
+void GetNodeCountResponse::CopyFrom(const GetNodeCountResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:iop.locnet.GetNodeCountResponse)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool GetColleagueNodeCountResponse::IsInitialized() const {
+bool GetNodeCountResponse::IsInitialized() const {
 
   return true;
 }
 
-void GetColleagueNodeCountResponse::Swap(GetColleagueNodeCountResponse* other) {
+void GetNodeCountResponse::Swap(GetNodeCountResponse* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void GetColleagueNodeCountResponse::InternalSwap(GetColleagueNodeCountResponse* other) {
+void GetNodeCountResponse::InternalSwap(GetNodeCountResponse* other) {
   std::swap(nodecount_, other->nodecount_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
 
-::google::protobuf::Metadata GetColleagueNodeCountResponse::GetMetadata() const {
+::google::protobuf::Metadata GetNodeCountResponse::GetMetadata() const {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::Metadata metadata;
-  metadata.descriptor = GetColleagueNodeCountResponse_descriptor_;
-  metadata.reflection = GetColleagueNodeCountResponse_reflection_;
+  metadata.descriptor = GetNodeCountResponse_descriptor_;
+  metadata.reflection = GetNodeCountResponse_reflection_;
   return metadata;
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
-// GetColleagueNodeCountResponse
+// GetNodeCountResponse
 
 // optional uint32 nodeCount = 1;
-void GetColleagueNodeCountResponse::clear_nodecount() {
+void GetNodeCountResponse::clear_nodecount() {
   nodecount_ = 0u;
 }
- ::google::protobuf::uint32 GetColleagueNodeCountResponse::nodecount() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.GetColleagueNodeCountResponse.nodeCount)
+ ::google::protobuf::uint32 GetNodeCountResponse::nodecount() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.GetNodeCountResponse.nodeCount)
   return nodecount_;
 }
- void GetColleagueNodeCountResponse::set_nodecount(::google::protobuf::uint32 value) {
+ void GetNodeCountResponse::set_nodecount(::google::protobuf::uint32 value) {
   
   nodecount_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.GetColleagueNodeCountResponse.nodeCount)
+  // @@protoc_insertion_point(field_set:iop.locnet.GetNodeCountResponse.nodeCount)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

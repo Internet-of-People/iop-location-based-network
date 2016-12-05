@@ -158,8 +158,8 @@ std::vector<NodeInfo> InMemorySpatialDatabase::GetNodes(NodeRelationType relatio
 }
 
 
-size_t InMemorySpatialDatabase::GetColleagueNodeCount() const
-    { return GetNodes(NodeRelationType::Colleague).size(); }
+size_t InMemorySpatialDatabase::GetNodeCount() const
+    { return _nodes.size(); }
 
 
 vector<NodeInfo> InMemorySpatialDatabase::GetNeighbourNodesByDistance() const
