@@ -1,9 +1,10 @@
 #include <algorithm>
 #include <chrono>
+
+#include <easylogging++.h>
 #include <sqlite3.h>
 #include <spatialite.h>
 
-#include "easylogging++.h"
 #include "spatialdb.hpp"
 
 using namespace std;

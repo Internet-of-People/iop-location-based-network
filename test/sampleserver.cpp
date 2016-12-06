@@ -1,8 +1,8 @@
 #include <iostream>
 #include <csignal>
 
-#include "easylogging++.h"
-#include "locnet.hpp"
+#include <easylogging++.h>
+
 #include "network.hpp"
 #include "testimpls.hpp"
 #include "testdata.hpp"
@@ -80,8 +80,8 @@ int main()
         Node node( TestData::NodeBudapest, geodb, connectionFactory );
         IncomingRequestDispatcher dispatcher(node);
         
-        const LocNet::NetworkInterface &BudapestNodeContact(
-            LocNet::TestData::NodeBudapest.profile().contact() );
+        const NetworkInterface &BudapestNodeContact(
+            TestData::NodeBudapest.profile().contact() );
         TcpNetwork network(BudapestNodeContact);
         
         while (! ShutdownRequested)

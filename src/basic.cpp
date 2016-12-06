@@ -56,6 +56,12 @@ bool NodeProfile::operator==(const NodeProfile& other) const
 }
 
 
+std::ostream& operator<<(std::ostream& out, const NodeProfile &value)
+{
+    return out << value.id() << " (" << value.contact() << ")";
+}
+
+
 
 
 GpsLocation::GpsLocation(const GpsLocation &other) :
@@ -83,6 +89,12 @@ bool GpsLocation::operator==(const GpsLocation& other) const
 }
 
 
+std::ostream& operator<<(std::ostream& out, const GpsLocation &value)
+{
+    return out << value.latitude() << "," << value.longitude();
+}
+
+
 
 
 NodeInfo::NodeInfo(const NodeInfo& other) :
@@ -102,6 +114,13 @@ bool NodeInfo::operator==(const NodeInfo& other) const
     return _profile  == other._profile &&
            _location == other._location;
 }
+
+
+std::ostream& operator<<(std::ostream& out, const NodeInfo &value)
+{
+    return out << "Node " << value.profile() << "; Location " << value.location();
+}
+
 
 
 } // namespace LocNet

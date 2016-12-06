@@ -1,8 +1,9 @@
 #include <thread>
 
-#include "asio.hpp"
-#include "catch.hpp"
-#include "easylogging++.h"
+#include <asio.hpp>
+#include <catch.hpp>
+#include <easylogging++.h>
+
 #include "network.hpp"
 #include "testimpls.hpp"
 #include "testdata.hpp"

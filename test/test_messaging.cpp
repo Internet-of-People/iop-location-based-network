@@ -1,5 +1,6 @@
-#include "catch.hpp"
-#include "easylogging++.h"
+#include <catch.hpp>
+#include <easylogging++.h>
+
 #include "messaging.hpp"
 #include "testdata.hpp"
 #include "testimpls.hpp"

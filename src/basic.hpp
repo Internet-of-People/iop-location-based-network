@@ -45,7 +45,6 @@ public:
     bool operator==(const NetworkInterface &other) const;
 };
 
-
 std::ostream& operator<<(std::ostream& out, const NetworkInterface &value);
 
 
@@ -66,6 +65,8 @@ public:
     
     bool operator==(const NodeProfile &other) const;
 };
+
+std::ostream& operator<<(std::ostream& out, const NodeProfile &value);
 
 
 typedef NodeProfile ServiceProfile;
@@ -98,6 +99,8 @@ public:
     bool operator==(const GpsLocation &other) const;
 };
 
+std::ostream& operator<<(std::ostream& out, const GpsLocation &value);
+
 
 
 enum class NodeContactRoleType : uint8_t
@@ -124,6 +127,8 @@ public:
     
     bool operator==(const NodeInfo &other) const;
 };
+
+std::ostream& operator<<(std::ostream& out, const NodeInfo &value);
 
 
 

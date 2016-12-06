@@ -5,7 +5,8 @@
 #include <limits>
 #include <unordered_set>
 
-#include "easylogging++.h"
+#include <easylogging++.h>
+
 #include "locnet.hpp"
 
 using namespace std;

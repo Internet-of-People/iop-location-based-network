@@ -1,5 +1,6 @@
 #include <functional>
-#include "easylogging++.h"
+
+#include <easylogging++.h>
 
 #include "network.hpp"
 
