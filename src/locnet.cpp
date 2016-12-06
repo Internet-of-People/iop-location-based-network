@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 #include <deque>
 #include <limits>
 #include <unordered_set>
@@ -15,11 +16,14 @@ namespace LocNet
 {
 
 
-static const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT        = 100;
+const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT         = 100;
 
-static const size_t   INIT_WORLD_RANDOM_NODE_COUNT        = 100;
-static const float    INIT_WORLD_NODE_FILL_TARGET_RATE    = 0.75;
-static const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT = 10;
+const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 100;
+const float    INIT_WORLD_NODE_FILL_TARGET_RATE     = 0.75;
+const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT  = 10;
+
+const chrono::duration<uint32_t> MAINTENANCE_PERIOD = chrono::hours(24);
+const size_t   MAINTENANCE_ATTEMPT_COUNT            = 100;
 
 
 
@@ -448,7 +452,8 @@ bool Node::InitializeNeighbourhood()
                 { continue; }
                 
             // Try to add node as neighbour, reusing connection
-            SafeStoreNode( NodeDbEntry(neighbourCandidate, NodeRelationType::Neighbour, NodeContactRoleType::Initiator), candidateConnection );
+            SafeStoreNode( NodeDbEntry(neighbourCandidate, NodeRelationType::Neighbour, NodeContactRoleType::Initiator),
+                           candidateConnection );
             
             // Get its neighbours closest to us
             vector<NodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodesByDistance(
@@ -513,8 +518,44 @@ void Node::RenewNodeRelations()
 
 void Node::DiscoverUnknownAreas()
 {
-    // TODO implement this
     // TODO we probably have to run this in a separate thread
+    for (size_t i = 0; i < MAINTENANCE_ATTEMPT_COUNT; ++i)
+    {
+        // Generate a random GPS location
+        uniform_real_distribution<float> latitudeRange(-90.0, 90.0);
+        uniform_real_distribution<float> longitudeRange(-180.0, 180.0);
+        GpsLocation randomLocation( latitudeRange(_randomDevice), longitudeRange(_randomDevice) );
+        
+        // Get node closest to this position that is already present in our database
+        vector<NodeInfo> myClosestNodes = _spatialDb->GetClosestNodesByDistance(
+            randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Excluded );
+        if ( myClosestNodes.empty() )
+            { continue; }
+        const auto &myClosestNode = myClosestNodes[0];
+        
+        // Connect to closest node
+        shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.profile() );
+        if (connection == nullptr)
+        {
+            LOG(INFO) << "Failed to contact node " << myClosestNode.profile().id();
+            continue;
+        }
+        
+        // Ask closest node about its nodes closest to the random position
+        vector<NodeInfo> gotClosestNodes = connection->GetClosestNodesByDistance(
+            randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Included );
+        if ( gotClosestNodes.empty() )
+            { continue; }
+        const auto &gotClosestNode = gotClosestNodes[0];
+        
+        // Try to add node to our database
+        bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( gotClosestNode,
+            NodeRelationType::Colleague, NodeContactRoleType::Initiator), connection );
+        if (! storedAsNeighbour) {
+            SafeStoreNode( NodeDbEntry( gotClosestNode,
+                NodeRelationType::Colleague, NodeContactRoleType::Initiator), connection );
+        }
+    }
 }
 
 
