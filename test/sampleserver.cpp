@@ -71,6 +71,9 @@ int main()
 //         LOG(DEBUG) << (geodb->GetNodeCount() == nodeCount + 1);
 //         geodb->Remove( testEntry.profile().id() );
 //         LOG(DEBUG) << (geodb->GetNodeCount() == nodeCount);
+//         vector<NodeDbEntry> entries = geodb->GetNodes(NodeContactRoleType::Initiator);
+//         for (const NodeDbEntry &entry : entries)
+//             { LOG(DEBUG) << "  Entry id: " << entry.profile().id(); }
         
         shared_ptr<INodeConnectionFactory> connectionFactory(
             new DummyNodeConnectionFactory() );

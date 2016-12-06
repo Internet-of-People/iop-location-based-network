@@ -32,6 +32,7 @@ public:
     void Remove(const NodeId &nodeId) override;
     
     void ExpireOldNodes() override;
+    std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
     std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;

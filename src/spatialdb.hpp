@@ -55,6 +55,7 @@ public:
     virtual void Remove(const NodeId &nodeId) = 0;
     
     virtual void ExpireOldNodes() = 0;
+    virtual std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) = 0;
 
     virtual size_t GetNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
@@ -87,6 +88,7 @@ public:
     void Remove(const NodeId &nodeId) override;
     
     void ExpireOldNodes() override;
+    std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
     std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;

@@ -162,6 +162,20 @@ size_t InMemorySpatialDatabase::GetNodeCount() const
     { return _nodes.size(); }
 
 
+
+vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeContactRoleType roleType)
+{
+    vector<NodeDbEntry> result;
+    for (auto const &entry : _nodes)
+    {
+        if ( entry.second.roleType() == roleType )
+            { result.push_back(entry.second); }
+    }
+    return result;
+}
+
+
+
 vector<NodeInfo> InMemorySpatialDatabase::GetNeighbourNodesByDistance() const
 {
     vector<NodeInfo> neighbours( GetNodes(NodeRelationType::Neighbour) );

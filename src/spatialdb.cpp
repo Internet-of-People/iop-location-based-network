@@ -377,7 +377,53 @@ void SpatiaLiteDatabase::ExpireOldNodes()
 
 
 
-vector<NodeInfo> ListNodesByDistance(sqlite3 *dbHandle, const GpsLocation &location,
+vector<NodeDbEntry> SpatiaLiteDatabase::GetNodes(NodeContactRoleType roleType)
+{
+    sqlite3_stmt *statement;
+    string queryStr =
+        "SELECT id, addressType, ipAddress, port, X(location), Y(location), "
+            "relationType, roleType, expiresAt "
+        "FROM nodes "
+        "WHERE roleType = " + to_string( static_cast<int>(roleType) );
+    
+    //LOG(DEBUG) << "Running query: " << queryStr;
+    
+    int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
+    if (prepResult != SQLITE_OK)
+    {
+        LOG(ERROR) << "Failed to prepare statement: " << queryStr;
+        throw runtime_error("Failed to prepare statement to get nodes with roletype");
+    }
+
+    scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
+    
+    vector<NodeDbEntry> result;
+    while ( sqlite3_step(statement) == SQLITE_ROW )
+    {
+        const uint8_t *idPtr        = sqlite3_column_text  (statement, 0);
+        int            addrType     = sqlite3_column_int   (statement, 1);
+        const uint8_t *ipAddrPtr    = sqlite3_column_text  (statement, 2);
+        int            port         = sqlite3_column_int   (statement, 3);
+        double         longitude    = sqlite3_column_double(statement, 4);
+        double         latitude     = sqlite3_column_double(statement, 5);
+        int            relationType = sqlite3_column_int   (statement, 6);
+        int            roleType     = sqlite3_column_int   (statement, 7);
+        //int            expiresAt    = sqlite3_column_int   (statement, 8);
+        
+        NetworkInterface contact( static_cast<AddressType>(addrType),
+            reinterpret_cast<const char*>(ipAddrPtr), static_cast<TcpPort>(port) );
+        NodeInfo info( NodeProfile( reinterpret_cast<const char*>(idPtr), contact ),
+                       GpsLocation(latitude, longitude) );
+        result.emplace_back( info, static_cast<NodeRelationType>(relationType),
+            static_cast<NodeContactRoleType>(roleType) );
+    }
+    
+    return result;
+}
+
+
+
+vector<NodeInfo> ListNodes(sqlite3 *dbHandle, const GpsLocation &location,
     const string &whereCondition = "", const string orderBy = "", const string &limit = "")
 {
     sqlite3_stmt *statement;
@@ -423,7 +469,7 @@ vector<NodeInfo> ListNodesByDistance(sqlite3 *dbHandle, const GpsLocation &locat
 
 size_t SpatiaLiteDatabase::GetNodeCount() const
 {
-    vector<NodeInfo> nodes( ListNodesByDistance(_dbHandle, _myLocation) );
+    vector<NodeInfo> nodes( ListNodes(_dbHandle, _myLocation) );
     return nodes.size();
 }
 
@@ -431,7 +477,7 @@ size_t SpatiaLiteDatabase::GetNodeCount() const
 
 vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 {
-    return ListNodesByDistance(_dbHandle, _myLocation,
+    return ListNodes(_dbHandle, _myLocation,
         "WHERE relationType = " + to_string( static_cast<int>(NodeRelationType::Neighbour) ),
         "ORDER BY dist_km" );
 }
@@ -441,7 +487,7 @@ vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 //vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
 vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t, Neighbours) const
 {
-    return ListNodesByDistance(_dbHandle, _myLocation, "",
+    return ListNodes(_dbHandle, _myLocation, "",
         "ORDER BY RANDOM()" );
 }
 
@@ -457,7 +503,7 @@ vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(
             to_string( static_cast<int>(NodeRelationType::Neighbour) );
     }
     
-    return ListNodesByDistance(_dbHandle, location,
+    return ListNodes(_dbHandle, location,
         whereCondition,
         "ORDER BY dist_km "
         "LIMIT " + to_string(maxNodeCount) );
