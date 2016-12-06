@@ -1,6 +1,8 @@
 #ifndef __LOCNET_CONFIG_H__
 #define __LOCNET_CONFIG_H__
 
+#include <memory>
+
 #include "basic.hpp"
 
 
@@ -9,29 +11,35 @@ namespace LocNet
 
 
 
-class IConfig
+class Config
 {
+    static std::unique_ptr<Config> _instance;
+    
+protected:
+    
+    virtual bool Initialize(int argc, const char *argv[]) = 0;
+    
+public:
+    
+    static bool Init(int argc, const char *argv[]);
+    static const Config& Instance();
+    
     virtual NodeInfo myNodeInfo() const = 0;
 };
 
 
 
-class Config : public IConfig
+class EzParserConfig : public Config
 {
-    static Config _instance;
-    
     NodeId          _id;
     Address         _ipAddr;
     TcpPort         _port;
     GpsCoordinate   _latitude;
     GpsCoordinate   _longitude;
     
-    Config();
-    
 public:
 
-    static bool Initialize(int argc, const char *argv[]);
-    static const Config& Instance();
+    bool Initialize(int argc, const char *argv[]) override;
     
     NodeInfo myNodeInfo() const override;
 };

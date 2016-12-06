@@ -8,6 +8,8 @@ Header-only dependencies already included in directory extlib:
   [download here](https://github.com/easylogging/easyloggingpp)
 - asio 1.11.0, used for networking,
   [download here](http://think-async.com/Asio/Download)
+- ezOptionParser 0.2.2, used for handling options from command line and config files,
+  [download here](http://ezoptionparser.sourceforge.net/)
 - catch 1.5.0, used only for testing,
   [download here](https://github.com/philsquared/Catch)
 

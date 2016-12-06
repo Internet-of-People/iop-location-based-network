@@ -11,10 +11,25 @@ namespace LocNet
 {
 
 
-Config Config::_instance;
+unique_ptr<Config> Config::_instance(nullptr);
 
 const Config& Config::Instance()
-    { return _instance; }
+{
+    if (! _instance)
+    {
+        LOG(ERROR) << "Implementation error: config was not properly initialized. Call Config::Init()!";
+        throw runtime_error("Config is uninitialized");
+    }
+    return *_instance;
+}
+
+
+bool Config::Init(int argc, const char* argv[])
+{
+    _instance.reset( new EzParserConfig() );
+    return _instance->Initialize(argc, argv);
+}
+
 
 
 
@@ -29,11 +44,7 @@ static const char *OPTNAME_LONGITUDE   = "--longitude";
 
 
 
-Config::Config() {}
-
-
-
-bool Config::Initialize(int argc, const char *argv[])
+bool EzParserConfig::Initialize(int argc, const char *argv[])
 {
     ez::ezOptionParser _optParser;
     
@@ -65,6 +76,12 @@ bool Config::Initialize(int argc, const char *argv[])
     
     _optParser.parse(argc, argv);
     
+    string filename;
+    _optParser.get(OPTNAME_CONFIGFILE)->getString(filename);
+    if ( _optParser.importFile( filename.c_str() ) )
+         { cout << "Processed config file " << filename << endl; }
+    else { cout << "No config file found with name " << filename << ", using command line values only" << endl; }
+    
     vector<string> badOptions;
     bool requiredPassed = _optParser.gotRequired(badOptions);
     if(! requiredPassed)
@@ -88,19 +105,14 @@ bool Config::Initialize(int argc, const char *argv[])
         return false;
     }
     
-    string filename;
-    _optParser.get(OPTNAME_CONFIGFILE)->getString(filename);
-    if (! _optParser.importFile( filename.c_str() ) )
-        { LOG(INFO) << "No config file found with name " << filename; }
-    
-    _optParser.get(OPTNAME_NODEID)->getString(_instance._id);
-    _optParser.get(OPTNAME_HOSTNAME)->getString(_instance._ipAddr);
-    _optParser.get(OPTNAME_LATITUDE)->getFloat(_instance._latitude);
-    _optParser.get(OPTNAME_LONGITUDE)->getFloat(_instance._longitude);
+    _optParser.get(OPTNAME_NODEID)->getString(_id);
+    _optParser.get(OPTNAME_HOSTNAME)->getString(_ipAddr);
+    _optParser.get(OPTNAME_LATITUDE)->getFloat(_latitude);
+    _optParser.get(OPTNAME_LONGITUDE)->getFloat(_longitude);
     
     unsigned long port;
     _optParser.get(OPTNAME_PORT)->getULong(port);
-    _instance._port = port;
+    _port = port;
     
 //     cout << "----- Pretty print" << endl;
 //     string pretty;
@@ -113,7 +125,7 @@ bool Config::Initialize(int argc, const char *argv[])
 
 
 
-NodeInfo Config::myNodeInfo() const
+NodeInfo EzParserConfig::myNodeInfo() const
 {
     // TODO differentiate between ipv4 and v6 addresses
     return NodeInfo(

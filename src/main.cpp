@@ -25,7 +25,7 @@ int main(int argc, const char *argv[])
 {
     try
     {
-        bool configCreated = Config::Initialize(argc, argv);
+        bool configCreated = Config::Init(argc, argv);
         if (! configCreated)
             { return 1; }
             
