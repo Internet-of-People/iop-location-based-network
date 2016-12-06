@@ -526,6 +526,11 @@ void Node::DiscoverUnknownAreas()
         uniform_real_distribution<float> longitudeRange(-180.0, 180.0);
         GpsLocation randomLocation( latitudeRange(_randomDevice), longitudeRange(_randomDevice) );
         
+        // TODO consider: the resulted node might be very far away from the generated random node,
+        //      so prefiltering might cause bad results, but it also spares network costs. Test and decide!
+        if ( BubbleOverlaps(randomLocation) )
+            { continue; }
+        
         // Get node closest to this position that is already present in our database
         vector<NodeInfo> myClosestNodes = _spatialDb->GetClosestNodesByDistance(
             randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Excluded );

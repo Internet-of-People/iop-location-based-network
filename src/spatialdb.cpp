@@ -14,11 +14,11 @@ namespace LocNet
 {
 
 
-const chrono::duration<uint32_t> ExpirationPeriod = chrono::hours(24);
+const chrono::duration<uint32_t> EXPIRATION_PERIOD = chrono::hours(24);
 
-//const string DatabaseFile = ":memory:"; // NOTE in-memory storage without a db file
-//const string DatabaseFile = "file:locnet.sqlite"; // NOTE this may be any file URL
-const string DatabaseFilePath = "locnet.sqlite";
+//const string DBFILE_PATH = ":memory:"; // NOTE in-memory storage without a db file
+//const string DBFILE_PATH = "file:locnet.sqlite"; // NOTE this may be any file URL
+const string DBFILE_PATH = "locnet.sqlite";
 
 const vector<string> DatabaseInitCommands = {
     "SELECT InitSpatialMetadata();",
@@ -103,16 +103,16 @@ SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
 {
     _spatialiteConnection = spatialite_alloc_connection();
     
-    bool creatingDb = ! FileExist(DatabaseFilePath);
+    bool creatingDb = ! FileExist(DBFILE_PATH);
     
     // NOTE SQLITE_OPEN_FULLMUTEX performs operations sequentially using a mutex.
     //      We might have to change to a more performant but more complicated model here.
-    int openResult = sqlite3_open_v2 ( DatabaseFilePath.c_str(), &_dbHandle,
+    int openResult = sqlite3_open_v2 ( DBFILE_PATH.c_str(), &_dbHandle,
          SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_URI, nullptr);
     scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
     if (openResult != SQLITE_OK)
     {
-        LOG(ERROR) << "Failed to open existing SpatiaLite database file " << DatabaseFilePath;
+        LOG(ERROR) << "Failed to open existing SpatiaLite database file " << DBFILE_PATH;
         throw runtime_error("Failed to open SpatiaLite database");
     }
     
@@ -124,7 +124,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
     
     if (creatingDb)
     {
-        LOG(INFO) << "No SpatiaLite database found, generating: " << DatabaseFilePath;
+        LOG(INFO) << "No SpatiaLite database found, generating: " << DBFILE_PATH;
         for (const string &command : DatabaseInitCommands)
         {
             ExecuteSql(_dbHandle, command);
@@ -219,7 +219,7 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node)
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
     
-    time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + ExpirationPeriod );
+    time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + EXPIRATION_PERIOD );
     const NetworkInterface &contact = node.profile().contact();
     if ( sqlite3_bind_text( statement, 1, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
          sqlite3_bind_int(  statement, 2, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||
@@ -310,7 +310,7 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node)
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
     
-    time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + ExpirationPeriod );
+    time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + EXPIRATION_PERIOD );
     const NetworkInterface &contact = node.profile().contact();
     if ( sqlite3_bind_int(  statement, 1, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||
          sqlite3_bind_text( statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
