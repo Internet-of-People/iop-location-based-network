@@ -45,21 +45,21 @@ unique_ptr<std::thread> StartServerThread()
             
             while (! ShutdownRequested)
             {
-                // TODO CTRL-C should break this loop immediately instead of after finishing next request
                 ProtoBufSyncTcpSession session(network);
-                
-                LOG(DEBUG) << "Reading request";
-                shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
-                
-                LOG(DEBUG) << "Serving request";
-                unique_ptr<iop::locnet::Response> response( dispatcher.Dispatch( requestMsg->body().request() ) );
-                
-                LOG(DEBUG) << "Sending response";
-                iop::locnet::MessageWithHeader responseMsg;
-                responseMsg.mutable_body()->set_allocated_response( response.release() );
-                session.SendMessage(responseMsg);
-                
-                //session.Close();
+             
+                while (! ShutdownRequested)
+                {
+                    LOG(DEBUG) << "Reading request";
+                    shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
+                    
+                    LOG(DEBUG) << "Serving request";
+                    unique_ptr<iop::locnet::Response> response( dispatcher.Dispatch( requestMsg->body().request() ) );
+                    
+                    LOG(DEBUG) << "Sending response";
+                    iop::locnet::MessageWithHeader responseMsg;
+                    responseMsg.mutable_body()->set_allocated_response( response.release() );
+                    session.SendMessage(responseMsg);
+                }
             }
         }
         catch (exception &e) {

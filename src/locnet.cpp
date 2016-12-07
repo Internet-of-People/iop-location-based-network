@@ -31,10 +31,10 @@ const size_t   MAINTENANCE_ATTEMPT_COUNT            = 100;
 
 const vector<NodeInfo> Node::_seedNodes {
     // TODO put some real seed nodes in here
-    NodeInfo( NodeProfile( NodeId("FirstSeedNodeId"),
-        NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6371) ), GpsLocation(1.0, 2.0) ),
-    NodeInfo( NodeProfile( NodeId("SecondSeedNodeId"),
-        NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6372) ), GpsLocation(3.0, 4.0) ),
+    NodeInfo( NodeProfile( NodeId("BudapestSeedNodeId"),
+        NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6371) ), GpsLocation(48.2081743, 16.3738189) ),
+//     NodeInfo( NodeProfile( NodeId("WienSeedNodeId"),
+//         NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6372) ), GpsLocation(47.497912, 19.040235) ),
 };
 
 random_device Node::_randomDevice;
@@ -57,7 +57,14 @@ Node::Node( const NodeInfo &nodeInfo,
     {
         bool discoverySucceeded = InitializeWorld() && InitializeNeighbourhood();
         if (! discoverySucceeded)
-            { throw runtime_error("Network discovery failed"); }
+        {
+            // This still might be normal if we're the very first seed node of the whole network
+            auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
+                [this] (const NodeInfo& seedProfile) { return _myNodeInfo.profile() == seedProfile.profile(); } );
+            if ( seedIt == _seedNodes.end() )
+                 { throw runtime_error("Network discovery failed"); }
+            else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
+        }
     }
 }
 
@@ -307,7 +314,9 @@ bool Node::InitializeWorld()
                 { continue; }
             
             // And query both a target World Map size and an initial list of random nodes to start with
+            LOG(DEBUG) << "Getting node count from initial seed";
             nodeCountAtSeed = seedNodeConnection->GetNodeCount();
+            LOG(DEBUG) << "Node count on seed is " << nodeCountAtSeed;
             randomColleagueCandidates = seedNodeConnection->GetRandomNodes(
                 min(INIT_WORLD_RANDOM_NODE_COUNT, nodeCountAtSeed), Neighbours::Excluded );
             
@@ -333,20 +342,15 @@ bool Node::InitializeWorld()
     if ( nodeCountAtSeed == 0 && randomColleagueCandidates.empty() &&
          triedSeedNodes.size() == _seedNodes.size() )
     {
-        // This still might be normal if we're the very first seed node of the whole network
-        auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
-            [this] (const NodeInfo& seedProfile) { return _myNodeInfo.profile() == seedProfile.profile(); } );
-        if ( seedIt == _seedNodes.end() )
-        {
-            // TODO reconsider error handling here, should we completely give up and maybe exit()?
-            LOG(ERROR) << "All seed nodes have been tried and failed, giving up";
-            return false;
-        }
+        // TODO reconsider error handling here, should we completely give up and maybe exit()?
+        LOG(ERROR) << "All seed nodes have been tried and failed";
+        return false;
     }
     
     // We received a reasonable random node list from a seed, try to fill in our world map
     size_t targetNodeCound = nodeCountAtSeed <= NEIGHBOURHOOD_MAX_NODE_COUNT ?
         nodeCountAtSeed : INIT_WORLD_NODE_FILL_TARGET_RATE * nodeCountAtSeed;
+    LOG(DEBUG) << "Targeted node count is " << targetNodeCound;
     for (size_t addedColleagueCount = 0; addedColleagueCount < targetNodeCound; )
     {
         if ( ! randomColleagueCandidates.empty() )
@@ -391,6 +395,7 @@ bool Node::InitializeWorld()
         }
     }
     
+    LOG(DEBUG) << "World discovery finished successfully";
     return true;
 }
 

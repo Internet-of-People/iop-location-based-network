@@ -23,6 +23,9 @@ TcpNetwork::TcpNetwork(const NetworkInterface &listenOn, size_t threadPoolSize) 
     _threadPool(), _ioService(), _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
     _acceptor( _ioService, tcp::endpoint( make_address( listenOn.address() ), listenOn.port() ) )
 {
+    // Switch the acceptor to listening state
+    _acceptor.listen();
+    
     // Start the specified number of job processor threads
     for (size_t idx = 0; idx < threadPoolSize; ++idx)
     {
@@ -163,7 +166,6 @@ shared_ptr<INodeMethods> SyncTcpNodeConnectionFactory::ConnectTo(const NodeProfi
     shared_ptr<IProtoBufNetworkSession> session( new ProtoBufSyncTcpSession( node.contact() ) );
     shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
     shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher) );
-    LOG(DEBUG) << "Connection established to " << node;
     return result;
 }
 
