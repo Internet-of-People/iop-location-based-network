@@ -59,6 +59,7 @@ public:
     
     ProtoBufSyncTcpSession(TcpNetwork &network);
     ProtoBufSyncTcpSession(const NetworkInterface &contact);
+    ~ProtoBufSyncTcpSession();
     
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
     void SendMessage(iop::locnet::MessageWithHeader &message) override;
@@ -79,6 +80,16 @@ public:
     virtual ~ProtoBufRequestNetworkDispatcher() {}
     
     std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
+};
+
+
+
+// TODO what will be the connection to asio::io_service? Is it needed at all on sync streams?
+class SyncTcpNodeConnectionFactory : public INodeConnectionFactory
+{
+public:
+    
+    std::shared_ptr<INodeMethods> ConnectTo(const NodeProfile &node) override;
 };
 
 

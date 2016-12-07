@@ -32,15 +32,24 @@ bool Config::Init(int argc, const char* argv[])
 
 
 
+static const string DESC_OPTIONAL_DEFAULT = "Optional, default value: ";
 
-static const char *DEFAULT_CONFIG_FILE = "iop-locnet.cfg";
-static const char *OPTNAME_HELP        = "--help";
-static const char *OPTNAME_CONFIGFILE  = "--configfile";
-static const char *OPTNAME_NODEID      = "--nodeid";
-static const char *OPTNAME_HOSTNAME    = "--hostname";
-static const char *OPTNAME_PORT        = "--port";
-static const char *OPTNAME_LATITUDE    = "--latitude";
-static const char *OPTNAME_LONGITUDE   = "--longitude";
+static const char *DEFAULT_CONFIG_FILE  = "iop-locnet.cfg";
+static const char *DEFAULT_PORT         = "6371";
+static const char *DEFAULT_DBPATH       = "locnet.sqlite";
+//const string DBFILE_PATH = ":memory:"; // NOTE in-memory storage without a db file
+//const string DBFILE_PATH = "file:locnet.sqlite"; // NOTE this may be any file URL
+
+
+static const char *OPTNAME_HELP         = "--help";
+static const char *OPTNAME_CONFIGFILE   = "--configfile";
+static const char *OPTNAME_NODEID       = "--nodeid";
+static const char *OPTNAME_IPADDRESS    = "--ipaddress";
+static const char *OPTNAME_PORT         = "--port";
+static const char *OPTNAME_LATITUDE     = "--latitude";
+static const char *OPTNAME_LONGITUDE    = "--longitude";
+
+static const char *OPTNAME_DBPATH       = "--dbpath";
 
 
 
@@ -62,16 +71,22 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
         "-h", OPTNAME_HELP // Flag names
     );
     
-    _optParser.add(DEFAULT_CONFIG_FILE, false, 1, 0,
-        "Config filename to also load options from", "-c", OPTNAME_CONFIGFILE);
-    _optParser.add("", true, 1, 0,
-        "Public node id", "-i", OPTNAME_NODEID);
-    _optParser.add("", false, 1, 0,
-        "IP address (either v4 or v6) used for serving other nodes and clients", "-h", OPTNAME_HOSTNAME);
-    _optParser.add("", true, 1, 0,
-        "TCP port number used for serving other nodes and clients", "-p", OPTNAME_PORT);
-    _optParser.add("", true, 1, 0, "Latitude part from GPS location of this server", "-y", OPTNAME_LATITUDE);
-    _optParser.add("", true, 1, 0, "Longitude part form GPS location of this server", "-x", OPTNAME_LONGITUDE);
+    _optParser.add(DEFAULT_CONFIG_FILE, false, 1, 0, ( "Path to config file to load options from. " +
+        DESC_OPTIONAL_DEFAULT + DEFAULT_CONFIG_FILE ).c_str(), "-c", OPTNAME_CONFIGFILE);
+    _optParser.add("", true, 1, 0, "Public node id, should be an SHA256 hash "
+        "of the public key of this node", "-i", OPTNAME_NODEID);
+    _optParser.add("", true, 1, 0, "IP address (either ipv4 or v6) of network interface "
+        "that can be used to connect to this node", "-a", OPTNAME_IPADDRESS);
+    _optParser.add(DEFAULT_PORT, false, 1, 0, ( "TCP port number for connecting to this node. " +
+        DESC_OPTIONAL_DEFAULT + DEFAULT_PORT ).c_str(), "-p", OPTNAME_PORT);
+    _optParser.add("", true, 1, 0, "GPS latitude of this server "
+        "as real number from range (-90,90)", "-y", OPTNAME_LATITUDE);
+    _optParser.add("", true, 1, 0, "GPS longitude of this server "
+        "as real number from range (-180,180)", "-x", OPTNAME_LONGITUDE);
+    
+    _optParser.add(DEFAULT_DBPATH, false, 1, 0, ( "Path to node database. For SQLite, value ':memory:' "
+        "creates in-memory database that will not be saved to disk. " +
+        DESC_OPTIONAL_DEFAULT + DEFAULT_DBPATH ).c_str(), "-d", OPTNAME_DBPATH);
     
     
     _optParser.parse(argc, argv);
@@ -80,7 +95,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     _optParser.get(OPTNAME_CONFIGFILE)->getString(filename);
     if ( _optParser.importFile( filename.c_str() ) )
          { cout << "Processed config file " << filename << endl; }
-    else { cout << "No config file found with name " << filename << ", using command line values only" << endl; }
+    else { cout << "Config file '" << filename << "' not found, using command line values only" << endl; }
     
     vector<string> badOptions;
     bool requiredPassed = _optParser.gotRequired(badOptions);
@@ -106,9 +121,10 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     }
     
     _optParser.get(OPTNAME_NODEID)->getString(_id);
-    _optParser.get(OPTNAME_HOSTNAME)->getString(_ipAddr);
+    _optParser.get(OPTNAME_IPADDRESS)->getString(_ipAddr);
     _optParser.get(OPTNAME_LATITUDE)->getFloat(_latitude);
     _optParser.get(OPTNAME_LONGITUDE)->getFloat(_longitude);
+    _optParser.get(OPTNAME_DBPATH)->getString(_dbPath);
     
     unsigned long port;
     _optParser.get(OPTNAME_PORT)->getULong(port);
@@ -120,18 +136,23 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
 //     cout << pretty;
 //     cout << "-----" << endl;
     
+    
+    AddressType addrType = _ipAddr.find(':') == string::npos ?
+        AddressType::Ipv4 : AddressType::Ipv6;
+    _myNodeInfo.reset( new NodeInfo(
+        NodeProfile(_id, NetworkInterface(addrType, _ipAddr, _port) ),
+        GpsLocation(_latitude, _longitude) ) );
+    
     return true;
 }
 
 
 
-NodeInfo EzParserConfig::myNodeInfo() const
-{
-    // TODO differentiate between ipv4 and v6 addresses
-    return NodeInfo(
-        NodeProfile(_id, NetworkInterface(AddressType::Ipv4, _ipAddr, _port) ),
-        GpsLocation(_latitude, _longitude) );
-}
+const string& EzParserConfig::dbPath() const
+    { return _dbPath; }
+
+const NodeInfo& EzParserConfig::myNodeInfo() const
+    { return *_myNodeInfo; }
 
 
 

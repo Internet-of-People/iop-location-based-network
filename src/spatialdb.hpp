@@ -77,7 +77,7 @@ class SpatiaLiteDatabase : public ISpatialDatabase
     
 public:
     
-    SpatiaLiteDatabase(const GpsLocation &nodeLocation);
+    SpatiaLiteDatabase(const std::string &dbPath, const GpsLocation &nodeLocation);
     virtual ~SpatiaLiteDatabase();
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;

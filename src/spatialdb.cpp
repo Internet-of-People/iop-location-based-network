@@ -17,10 +17,6 @@ namespace LocNet
 
 const chrono::duration<uint32_t> EXPIRATION_PERIOD = chrono::hours(24);
 
-//const string DBFILE_PATH = ":memory:"; // NOTE in-memory storage without a db file
-//const string DBFILE_PATH = "file:locnet.sqlite"; // NOTE this may be any file URL
-const string DBFILE_PATH = "locnet.sqlite";
-
 const vector<string> DatabaseInitCommands = {
     "SELECT InitSpatialMetadata();",
     "CREATE TABLE IF NOT EXISTS nodes ( "
@@ -98,22 +94,23 @@ void ExecuteSql(sqlite3 *dbHandle, const string &sql)
 
 
 
-// SpatiaLite initialization/shutdown sequence is documented here: https://groups.google.com/forum/#!msg/spatialite-users/83SOajOJ2JU/sgi5fuYAVVkJ
-SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
+// SpatiaLite initialization/shutdown sequence is documented here:
+// https://groups.google.com/forum/#!msg/spatialite-users/83SOajOJ2JU/sgi5fuYAVVkJ
+SpatiaLiteDatabase::SpatiaLiteDatabase(const string &dbPath, const GpsLocation& nodeLocation) :
     _myLocation(nodeLocation), _dbHandle(nullptr)
 {
     _spatialiteConnection = spatialite_alloc_connection();
     
-    bool creatingDb = ! FileExist(DBFILE_PATH);
+    bool creatingDb = ! FileExist(dbPath);
     
     // NOTE SQLITE_OPEN_FULLMUTEX performs operations sequentially using a mutex.
     //      We might have to change to a more performant but more complicated model here.
-    int openResult = sqlite3_open_v2 ( DBFILE_PATH.c_str(), &_dbHandle,
+    int openResult = sqlite3_open_v2 ( dbPath.c_str(), &_dbHandle,
          SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_URI, nullptr);
     scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
     if (openResult != SQLITE_OK)
     {
-        LOG(ERROR) << "Failed to open existing SpatiaLite database file " << DBFILE_PATH;
+        LOG(ERROR) << "Failed to open/create SpatiaLite database file " << dbPath;
         throw runtime_error("Failed to open SpatiaLite database");
     }
     
@@ -125,7 +122,8 @@ SpatiaLiteDatabase::SpatiaLiteDatabase(const GpsLocation& nodeLocation) :
     
     if (creatingDb)
     {
-        LOG(INFO) << "No SpatiaLite database found, generating: " << DBFILE_PATH;
+        LOG(INFO) << "No SpatiaLite database found, generating: " << dbPath;
+        LOG(INFO) << "This may take a long time ...";
         for (const string &command : DatabaseInitCommands)
         {
             ExecuteSql(_dbHandle, command);

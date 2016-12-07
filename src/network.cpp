@@ -52,7 +52,9 @@ tcp::acceptor& TcpNetwork::acceptor() { return _acceptor; }
 ProtoBufSyncTcpSession::ProtoBufSyncTcpSession(TcpNetwork &network) :
     _stream()
 {
+    LOG(DEBUG) << "Start accepting connection";
     network.acceptor().accept( *_stream.rdbuf() );
+    LOG(DEBUG) << "Connection accepted";
 }
 
 
@@ -61,6 +63,12 @@ ProtoBufSyncTcpSession::ProtoBufSyncTcpSession(const NetworkInterface &contact) 
 {
     if (! _stream)
         { throw runtime_error("Failed to connect"); }
+    LOG(DEBUG) << "Connected to " << contact;
+}
+
+ProtoBufSyncTcpSession::~ProtoBufSyncTcpSession()
+{
+    LOG(DEBUG) << "Session closed";
 }
 
 
@@ -140,6 +148,22 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
         
     unique_ptr<iop::locnet::Response> result(
         new iop::locnet::Response( respMsg->body().response() ) );
+    return result;
+}
+
+
+
+// SyncTcpNodeConnectionFactory::SyncTcpNodeConnectionFactory(TcpNetwork& network) :
+//     _network(network) {}
+
+
+shared_ptr<INodeMethods> SyncTcpNodeConnectionFactory::ConnectTo(const NodeProfile& node)
+{
+    LOG(DEBUG) << "Connecting to " << node;
+    shared_ptr<IProtoBufNetworkSession> session( new ProtoBufSyncTcpSession( node.contact() ) );
+    shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
+    shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher) );
+    LOG(DEBUG) << "Connection established to " << node;
     return result;
 }
 

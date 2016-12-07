@@ -31,15 +31,18 @@ int main()
     {
         LOG(INFO) << "Initializing server";
 //        shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(TestData::Budapest) );
-        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(TestData::Budapest) );
-        
+        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
+//            "locnet.sqlite", TestData::Budapest) );
+
 // TODO move this commented code section to unit testing
+            ":memory:", TestData::Budapest) );
+        geodb->Store(TestData::EntryKecskemet);
+        geodb->Store(TestData::EntryLondon);
+        geodb->Store(TestData::EntryNewYork);
+        geodb->Store(TestData::EntryWien);
+        geodb->Store(TestData::EntryCapeTown);
+        
 //        LOG(INFO) << "Distance: " << geodb->GetDistanceKm(TestData::Budapest, TestData::Kecskemet);
-//         geodb->Store(TestData::EntryKecskemet);
-//         geodb->Store(TestData::EntryLondon);
-//         geodb->Store(TestData::EntryNewYork);
-//         geodb->Store(TestData::EntryWien);
-//         geodb->Store(TestData::EntryCapeTown);
 //         size_t nodeCount = geodb->GetNodeCount();
 //         LOG(INFO) << "Node count: " << nodeCount;
 //         vector<NodeInfo> neighbours = geodb->GetNeighbourNodesByDistance();
