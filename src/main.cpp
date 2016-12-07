@@ -90,10 +90,10 @@ int main(int argc, const char *argv[])
         LOG(INFO) << "Initializing server";
         
         unique_ptr<thread> serverThread = StartServerThread();
-        while (! ShutdownRequested)
-            { this_thread::sleep_for( chrono::milliseconds(1) ); }
+        serverThread->detach();
         
-        serverThread.reset();
+        while (! ShutdownRequested)
+            { this_thread::sleep_for( chrono::milliseconds(10) ); }
         
         LOG(INFO) << "Finished successfully";
         return 0;
