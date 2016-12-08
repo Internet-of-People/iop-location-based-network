@@ -18,20 +18,27 @@ namespace LocNet
 
 class TcpNetwork
 {
-    std::vector<std::thread> _threadPool;
+    bool _shutdownRequested;
+    
     asio::io_service _ioService;
+    std::vector<std::thread> _threadPool;
     std::unique_ptr<asio::io_service::work> _keepThreadPoolBusy;
     
     asio::ip::tcp::acceptor _acceptor;
 //    std::unordered_map<uint16_t, std::shared_ptr<INetworkSessionFactory>> _sessionFactories;
+
+    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
+    void AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket,
+                            const asio::error_code &ec);
     
 public:
     
-    TcpNetwork(const NetworkInterface &listenOn, size_t threadPoolSize = 1);
+    TcpNetwork(const NetworkInterface &listenOn,
+               std::shared_ptr<IProtoBufRequestDispatcher> dispatcher);
     //TcpNetwork(const std::vector<NetworkInterface> &listenOn, size_t threadPoolSize = 1);
     ~TcpNetwork();
     
-    asio::ip::tcp::acceptor& acceptor();
+    void Shutdown();
 };
 
 
@@ -51,15 +58,15 @@ public:
 
 
 
-class ProtoBufSyncTcpSession : public IProtoBufNetworkSession
+class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
 {
     asio::ip::tcp::iostream _stream;
     
 public:
     
-    ProtoBufSyncTcpSession(TcpNetwork &network);
-    ProtoBufSyncTcpSession(const NetworkInterface &contact);
-    ~ProtoBufSyncTcpSession();
+    ProtoBufTcpStreamSession(asio::ip::tcp::socket &socket);
+    ProtoBufTcpStreamSession(const NetworkInterface &contact);
+    ~ProtoBufTcpStreamSession();
     
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
     void SendMessage(iop::locnet::MessageWithHeader &message) override;
@@ -85,7 +92,7 @@ public:
 
 
 // TODO what will be the connection to asio::io_service? Is it needed at all on sync streams?
-class SyncTcpNodeConnectionFactory : public INodeConnectionFactory
+class TcpStreamConnectionFactory : public INodeConnectionFactory
 {
 public:
     

@@ -13,27 +13,35 @@ namespace LocNet
 {
 
 
-const size_t MessageHeaderSize = 5;
-const size_t MessageSizeOffset = 1;
-const size_t MaxMessageSize = 1024 * 1024;
+static const size_t ThreadPoolSize = 1;
+static const size_t MessageHeaderSize = 5;
+static const size_t MessageSizeOffset = 1;
+static const size_t MaxMessageSize = 1024 * 1024;
 
 
 
-TcpNetwork::TcpNetwork(const NetworkInterface &listenOn, size_t threadPoolSize) :
-    _threadPool(), _ioService(), _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
-    _acceptor( _ioService, tcp::endpoint( make_address( listenOn.address() ), listenOn.port() ) )
+TcpNetwork::TcpNetwork(const NetworkInterface &listenOn,
+                       shared_ptr<IProtoBufRequestDispatcher> dispatcher) :
+    _shutdownRequested(false),  _ioService(), _threadPool(),
+    _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
+    _acceptor( _ioService, tcp::endpoint( make_address( listenOn.address() ), listenOn.port() ) ),
+    _dispatcher(dispatcher)
 {
     // Switch the acceptor to listening state
+    LOG(DEBUG) << "Start accepting connections";
     _acceptor.listen();
     
+    shared_ptr<tcp::socket> socket( new tcp::socket(_ioService) );
+    _acceptor.async_accept( *socket,
+        [this, socket] (const asio::error_code &ec) { AsyncAcceptHandler(socket, ec); } );
+    
     // Start the specified number of job processor threads
-    for (size_t idx = 0; idx < threadPoolSize; ++idx)
+    for (size_t idx = 0; idx < ThreadPoolSize; ++idx)
     {
         _threadPool.push_back( thread(
             [this] { _ioService.run(); } ) );
     }
 }
-
 
 
 TcpNetwork::~TcpNetwork()
@@ -47,29 +55,81 @@ TcpNetwork::~TcpNetwork()
 }
 
 
-tcp::acceptor& TcpNetwork::acceptor() { return _acceptor; }
-
-
-
-
-ProtoBufSyncTcpSession::ProtoBufSyncTcpSession(TcpNetwork &network) :
-    _stream()
+void TcpNetwork::Shutdown()
 {
-    LOG(DEBUG) << "Start accepting connection";
-    network.acceptor().accept( *_stream.rdbuf() );
-    LOG(DEBUG) << "Connection accepted";
+    _shutdownRequested = true;
 }
 
 
-ProtoBufSyncTcpSession::ProtoBufSyncTcpSession(const NetworkInterface &contact) :
+
+void TcpNetwork::AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket,
+                                    const asio::error_code &ec)
+{
+    if (ec)
+    {
+        LOG(ERROR) << "Failed to accept connection: " << ec;
+        return;
+    }
+    LOG(DEBUG) << "Connection accepted";
+    
+    // Keep accepting connections on the socket
+    shared_ptr<tcp::socket> nextSocket( new tcp::socket(_ioService) );
+    _acceptor.async_accept( *nextSocket,
+        [this, nextSocket] (const asio::error_code &ec) { AsyncAcceptHandler(nextSocket, ec); } );
+    
+    // Serve connected client on separate thread
+    thread serveSessionThread( [this, socket] // copy by value to keep socket alive
+    {
+        try
+        {
+            ProtoBufTcpStreamSession session(*socket);
+
+            while (! _shutdownRequested)
+            {
+                LOG(INFO) << "Reading request";
+                shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
+                if (! requestMsg)
+                    { break; }
+                
+                LOG(INFO) << "Serving request";
+                unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch( requestMsg->body().request() ) );
+                
+                LOG(INFO) << "Sending response";
+                iop::locnet::MessageWithHeader responseMsg;
+                responseMsg.mutable_body()->set_allocated_response( response.release() );
+                session.SendMessage(responseMsg);
+            }
+        }
+        catch (exception &ex)
+        {
+            LOG(ERROR) << "Session failed: " << ex.what();
+        }
+    } );
+    
+    // Keep thread running independently, don't block io_service here by joining it
+    serveSessionThread.detach();
+}
+
+
+
+
+ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(tcp::socket &socket) :
+    _stream()
+{
+    //_stream.rdbuf()->assign( tcp::v4(), socket.native_handle() );
+    _stream.rdbuf()->assign( socket.local_endpoint().protocol(), socket.native_handle() );
+}
+
+
+ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &contact) :
     _stream( contact.address(), to_string( contact.port() ) )
 {
     if (! _stream)
-        { throw runtime_error("Failed to connect"); }
+        { throw runtime_error("Session failed to connect: " + _stream.error().message() ); }
     LOG(DEBUG) << "Connected to " << contact;
 }
 
-ProtoBufSyncTcpSession::~ProtoBufSyncTcpSession()
+ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()
 {
     LOG(DEBUG) << "Session closed";
 }
@@ -85,11 +145,13 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 
 
 
-iop::locnet::MessageWithHeader* ProtoBufSyncTcpSession::ReceiveMessage()
+iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
 {
     // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
     _stream.read( &messageBytes[0], MessageHeaderSize );
+    if (! _stream.good())
+        { return nullptr; }
     
     // Extract message size from the header to know how many bytes to read
     uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
@@ -109,7 +171,7 @@ iop::locnet::MessageWithHeader* ProtoBufSyncTcpSession::ReceiveMessage()
 
 
 
-void ProtoBufSyncTcpSession::SendMessage(iop::locnet::MessageWithHeader& message)
+void ProtoBufTcpStreamSession::SendMessage(iop::locnet::MessageWithHeader& message)
 {
     message.set_header(1);
     message.set_header( message.ByteSize() - MessageHeaderSize );
@@ -117,14 +179,14 @@ void ProtoBufSyncTcpSession::SendMessage(iop::locnet::MessageWithHeader& message
 }
 
 
-// bool SyncProtoBufNetworkSession::IsAlive() const
+// bool ProtoBufTcpStreamSession::IsAlive() const
 // {
-//     This doesn't really seems to work as on :normal" std::streamss
+//     This doesn't really seem to work as on "normal" std::streamss
 //     return static_cast<bool>(_stream);
 // }
 
 
-void ProtoBufSyncTcpSession::Close()
+void ProtoBufTcpStreamSession::Close()
 {
     _stream.close();
 }
@@ -160,10 +222,10 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
 //     _network(network) {}
 
 
-shared_ptr<INodeMethods> SyncTcpNodeConnectionFactory::ConnectTo(const NodeProfile& node)
+shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NodeProfile& node)
 {
     LOG(DEBUG) << "Connecting to " << node;
-    shared_ptr<IProtoBufNetworkSession> session( new ProtoBufSyncTcpSession( node.contact() ) );
+    shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession( node.contact() ) );
     shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
     shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher) );
     return result;

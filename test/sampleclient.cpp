@@ -22,7 +22,7 @@ int main()
     {
         const NetworkInterface &BudapestNodeContact( TestData::NodeBudapest.profile().contact() );
         LOG(INFO) << "Connecting to server " << BudapestNodeContact;
-        shared_ptr<IProtoBufNetworkSession> session( new ProtoBufSyncTcpSession(BudapestNodeContact) );
+        shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(BudapestNodeContact) );
 
         LOG(INFO) << "Sending getcolleaguenodecount request";
         shared_ptr<IProtoBufRequestDispatcher> netDispatcher( new ProtoBufRequestNetworkDispatcher(session) );

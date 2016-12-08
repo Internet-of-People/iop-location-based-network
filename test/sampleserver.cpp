@@ -14,19 +14,14 @@ using namespace LocNet;
 
 
 
-bool ShutdownRequested = false;
+function<void(int)> mySignalHandlerFunc;
 
-void ShutdownSignalHandler(int)
-{
-    ShutdownRequested = true;
-}
+void signalHandler(int signal)
+    { mySignalHandlerFunc(signal); }
 
 
 int main()
 {
-    std::signal(SIGINT,  ShutdownSignalHandler);
-    std::signal(SIGTERM, ShutdownSignalHandler);
-    
     try
     {
         LOG(INFO) << "Initializing server";
@@ -78,30 +73,26 @@ int main()
         shared_ptr<INodeConnectionFactory> connectionFactory(
             new DummyNodeConnectionFactory() );
         Node node( TestData::NodeBudapest, geodb, connectionFactory );
-        IncomingRequestDispatcher dispatcher(node);
+        shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
         
         const NetworkInterface &BudapestNodeContact(
             TestData::NodeBudapest.profile().contact() );
-        TcpNetwork network(BudapestNodeContact);
+        TcpNetwork network(BudapestNodeContact, dispatcher);
+        
+        
+        bool ShutdownRequested = false;
+
+        mySignalHandlerFunc = [&ShutdownRequested, &network] (int)
+        {
+            ShutdownRequested = true;
+            network.Shutdown();
+        };
+        
+        std::signal(SIGINT,  signalHandler);
+        std::signal(SIGTERM, signalHandler);
         
         while (! ShutdownRequested)
-        {
-            // TODO CTRL-C should break this loop immediately instead of after finishing next request
-            ProtoBufSyncTcpSession session(network);
-            
-            LOG(INFO) << "Reading request";
-            shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
-            
-            LOG(INFO) << "Serving request";
-            unique_ptr<iop::locnet::Response> response( dispatcher.Dispatch( requestMsg->body().request() ) );
-            
-            LOG(INFO) << "Sending response";
-            iop::locnet::MessageWithHeader responseMsg;
-            responseMsg.mutable_body()->set_allocated_response( response.release() );
-            session.SendMessage(responseMsg);
-            
-            session.Close();
-        }
+            { this_thread::sleep_for( chrono::milliseconds(10) ); }
         
         LOG(INFO) << "Finished successfully";
         return 0;

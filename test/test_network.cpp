@@ -14,67 +14,33 @@ using namespace asio::ip;
 
 
 
-unique_ptr<std::thread> StartServerThread()
-{
-    const NetworkInterface &BudapestNodeContact(
-        TestData::NodeBudapest.profile().contact() );
-    TcpNetwork network(BudapestNodeContact);
-    
-    bool initialized = false;
-    thread *serverThread = new thread( [&network, &initialized]()
-    {
-        try {
-            shared_ptr<ISpatialDatabase> geodb(
-                new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::Budapest) );
-            geodb->Store(TestData::EntryKecskemet);
-            geodb->Store(TestData::EntryLondon);
-            geodb->Store(TestData::EntryNewYork);
-            geodb->Store(TestData::EntryWien);
-            geodb->Store(TestData::EntryCapeTown);
-
-            shared_ptr<INodeConnectionFactory> connectionFactory(
-                new DummyNodeConnectionFactory() );
-            Node node( TestData::NodeBudapest, geodb, connectionFactory );
-            IncomingRequestDispatcher dispatcher(node);
-            
-            initialized = true;
-            ProtoBufSyncTcpSession serverSession(network);
-            while (true)
-            {
-                shared_ptr<iop::locnet::MessageWithHeader> requestMsg( serverSession.ReceiveMessage() );
-
-                unique_ptr<iop::locnet::Response> response( dispatcher.Dispatch( requestMsg->body().request() ) );
-                
-                iop::locnet::MessageWithHeader responseMsg;
-                responseMsg.mutable_body()->set_allocated_response( response.release() );
-                serverSession.SendMessage(responseMsg);
-            }
-        }
-        catch (exception &e) {
-            // LOG(ERROR) << "Server thread failed: " << e.what();
-        }
-    } );
-    
-    while (! initialized)
-        { this_thread::sleep_for( chrono::milliseconds(1) ); }
-    
-    return unique_ptr<thread>(serverThread);
-}
-
-
-
 SCENARIO("TCP networking", "[network]")
 {
     GIVEN("A configured Node and Tcp networking")
     {
-        unique_ptr<thread> serverThread( StartServerThread() );
+        const NetworkInterface &BudapestNodeContact(
+            TestData::NodeBudapest.profile().contact() );
+        
+        shared_ptr<ISpatialDatabase> geodb(
+            new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::Budapest) );
+        geodb->Store(TestData::EntryKecskemet);
+        geodb->Store(TestData::EntryLondon);
+        geodb->Store(TestData::EntryNewYork);
+        geodb->Store(TestData::EntryWien);
+        geodb->Store(TestData::EntryCapeTown);
+
+        shared_ptr<INodeConnectionFactory> connectionFactory(
+            new DummyNodeConnectionFactory() );
+        Node node( TestData::NodeBudapest, geodb, connectionFactory );
+        shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
+        TcpNetwork network(BudapestNodeContact, dispatcher);
         
         THEN("It serves clients via sync TCP")
         {
             const NetworkInterface &BudapestNodeContact(
                 TestData::NodeBudapest.profile().contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
-                new ProtoBufSyncTcpSession(BudapestNodeContact) );
+                new ProtoBufTcpStreamSession(BudapestNodeContact) );
             
             {
                 iop::locnet::MessageWithHeader requestMsg;
@@ -106,23 +72,12 @@ SCENARIO("TCP networking", "[network]")
             clientSession->Close();
         }
         
-        serverThread->join();
-    }
-}
-
-
-
-SCENARIO("Transparent remote node client", "[network]") {
-    GIVEN("A configured Node and Tcp networking")
-    {
-        unique_ptr<thread> serverThread( StartServerThread() );
-        
         THEN("It serves transparent clients using ProtoBuf/TCP protocol")
         {
             const NetworkInterface &BudapestNodeContact(
                 TestData::NodeBudapest.profile().contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
-                new ProtoBufSyncTcpSession(BudapestNodeContact) );
+                new ProtoBufTcpStreamSession(BudapestNodeContact) );
             
             shared_ptr<IProtoBufRequestDispatcher> netDispatcher(
                 new ProtoBufRequestNetworkDispatcher(clientSession) );
@@ -131,7 +86,5 @@ SCENARIO("Transparent remote node client", "[network]") {
             size_t nodeCount = client.GetNodeCount();
             REQUIRE( nodeCount == 5 );
         }
-        
-        serverThread->join();
     }
 }

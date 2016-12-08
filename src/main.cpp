@@ -13,84 +13,44 @@ using namespace LocNet;
 
 
 
-bool ShutdownRequested = false;
+function<void(int)> mySignalHandlerFunc;
 
-void ShutdownSignalHandler(int)
-{
-    ShutdownRequested = true;
-}
-
-
-
-unique_ptr<std::thread> StartServerThread()
-{
-    bool initialized = false;
-    thread *serverThread = new thread( [&initialized]()
-    {
-        try {
-            NodeInfo myNodeInfo( Config::Instance().myNodeInfo() );
-            LOG(INFO) << "Starting with node info: " << myNodeInfo;
-            
-            shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
-                Config::Instance().dbPath(), myNodeInfo.location() ) );
-
-            shared_ptr<INodeConnectionFactory> connectionFactory( new SyncTcpNodeConnectionFactory() );
-            Node node(myNodeInfo, geodb, connectionFactory);
-            IncomingRequestDispatcher dispatcher(node);
-            
-            TcpNetwork network( myNodeInfo.profile().contact() );
-        
-            initialized = true;
-            LOG(INFO) << "Server initialized";
-            
-            while (! ShutdownRequested)
-            {
-                ProtoBufSyncTcpSession session(network);
-             
-                while (! ShutdownRequested)
-                {
-                    LOG(DEBUG) << "Reading request";
-                    shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
-                    
-                    LOG(DEBUG) << "Serving request";
-                    unique_ptr<iop::locnet::Response> response( dispatcher.Dispatch( requestMsg->body().request() ) );
-                    
-                    LOG(DEBUG) << "Sending response";
-                    iop::locnet::MessageWithHeader responseMsg;
-                    responseMsg.mutable_body()->set_allocated_response( response.release() );
-                    session.SendMessage(responseMsg);
-                }
-            }
-        }
-        catch (exception &e) {
-            LOG(WARNING) << "Exception in server thread: " << e.what();
-        }
-    } );
-    
-    while (! initialized)
-        { this_thread::sleep_for( chrono::milliseconds(1) ); }
-    
-    return unique_ptr<thread>(serverThread);
-}
-
-
+void signalHandler(int signal)
+    { mySignalHandlerFunc(signal); }
 
 
 int main(int argc, const char *argv[])
 {
     try
     {
-        std::signal(SIGINT,  ShutdownSignalHandler);
-        std::signal(SIGTERM, ShutdownSignalHandler);
-        
         bool configCreated = Config::Init(argc, argv);
         if (! configCreated)
             { return 1; }
-            
-        LOG(INFO) << "Initializing server";
         
-        unique_ptr<thread> serverThread = StartServerThread();
-        serverThread->detach();
+        
+         NodeInfo myNodeInfo( Config::Instance().myNodeInfo() );
+        LOG(INFO) << "Initializing server with node info: " << myNodeInfo;
+        
+        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
+            Config::Instance().dbPath(), myNodeInfo.location() ) );
+
+        shared_ptr<INodeConnectionFactory> connectionFactory( new TcpStreamConnectionFactory() );
+        Node node(myNodeInfo, geodb, connectionFactory);
+
+        shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
+        TcpNetwork network( myNodeInfo.profile().contact(), dispatcher );
+
+
+        bool ShutdownRequested = false;
+
+        mySignalHandlerFunc = [&ShutdownRequested, &network] (int)
+        {
+            ShutdownRequested = true;
+            network.Shutdown();
+        };
+        
+        std::signal(SIGINT,  signalHandler);
+        std::signal(SIGTERM, signalHandler);
         
         while (! ShutdownRequested)
             { this_thread::sleep_for( chrono::milliseconds(10) ); }
