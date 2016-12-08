@@ -77,6 +77,8 @@ class SpatiaLiteDatabase : public ISpatialDatabase
     
 public:
     
+    static const std::string IN_MEMORY_DB;
+    
     SpatiaLiteDatabase(const std::string &dbPath, const GpsLocation &nodeLocation);
     virtual ~SpatiaLiteDatabase();
     

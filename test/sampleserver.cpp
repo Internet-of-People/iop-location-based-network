@@ -30,12 +30,9 @@ int main()
     try
     {
         LOG(INFO) << "Initializing server";
-//        shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(TestData::Budapest) );
-        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
-//            "locnet.sqlite", TestData::Budapest) );
-
 // TODO move this commented code section to unit testing
-            ":memory:", TestData::Budapest) );
+        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
+            SpatiaLiteDatabase::IN_MEMORY_DB, TestData::Budapest) );
         geodb->Store(TestData::EntryKecskemet);
         geodb->Store(TestData::EntryLondon);
         geodb->Store(TestData::EntryNewYork);

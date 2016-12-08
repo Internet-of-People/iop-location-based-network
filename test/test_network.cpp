@@ -24,7 +24,8 @@ unique_ptr<std::thread> StartServerThread()
     thread *serverThread = new thread( [&network, &initialized]()
     {
         try {
-            shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(TestData::Budapest) );
+            shared_ptr<ISpatialDatabase> geodb(
+                new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::Budapest) );
             geodb->Store(TestData::EntryKecskemet);
             geodb->Store(TestData::EntryLondon);
             geodb->Store(TestData::EntryNewYork);

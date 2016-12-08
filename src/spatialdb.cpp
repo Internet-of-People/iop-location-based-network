@@ -15,6 +15,7 @@ namespace LocNet
 {
 
 
+const string SpatiaLiteDatabase::IN_MEMORY_DB = ":memory:";
 const chrono::duration<uint32_t> EXPIRATION_PERIOD = chrono::hours(24);
 
 const vector<string> DatabaseInitCommands = {
@@ -329,6 +330,13 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node)
         LOG(ERROR) << "Failed to run node update statement, error code: " << execResult;
         throw runtime_error("Failed to run node update statement");
     }
+    
+    int affectedRows = sqlite3_changes(_dbHandle);
+    if (affectedRows != 1)
+    {
+        LOG(ERROR) << "Affected row count for update should be 1, got : " << affectedRows;
+        throw runtime_error("Wrong affected row count for update");
+    }
 }
 
 
@@ -359,6 +367,13 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
     {
         LOG(ERROR) << "Failed to run node delete statement, error code: " << execResult;
         throw runtime_error("Failed to run node delete statement");
+    }
+    
+    int affectedRows = sqlite3_changes(_dbHandle);
+    if (affectedRows != 1)
+    {
+        LOG(ERROR) << "Affected row count for delete should be 1, got : " << affectedRows;
+        throw runtime_error("Wrong affected row count for delete");
     }
 }
 
@@ -483,11 +498,12 @@ vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 
 
 
-//vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
-vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t, Neighbours) const
+vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
 {
-    return ListNodes(_dbHandle, _myLocation, "",
-        "ORDER BY RANDOM()" );
+    string whereCondition = filter == Neighbours::Included ? "" :
+        "WHERE relationType != " + to_string( static_cast<int>(NodeRelationType::Neighbour) );
+    return ListNodes(_dbHandle, _myLocation, whereCondition,
+        "ORDER BY RANDOM()", "LIMIT " + to_string(maxNodeCount) );
 }
 
 
@@ -504,7 +520,7 @@ vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(
     
     return ListNodes(_dbHandle, location,
         whereCondition,
-        "ORDER BY dist_km "
+        "ORDER BY dist_km",
         "LIMIT " + to_string(maxNodeCount) );
 }
 

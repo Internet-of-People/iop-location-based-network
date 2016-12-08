@@ -87,7 +87,7 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
 SCENARIO("Spatial database", "")
 {
     GIVEN("A spatial database implementation") {
-        InMemorySpatialDatabase geodb(TestData::Budapest);
+        SpatiaLiteDatabase geodb(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::Budapest);
 
         THEN("its initially empty") {
             REQUIRE( geodb.GetNodeCount() == 0 );
@@ -105,8 +105,8 @@ SCENARIO("Spatial database", "")
             REQUIRE( Budapest_Kecskemet == Approx(83.03).epsilon(0.01) );
             REQUIRE( Budapest_Wien == Approx(214.59).epsilon(0.007) );
             REQUIRE( Budapest_London == Approx(1453.28).epsilon(0.005) );
-            REQUIRE( Budapest_NewYork == Approx(7023.15).epsilon(0.003) );
-            REQUIRE( Budapest_CapeTown == Approx(9053.66).epsilon(0.003) );
+            REQUIRE( Budapest_NewYork == Approx(7023.15).epsilon(0.005) );
+            REQUIRE( Budapest_CapeTown == Approx(9053.66).epsilon(0.005) );
         }
         
         WHEN("adding nodes") {
@@ -194,6 +194,19 @@ SCENARIO("Spatial database", "")
                 REQUIRE( neighboursByDistance[0] == TestData::EntryKecskemet );
                 REQUIRE( neighboursByDistance[1] == TestData::EntryWien );
             }
+            
+            THEN("Data is properly deleted") {
+                REQUIRE( geodb.GetNodeCount() == 5 );
+                
+                geodb.Remove( TestData::NodeKecskemet.profile().id() );
+                geodb.Remove( TestData::NodeLondon.profile().id() );
+                geodb.Remove( TestData::NodeNewYork.profile().id() );
+                geodb.Remove( TestData::NodeWien.profile().id() );
+                geodb.Remove( TestData::NodeCapeTown.profile().id() );
+                
+                REQUIRE( geodb.GetNodeCount() == 0 );
+                REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
+            }
         }
     }
 }
@@ -206,7 +219,8 @@ SCENARIO("Server registration", "")
         GpsLocation loc(1.0, 2.0);
         NodeInfo nodeInfo( NodeProfile("NodeId",
             { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), loc );
-        shared_ptr<ISpatialDatabase> geodb( new InMemorySpatialDatabase(loc) );
+        shared_ptr<ISpatialDatabase> geodb(
+            new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, loc) );
         shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
         Node geonet(nodeInfo, geodb, connectionFactory, true);
         
