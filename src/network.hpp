@@ -16,29 +16,40 @@ namespace LocNet
 
 
 
-class TcpNetwork
+class TcpServer
 {
-    bool _shutdownRequested;
+protected:
     
     asio::io_service _ioService;
+    asio::ip::tcp::acceptor _acceptor;
+    
     std::vector<std::thread> _threadPool;
     std::unique_ptr<asio::io_service::work> _keepThreadPoolBusy;
-    
-    asio::ip::tcp::acceptor _acceptor;
-//    std::unordered_map<uint16_t, std::shared_ptr<INetworkSessionFactory>> _sessionFactories;
 
-    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
-    void AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket,
-                            const asio::error_code &ec);
+    bool _shutdownRequested;
     
+    virtual void AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket,
+        const asio::error_code &ec) = 0;
 public:
     
-    TcpNetwork(const NetworkInterface &listenOn,
-               std::shared_ptr<IProtoBufRequestDispatcher> dispatcher);
-    //TcpNetwork(const std::vector<NetworkInterface> &listenOn, size_t threadPoolSize = 1);
-    ~TcpNetwork();
+    TcpServer(const NetworkInterface &listenOn);
+    virtual ~TcpServer();
     
     void Shutdown();
+};
+
+
+
+class ProtoBufDispatchingTcpServer : public TcpServer
+{
+    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
+    
+    void AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket,
+                            const asio::error_code &ec) override;
+public:
+    
+    ProtoBufDispatchingTcpServer(const NetworkInterface &listenOn,
+        std::shared_ptr<IProtoBufRequestDispatcher> dispatcher);
 };
 
 

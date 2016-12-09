@@ -28,7 +28,7 @@ int main(int argc, const char *argv[])
             { return 1; }
         
         
-         NodeInfo myNodeInfo( Config::Instance().myNodeInfo() );
+        NodeInfo myNodeInfo( Config::Instance().myNodeInfo() );
         LOG(INFO) << "Initializing server with node info: " << myNodeInfo;
         
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
@@ -38,19 +38,19 @@ int main(int argc, const char *argv[])
         Node node(myNodeInfo, geodb, connectionFactory);
 
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
-        TcpNetwork network( myNodeInfo.profile().contact(), dispatcher );
+        ProtoBufDispatchingTcpServer tcpServer( myNodeInfo.profile().contact(), dispatcher );
 
 
         bool ShutdownRequested = false;
 
-        mySignalHandlerFunc = [&ShutdownRequested, &network] (int)
+        mySignalHandlerFunc = [&ShutdownRequested, &tcpServer] (int)
         {
             ShutdownRequested = true;
-            network.Shutdown();
+            tcpServer.Shutdown();
         };
         
-        std::signal(SIGINT,  signalHandler);
-        std::signal(SIGTERM, signalHandler);
+        signal(SIGINT,  signalHandler);
+        signal(SIGTERM, signalHandler);
         
         while (! ShutdownRequested)
             { this_thread::sleep_for( chrono::milliseconds(10) ); }

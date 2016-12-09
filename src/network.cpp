@@ -20,12 +20,11 @@ static const size_t MaxMessageSize = 1024 * 1024;
 
 
 
-TcpNetwork::TcpNetwork(const NetworkInterface &listenOn,
-                       shared_ptr<IProtoBufRequestDispatcher> dispatcher) :
-    _shutdownRequested(false),  _ioService(), _threadPool(),
-    _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
+TcpServer::TcpServer(const NetworkInterface &listenOn) :
+    _ioService(),
     _acceptor( _ioService, tcp::endpoint( make_address( listenOn.address() ), listenOn.port() ) ),
-    _dispatcher(dispatcher)
+    _threadPool(), _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
+    _shutdownRequested(false)
 {
     // Switch the acceptor to listening state
     LOG(DEBUG) << "Start accepting connections";
@@ -44,7 +43,7 @@ TcpNetwork::TcpNetwork(const NetworkInterface &listenOn,
 }
 
 
-TcpNetwork::~TcpNetwork()
+TcpServer::~TcpServer()
 {
     // Release lock that disables return from io_service.run() even if job queue is empty
     _keepThreadPoolBusy.reset();
@@ -55,15 +54,21 @@ TcpNetwork::~TcpNetwork()
 }
 
 
-void TcpNetwork::Shutdown()
+void TcpServer::Shutdown()
 {
     _shutdownRequested = true;
 }
 
 
 
-void TcpNetwork::AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket,
-                                    const asio::error_code &ec)
+ProtoBufDispatchingTcpServer::ProtoBufDispatchingTcpServer(
+        const NetworkInterface& listenOn, shared_ptr< IProtoBufRequestDispatcher > dispatcher) :
+    TcpServer(listenOn), _dispatcher(dispatcher) {}
+
+
+
+void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
+    std::shared_ptr<asio::ip::tcp::socket> socket, const asio::error_code &ec)
 {
     if (ec)
     {
@@ -92,11 +97,24 @@ void TcpNetwork::AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socke
                     { break; }
                 
                 LOG(INFO) << "Serving request";
-                unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch( requestMsg->body().request() ) );
+                unique_ptr<iop::locnet::Response> response;
+                try
+                {
+                    response = _dispatcher->Dispatch( requestMsg->body().request() );
+                    response->set_status(iop::locnet::Status::STATUS_OK);
+                }
+                catch (exception &ex)
+                {
+                    LOG(ERROR) << "Failed to serve request: " << ex.what();
+                    response.reset( new iop::locnet::Response() );
+                    response->set_status(iop::locnet::Status::ERROR_INTERNAL);
+                    response->set_details( ex.what() );
+                }
                 
                 LOG(INFO) << "Sending response";
                 iop::locnet::MessageWithHeader responseMsg;
                 responseMsg.mutable_body()->set_allocated_response( response.release() );
+                
                 session.SendMessage(responseMsg);
             }
         }
@@ -162,6 +180,8 @@ iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
     // Extend buffer to fit remaining message size and read it
     messageBytes.resize(MessageHeaderSize + bodySize, 0);
     _stream.read( &messageBytes[0] + MessageHeaderSize, bodySize );
+    if (! _stream.good())
+        { return nullptr; }
 
     // Deserialize message from receive buffer, avoid leaks for failing cases with RAII-based unique_ptr
     unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );

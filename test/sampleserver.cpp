@@ -77,15 +77,15 @@ int main()
         
         const NetworkInterface &BudapestNodeContact(
             TestData::NodeBudapest.profile().contact() );
-        TcpNetwork network(BudapestNodeContact, dispatcher);
+        ProtoBufDispatchingTcpServer tcpServer(BudapestNodeContact, dispatcher);
         
         
         bool ShutdownRequested = false;
 
-        mySignalHandlerFunc = [&ShutdownRequested, &network] (int)
+        mySignalHandlerFunc = [&ShutdownRequested, &tcpServer] (int)
         {
             ShutdownRequested = true;
-            network.Shutdown();
+            tcpServer.Shutdown();
         };
         
         std::signal(SIGINT,  signalHandler);

@@ -33,7 +33,7 @@ SCENARIO("TCP networking", "[network]")
             new DummyNodeConnectionFactory() );
         Node node( TestData::NodeBudapest, geodb, connectionFactory );
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
-        TcpNetwork network(BudapestNodeContact, dispatcher);
+        ProtoBufDispatchingTcpServer tcpServer(BudapestNodeContact, dispatcher);
         
         THEN("It serves clients via sync TCP")
         {
