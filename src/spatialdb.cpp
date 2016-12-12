@@ -82,9 +82,9 @@ bool FileExist(const string &fileName)
 
 void ExecuteSql(sqlite3 *dbHandle, const string &sql)
 {
-    char *errorMessage;
-    scope_exit freeMsg( [&errorMessage] { sqlite3_free(errorMessage); } );
+    char *errorMessage = nullptr;
     int execResult = sqlite3_exec( dbHandle, sql.c_str(), nullptr, nullptr, &errorMessage );
+    scope_exit freeMsg( [&errorMessage] { sqlite3_free(errorMessage); } );
     if (execResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to execute command: " << sql;
@@ -107,7 +107,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase(const string &dbPath, const GpsLocation& 
     // NOTE SQLITE_OPEN_FULLMUTEX performs operations sequentially using a mutex.
     //      We might have to change to a more performant but more complicated model here.
     int openResult = sqlite3_open_v2 ( dbPath.c_str(), &_dbHandle,
-         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_URI, nullptr);
+         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_URI, nullptr); // null: no vFS module to use
     scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
     if (openResult != SQLITE_OK)
     {
@@ -221,6 +221,7 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node)
     
     time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + EXPIRATION_PERIOD );
     const NetworkInterface &contact = node.profile().contact();
+    // TODO abstract bind away, probably with functions, or maybe macros
     if ( sqlite3_bind_text( statement, 1, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
          sqlite3_bind_int(  statement, 2, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||
          sqlite3_bind_text( statement, 3, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
@@ -243,6 +244,7 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node)
 
 
 
+// Merge implementation of this function with GetNodes() to decrease duplication
 shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
 {
     sqlite3_stmt *statement;
@@ -284,6 +286,7 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
         NetworkInterface contact( static_cast<AddressType>(addrType),
             reinterpret_cast<const char*>(ipAddrPtr), static_cast<TcpPort>(port) );
         GpsLocation location(latitude, longitude);
+        // TODO create enums through checked "enum constructor" method
         result.reset( new NodeDbEntry(
             NodeInfo( NodeProfile( reinterpret_cast<const char*>(idPtr), contact ), location ),
             static_cast<NodeRelationType>(relationType), static_cast<NodeContactRoleType>(roleType) ) );
@@ -437,13 +440,13 @@ vector<NodeDbEntry> SpatiaLiteDatabase::GetNodes(NodeContactRoleType roleType)
 
 
 
-vector<NodeInfo> ListNodes(sqlite3 *dbHandle, const GpsLocation &location,
+vector<NodeInfo> ListNodes(sqlite3 *dbHandle, const GpsLocation &fromLocation,
     const string &whereCondition = "", const string orderBy = "", const string &limit = "")
 {
     sqlite3_stmt *statement;
     string queryStr =
         "SELECT id, addressType, ipAddress, port, X(location), Y(location), "
-            "Distance(location, " + LocationPointSql(location) + ", 1) / 1000 AS dist_km "
+            "Distance(location, " + LocationPointSql(fromLocation) + ", 1) / 1000 AS dist_km "
         "FROM nodes " +
         whereCondition + " " +
         orderBy + " " +

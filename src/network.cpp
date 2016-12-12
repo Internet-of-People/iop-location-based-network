@@ -91,12 +91,12 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 
             while (! _shutdownRequested)
             {
-                LOG(INFO) << "Reading request";
+                LOG(TRACE) << "Reading request";
                 shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
                 if (! requestMsg)
                     { break; }
                 
-                LOG(INFO) << "Serving request";
+                LOG(TRACE) << "Serving request";
                 unique_ptr<iop::locnet::Response> response;
                 try
                 {
@@ -111,7 +111,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     response->set_details( ex.what() );
                 }
                 
-                LOG(INFO) << "Sending response";
+                LOG(TRACE) << "Sending response";
                 iop::locnet::MessageWithHeader responseMsg;
                 responseMsg.mutable_body()->set_allocated_response( response.release() );
                 
@@ -236,10 +236,6 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
     return result;
 }
 
-
-
-// SyncTcpNodeConnectionFactory::SyncTcpNodeConnectionFactory(TcpNetwork& network) :
-//     _network(network) {}
 
 
 shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NodeProfile& node)

@@ -40,6 +40,8 @@ int main(int argc, const char *argv[])
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
         ProtoBufDispatchingTcpServer tcpServer( myNodeInfo.profile().contact(), dispatcher );
 
+        // TODO add thread(s) for periodic discovery and db maintenance
+        
 
         bool ShutdownRequested = false;
 
