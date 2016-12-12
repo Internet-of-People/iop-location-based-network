@@ -97,6 +97,7 @@ public:
     GpsCoordinate longitude() const;
     
     bool operator==(const GpsLocation &other) const;
+    bool operator!=(const GpsLocation &other) const;
 };
 
 std::ostream& operator<<(std::ostream& out, const GpsLocation &value);

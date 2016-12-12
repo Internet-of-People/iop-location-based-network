@@ -88,6 +88,9 @@ bool GpsLocation::operator==(const GpsLocation& other) const
            abs(_longitude - other._longitude) < 0.00001;
 }
 
+bool GpsLocation::operator!=(const GpsLocation& other) const
+    { return ! operator==(other); }
+
 
 std::ostream& operator<<(std::ostream& out, const GpsLocation &value)
 {

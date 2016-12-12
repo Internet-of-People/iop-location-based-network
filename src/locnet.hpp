@@ -93,7 +93,8 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     void DiscoverUnknownAreas();
     
     Distance GetBubbleSize(const GpsLocation &location) const;
-    bool BubbleOverlaps(const GpsLocation &newNodeLocation) const;
+    bool BubbleOverlaps(const GpsLocation &newNodeLocation,
+                        const std::string &nodeIdToIgnore = "") const;
     
 public:
     

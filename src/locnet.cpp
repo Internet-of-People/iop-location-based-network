@@ -103,13 +103,9 @@ bool Node::RenewColleague(const NodeInfo& node)
     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
     if (storedInfo != nullptr)
     {
-        if ( storedInfo->location() == node.location() )
-        {
-            _spatialDb->Update( NodeDbEntry(
-                node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
-            return true;
-        }
-        // TODO consider how we should handle changed location here: recalculate bubbles or simply deny renewal
+        SafeStoreNode( NodeDbEntry(
+            node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
+        return true;
     }
     return false;
 }
@@ -128,18 +124,9 @@ bool Node::RenewNeighbour(const NodeInfo& node)
     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
     if (storedInfo != nullptr)
     {
-        if ( storedInfo->location() == node.location() )
-        {
-            if ( _spatialDb->GetNeighbourNodesByDistance().size() > NEIGHBOURHOOD_MAX_NODE_COUNT )
-            {
-                // TODO check if neighbour is too far to be renewed
-            }
-            
-            _spatialDb->Update( NodeDbEntry(
-                node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
-            return true;
-        }
-        // TODO consider how we should handle changed location here: recalculate bubbles or simply deny renewal
+        SafeStoreNode( NodeDbEntry(
+            node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
+        return true;
     }
     return false;
 }
@@ -172,17 +159,22 @@ Distance Node::GetBubbleSize(const GpsLocation& location) const
 }
 
 
-bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation) const
+bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &nodeIdToIgnore) const
 {
     // Get our closest node to location, no matter the radius
     vector<NodeInfo> closestNodes = _spatialDb->GetClosestNodesByDistance(
-        newNodeLocation, numeric_limits<Distance>::max(), 1, Neighbours::Excluded);
+        newNodeLocation, numeric_limits<Distance>::max(), 2, Neighbours::Excluded);
     
-    // If there is no such point yet (i.e. map is still empty), it cannot overlap
-    if ( closestNodes.empty() ) { return false; }
+    // If there are no points yet (i.e. map is still empty) or our single node is being updated, it cannot overlap
+    if ( closestNodes.empty() ||
+       ( closestNodes.size() == 1 && closestNodes.front().profile().id() == nodeIdToIgnore ) )
+        { return false; }
     
+    // If updating a node with specified nodeId, ignore overlapping with itself
+    const GpsLocation &myClosesNodeLocation = closestNodes.front().profile().id() != nodeIdToIgnore ?
+        closestNodes.front().location() : closestNodes.back().location();
+        
     // Get bubble sizes of both locations
-    const GpsLocation &myClosesNodeLocation = closestNodes.front().location();
     Distance myClosestNodeBubbleSize = GetBubbleSize(myClosesNodeLocation);
     Distance newNodeBubbleSize       = GetBubbleSize(newNodeLocation);
     
@@ -205,63 +197,85 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NodeProfile& node)
 }
 
 
-bool Node::SafeStoreNode(const NodeDbEntry& entry, shared_ptr<INodeMethods> nodeConnection)
+bool Node::SafeStoreNode(const NodeDbEntry& newEntry, shared_ptr<INodeMethods> nodeConnection)
 {
     try
     {
         // Check if node is acceptable
-        shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( entry.profile().id() );
-        switch ( entry.relationType() )
+        shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( newEntry.profile().id() );
+        switch ( newEntry.relationType() )
         {
-            case NodeRelationType::Neighbour:
-            {
-                // Neighbour limit is about to be exceeded and all present neighbours are closer
-                vector<NodeInfo> neighboursByDistance( _spatialDb->GetNeighbourNodesByDistance() );
-                if ( neighboursByDistance.size() >= NEIGHBOURHOOD_MAX_NODE_COUNT &&
-                     _spatialDb->GetDistanceKm( neighboursByDistance.back().location(), _myNodeInfo.location() ) <=
-                     _spatialDb->GetDistanceKm( _myNodeInfo.location(), entry.location() ) )
-                    { return false; }
-                    
-                // Existing colleague info may be upgraded to neighbour but not vica versa
-                if ( storedInfo != nullptr && storedInfo->relationType() == NodeRelationType::Neighbour )
-                    { return false; }
-                break;
-            }
-                
             case NodeRelationType::Colleague:
             {
-                if ( BubbleOverlaps( entry.location() ) )
-                    { return false; }
-                    
-                // Existing node info may neither be duplicaed nor updated/overwritten
                 if (storedInfo != nullptr)
-                    { return false; }
+                {
+                    // Existing colleague info may be upgraded to neighbour but not vica versa
+                    if ( storedInfo->relationType() == NodeRelationType::Neighbour )
+                        { return false; }
+                    if ( storedInfo->location() != newEntry.location() ) {
+                        // Node must not be moved away to a position that overlaps with anything other than itself
+                        if ( BubbleOverlaps( newEntry.location(), newEntry.profile().id() ) )
+                            { return false; }
+                    }
+                }
+                else {
+                    // Node must not overlap with other colleagues
+                    if ( BubbleOverlaps( newEntry.location() ) )
+                        { return false; }
+                }
+                    
                 break;
+            }
+            
+            case NodeRelationType::Neighbour:
+            {
+                // Neighbour limit will be exceeded, check if new entry deserves to temporarilty go over limit
+                vector<NodeInfo> neighboursByDistance( _spatialDb->GetNeighbourNodesByDistance() );
+                if ( neighboursByDistance.size() >= NEIGHBOURHOOD_MAX_NODE_COUNT )
+                {
+                    // If we have too many closer neighbours already, deny request
+                    const NodeInfo &limitNeighbour = neighboursByDistance[NEIGHBOURHOOD_MAX_NODE_COUNT - 1];
+                    if ( _spatialDb->GetDistanceKm( limitNeighbour.location(), _myNodeInfo.location() ) <=
+                         _spatialDb->GetDistanceKm( _myNodeInfo.location(), newEntry.location() ) )
+                    { return false; }
+                }
             }
                 
             default:
                 throw runtime_error("Unknown nodetype, missing implementation");
         }
         
-        if ( entry.roleType() == NodeContactRoleType::Initiator )
+        if ( newEntry.roleType() == NodeContactRoleType::Initiator )
         {
             // If no connection argument is specified, try connecting to candidate node
             if (nodeConnection == nullptr)
-                { nodeConnection = SafeConnectTo( entry.profile() ); }
+                { nodeConnection = SafeConnectTo( newEntry.profile() ); }
             if (nodeConnection == nullptr)
                 { return false; }
             
-            // Ask for its permission to add it
-            switch ( entry.relationType() )
+            // Ask for its permission for mutual acceptance
+            switch ( newEntry.relationType() )
             {
-                case NodeRelationType::Colleague:
-                    if ( ! nodeConnection->AcceptColleague(_myNodeInfo) )
-                        { return false; }
+                case NodeRelationType::Neighbour:
+                    if (storedInfo == nullptr) {
+                        if ( ! nodeConnection->AcceptNeighbour(_myNodeInfo) )
+                            { return false; }
+                    }
+                    else {
+                        if ( ! nodeConnection->RenewNeighbour(_myNodeInfo) )
+                            { return false; }
+                    }
                     break;
                     
-                case NodeRelationType::Neighbour:
-                    if ( ! nodeConnection->AcceptNeighbour(_myNodeInfo) )
-                        { return false; }
+                case NodeRelationType::Colleague:
+                    if (storedInfo == nullptr) {
+                        if ( ! nodeConnection->AcceptColleague(_myNodeInfo) )
+                            { return false; }
+                    }
+                    else {
+                        if ( ! nodeConnection->RenewColleague(_myNodeInfo) )
+                            { return false; }
+                    }
                     break;
                     
                 default:
@@ -270,9 +284,8 @@ bool Node::SafeStoreNode(const NodeDbEntry& entry, shared_ptr<INodeMethods> node
         }
         
         // TODO consider if all further possible sanity checks are done already
-        //      e.g. what to do if location is changed for an existing entry?
-        if (storedInfo == nullptr) { _spatialDb->Store(entry); }
-        else                       { _spatialDb->Update(entry); }
+        if (storedInfo == nullptr) { _spatialDb->Store(newEntry); }
+        else                       { _spatialDb->Update(newEntry); }
         return true;
     }
     catch (exception &e)
