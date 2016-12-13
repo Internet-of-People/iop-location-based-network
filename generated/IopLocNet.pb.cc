@@ -599,7 +599,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RemoteNodeResponse, _is_default_instance_));
   BuildNetworkRequest_descriptor_ = file->message_type(22);
   static const int BuildNetworkRequest_offsets_[1] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkRequest, nodeinfo_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkRequest, requestornodeinfo_),
   };
   BuildNetworkRequest_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -613,8 +613,9 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkRequest, _is_default_instance_));
   BuildNetworkResponse_descriptor_ = file->message_type(23);
-  static const int BuildNetworkResponse_offsets_[1] = {
+  static const int BuildNetworkResponse_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkResponse, accepted_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkResponse, acceptornodeinfo_),
   };
   BuildNetworkResponse_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -1088,48 +1089,50 @@ void protobuf_AddDesc_IopLocNet_2eproto() {
     "tRandomNodes\030\006 \001(\0132\".iop.locnet.GetRando"
     "mNodesResponseH\000\022H\n\017getClosestNodes\030\007 \001("
     "\0132-.iop.locnet.GetClosestNodesByDistance"
-    "ResponseH\000B\030\n\026RemoteNodeResponseType\"=\n\023"
-    "BuildNetworkRequest\022&\n\010nodeInfo\030\001 \001(\0132\024."
-    "iop.locnet.NodeInfo\"(\n\024BuildNetworkRespo"
-    "nse\022\020\n\010accepted\030\001 \001(\010\"\025\n\023GetNodeCountReq"
-    "uest\")\n\024GetNodeCountResponse\022\021\n\tnodeCoun"
-    "t\030\001 \001(\r\"H\n\025GetRandomNodesRequest\022\024\n\014maxN"
-    "odeCount\030\001 \001(\r\022\031\n\021includeNeighbours\030\002 \001("
-    "\010\"=\n\026GetRandomNodesResponse\022#\n\005nodes\030\001 \003"
-    "(\0132\024.iop.locnet.NodeInfo\"\223\001\n GetClosestN"
-    "odesByDistanceRequest\022)\n\010location\030\001 \001(\0132"
-    "\027.iop.locnet.GpsLocation\022\023\n\013maxRadiusKm\030"
-    "\002 \001(\002\022\024\n\014maxNodeCount\030\003 \001(\r\022\031\n\021includeNe"
-    "ighbours\030\004 \001(\010\"H\n!GetClosestNodesByDista"
-    "nceResponse\022#\n\005nodes\030\001 \003(\0132\024.iop.locnet."
-    "NodeInfo\"\367\001\n\rClientRequest\0225\n\013getService"
-    "s\030\001 \001(\0132\036.iop.locnet.GetServicesRequestH"
-    "\000\022Q\n\021getNeighbourNodes\030\002 \001(\01324.iop.locne"
-    "t.GetNeighbourNodesByDistanceClientReque"
-    "stH\000\022G\n\017getClosestNodes\030\003 \001(\0132,.iop.locn"
-    "et.GetClosestNodesByDistanceRequestH\000B\023\n"
-    "\021ClientRequestType\"\366\001\n\016ClientResponse\0226\n"
-    "\013getServices\030\001 \001(\0132\037.iop.locnet.GetServi"
-    "cesResponseH\000\022L\n\021getNeighbourNodes\030\002 \001(\013"
-    "2/.iop.locnet.GetNeighbourNodesByDistanc"
-    "eResponseH\000\022H\n\017getClosestNodes\030\003 \001(\0132-.i"
-    "op.locnet.GetClosestNodesByDistanceRespo"
-    "nseH\000B\024\n\022ClientResponseType\"\024\n\022GetServic"
-    "esRequest\"h\n\016ServiceProfile\022,\n\013serviceTy"
-    "pe\030\001 \001(\0162\027.iop.locnet.ServiceType\022(\n\007pro"
-    "file\030\002 \001(\0132\027.iop.locnet.NodeProfile\"C\n\023G"
-    "etServicesResponse\022,\n\010services\030\001 \003(\0132\032.i"
-    "op.locnet.ServiceProfile\"*\n(GetNeighbour"
-    "NodesByDistanceClientRequest*\302\001\n\006Status\022"
-    "\r\n\tSTATUS_OK\020\000\022\034\n\030ERROR_PROTOCOL_VIOLATI"
-    "ON\020\001\022\025\n\021ERROR_UNSUPPORTED\020\002\022\026\n\022ERROR_UNA"
-    "UTHORIZED\020\005\022\022\n\016ERROR_BAD_ROLE\020\006\022\022\n\016ERROR"
-    "_INTERNAL\020\010\022\033\n\027ERROR_INVALID_SIGNATURE\0204"
-    "\022\027\n\023ERROR_INVALID_VALUE\0206*\226\001\n\013ServiceTyp"
-    "e\022\020\n\014Unstructured\020\000\022\013\n\007Content\020\001\022\013\n\007Late"
-    "ncy\020\002\022\014\n\010Location\020\003\022\t\n\005Token\020\n\022\013\n\007Profil"
-    "e\020\013\022\r\n\tProximity\020\014\022\t\n\005Relay\020\r\022\016\n\nReputat"
-    "ion\020\016\022\013\n\007Minting\020\017b\006proto3", 5026);
+    "ResponseH\000B\030\n\026RemoteNodeResponseType\"F\n\023"
+    "BuildNetworkRequest\022/\n\021requestorNodeInfo"
+    "\030\001 \001(\0132\024.iop.locnet.NodeInfo\"X\n\024BuildNet"
+    "workResponse\022\020\n\010accepted\030\001 \001(\010\022.\n\020accept"
+    "orNodeInfo\030\002 \001(\0132\024.iop.locnet.NodeInfo\"\025"
+    "\n\023GetNodeCountRequest\")\n\024GetNodeCountRes"
+    "ponse\022\021\n\tnodeCount\030\001 \001(\r\"H\n\025GetRandomNod"
+    "esRequest\022\024\n\014maxNodeCount\030\001 \001(\r\022\031\n\021inclu"
+    "deNeighbours\030\002 \001(\010\"=\n\026GetRandomNodesResp"
+    "onse\022#\n\005nodes\030\001 \003(\0132\024.iop.locnet.NodeInf"
+    "o\"\223\001\n GetClosestNodesByDistanceRequest\022)"
+    "\n\010location\030\001 \001(\0132\027.iop.locnet.GpsLocatio"
+    "n\022\023\n\013maxRadiusKm\030\002 \001(\002\022\024\n\014maxNodeCount\030\003"
+    " \001(\r\022\031\n\021includeNeighbours\030\004 \001(\010\"H\n!GetCl"
+    "osestNodesByDistanceResponse\022#\n\005nodes\030\001 "
+    "\003(\0132\024.iop.locnet.NodeInfo\"\367\001\n\rClientRequ"
+    "est\0225\n\013getServices\030\001 \001(\0132\036.iop.locnet.Ge"
+    "tServicesRequestH\000\022Q\n\021getNeighbourNodes\030"
+    "\002 \001(\01324.iop.locnet.GetNeighbourNodesByDi"
+    "stanceClientRequestH\000\022G\n\017getClosestNodes"
+    "\030\003 \001(\0132,.iop.locnet.GetClosestNodesByDis"
+    "tanceRequestH\000B\023\n\021ClientRequestType\"\366\001\n\016"
+    "ClientResponse\0226\n\013getServices\030\001 \001(\0132\037.io"
+    "p.locnet.GetServicesResponseH\000\022L\n\021getNei"
+    "ghbourNodes\030\002 \001(\0132/.iop.locnet.GetNeighb"
+    "ourNodesByDistanceResponseH\000\022H\n\017getClose"
+    "stNodes\030\003 \001(\0132-.iop.locnet.GetClosestNod"
+    "esByDistanceResponseH\000B\024\n\022ClientResponse"
+    "Type\"\024\n\022GetServicesRequest\"h\n\016ServicePro"
+    "file\022,\n\013serviceType\030\001 \001(\0162\027.iop.locnet.S"
+    "erviceType\022(\n\007profile\030\002 \001(\0132\027.iop.locnet"
+    ".NodeProfile\"C\n\023GetServicesResponse\022,\n\010s"
+    "ervices\030\001 \003(\0132\032.iop.locnet.ServiceProfil"
+    "e\"*\n(GetNeighbourNodesByDistanceClientRe"
+    "quest*\302\001\n\006Status\022\r\n\tSTATUS_OK\020\000\022\034\n\030ERROR"
+    "_PROTOCOL_VIOLATION\020\001\022\025\n\021ERROR_UNSUPPORT"
+    "ED\020\002\022\026\n\022ERROR_UNAUTHORIZED\020\005\022\022\n\016ERROR_BA"
+    "D_ROLE\020\006\022\022\n\016ERROR_INTERNAL\020\010\022\033\n\027ERROR_IN"
+    "VALID_SIGNATURE\0204\022\027\n\023ERROR_INVALID_VALUE"
+    "\0206*\226\001\n\013ServiceType\022\020\n\014Unstructured\020\000\022\013\n\007"
+    "Content\020\001\022\013\n\007Latency\020\002\022\014\n\010Location\020\003\022\t\n\005"
+    "Token\020\n\022\013\n\007Profile\020\013\022\r\n\tProximity\020\014\022\t\n\005R"
+    "elay\020\r\022\016\n\nReputation\020\016\022\013\n\007Minting\020\017b\006pro"
+    "to3", 5083);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IopLocNet.proto", &protobuf_RegisterTypes);
   MessageWithHeader::default_instance_ = new MessageWithHeader();
@@ -10336,7 +10339,7 @@ RemoteNodeResponse::RemoteNodeResponseTypeCase RemoteNodeResponse::RemoteNodeRes
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int BuildNetworkRequest::kNodeInfoFieldNumber;
+const int BuildNetworkRequest::kRequestorNodeInfoFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 BuildNetworkRequest::BuildNetworkRequest()
@@ -10347,7 +10350,7 @@ BuildNetworkRequest::BuildNetworkRequest()
 
 void BuildNetworkRequest::InitAsDefaultInstance() {
   _is_default_instance_ = true;
-  nodeinfo_ = const_cast< ::iop::locnet::NodeInfo*>(&::iop::locnet::NodeInfo::default_instance());
+  requestornodeinfo_ = const_cast< ::iop::locnet::NodeInfo*>(&::iop::locnet::NodeInfo::default_instance());
 }
 
 BuildNetworkRequest::BuildNetworkRequest(const BuildNetworkRequest& from)
@@ -10361,7 +10364,7 @@ BuildNetworkRequest::BuildNetworkRequest(const BuildNetworkRequest& from)
 void BuildNetworkRequest::SharedCtor() {
     _is_default_instance_ = false;
   _cached_size_ = 0;
-  nodeinfo_ = NULL;
+  requestornodeinfo_ = NULL;
 }
 
 BuildNetworkRequest::~BuildNetworkRequest() {
@@ -10371,7 +10374,7 @@ BuildNetworkRequest::~BuildNetworkRequest() {
 
 void BuildNetworkRequest::SharedDtor() {
   if (this != default_instance_) {
-    delete nodeinfo_;
+    delete requestornodeinfo_;
   }
 }
 
@@ -10402,8 +10405,8 @@ BuildNetworkRequest* BuildNetworkRequest::New(::google::protobuf::Arena* arena) 
 
 void BuildNetworkRequest::Clear() {
 // @@protoc_insertion_point(message_clear_start:iop.locnet.BuildNetworkRequest)
-  if (GetArenaNoVirtual() == NULL && nodeinfo_ != NULL) delete nodeinfo_;
-  nodeinfo_ = NULL;
+  if (GetArenaNoVirtual() == NULL && requestornodeinfo_ != NULL) delete requestornodeinfo_;
+  requestornodeinfo_ = NULL;
 }
 
 bool BuildNetworkRequest::MergePartialFromCodedStream(
@@ -10416,11 +10419,11 @@ bool BuildNetworkRequest::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional .iop.locnet.NodeInfo nodeInfo = 1;
+      // optional .iop.locnet.NodeInfo requestorNodeInfo = 1;
       case 1: {
         if (tag == 10) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_nodeinfo()));
+               input, mutable_requestornodeinfo()));
         } else {
           goto handle_unusual;
         }
@@ -10452,10 +10455,10 @@ failure:
 void BuildNetworkRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:iop.locnet.BuildNetworkRequest)
-  // optional .iop.locnet.NodeInfo nodeInfo = 1;
-  if (this->has_nodeinfo()) {
+  // optional .iop.locnet.NodeInfo requestorNodeInfo = 1;
+  if (this->has_requestornodeinfo()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, *this->nodeinfo_, output);
+      1, *this->requestornodeinfo_, output);
   }
 
   // @@protoc_insertion_point(serialize_end:iop.locnet.BuildNetworkRequest)
@@ -10464,11 +10467,11 @@ void BuildNetworkRequest::SerializeWithCachedSizes(
 ::google::protobuf::uint8* BuildNetworkRequest::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   // @@protoc_insertion_point(serialize_to_array_start:iop.locnet.BuildNetworkRequest)
-  // optional .iop.locnet.NodeInfo nodeInfo = 1;
-  if (this->has_nodeinfo()) {
+  // optional .iop.locnet.NodeInfo requestorNodeInfo = 1;
+  if (this->has_requestornodeinfo()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        1, *this->nodeinfo_, false, target);
+        1, *this->requestornodeinfo_, false, target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.BuildNetworkRequest)
@@ -10479,11 +10482,11 @@ int BuildNetworkRequest::ByteSize() const {
 // @@protoc_insertion_point(message_byte_size_start:iop.locnet.BuildNetworkRequest)
   int total_size = 0;
 
-  // optional .iop.locnet.NodeInfo nodeInfo = 1;
-  if (this->has_nodeinfo()) {
+  // optional .iop.locnet.NodeInfo requestorNodeInfo = 1;
+  if (this->has_requestornodeinfo()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        *this->nodeinfo_);
+        *this->requestornodeinfo_);
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -10514,8 +10517,8 @@ void BuildNetworkRequest::MergeFrom(const BuildNetworkRequest& from) {
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
-  if (from.has_nodeinfo()) {
-    mutable_nodeinfo()->::iop::locnet::NodeInfo::MergeFrom(from.nodeinfo());
+  if (from.has_requestornodeinfo()) {
+    mutable_requestornodeinfo()->::iop::locnet::NodeInfo::MergeFrom(from.requestornodeinfo());
   }
 }
 
@@ -10543,7 +10546,7 @@ void BuildNetworkRequest::Swap(BuildNetworkRequest* other) {
   InternalSwap(other);
 }
 void BuildNetworkRequest::InternalSwap(BuildNetworkRequest* other) {
-  std::swap(nodeinfo_, other->nodeinfo_);
+  std::swap(requestornodeinfo_, other->requestornodeinfo_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -10559,42 +10562,42 @@ void BuildNetworkRequest::InternalSwap(BuildNetworkRequest* other) {
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // BuildNetworkRequest
 
-// optional .iop.locnet.NodeInfo nodeInfo = 1;
-bool BuildNetworkRequest::has_nodeinfo() const {
-  return !_is_default_instance_ && nodeinfo_ != NULL;
+// optional .iop.locnet.NodeInfo requestorNodeInfo = 1;
+bool BuildNetworkRequest::has_requestornodeinfo() const {
+  return !_is_default_instance_ && requestornodeinfo_ != NULL;
 }
-void BuildNetworkRequest::clear_nodeinfo() {
-  if (GetArenaNoVirtual() == NULL && nodeinfo_ != NULL) delete nodeinfo_;
-  nodeinfo_ = NULL;
+void BuildNetworkRequest::clear_requestornodeinfo() {
+  if (GetArenaNoVirtual() == NULL && requestornodeinfo_ != NULL) delete requestornodeinfo_;
+  requestornodeinfo_ = NULL;
 }
-const ::iop::locnet::NodeInfo& BuildNetworkRequest::nodeinfo() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.BuildNetworkRequest.nodeInfo)
-  return nodeinfo_ != NULL ? *nodeinfo_ : *default_instance_->nodeinfo_;
+const ::iop::locnet::NodeInfo& BuildNetworkRequest::requestornodeinfo() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.BuildNetworkRequest.requestorNodeInfo)
+  return requestornodeinfo_ != NULL ? *requestornodeinfo_ : *default_instance_->requestornodeinfo_;
 }
-::iop::locnet::NodeInfo* BuildNetworkRequest::mutable_nodeinfo() {
+::iop::locnet::NodeInfo* BuildNetworkRequest::mutable_requestornodeinfo() {
   
-  if (nodeinfo_ == NULL) {
-    nodeinfo_ = new ::iop::locnet::NodeInfo;
+  if (requestornodeinfo_ == NULL) {
+    requestornodeinfo_ = new ::iop::locnet::NodeInfo;
   }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.BuildNetworkRequest.nodeInfo)
-  return nodeinfo_;
+  // @@protoc_insertion_point(field_mutable:iop.locnet.BuildNetworkRequest.requestorNodeInfo)
+  return requestornodeinfo_;
 }
-::iop::locnet::NodeInfo* BuildNetworkRequest::release_nodeinfo() {
-  // @@protoc_insertion_point(field_release:iop.locnet.BuildNetworkRequest.nodeInfo)
+::iop::locnet::NodeInfo* BuildNetworkRequest::release_requestornodeinfo() {
+  // @@protoc_insertion_point(field_release:iop.locnet.BuildNetworkRequest.requestorNodeInfo)
   
-  ::iop::locnet::NodeInfo* temp = nodeinfo_;
-  nodeinfo_ = NULL;
+  ::iop::locnet::NodeInfo* temp = requestornodeinfo_;
+  requestornodeinfo_ = NULL;
   return temp;
 }
-void BuildNetworkRequest::set_allocated_nodeinfo(::iop::locnet::NodeInfo* nodeinfo) {
-  delete nodeinfo_;
-  nodeinfo_ = nodeinfo;
-  if (nodeinfo) {
+void BuildNetworkRequest::set_allocated_requestornodeinfo(::iop::locnet::NodeInfo* requestornodeinfo) {
+  delete requestornodeinfo_;
+  requestornodeinfo_ = requestornodeinfo;
+  if (requestornodeinfo) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.BuildNetworkRequest.nodeInfo)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.BuildNetworkRequest.requestorNodeInfo)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -10603,6 +10606,7 @@ void BuildNetworkRequest::set_allocated_nodeinfo(::iop::locnet::NodeInfo* nodein
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int BuildNetworkResponse::kAcceptedFieldNumber;
+const int BuildNetworkResponse::kAcceptorNodeInfoFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 BuildNetworkResponse::BuildNetworkResponse()
@@ -10613,6 +10617,7 @@ BuildNetworkResponse::BuildNetworkResponse()
 
 void BuildNetworkResponse::InitAsDefaultInstance() {
   _is_default_instance_ = true;
+  acceptornodeinfo_ = const_cast< ::iop::locnet::NodeInfo*>(&::iop::locnet::NodeInfo::default_instance());
 }
 
 BuildNetworkResponse::BuildNetworkResponse(const BuildNetworkResponse& from)
@@ -10627,6 +10632,7 @@ void BuildNetworkResponse::SharedCtor() {
     _is_default_instance_ = false;
   _cached_size_ = 0;
   accepted_ = false;
+  acceptornodeinfo_ = NULL;
 }
 
 BuildNetworkResponse::~BuildNetworkResponse() {
@@ -10636,6 +10642,7 @@ BuildNetworkResponse::~BuildNetworkResponse() {
 
 void BuildNetworkResponse::SharedDtor() {
   if (this != default_instance_) {
+    delete acceptornodeinfo_;
   }
 }
 
@@ -10667,6 +10674,8 @@ BuildNetworkResponse* BuildNetworkResponse::New(::google::protobuf::Arena* arena
 void BuildNetworkResponse::Clear() {
 // @@protoc_insertion_point(message_clear_start:iop.locnet.BuildNetworkResponse)
   accepted_ = false;
+  if (GetArenaNoVirtual() == NULL && acceptornodeinfo_ != NULL) delete acceptornodeinfo_;
+  acceptornodeinfo_ = NULL;
 }
 
 bool BuildNetworkResponse::MergePartialFromCodedStream(
@@ -10686,6 +10695,19 @@ bool BuildNetworkResponse::MergePartialFromCodedStream(
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &accepted_)));
 
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(18)) goto parse_acceptorNodeInfo;
+        break;
+      }
+
+      // optional .iop.locnet.NodeInfo acceptorNodeInfo = 2;
+      case 2: {
+        if (tag == 18) {
+         parse_acceptorNodeInfo:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_acceptornodeinfo()));
         } else {
           goto handle_unusual;
         }
@@ -10722,6 +10744,12 @@ void BuildNetworkResponse::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(1, this->accepted(), output);
   }
 
+  // optional .iop.locnet.NodeInfo acceptorNodeInfo = 2;
+  if (this->has_acceptornodeinfo()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, *this->acceptornodeinfo_, output);
+  }
+
   // @@protoc_insertion_point(serialize_end:iop.locnet.BuildNetworkResponse)
 }
 
@@ -10731,6 +10759,13 @@ void BuildNetworkResponse::SerializeWithCachedSizes(
   // optional bool accepted = 1;
   if (this->accepted() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(1, this->accepted(), target);
+  }
+
+  // optional .iop.locnet.NodeInfo acceptorNodeInfo = 2;
+  if (this->has_acceptornodeinfo()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        2, *this->acceptornodeinfo_, false, target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.BuildNetworkResponse)
@@ -10744,6 +10779,13 @@ int BuildNetworkResponse::ByteSize() const {
   // optional bool accepted = 1;
   if (this->accepted() != 0) {
     total_size += 1 + 1;
+  }
+
+  // optional .iop.locnet.NodeInfo acceptorNodeInfo = 2;
+  if (this->has_acceptornodeinfo()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->acceptornodeinfo_);
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -10777,6 +10819,9 @@ void BuildNetworkResponse::MergeFrom(const BuildNetworkResponse& from) {
   if (from.accepted() != 0) {
     set_accepted(from.accepted());
   }
+  if (from.has_acceptornodeinfo()) {
+    mutable_acceptornodeinfo()->::iop::locnet::NodeInfo::MergeFrom(from.acceptornodeinfo());
+  }
 }
 
 void BuildNetworkResponse::CopyFrom(const ::google::protobuf::Message& from) {
@@ -10804,6 +10849,7 @@ void BuildNetworkResponse::Swap(BuildNetworkResponse* other) {
 }
 void BuildNetworkResponse::InternalSwap(BuildNetworkResponse* other) {
   std::swap(accepted_, other->accepted_);
+  std::swap(acceptornodeinfo_, other->acceptornodeinfo_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -10831,6 +10877,44 @@ void BuildNetworkResponse::clear_accepted() {
   
   accepted_ = value;
   // @@protoc_insertion_point(field_set:iop.locnet.BuildNetworkResponse.accepted)
+}
+
+// optional .iop.locnet.NodeInfo acceptorNodeInfo = 2;
+bool BuildNetworkResponse::has_acceptornodeinfo() const {
+  return !_is_default_instance_ && acceptornodeinfo_ != NULL;
+}
+void BuildNetworkResponse::clear_acceptornodeinfo() {
+  if (GetArenaNoVirtual() == NULL && acceptornodeinfo_ != NULL) delete acceptornodeinfo_;
+  acceptornodeinfo_ = NULL;
+}
+const ::iop::locnet::NodeInfo& BuildNetworkResponse::acceptornodeinfo() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.BuildNetworkResponse.acceptorNodeInfo)
+  return acceptornodeinfo_ != NULL ? *acceptornodeinfo_ : *default_instance_->acceptornodeinfo_;
+}
+::iop::locnet::NodeInfo* BuildNetworkResponse::mutable_acceptornodeinfo() {
+  
+  if (acceptornodeinfo_ == NULL) {
+    acceptornodeinfo_ = new ::iop::locnet::NodeInfo;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.BuildNetworkResponse.acceptorNodeInfo)
+  return acceptornodeinfo_;
+}
+::iop::locnet::NodeInfo* BuildNetworkResponse::release_acceptornodeinfo() {
+  // @@protoc_insertion_point(field_release:iop.locnet.BuildNetworkResponse.acceptorNodeInfo)
+  
+  ::iop::locnet::NodeInfo* temp = acceptornodeinfo_;
+  acceptornodeinfo_ = NULL;
+  return temp;
+}
+void BuildNetworkResponse::set_allocated_acceptornodeinfo(::iop::locnet::NodeInfo* acceptornodeinfo) {
+  delete acceptornodeinfo_;
+  acceptornodeinfo_ = acceptornodeinfo;
+  if (acceptornodeinfo) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.BuildNetworkResponse.acceptorNodeInfo)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

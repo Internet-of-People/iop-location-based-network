@@ -31,6 +31,7 @@ const size_t   MAINTENANCE_ATTEMPT_COUNT            = 100;
 
 const vector<NodeInfo> Node::_seedNodes {
     // TODO put some real seed nodes in here
+    // TODO put this list into class Config
     NodeInfo( NodeProfile( NodeId("BudapestSeedNodeId"),
         NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6371) ), GpsLocation(48.2081743, 16.3738189) ),
 //     NodeInfo( NodeProfile( NodeId("WienSeedNodeId"),
@@ -91,54 +92,58 @@ void Node::DeregisterService(ServiceType serviceType)
 }
 
 
-bool Node::AcceptColleague(const NodeInfo &newNode)
+shared_ptr<NodeInfo> Node::AcceptColleague(const NodeInfo &newNode)
 {
-// TODO Store conditions are checked in SafeStoreNode, should we reject the request
-//      if the other node "forgot" the connection or use the wrong method (accept vs renew)?
+// TODO Sanity checks are performed in SafeStoreNode, should we reject the request
+//      if the other node "forgot" about the existing relation or call the wrong method (accept vs renew)?
 //      Should the two methods maybe merged instead?
 //     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
 //     if (storedInfo != nullptr)
 //         { return false; } // We shouldn't have this colleague already
     
-    return SafeStoreNode( NodeDbEntry(
+    bool success = SafeStoreNode( NodeDbEntry(
         newNode, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
+    return success ? shared_ptr<NodeInfo>( new NodeInfo(_myNodeInfo) ) : shared_ptr<NodeInfo>();
 }
 
 
-bool Node::RenewColleague(const NodeInfo& node)
+shared_ptr<NodeInfo> Node::RenewColleague(const NodeInfo& node)
 {
 // TODO Store conditions are checked in SafeStoreNode, should we reject the request?
 //     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
 //     if (storedInfo == nullptr)
 //         { return false; } // We should have this colleague already
 
-    return SafeStoreNode( NodeDbEntry(
+    bool success = SafeStoreNode( NodeDbEntry(
         node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
+    return success ? shared_ptr<NodeInfo>( new NodeInfo(_myNodeInfo) ) : shared_ptr<NodeInfo>();
 }
 
 
 
-bool Node::AcceptNeighbour(const NodeInfo &node)
+shared_ptr<NodeInfo> Node::AcceptNeighbour(const NodeInfo &node)
 {
 // TODO Store conditions are checked in SafeStoreNode, should we reject the request?
 //     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
 //     if (storedInfo != nullptr)
 //         { return false; } // We shouldn't have this colleague already
     
-    return SafeStoreNode( NodeDbEntry(
+    bool success = SafeStoreNode( NodeDbEntry(
         node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
+    return success ? shared_ptr<NodeInfo>( new NodeInfo(_myNodeInfo) ) : shared_ptr<NodeInfo>();
 }
 
 
-bool Node::RenewNeighbour(const NodeInfo& node)
+shared_ptr<NodeInfo> Node::RenewNeighbour(const NodeInfo& node)
 {
 // TODO Store conditions are checked in SafeStoreNode, should we reject the request?
 //     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
 //     if (storedInfo == nullptr)
 //         { return false; } // We should have this colleague already
         
-    return SafeStoreNode( NodeDbEntry(
+    bool success = SafeStoreNode( NodeDbEntry(
         node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
+    return success ? shared_ptr<NodeInfo>( new NodeInfo(_myNodeInfo) ) : shared_ptr<NodeInfo>();
 }
 
 
@@ -207,13 +212,13 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NodeProfile& node)
 }
 
 
-bool Node::SafeStoreNode(const NodeDbEntry& newEntry, shared_ptr<INodeMethods> nodeConnection)
+bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethods> nodeConnection)
 {
     try
     {
         // Check if node is acceptable
-        shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( newEntry.profile().id() );
-        switch ( newEntry.relationType() )
+        shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( plannedEntry.profile().id() );
+        switch ( plannedEntry.relationType() )
         {
             case NodeRelationType::Colleague:
             {
@@ -222,18 +227,17 @@ bool Node::SafeStoreNode(const NodeDbEntry& newEntry, shared_ptr<INodeMethods> n
                     // Existing colleague info may be upgraded to neighbour but not vica versa
                     if ( storedInfo->relationType() == NodeRelationType::Neighbour )
                         { return false; }
-                    if ( storedInfo->location() != newEntry.location() ) {
+                    if ( storedInfo->location() != plannedEntry.location() ) {
                         // Node must not be moved away to a position that overlaps with anything other than itself
-                        if ( BubbleOverlaps( newEntry.location(), newEntry.profile().id() ) )
+                        if ( BubbleOverlaps( plannedEntry.location(), plannedEntry.profile().id() ) )
                             { return false; }
                     }
                 }
                 else {
                     // Node must not overlap with other colleagues
-                    if ( BubbleOverlaps( newEntry.location() ) )
+                    if ( BubbleOverlaps( plannedEntry.location() ) )
                         { return false; }
                 }
-                    
                 break;
             }
             
@@ -246,56 +250,50 @@ bool Node::SafeStoreNode(const NodeDbEntry& newEntry, shared_ptr<INodeMethods> n
                     // If we have too many closer neighbours already, deny request
                     const NodeInfo &limitNeighbour = neighboursByDistance[NEIGHBOURHOOD_MAX_NODE_COUNT - 1];
                     if ( _spatialDb->GetDistanceKm( limitNeighbour.location(), _myNodeInfo.location() ) <=
-                         _spatialDb->GetDistanceKm( _myNodeInfo.location(), newEntry.location() ) )
+                         _spatialDb->GetDistanceKm( _myNodeInfo.location(), plannedEntry.location() ) )
                     { return false; }
                 }
+                break;
             }
                 
             default:
                 throw runtime_error("Unknown nodetype, missing implementation");
         }
         
-        if ( newEntry.roleType() == NodeContactRoleType::Initiator )
+        NodeDbEntry entryToWrite(plannedEntry);
+        if ( plannedEntry.roleType() == NodeContactRoleType::Initiator )
         {
             // If no connection argument is specified, try connecting to candidate node
             if (nodeConnection == nullptr)
-                { nodeConnection = SafeConnectTo( newEntry.profile() ); }
+                { nodeConnection = SafeConnectTo( plannedEntry.profile() ); }
             if (nodeConnection == nullptr)
                 { return false; }
             
             // Ask for its permission for mutual acceptance
-            switch ( newEntry.relationType() )
+            shared_ptr<NodeInfo> freshInfo;
+            switch ( plannedEntry.relationType() )
             {
-                case NodeRelationType::Neighbour:
-                    if (storedInfo == nullptr) {
-                        if ( ! nodeConnection->AcceptNeighbour(_myNodeInfo) )
-                            { return false; }
-                    }
-                    else {
-                        if ( ! nodeConnection->RenewNeighbour(_myNodeInfo) )
-                            { return false; }
-                    }
-                    break;
-                    
                 case NodeRelationType::Colleague:
-                    if (storedInfo == nullptr) {
-                        if ( ! nodeConnection->AcceptColleague(_myNodeInfo) )
-                            { return false; }
-                    }
-                    else {
-                        if ( ! nodeConnection->RenewColleague(_myNodeInfo) )
-                            { return false; }
-                    }
+                    freshInfo = storedInfo ? nodeConnection->RenewColleague(_myNodeInfo) :
+                                             nodeConnection->AcceptColleague(_myNodeInfo);
+                    break;
+                
+                case NodeRelationType::Neighbour:
+                    freshInfo = storedInfo ? nodeConnection->RenewNeighbour(_myNodeInfo) :
+                                             nodeConnection->AcceptNeighbour(_myNodeInfo);
                     break;
                     
-                default:
-                    throw runtime_error("Unknown nodetype, missing implementation");
+                default: throw runtime_error("Unknown relationtype, missing implementation");
             }
+            
+            if (freshInfo == nullptr)
+                { return false; }
+            entryToWrite = NodeDbEntry( *freshInfo, plannedEntry.relationType(), plannedEntry.roleType() );
         }
         
         // TODO consider if all further possible sanity checks are done already
-        if (storedInfo == nullptr) { _spatialDb->Store(newEntry); }
-        else                       { _spatialDb->Update(newEntry); }
+        if (storedInfo == nullptr) { _spatialDb->Store(entryToWrite); }
+        else                       { _spatialDb->Update(entryToWrite); }
         return true;
     }
     catch (exception &e)
@@ -307,7 +305,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& newEntry, shared_ptr<INodeMethods> n
 }
 
 
-// TODO consider if this is guaranteed to stop
+
 bool Node::InitializeWorld()
 {
     // Initialize random generator and utility variables
@@ -518,28 +516,8 @@ void Node::RenewNodeRelations()
     {
         try
         {
-            shared_ptr<INodeMethods> connection = SafeConnectTo( node.profile() );
-            if (connection == nullptr)
-            {
-                LOG(INFO) << "Failed to contact node " << node.profile().id();
-                continue;
-            }
-            
-            bool renewed = false;
-            switch ( node.relationType() )
-            {
-                case NodeRelationType::Colleague:
-                    renewed = connection->RenewColleague(_myNodeInfo);
-                    break;
-                    
-                case NodeRelationType::Neighbour:
-                    renewed = connection->RenewNeighbour(_myNodeInfo);
-                    break;
-                    
-                default:
-                    throw runtime_error("Unknown relation type");
-            }
-            LOG(DEBUG) << "Renewing relation with node " << node.profile().id() << " status: " << renewed;
+            bool renewed = SafeStoreNode(node);
+            LOG(DEBUG) << "Attempted renewing relation with node " << node.profile().id() << ", result: " << renewed;
         }
         catch (exception &e)
         {
@@ -556,8 +534,8 @@ void Node::DiscoverUnknownAreas()
     for (size_t i = 0; i < MAINTENANCE_ATTEMPT_COUNT; ++i)
     {
         // Generate a random GPS location
-        uniform_real_distribution<float> latitudeRange(-90.0, 90.0);
-        uniform_real_distribution<float> longitudeRange(-180.0, 180.0);
+        uniform_real_distribution<GpsCoordinate> latitudeRange(-90.0, 90.0);
+        uniform_real_distribution<GpsCoordinate> longitudeRange(-180.0, 180.0);
         GpsLocation randomLocation( latitudeRange(_randomDevice), longitudeRange(_randomDevice) );
         
         // TODO consider: the resulted node might be very far away from the generated random node,

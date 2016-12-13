@@ -252,36 +252,56 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
         case iop::locnet::RemoteNodeRequest::kAcceptColleague:
         {
             auto acceptColleagueReq = nodeRequest.acceptcolleague();
-            bool accepted = _iRemoteNode.AcceptColleague( Converter::FromProtoBuf( acceptColleagueReq.nodeinfo() ) );
+            shared_ptr<NodeInfo> result = _iRemoteNode.AcceptColleague( Converter::FromProtoBuf(
+                acceptColleagueReq.requestornodeinfo() ) );
             auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_acceptcolleague()->set_accepted(accepted);
+            response->mutable_acceptcolleague()->set_accepted( static_cast<bool>(result) );
+            if (result) {
+                response->mutable_acceptcolleague()->set_allocated_acceptornodeinfo(
+                    Converter::ToProtoBuf(*result) );
+            }
             return response;
         }
         
         case iop::locnet::RemoteNodeRequest::kRenewColleague:
         {
             auto renewColleagueReq = nodeRequest.renewcolleague();
-            bool accepted = _iRemoteNode.RenewColleague( Converter::FromProtoBuf( renewColleagueReq.nodeinfo() ) );
+            shared_ptr<NodeInfo> result = _iRemoteNode.RenewColleague( Converter::FromProtoBuf(
+                renewColleagueReq.requestornodeinfo() ) );
             auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_renewcolleague()->set_accepted(accepted);
+            response->mutable_renewcolleague()->set_accepted( static_cast<bool>(result) );
+            if (result) {
+                response->mutable_acceptcolleague()->set_allocated_acceptornodeinfo(
+                    Converter::ToProtoBuf(*result) );
+            }
             return response;
         }
         
         case iop::locnet::RemoteNodeRequest::kAcceptNeighbour:
         {
             auto acceptNeighbourReq = nodeRequest.acceptneighbour();
-            bool accepted = _iRemoteNode.AcceptNeighbour( Converter::FromProtoBuf( acceptNeighbourReq.nodeinfo() ) );
+            shared_ptr<NodeInfo> result = _iRemoteNode.AcceptNeighbour( Converter::FromProtoBuf(
+                acceptNeighbourReq.requestornodeinfo() ) );
             auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_acceptneighbour()->set_accepted(accepted);
+            response->mutable_acceptneighbour()->set_accepted( static_cast<bool>(result) );
+            if (result) {
+                response->mutable_acceptcolleague()->set_allocated_acceptornodeinfo(
+                    Converter::ToProtoBuf(*result) );
+            }
             return response;
         }
         
         case iop::locnet::RemoteNodeRequest::kRenewNeighbour:
         {
             auto renewNeighbourReq = nodeRequest.renewneighbour();
-            bool accepted = _iRemoteNode.RenewNeighbour( Converter::FromProtoBuf( renewNeighbourReq.nodeinfo() ) );
+            shared_ptr<NodeInfo> result = _iRemoteNode.RenewNeighbour( Converter::FromProtoBuf(
+                renewNeighbourReq.requestornodeinfo() ) );
             auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_renewneighbour()->set_accepted(accepted);
+            response->mutable_renewneighbour()->set_accepted( static_cast<bool>(result) );
+            if (result) {
+                response->mutable_acceptcolleague()->set_allocated_acceptornodeinfo(
+                    Converter::ToProtoBuf(*result) );
+            }
             return response;
         }
 
@@ -423,66 +443,78 @@ size_t NodeMethodsProtoBufClient::GetNodeCount() const
 
 
 
-bool NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& node)
+shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& node)
 {
     iop::locnet::Request request;
     //request.set_version("1");
-    request.mutable_remotenode()->mutable_acceptcolleague()->set_allocated_nodeinfo(
+    request.mutable_remotenode()->mutable_acceptcolleague()->set_allocated_requestornodeinfo(
         Converter::ToProtoBuf(node) );
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_acceptcolleague() )
         { throw runtime_error("Failed to get expected response"); }
     
-    return response->remotenode().acceptcolleague().accepted();
+    return response->remotenode().acceptcolleague().accepted() ?
+        shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
+            response->remotenode().acceptcolleague().acceptornodeinfo() ) ) ) :
+        shared_ptr<NodeInfo>();
 }
 
 
 
-bool NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& node)
+shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& node)
 {
     iop::locnet::Request request;
     //request.set_version("1");
-    request.mutable_remotenode()->mutable_renewcolleague()->set_allocated_nodeinfo(
+    request.mutable_remotenode()->mutable_renewcolleague()->set_allocated_requestornodeinfo(
         Converter::ToProtoBuf(node) );
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_renewcolleague() )
         { throw runtime_error("Failed to get expected response"); }
     
-    return response->remotenode().renewcolleague().accepted();
+    return response->remotenode().acceptcolleague().accepted() ?
+        shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
+            response->remotenode().acceptcolleague().acceptornodeinfo() ) ) ) :
+        shared_ptr<NodeInfo>();
 }
 
 
 
-bool NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& node)
+shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& node)
 {
     iop::locnet::Request request;
     //request.set_version("1");
-    request.mutable_remotenode()->mutable_acceptneighbour()->set_allocated_nodeinfo(
+    request.mutable_remotenode()->mutable_acceptneighbour()->set_allocated_requestornodeinfo(
         Converter::ToProtoBuf(node) );
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_acceptneighbour() )
         { throw runtime_error("Failed to get expected response"); }
     
-    return response->remotenode().acceptneighbour().accepted();
+    return response->remotenode().acceptcolleague().accepted() ?
+        shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
+            response->remotenode().acceptcolleague().acceptornodeinfo() ) ) ) :
+        shared_ptr<NodeInfo>();
 }
 
 
 
-bool NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& node)
+shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& node)
 {
     iop::locnet::Request request;
     //request.set_version("1");
-    request.mutable_remotenode()->mutable_renewneighbour()->set_allocated_nodeinfo(
+    request.mutable_remotenode()->mutable_renewneighbour()->set_allocated_requestornodeinfo(
         Converter::ToProtoBuf(node) );
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_renewneighbour() )
         { throw runtime_error("Failed to get expected response"); }
     
-    return response->remotenode().renewneighbour().accepted();
+    return response->remotenode().acceptcolleague().accepted() ?
+        shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
+            response->remotenode().acceptcolleague().acceptornodeinfo() ) ) ) :
+        shared_ptr<NodeInfo>();
 }
 
 

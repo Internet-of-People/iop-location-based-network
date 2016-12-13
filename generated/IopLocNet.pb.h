@@ -2588,21 +2588,21 @@ class BuildNetworkRequest : public ::google::protobuf::Message /* @@protoc_inser
 
   // accessors -------------------------------------------------------
 
-  // optional .iop.locnet.NodeInfo nodeInfo = 1;
-  bool has_nodeinfo() const;
-  void clear_nodeinfo();
-  static const int kNodeInfoFieldNumber = 1;
-  const ::iop::locnet::NodeInfo& nodeinfo() const;
-  ::iop::locnet::NodeInfo* mutable_nodeinfo();
-  ::iop::locnet::NodeInfo* release_nodeinfo();
-  void set_allocated_nodeinfo(::iop::locnet::NodeInfo* nodeinfo);
+  // optional .iop.locnet.NodeInfo requestorNodeInfo = 1;
+  bool has_requestornodeinfo() const;
+  void clear_requestornodeinfo();
+  static const int kRequestorNodeInfoFieldNumber = 1;
+  const ::iop::locnet::NodeInfo& requestornodeinfo() const;
+  ::iop::locnet::NodeInfo* mutable_requestornodeinfo();
+  ::iop::locnet::NodeInfo* release_requestornodeinfo();
+  void set_allocated_requestornodeinfo(::iop::locnet::NodeInfo* requestornodeinfo);
 
   // @@protoc_insertion_point(class_scope:iop.locnet.BuildNetworkRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
-  ::iop::locnet::NodeInfo* nodeinfo_;
+  ::iop::locnet::NodeInfo* requestornodeinfo_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_IopLocNet_2eproto();
   friend void protobuf_AssignDesc_IopLocNet_2eproto();
@@ -2679,11 +2679,21 @@ class BuildNetworkResponse : public ::google::protobuf::Message /* @@protoc_inse
   bool accepted() const;
   void set_accepted(bool value);
 
+  // optional .iop.locnet.NodeInfo acceptorNodeInfo = 2;
+  bool has_acceptornodeinfo() const;
+  void clear_acceptornodeinfo();
+  static const int kAcceptorNodeInfoFieldNumber = 2;
+  const ::iop::locnet::NodeInfo& acceptornodeinfo() const;
+  ::iop::locnet::NodeInfo* mutable_acceptornodeinfo();
+  ::iop::locnet::NodeInfo* release_acceptornodeinfo();
+  void set_allocated_acceptornodeinfo(::iop::locnet::NodeInfo* acceptornodeinfo);
+
   // @@protoc_insertion_point(class_scope:iop.locnet.BuildNetworkResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
+  ::iop::locnet::NodeInfo* acceptornodeinfo_;
   bool accepted_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_IopLocNet_2eproto();
@@ -6257,42 +6267,42 @@ inline RemoteNodeResponse::RemoteNodeResponseTypeCase RemoteNodeResponse::Remote
 
 // BuildNetworkRequest
 
-// optional .iop.locnet.NodeInfo nodeInfo = 1;
-inline bool BuildNetworkRequest::has_nodeinfo() const {
-  return !_is_default_instance_ && nodeinfo_ != NULL;
+// optional .iop.locnet.NodeInfo requestorNodeInfo = 1;
+inline bool BuildNetworkRequest::has_requestornodeinfo() const {
+  return !_is_default_instance_ && requestornodeinfo_ != NULL;
 }
-inline void BuildNetworkRequest::clear_nodeinfo() {
-  if (GetArenaNoVirtual() == NULL && nodeinfo_ != NULL) delete nodeinfo_;
-  nodeinfo_ = NULL;
+inline void BuildNetworkRequest::clear_requestornodeinfo() {
+  if (GetArenaNoVirtual() == NULL && requestornodeinfo_ != NULL) delete requestornodeinfo_;
+  requestornodeinfo_ = NULL;
 }
-inline const ::iop::locnet::NodeInfo& BuildNetworkRequest::nodeinfo() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.BuildNetworkRequest.nodeInfo)
-  return nodeinfo_ != NULL ? *nodeinfo_ : *default_instance_->nodeinfo_;
+inline const ::iop::locnet::NodeInfo& BuildNetworkRequest::requestornodeinfo() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.BuildNetworkRequest.requestorNodeInfo)
+  return requestornodeinfo_ != NULL ? *requestornodeinfo_ : *default_instance_->requestornodeinfo_;
 }
-inline ::iop::locnet::NodeInfo* BuildNetworkRequest::mutable_nodeinfo() {
+inline ::iop::locnet::NodeInfo* BuildNetworkRequest::mutable_requestornodeinfo() {
   
-  if (nodeinfo_ == NULL) {
-    nodeinfo_ = new ::iop::locnet::NodeInfo;
+  if (requestornodeinfo_ == NULL) {
+    requestornodeinfo_ = new ::iop::locnet::NodeInfo;
   }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.BuildNetworkRequest.nodeInfo)
-  return nodeinfo_;
+  // @@protoc_insertion_point(field_mutable:iop.locnet.BuildNetworkRequest.requestorNodeInfo)
+  return requestornodeinfo_;
 }
-inline ::iop::locnet::NodeInfo* BuildNetworkRequest::release_nodeinfo() {
-  // @@protoc_insertion_point(field_release:iop.locnet.BuildNetworkRequest.nodeInfo)
+inline ::iop::locnet::NodeInfo* BuildNetworkRequest::release_requestornodeinfo() {
+  // @@protoc_insertion_point(field_release:iop.locnet.BuildNetworkRequest.requestorNodeInfo)
   
-  ::iop::locnet::NodeInfo* temp = nodeinfo_;
-  nodeinfo_ = NULL;
+  ::iop::locnet::NodeInfo* temp = requestornodeinfo_;
+  requestornodeinfo_ = NULL;
   return temp;
 }
-inline void BuildNetworkRequest::set_allocated_nodeinfo(::iop::locnet::NodeInfo* nodeinfo) {
-  delete nodeinfo_;
-  nodeinfo_ = nodeinfo;
-  if (nodeinfo) {
+inline void BuildNetworkRequest::set_allocated_requestornodeinfo(::iop::locnet::NodeInfo* requestornodeinfo) {
+  delete requestornodeinfo_;
+  requestornodeinfo_ = requestornodeinfo;
+  if (requestornodeinfo) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.BuildNetworkRequest.nodeInfo)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.BuildNetworkRequest.requestorNodeInfo)
 }
 
 // -------------------------------------------------------------------
@@ -6311,6 +6321,44 @@ inline void BuildNetworkResponse::set_accepted(bool value) {
   
   accepted_ = value;
   // @@protoc_insertion_point(field_set:iop.locnet.BuildNetworkResponse.accepted)
+}
+
+// optional .iop.locnet.NodeInfo acceptorNodeInfo = 2;
+inline bool BuildNetworkResponse::has_acceptornodeinfo() const {
+  return !_is_default_instance_ && acceptornodeinfo_ != NULL;
+}
+inline void BuildNetworkResponse::clear_acceptornodeinfo() {
+  if (GetArenaNoVirtual() == NULL && acceptornodeinfo_ != NULL) delete acceptornodeinfo_;
+  acceptornodeinfo_ = NULL;
+}
+inline const ::iop::locnet::NodeInfo& BuildNetworkResponse::acceptornodeinfo() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.BuildNetworkResponse.acceptorNodeInfo)
+  return acceptornodeinfo_ != NULL ? *acceptornodeinfo_ : *default_instance_->acceptornodeinfo_;
+}
+inline ::iop::locnet::NodeInfo* BuildNetworkResponse::mutable_acceptornodeinfo() {
+  
+  if (acceptornodeinfo_ == NULL) {
+    acceptornodeinfo_ = new ::iop::locnet::NodeInfo;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.BuildNetworkResponse.acceptorNodeInfo)
+  return acceptornodeinfo_;
+}
+inline ::iop::locnet::NodeInfo* BuildNetworkResponse::release_acceptornodeinfo() {
+  // @@protoc_insertion_point(field_release:iop.locnet.BuildNetworkResponse.acceptorNodeInfo)
+  
+  ::iop::locnet::NodeInfo* temp = acceptornodeinfo_;
+  acceptornodeinfo_ = NULL;
+  return temp;
+}
+inline void BuildNetworkResponse::set_allocated_acceptornodeinfo(::iop::locnet::NodeInfo* acceptornodeinfo) {
+  delete acceptornodeinfo_;
+  acceptornodeinfo_ = acceptornodeinfo;
+  if (acceptornodeinfo) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.BuildNetworkResponse.acceptorNodeInfo)
 }
 
 // -------------------------------------------------------------------

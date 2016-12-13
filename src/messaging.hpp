@@ -79,10 +79,10 @@ public:
     std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
     
-    bool AcceptColleague(const NodeInfo &node) override;
-    bool RenewColleague(const NodeInfo &node) override;
-    bool AcceptNeighbour(const NodeInfo &node) override;
-    bool RenewNeighbour(const NodeInfo &node) override;
+    std::shared_ptr<NodeInfo> AcceptColleague(const NodeInfo &node) override;
+    std::shared_ptr<NodeInfo> RenewColleague (const NodeInfo &node) override;
+    std::shared_ptr<NodeInfo> AcceptNeighbour(const NodeInfo &node) override;
+    std::shared_ptr<NodeInfo> RenewNeighbour (const NodeInfo &node) override;
 };
 
 
