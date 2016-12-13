@@ -75,7 +75,6 @@ public:
 
 class Node : public ILocalServiceMethods, public IClientMethods, public INodeMethods
 {
-    static const std::vector<NodeInfo> _seedNodes;
     static std::random_device _randomDevice;
     
     NodeInfo _myNodeInfo;
@@ -87,7 +86,7 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     bool SafeStoreNode(const NodeDbEntry &entry,
         std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
     
-    bool InitializeWorld();
+    bool InitializeWorld(const std::vector<NodeProfile> &seedNodes);
     bool InitializeNeighbourhood();
     void RenewNodeRelations();
     void DiscoverUnknownAreas();
@@ -98,10 +97,10 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     
 public:
     
-    Node( const NodeInfo &nodeInfo,
+    Node( const NodeInfo &myNodeInfo,
           std::shared_ptr<ISpatialDatabase> spatialDb,
           std::shared_ptr<INodeConnectionFactory> connectionFactory,
-          bool ignoreDiscovery = false );
+          const std::vector<NodeProfile> &seedNodes );
 
     // Interface provided to serve higher level services and clients
     const std::unordered_map<ServiceType,ServiceProfile,EnumHasher>& GetServices() const override;

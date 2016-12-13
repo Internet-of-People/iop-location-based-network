@@ -53,6 +53,14 @@ static const char *OPTNAME_DBPATH       = "--dbpath";
 
 
 
+const vector<NodeProfile> EzParserConfig::_seedNodes {
+    // TODO put some real seed nodes in here
+    NodeProfile( "BudapestSeedNodeId", NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6371) ),
+//  NodeProfile( NodeId("WienSeedNodeId"), NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6372) ),
+};
+
+
+
 bool EzParserConfig::Initialize(int argc, const char *argv[])
 {
     ez::ezOptionParser _optParser;
@@ -153,6 +161,9 @@ const string& EzParserConfig::dbPath() const
 
 const NodeInfo& EzParserConfig::myNodeInfo() const
     { return *_myNodeInfo; }
+
+const vector<NodeProfile>& EzParserConfig::seedNodes() const
+    { return _seedNodes; }
 
 
 

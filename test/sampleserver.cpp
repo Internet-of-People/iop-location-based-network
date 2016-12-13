@@ -72,7 +72,7 @@ int main()
         
         shared_ptr<INodeConnectionFactory> connectionFactory(
             new DummyNodeConnectionFactory() );
-        Node node( TestData::NodeBudapest, geodb, connectionFactory );
+        Node node( TestData::NodeBudapest, geodb, connectionFactory, {} );
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
         
         const NetworkInterface &BudapestNodeContact(

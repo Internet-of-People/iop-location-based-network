@@ -138,9 +138,10 @@ SpatiaLiteDatabase::SpatiaLiteDatabase(const string &dbPath, const NodeInfo& myN
         LOG(INFO) << "Database initialized";
     }
     else {
-        LOG(INFO) << "Updating node information in database";
+        LOG(DEBUG) << "Updating node information in database";
         Update( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor), false );
     }
+    LOG(DEBUG) << "Database ready with node count: " << GetNodeCount();
 }
 
 

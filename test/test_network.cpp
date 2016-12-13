@@ -31,7 +31,7 @@ SCENARIO("TCP networking", "[network]")
 
         shared_ptr<INodeConnectionFactory> connectionFactory(
             new DummyNodeConnectionFactory() );
-        Node node( TestData::NodeBudapest, geodb, connectionFactory );
+        Node node( TestData::NodeBudapest, geodb, connectionFactory, {} );
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
         ProtoBufDispatchingTcpServer tcpServer(BudapestNodeContact, dispatcher);
         

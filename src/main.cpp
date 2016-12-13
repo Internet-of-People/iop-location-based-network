@@ -35,7 +35,7 @@ int main(int argc, const char *argv[])
             Config::Instance().dbPath(), myNodeInfo ) );
 
         shared_ptr<INodeConnectionFactory> connectionFactory( new TcpStreamConnectionFactory() );
-        Node node(myNodeInfo, geodb, connectionFactory);
+        Node node( myNodeInfo, geodb, connectionFactory, Config::Instance().seedNodes() );
 
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
         ProtoBufDispatchingTcpServer tcpServer( myNodeInfo.profile().contact(), dispatcher );
@@ -55,7 +55,7 @@ int main(int argc, const char *argv[])
         signal(SIGTERM, signalHandler);
         
         while (! ShutdownRequested)
-            { this_thread::sleep_for( chrono::milliseconds(10) ); }
+            { this_thread::sleep_for( chrono::milliseconds(50) ); }
         
         LOG(INFO) << "Finished successfully";
         return 0;

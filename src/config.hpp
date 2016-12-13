@@ -27,6 +27,7 @@ public:
     virtual ~Config() {}
     
     virtual const NodeInfo& myNodeInfo() const = 0;
+    virtual const std::vector<NodeProfile>& seedNodes() const = 0;
     virtual const std::string& dbPath() const = 0;
 };
 
@@ -34,6 +35,8 @@ public:
 
 class EzParserConfig : public Config
 {
+    static const std::vector<NodeProfile> _seedNodes;
+    
     NodeId          _id;
     Address         _ipAddr;
     TcpPort         _port;
@@ -48,6 +51,7 @@ public:
     bool Initialize(int argc, const char *argv[]) override;
     
     const NodeInfo& myNodeInfo() const override;
+    const std::vector<NodeProfile>& seedNodes() const override;
     const std::string& dbPath() const override;
 };
 
