@@ -21,14 +21,16 @@ shared_ptr<INodeMethods> DummyNodeConnectionFactory::ConnectTo(const NodeProfile
 random_device InMemorySpatialDatabase::_randomDevice;
 
 
-InMemorySpatialDatabase::InMemorySpatialDatabase(const GpsLocation& nodeLocation) :
-    _myLocation(nodeLocation) {}
-
-
-
-void InMemorySpatialDatabase::Store(const NodeDbEntry &node)
+InMemorySpatialDatabase::InMemorySpatialDatabase(const NodeInfo& myNodeInfo) :
+    _myLocation( myNodeInfo.location() )
 {
-    // TODO consider exception strategy, bool return value vs exception consistency
+    Store( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor) );
+}
+
+
+
+void InMemorySpatialDatabase::Store(const NodeDbEntry &node, bool)
+{
     auto it = _nodes.find( node.profile().id() );
     if ( it != _nodes.end() ) {
         throw runtime_error("Node is already present");
@@ -43,19 +45,17 @@ shared_ptr<NodeDbEntry> InMemorySpatialDatabase::Load(const string &nodeId) cons
     auto it = _nodes.find(nodeId);
     if ( it == _nodes.end() ) {
         throw runtime_error("Node is not found");
-        //return shared_ptr<LocNetNodeDbEntry>();
     }
     
     return shared_ptr<NodeDbEntry>( new NodeDbEntry(it->second) );
 }
 
 
-void InMemorySpatialDatabase::Update(const NodeDbEntry &node)
+void InMemorySpatialDatabase::Update(const NodeDbEntry &node, bool)
 {
     auto it = _nodes.find( node.profile().id() );
     if ( it == _nodes.end() ) {
         throw runtime_error("Node is not found");
-        // return false;
     }
     
     it->second = node;
@@ -67,7 +67,6 @@ void InMemorySpatialDatabase::Remove(const string &nodeId)
     auto it = _nodes.find(nodeId);
     if ( it == _nodes.end() ) {
         throw runtime_error("Node is not found");
-        // return false;
     }
     _nodes.erase(nodeId);
 }

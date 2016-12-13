@@ -32,7 +32,7 @@ int main(int argc, const char *argv[])
         LOG(INFO) << "Initializing server with node info: " << myNodeInfo;
         
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
-            Config::Instance().dbPath(), myNodeInfo.location() ) );
+            Config::Instance().dbPath(), myNodeInfo ) );
 
         shared_ptr<INodeConnectionFactory> connectionFactory( new TcpStreamConnectionFactory() );
         Node node(myNodeInfo, geodb, connectionFactory);

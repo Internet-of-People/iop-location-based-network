@@ -93,6 +93,13 @@ void Node::DeregisterService(ServiceType serviceType)
 
 bool Node::AcceptColleague(const NodeInfo &newNode)
 {
+// TODO Store conditions are checked in SafeStoreNode, should we reject the request
+//      if the other node "forgot" the connection or use the wrong method (accept vs renew)?
+//      Should the two methods maybe merged instead?
+//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+//     if (storedInfo != nullptr)
+//         { return false; } // We shouldn't have this colleague already
+    
     return SafeStoreNode( NodeDbEntry(
         newNode, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
 }
@@ -100,20 +107,24 @@ bool Node::AcceptColleague(const NodeInfo &newNode)
 
 bool Node::RenewColleague(const NodeInfo& node)
 {
-    shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
-    if (storedInfo != nullptr)
-    {
-        SafeStoreNode( NodeDbEntry(
-            node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
-        return true;
-    }
-    return false;
+// TODO Store conditions are checked in SafeStoreNode, should we reject the request?
+//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+//     if (storedInfo == nullptr)
+//         { return false; } // We should have this colleague already
+
+    return SafeStoreNode( NodeDbEntry(
+        node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
 }
 
 
 
 bool Node::AcceptNeighbour(const NodeInfo &node)
 {
+// TODO Store conditions are checked in SafeStoreNode, should we reject the request?
+//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+//     if (storedInfo != nullptr)
+//         { return false; } // We shouldn't have this colleague already
+    
     return SafeStoreNode( NodeDbEntry(
         node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
 }
@@ -121,14 +132,13 @@ bool Node::AcceptNeighbour(const NodeInfo &node)
 
 bool Node::RenewNeighbour(const NodeInfo& node)
 {
-    shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
-    if (storedInfo != nullptr)
-    {
-        SafeStoreNode( NodeDbEntry(
-            node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
-        return true;
-    }
-    return false;
+// TODO Store conditions are checked in SafeStoreNode, should we reject the request?
+//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+//     if (storedInfo == nullptr)
+//         { return false; } // We should have this colleague already
+        
+    return SafeStoreNode( NodeDbEntry(
+        node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
 }
 
 

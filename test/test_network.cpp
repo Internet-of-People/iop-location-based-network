@@ -22,7 +22,7 @@ SCENARIO("TCP networking", "[network]")
             TestData::NodeBudapest.profile().contact() );
         
         shared_ptr<ISpatialDatabase> geodb(
-            new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::Budapest) );
+            new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::NodeBudapest) );
         geodb->Store(TestData::EntryKecskemet);
         geodb->Store(TestData::EntryLondon);
         geodb->Store(TestData::EntryNewYork);
@@ -66,7 +66,7 @@ SCENARIO("TCP networking", "[network]")
                 
                 const iop::locnet::GetNodeCountResponse &response =
                     msgReceived->body().response().remotenode().getnodecount();
-                REQUIRE( response.nodecount() == 5 );
+                REQUIRE( response.nodecount() == 6 );
             }
             
             clientSession->Close();
@@ -84,7 +84,7 @@ SCENARIO("TCP networking", "[network]")
             NodeMethodsProtoBufClient client(netDispatcher);
             
             size_t nodeCount = client.GetNodeCount();
-            REQUIRE( nodeCount == 5 );
+            REQUIRE( nodeCount == 6 );
         }
     }
 }

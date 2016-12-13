@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <chrono>
+#include <limits>
 
 #include <easylogging++.h>
 #include <sqlite3.h>
@@ -20,6 +21,12 @@ const chrono::duration<uint32_t> EXPIRATION_PERIOD = chrono::hours(24);
 
 const vector<string> DatabaseInitCommands = {
     "SELECT InitSpatialMetadata();",
+    "CREATE TABLE IF NOT EXISTS metainfo ( "
+    "  key   TEXT PRIMARY KEY, "
+    "  value TEXT NOT NULL "
+    ");"
+    "INSERT INTO metainfo (key, value) "
+    "  VALUES ('version', '1');"
     "CREATE TABLE IF NOT EXISTS nodes ( "
     "  id           TEXT PRIMARY KEY, "
     "  addressType  INT NOT NULL, "
@@ -27,7 +34,7 @@ const vector<string> DatabaseInitCommands = {
     "  port         INT NOT NULL, "
     "  relationType INT NOT NULL, "
     "  roleType     INT NOT NULL, "
-    "  expiresAt    INT NOT NULL, " // Unix timestamp
+    "  expiresAt    INT NOT NULL, " // Unix timestamp. NOTE consider implementing non expiring entries to have NULL here.
     "  location     POINT NOT NULL "
     ");",
 };
@@ -97,8 +104,8 @@ void ExecuteSql(sqlite3 *dbHandle, const string &sql)
 
 // SpatiaLite initialization/shutdown sequence is documented here:
 // https://groups.google.com/forum/#!msg/spatialite-users/83SOajOJ2JU/sgi5fuYAVVkJ
-SpatiaLiteDatabase::SpatiaLiteDatabase(const string &dbPath, const GpsLocation& nodeLocation) :
-    _myLocation(nodeLocation), _dbHandle(nullptr)
+SpatiaLiteDatabase::SpatiaLiteDatabase(const string &dbPath, const NodeInfo& myNodeInfo) :
+    _myLocation( myNodeInfo.location() ), _dbHandle(nullptr)
 {
     _spatialiteConnection = spatialite_alloc_connection();
     
@@ -126,10 +133,13 @@ SpatiaLiteDatabase::SpatiaLiteDatabase(const string &dbPath, const GpsLocation& 
         LOG(INFO) << "No SpatiaLite database found, generating: " << dbPath;
         LOG(INFO) << "This may take a long time ...";
         for (const string &command : DatabaseInitCommands)
-        {
-            ExecuteSql(_dbHandle, command);
-        }
+            { ExecuteSql(_dbHandle, command); }
+        Store( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor), false );
         LOG(INFO) << "Database initialized";
+    }
+    else {
+        LOG(INFO) << "Updating node information in database";
+        Update( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor), false );
     }
 }
 
@@ -203,47 +213,6 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
 
 
 
-void SpatiaLiteDatabase::Store(const NodeDbEntry &node)
-{
-    sqlite3_stmt *statement;
-    string insertStr(
-        "INSERT INTO nodes "
-        "(id, addressType, ipAddress, port, relationType, roleType, expiresAt, location) VALUES "
-        "(?, ?, ?, ?, ?, ?, ?, " + LocationPointSql( node.location() ) + ")" );
-    int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr.c_str(), -1, &statement, nullptr );
-    if (prepResult != SQLITE_OK)
-    {
-        LOG(ERROR) << "Failed to prepare statement: " << insertStr;
-        throw runtime_error("Failed to prepare statement for storing node entry");
-    }
-
-    scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-    
-    time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + EXPIRATION_PERIOD );
-    const NetworkInterface &contact = node.profile().contact();
-    // TODO abstract bind away, probably with functions, or maybe macros
-    if ( sqlite3_bind_text( statement, 1, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 2, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||
-         sqlite3_bind_text( statement, 3, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 4, contact.port() )                                 != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 5, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 6, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 7, expiresAt )                                      != SQLITE_OK )
-    {
-        LOG(ERROR) << "Failed to bind node store statement params";
-        throw runtime_error("Failed to bind node store statement params");
-    }
-    
-    int execResult = sqlite3_step(statement);
-    if (execResult != SQLITE_DONE)
-    {
-        LOG(ERROR) << "Failed to run node store statement, error code: " << execResult;
-        throw runtime_error("Failed to run node store statement");
-    }
-}
-
-
-
 // Merge implementation of this function with GetNodes() to decrease duplication
 shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
 {
@@ -296,7 +265,50 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
 
 
 
-void SpatiaLiteDatabase::Update(const NodeDbEntry& node)
+void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
+{
+    sqlite3_stmt *statement;
+    string insertStr(
+        "INSERT INTO nodes "
+        "(id, addressType, ipAddress, port, relationType, roleType, expiresAt, location) VALUES "
+        "(?, ?, ?, ?, ?, ?, ?, " + LocationPointSql( node.location() ) + ")" );
+    int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr.c_str(), -1, &statement, nullptr );
+    if (prepResult != SQLITE_OK)
+    {
+        LOG(ERROR) << "Failed to prepare statement: " << insertStr;
+        throw runtime_error("Failed to prepare statement for storing node entry");
+    }
+
+    scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
+    
+    time_t expiresAt = expires ?
+        chrono::system_clock::to_time_t( chrono::system_clock::now() + EXPIRATION_PERIOD ) :
+        numeric_limits<time_t>::max();
+    const NetworkInterface &contact = node.profile().contact();
+    // TODO abstract bind checks away, probably with functions, or maybe macros
+    if ( sqlite3_bind_text( statement, 1, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 2, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||
+         sqlite3_bind_text( statement, 3, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 4, contact.port() )                                 != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 5, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 6, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 7, expiresAt )                                      != SQLITE_OK )
+    {
+        LOG(ERROR) << "Failed to bind node store statement params";
+        throw runtime_error("Failed to bind node store statement params");
+    }
+    
+    int execResult = sqlite3_step(statement);
+    if (execResult != SQLITE_DONE)
+    {
+        LOG(ERROR) << "Failed to run node store statement, error code: " << execResult;
+        throw runtime_error("Failed to run node store statement");
+    }
+}
+
+
+
+void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
 {
     sqlite3_stmt *statement;
     string insertStr(
@@ -313,7 +325,9 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node)
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
     
-    time_t expiresAt = chrono::system_clock::to_time_t( chrono::system_clock::now() + EXPIRATION_PERIOD );
+    time_t expiresAt = expires ?
+        chrono::system_clock::to_time_t( chrono::system_clock::now() + EXPIRATION_PERIOD ) :
+        numeric_limits<time_t>::max();
     const NetworkInterface &contact = node.profile().contact();
     if ( sqlite3_bind_int(  statement, 1, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||
          sqlite3_bind_text( statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
@@ -504,7 +518,7 @@ vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
 {
     string whereCondition = filter == Neighbours::Included ? "" :
-        "WHERE relationType != " + to_string( static_cast<int>(NodeRelationType::Neighbour) );
+        "WHERE relationType = " + to_string( static_cast<int>(NodeRelationType::Colleague) );
     return ListNodes(_dbHandle, _myLocation, whereCondition,
         "ORDER BY RANDOM()", "LIMIT " + to_string(maxNodeCount) );
 }
@@ -517,8 +531,8 @@ vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(
     string whereCondition = "WHERE (dist_km IS NULL OR dist_km <= " + to_string(radiusKm) + ")";
     if (filter == Neighbours::Excluded)
     {
-        whereCondition += " AND relationType != " +
-            to_string( static_cast<int>(NodeRelationType::Neighbour) );
+        whereCondition += " AND relationType = " +
+            to_string( static_cast<int>(NodeRelationType::Colleague) );
     }
     
     return ListNodes(_dbHandle, location,

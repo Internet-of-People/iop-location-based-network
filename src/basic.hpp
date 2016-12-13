@@ -77,6 +77,7 @@ enum class NodeRelationType : uint8_t
 {
     Colleague   = 1,
     Neighbour   = 2,
+    Self        = 3,
 };
 
 

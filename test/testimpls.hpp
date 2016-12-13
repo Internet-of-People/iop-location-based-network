@@ -9,12 +9,11 @@ namespace LocNet
 {
 
 
-// NOTE NOT PERSISTENT, suited for development only
+// NOTE NOT PERSISTENT, suited for development/testing only
 class InMemorySpatialDatabase : public ISpatialDatabase
 {
     static std::random_device _randomDevice;
     
-    // TODO probably would be better to store nodes in a vector in ascending order of distance from myLocation
     GpsLocation _myLocation;
     std::unordered_map<NodeId,NodeDbEntry> _nodes;
     
@@ -22,13 +21,13 @@ class InMemorySpatialDatabase : public ISpatialDatabase
     
 public:
     
-    InMemorySpatialDatabase(const GpsLocation &nodeLocation);
+    InMemorySpatialDatabase(const NodeInfo &myNodeInfo);
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
-    void Store(const NodeDbEntry &node) override;
     std::shared_ptr<NodeDbEntry> Load(const NodeId &nodeId) const override;
-    void Update(const NodeDbEntry &node) override;
+    void Store (const NodeDbEntry &node, bool expires = true) override;
+    void Update(const NodeDbEntry &node, bool expires = true) override;
     void Remove(const NodeId &nodeId) override;
     
     void ExpireOldNodes() override;

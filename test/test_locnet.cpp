@@ -87,12 +87,16 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
 SCENARIO("Spatial database", "")
 {
     GIVEN("A spatial database implementation") {
-        SpatiaLiteDatabase geodb(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::Budapest);
+        SpatiaLiteDatabase geodb(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::NodeBudapest);
 
         THEN("its initially empty") {
-            REQUIRE( geodb.GetNodeCount() == 0 );
+            REQUIRE( geodb.GetNodeCount() == 1 ); // contains only self
             REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
+            
+            shared_ptr<NodeDbEntry> self = geodb.Load(TestData::NodeBudapest.profile().id() );
+            REQUIRE( self );
+            REQUIRE( static_cast<NodeInfo>(*self) == TestData::NodeBudapest );
         }
 
         Distance Budapest_Kecskemet = geodb.GetDistanceKm(TestData::Budapest, TestData::Kecskemet);
@@ -121,17 +125,17 @@ SCENARIO("Spatial database", "")
             geodb.Store(entry2);
             
             THEN("they can be queried and removed") {
-                REQUIRE( geodb.GetNodeCount() == 2 );
+                REQUIRE( geodb.GetNodeCount() == 3 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 1 );
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
                 
                 geodb.Remove("ColleagueNodeId1");
-                REQUIRE( geodb.GetNodeCount() == 1 );
+                REQUIRE( geodb.GetNodeCount() == 2 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 1 );
                 geodb.Remove("NeighbourNodeId2");
                 
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
-                REQUIRE( geodb.GetNodeCount() == 0 );
+                REQUIRE( geodb.GetNodeCount() == 1 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             }
         }
@@ -146,31 +150,33 @@ SCENARIO("Spatial database", "")
             THEN("closest nodes are properly selected") {
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
-                        TestData::Budapest, 20000.0, 1, Neighbours::Included );
-                    REQUIRE( closestNodes.size() == 1 );
-                    REQUIRE( closestNodes[0] == TestData::EntryKecskemet );
+                        TestData::Budapest, 20000.0, 2, Neighbours::Included );
+                    REQUIRE( closestNodes.size() == 2 );
+                    REQUIRE( closestNodes[0] == TestData::NodeBudapest );
+                    REQUIRE( closestNodes[1] == TestData::NodeKecskemet );
                 }
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
                         TestData::Budapest, 20000.0, 1, Neighbours::Excluded );
                     REQUIRE( closestNodes.size() == 1 );
-                    REQUIRE( closestNodes[0] == TestData::EntryLondon );
+                    REQUIRE( closestNodes[0] == TestData::NodeLondon );
                 }
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
                         TestData::Budapest, 20000.0, 1000, Neighbours::Included );
-                    REQUIRE( closestNodes.size() == 5 );
-                    REQUIRE( closestNodes[0] == TestData::EntryKecskemet );
-                    REQUIRE( closestNodes[1] == TestData::EntryWien );
-                    REQUIRE( closestNodes[2] == TestData::EntryLondon );
-                    REQUIRE( closestNodes[3] == TestData::EntryNewYork );
-                    REQUIRE( closestNodes[4] == TestData::EntryCapeTown );
+                    REQUIRE( closestNodes.size() == 6 );
+                    REQUIRE( closestNodes[0] == TestData::NodeBudapest );
+                    REQUIRE( closestNodes[1] == TestData::NodeKecskemet );
+                    REQUIRE( closestNodes[2] == TestData::NodeWien );
+                    REQUIRE( closestNodes[3] == TestData::NodeLondon );
+                    REQUIRE( closestNodes[4] == TestData::NodeNewYork );
+                    REQUIRE( closestNodes[5] == TestData::NodeCapeTown );
                 }
                 {
                     vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
                         TestData::Budapest, 5000.0, 1000, Neighbours::Excluded );
                     REQUIRE( closestNodes.size() == 1 );
-                    REQUIRE( closestNodes[0] == TestData::EntryLondon );
+                    REQUIRE( closestNodes[0] == TestData::NodeLondon );
                 }
             }
             
@@ -196,7 +202,7 @@ SCENARIO("Spatial database", "")
             }
             
             THEN("Data is properly deleted") {
-                REQUIRE( geodb.GetNodeCount() == 5 );
+                REQUIRE( geodb.GetNodeCount() == 6 );
                 
                 geodb.Remove( TestData::NodeKecskemet.profile().id() );
                 geodb.Remove( TestData::NodeLondon.profile().id() );
@@ -204,7 +210,7 @@ SCENARIO("Spatial database", "")
                 geodb.Remove( TestData::NodeWien.profile().id() );
                 geodb.Remove( TestData::NodeCapeTown.profile().id() );
                 
-                REQUIRE( geodb.GetNodeCount() == 0 );
+                REQUIRE( geodb.GetNodeCount() == 1 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             }
         }
@@ -220,7 +226,7 @@ SCENARIO("Server registration", "")
         NodeInfo nodeInfo( NodeProfile("NodeId",
             { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), loc );
         shared_ptr<ISpatialDatabase> geodb(
-            new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, loc) );
+            new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, nodeInfo) );
         shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
         Node geonet(nodeInfo, geodb, connectionFactory, true);
         

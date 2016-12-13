@@ -27,7 +27,7 @@ int main()
         LOG(INFO) << "Initializing server";
 // TODO move this commented code section to unit testing
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
-            SpatiaLiteDatabase::IN_MEMORY_DB, TestData::Budapest) );
+            SpatiaLiteDatabase::IN_MEMORY_DB, TestData::NodeBudapest) );
         geodb->Store(TestData::EntryKecskemet);
         geodb->Store(TestData::EntryLondon);
         geodb->Store(TestData::EntryNewYork);

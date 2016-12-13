@@ -49,9 +49,9 @@ public:
     
     virtual Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const = 0;
     
-    virtual void Store(const NodeDbEntry &node) = 0;
     virtual std::shared_ptr<NodeDbEntry> Load(const NodeId &nodeId) const = 0;
-    virtual void Update(const NodeDbEntry &node) = 0;
+    virtual void Store (const NodeDbEntry &node, bool expires = true) = 0;
+    virtual void Update(const NodeDbEntry &node, bool expires = true) = 0;
     virtual void Remove(const NodeId &nodeId) = 0;
     
     virtual void ExpireOldNodes() = 0;
@@ -79,14 +79,14 @@ public:
     
     static const std::string IN_MEMORY_DB;
     
-    SpatiaLiteDatabase(const std::string &dbPath, const GpsLocation &nodeLocation);
+    SpatiaLiteDatabase(const std::string &dbPath, const NodeInfo &myNodeInfo);
     virtual ~SpatiaLiteDatabase();
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
-    void Store(const NodeDbEntry &node) override;
     std::shared_ptr<NodeDbEntry> Load(const NodeId &nodeId) const override;
-    void Update(const NodeDbEntry &node) override;
+    void Store (const NodeDbEntry &node, bool expires = true) override;
+    void Update(const NodeDbEntry &node, bool expires = true) override;
     void Remove(const NodeId &nodeId) override;
     
     void ExpireOldNodes() override;
