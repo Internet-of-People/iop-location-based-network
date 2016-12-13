@@ -523,8 +523,8 @@ void Node::RenewNodeRelations()
         }
         catch (exception &e)
         {
-            LOG(WARNING) << "Unexpected error while contacting node "
-                << node.profile().id() << " : " << e.what();
+            LOG(WARNING) << "Unexpected error renewing relation for node "
+                         << node.profile().id() << " : " << e.what();
         }
     }
 }
@@ -538,40 +538,47 @@ void Node::DiscoverUnknownAreas()
         uniform_real_distribution<GpsCoordinate> latitudeRange(-90.0, 90.0);
         uniform_real_distribution<GpsCoordinate> longitudeRange(-180.0, 180.0);
         GpsLocation randomLocation( latitudeRange(_randomDevice), longitudeRange(_randomDevice) );
-        
-        // TODO consider: the resulted node might be very far away from the generated random node,
-        //      so prefiltering might cause bad results, but it also spares network costs. Test and decide!
-        if ( BubbleOverlaps(randomLocation) )
-            { continue; }
-        
-        // Get node closest to this position that is already present in our database
-        vector<NodeInfo> myClosestNodes = _spatialDb->GetClosestNodesByDistance(
-            randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Excluded );
-        if ( myClosestNodes.empty() )
-            { continue; }
-        const auto &myClosestNode = myClosestNodes[0];
-        
-        // Connect to closest node
-        shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.profile() );
-        if (connection == nullptr)
+            
+        try
         {
-            LOG(INFO) << "Failed to contact node " << myClosestNode.profile().id();
-            continue;
-        }
-        
-        // Ask closest node about its nodes closest to the random position
-        vector<NodeInfo> gotClosestNodes = connection->GetClosestNodesByDistance(
-            randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Included );
-        if ( gotClosestNodes.empty() )
-            { continue; }
-        const auto &gotClosestNode = gotClosestNodes[0];
-        
-        // Try to add node to our database
-        bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( gotClosestNode,
-            NodeRelationType::Colleague, NodeContactRoleType::Initiator), connection );
-        if (! storedAsNeighbour) {
-            SafeStoreNode( NodeDbEntry( gotClosestNode,
+            // TODO consider: the resulted node might be very far away from the generated random node,
+            //      so prefiltering might cause bad results, but it also spares network costs. Test and decide!
+            if ( BubbleOverlaps(randomLocation) )
+                { continue; }
+            
+            // Get node closest to this position that is already present in our database
+            vector<NodeInfo> myClosestNodes = _spatialDb->GetClosestNodesByDistance(
+                randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Excluded );
+            if ( myClosestNodes.empty() )
+                { continue; }
+            const auto &myClosestNode = myClosestNodes[0];
+            
+            // Connect to closest node
+            shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.profile() );
+            if (connection == nullptr)
+            {
+                LOG(INFO) << "Failed to contact node " << myClosestNode.profile().id();
+                continue;
+            }
+            
+            // Ask closest node about its nodes closest to the random position
+            vector<NodeInfo> gotClosestNodes = connection->GetClosestNodesByDistance(
+                randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Included );
+            if ( gotClosestNodes.empty() )
+                { continue; }
+            const auto &gotClosestNode = gotClosestNodes[0];
+            
+            // Try to add node to our database
+            bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( gotClosestNode,
                 NodeRelationType::Colleague, NodeContactRoleType::Initiator), connection );
+            if (! storedAsNeighbour) {
+                SafeStoreNode( NodeDbEntry( gotClosestNode,
+                    NodeRelationType::Colleague, NodeContactRoleType::Initiator), connection );
+            }
+        }
+        catch (exception &ex)
+        {
+            LOG(INFO) << "Failed to discover location " << randomLocation << ": " << ex.what();
         }
     }
 }

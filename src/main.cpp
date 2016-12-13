@@ -58,9 +58,14 @@ int main(int argc, const char *argv[])
         {
             while (! ShutdownRequested)
             {
-                this_thread::sleep_for( config.dbMaintenancePeriod() );
-                node.ExpireOldNodes();
-                node.RenewNodeRelations();
+                try
+                {
+                    this_thread::sleep_for( config.dbMaintenancePeriod() );
+                    node.ExpireOldNodes();
+                    node.RenewNodeRelations();
+                }
+                catch (exception &ex)
+                    { LOG(ERROR) << "Maintenance thread failed: " << ex.what(); }
             }
         } );
         dbMaintenanceThread.detach();
@@ -69,8 +74,13 @@ int main(int argc, const char *argv[])
         {
             while (! ShutdownRequested)
             {
-                this_thread::sleep_for( config.discoveryPeriod() );
-                node.DiscoverUnknownAreas();
+                try
+                {
+                    this_thread::sleep_for( config.discoveryPeriod() );
+                    node.DiscoverUnknownAreas();
+                }
+                catch (exception &ex)
+                    { LOG(ERROR) << "Periodic discovery thread failed: " << ex.what(); }
             }
         } );
         discoveryThread.detach();
