@@ -87,7 +87,8 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
 SCENARIO("Spatial database", "")
 {
     GIVEN("A spatial database implementation") {
-        SpatiaLiteDatabase geodb(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::NodeBudapest);
+        SpatiaLiteDatabase geodb(TestData::NodeBudapest,
+            SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) );
 
         THEN("its initially empty") {
             REQUIRE( geodb.GetNodeCount() == 1 ); // contains only self
@@ -225,8 +226,8 @@ SCENARIO("Server registration", "")
         GpsLocation loc(1.0, 2.0);
         NodeInfo nodeInfo( NodeProfile("NodeId",
             { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), loc );
-        shared_ptr<ISpatialDatabase> geodb(
-            new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, nodeInfo) );
+        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(nodeInfo,
+            SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
         Node geonet(nodeInfo, geodb, connectionFactory, {});
         

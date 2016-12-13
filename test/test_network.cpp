@@ -21,8 +21,8 @@ SCENARIO("TCP networking", "[network]")
         const NetworkInterface &BudapestNodeContact(
             TestData::NodeBudapest.profile().contact() );
         
-        shared_ptr<ISpatialDatabase> geodb(
-            new SpatiaLiteDatabase(SpatiaLiteDatabase::IN_MEMORY_DB, TestData::NodeBudapest) );
+        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
+            SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         geodb->Store(TestData::EntryKecskemet);
         geodb->Store(TestData::EntryLondon);
         geodb->Store(TestData::EntryNewYork);

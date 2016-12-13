@@ -1,6 +1,7 @@
 #ifndef __LOCNET_SPATIAL_DATABASE_H__
 #define __LOCNET_SPATIAL_DATABASE_H__
 
+#include <chrono>
 #include <memory>
 #include <sqlite3.h>
 #include <vector>
@@ -74,12 +75,14 @@ class SpatiaLiteDatabase : public ISpatialDatabase
     GpsLocation  _myLocation;
     sqlite3     *_dbHandle;
     void        *_spatialiteConnection;
+    std::chrono::duration<uint32_t> _entryExpirationPeriod;
     
 public:
     
     static const std::string IN_MEMORY_DB;
     
-    SpatiaLiteDatabase(const std::string &dbPath, const NodeInfo &myNodeInfo);
+    SpatiaLiteDatabase(const NodeInfo &myNodeInfo, const std::string &dbPath,
+                       std::chrono::duration<uint32_t> expirationPeriod);
     virtual ~SpatiaLiteDatabase();
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;

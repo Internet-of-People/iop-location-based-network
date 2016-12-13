@@ -88,8 +88,6 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     
     bool InitializeWorld(const std::vector<NodeProfile> &seedNodes);
     bool InitializeNeighbourhood();
-    void RenewNodeRelations();
-    void DiscoverUnknownAreas();
     
     Distance GetBubbleSize(const GpsLocation &location) const;
     bool BubbleOverlaps(const GpsLocation &newNodeLocation,
@@ -102,6 +100,10 @@ public:
           std::shared_ptr<INodeConnectionFactory> connectionFactory,
           const std::vector<NodeProfile> &seedNodes );
 
+    void ExpireOldNodes();
+    void RenewNodeRelations();
+    void DiscoverUnknownAreas();
+    
     // Interface provided to serve higher level services and clients
     const std::unordered_map<ServiceType,ServiceProfile,EnumHasher>& GetServices() const override;
     // + GetClosestNodes() which is the same as for network instances on remote machines

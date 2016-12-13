@@ -17,7 +17,6 @@ namespace LocNet
 
 
 const string SpatiaLiteDatabase::IN_MEMORY_DB = ":memory:";
-const chrono::duration<uint32_t> EXPIRATION_PERIOD = chrono::hours(24);
 
 const vector<string> DatabaseInitCommands = {
     "SELECT InitSpatialMetadata();",
@@ -104,8 +103,10 @@ void ExecuteSql(sqlite3 *dbHandle, const string &sql)
 
 // SpatiaLite initialization/shutdown sequence is documented here:
 // https://groups.google.com/forum/#!msg/spatialite-users/83SOajOJ2JU/sgi5fuYAVVkJ
-SpatiaLiteDatabase::SpatiaLiteDatabase(const string &dbPath, const NodeInfo& myNodeInfo) :
-    _myLocation( myNodeInfo.location() ), _dbHandle(nullptr)
+SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string &dbPath,
+                                        chrono::duration<uint32_t> entryExpirationPeriod ) :
+    _myLocation( myNodeInfo.location() ), _dbHandle(nullptr),
+    _entryExpirationPeriod(entryExpirationPeriod)
 {
     _spatialiteConnection = spatialite_alloc_connection();
     
@@ -283,7 +284,7 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
     
     time_t expiresAt = expires ?
-        chrono::system_clock::to_time_t( chrono::system_clock::now() + EXPIRATION_PERIOD ) :
+        chrono::system_clock::to_time_t( chrono::system_clock::now() + _entryExpirationPeriod ) :
         numeric_limits<time_t>::max();
     const NetworkInterface &contact = node.profile().contact();
     // TODO abstract bind checks away, probably with functions, or maybe macros
@@ -327,7 +328,7 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
     
     time_t expiresAt = expires ?
-        chrono::system_clock::to_time_t( chrono::system_clock::now() + EXPIRATION_PERIOD ) :
+        chrono::system_clock::to_time_t( chrono::system_clock::now() + _entryExpirationPeriod ) :
         numeric_limits<time_t>::max();
     const NetworkInterface &contact = node.profile().contact();
     if ( sqlite3_bind_int(  statement, 1, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||

@@ -27,24 +27,23 @@ int main(int argc, const char *argv[])
         if (! configCreated)
             { return 1; }
         
-        
-        NodeInfo myNodeInfo( Config::Instance().myNodeInfo() );
+        // Initialize server components
+        const Config &config( Config::Instance() ); 
+        NodeInfo myNodeInfo( config.myNodeInfo() );
         LOG(INFO) << "Initializing server with node info: " << myNodeInfo;
         
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
-            Config::Instance().dbPath(), myNodeInfo ) );
+            myNodeInfo, config.dbPath(), config.dbExpirationPeriod() ) );
 
         shared_ptr<INodeConnectionFactory> connectionFactory( new TcpStreamConnectionFactory() );
-        Node node( myNodeInfo, geodb, connectionFactory, Config::Instance().seedNodes() );
+        Node node( myNodeInfo, geodb, connectionFactory, config.seedNodes() );
 
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
         ProtoBufDispatchingTcpServer tcpServer( myNodeInfo.profile().contact(), dispatcher );
 
-        // TODO add thread(s) for periodic discovery and db maintenance
-        
-
+        // Set up signal handlers to stop on Ctrl-C and further events
         bool ShutdownRequested = false;
-
+        
         mySignalHandlerFunc = [&ShutdownRequested, &tcpServer] (int)
         {
             ShutdownRequested = true;
@@ -54,6 +53,31 @@ int main(int argc, const char *argv[])
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
+        // start threads for periodic db maintenance (relation renewal and expiration) and discovery
+        thread dbMaintenanceThread( [&ShutdownRequested, &node, &config]
+        {
+            while (! ShutdownRequested)
+            {
+                this_thread::sleep_for( config.dbMaintenancePeriod() );
+                node.ExpireOldNodes();
+                node.RenewNodeRelations();
+            }
+        } );
+        dbMaintenanceThread.detach();
+        
+        thread discoveryThread( [&ShutdownRequested, &node, &config]
+        {
+            while (! ShutdownRequested)
+            {
+                this_thread::sleep_for( config.discoveryPeriod() );
+                node.DiscoverUnknownAreas();
+            }
+        } );
+        discoveryThread.detach();
+        
+        // TODO we should do something more useful here instead of polling,
+        //      maybe run io_service::run, but don't know if it blocks or behaves with CTRL-C and other signals
+        // Avoid exiting from this thread
         while (! ShutdownRequested)
             { this_thread::sleep_for( chrono::milliseconds(50) ); }
         

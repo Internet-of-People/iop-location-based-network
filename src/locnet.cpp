@@ -23,8 +23,7 @@ const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 100;
 const float    INIT_WORLD_NODE_FILL_TARGET_RATE     = 0.75;
 const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT  = 10;
 
-const chrono::duration<uint32_t> MAINTENANCE_PERIOD = chrono::hours(24);
-const size_t   MAINTENANCE_ATTEMPT_COUNT            = 100;
+const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT            = 100;
 
 
 
@@ -504,9 +503,16 @@ bool Node::InitializeNeighbourhood()
 
 
 
+void Node::ExpireOldNodes()
+{
+    // TODO implement and notify listeners like Profile Server when this is performed
+    _spatialDb->ExpireOldNodes();
+}
+
+
+
 void Node::RenewNodeRelations()
 {
-    // TODO we probably have to run this in a separate thread
     vector<NodeDbEntry> contactedNodes = _spatialDb->GetNodes(NodeContactRoleType::Initiator);
     for (auto const &node : contactedNodes)
     {
@@ -526,8 +532,7 @@ void Node::RenewNodeRelations()
 
 void Node::DiscoverUnknownAreas()
 {
-    // TODO we probably have to run this in a separate thread
-    for (size_t i = 0; i < MAINTENANCE_ATTEMPT_COUNT; ++i)
+    for (size_t i = 0; i < PERIODIC_DISCOVERY_ATTEMPT_COUNT; ++i)
     {
         // Generate a random GPS location
         uniform_real_distribution<GpsCoordinate> latitudeRange(-90.0, 90.0);

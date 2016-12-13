@@ -52,6 +52,9 @@ static const char *OPTNAME_LONGITUDE    = "--longitude";
 static const char *OPTNAME_DBPATH       = "--dbpath";
 
 
+const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::hours(6);
+const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod = chrono::hours(24);
+const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::hours(1);
 
 const vector<NodeProfile> EzParserConfig::_seedNodes {
     // TODO put some real seed nodes in here
@@ -165,6 +168,14 @@ const NodeInfo& EzParserConfig::myNodeInfo() const
 const vector<NodeProfile>& EzParserConfig::seedNodes() const
     { return _seedNodes; }
 
+chrono::duration< uint32_t > EzParserConfig::dbMaintenancePeriod() const
+    { return _dbMaintenancePeriod; }
+
+std::chrono::duration<uint32_t> EzParserConfig::dbExpirationPeriod() const
+    { return _dbExpirationPeriod; }
+
+std::chrono::duration<uint32_t> EzParserConfig::discoveryPeriod() const
+    { return _discoveryPeriod; }
 
 
 }
