@@ -274,7 +274,7 @@ SCENARIO("Server registration", "")
 
 
 
-int main( int, char* const [] )
+int main( int, const char* const [] )
 {
     // Disable logging to prevent flooding the console
     el::Configurations logConf;
