@@ -55,6 +55,9 @@ bool NodeProfile::operator==(const NodeProfile& other) const
             _contact == other._contact;
 }
 
+bool NodeProfile::operator!=(const NodeProfile& other) const
+    { return ! operator==(other); }
+
 
 std::ostream& operator<<(std::ostream& out, const NodeProfile &value)
 {
@@ -117,6 +120,9 @@ bool NodeInfo::operator==(const NodeInfo& other) const
     return _profile  == other._profile &&
            _location == other._location;
 }
+
+bool NodeInfo::operator!=(const NodeInfo& other) const
+    { return ! operator==(other); }
 
 
 std::ostream& operator<<(std::ostream& out, const NodeInfo &value)

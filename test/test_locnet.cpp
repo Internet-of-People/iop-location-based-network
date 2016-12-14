@@ -1,5 +1,5 @@
-// #define CATCH_CONFIG_RUNNER
-#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_RUNNER
+//#define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 #include <easylogging++.h>
 
@@ -274,10 +274,17 @@ SCENARIO("Server registration", "")
 
 
 
-// int main( int argc, char* const argv[] )
-// {
-//     Catch::Session session; // There must be exactly once instance
-// 
+int main( int, char* const [] )
+{
+    // Disable logging to prevent flooding the console
+    el::Configurations logConf;
+    logConf.setToDefault();
+    logConf.setGlobally(el::ConfigurationType::Enabled, "false");
+    el::Loggers::reconfigureLogger("default", logConf);
+    
+    // Perform all tests
+    Catch::Session session; // There must be exactly once instance
+
 //     // writing to session.configData() here sets defaults
 //     // this is the preferred way to set them
 // 
@@ -288,10 +295,8 @@ SCENARIO("Server registration", "")
 //     // writing to session.configData() or session.Config() here 
 //     // overrides command line args
 //     // only do this if you know you need to
-// 
-//     try {
-//         return session.run();
-//     } catch (exception &e) {
-//         cerr << "Caught exception: " << e.what() << endl;
-//     }
-// }
+
+    try { return session.run(); }
+    catch (exception &e)
+        { cerr << "Caught exception: " << e.what() << endl; }
+}

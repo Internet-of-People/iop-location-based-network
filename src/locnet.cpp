@@ -17,13 +17,13 @@ namespace LocNet
 {
 
 
-const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT         = 100;
+const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT         = 50;
 
-const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 100;
+const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 50;
 const float    INIT_WORLD_NODE_FILL_TARGET_RATE     = 0.75;
 const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT  = 10;
 
-const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT            = 100;
+const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT     = 100;
 
 
 
@@ -204,6 +204,11 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
 {
     try
     {
+        // We must not explicitly add or overwrite our own node info here.
+        // Whether or not our own nodeinfo is stored in the db is an implementation detail of the SpatialDatabase.
+        if ( static_cast<const NodeInfo&>(plannedEntry) == _myNodeInfo )
+            { return false; }
+        
         // Check if node is acceptable
         shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( plannedEntry.profile().id() );
         switch ( plannedEntry.relationType() )
@@ -543,34 +548,36 @@ void Node::DiscoverUnknownAreas()
         {
             // TODO consider: the resulted node might be very far away from the generated random node,
             //      so prefiltering might cause bad results, but it also spares network costs. Test and decide!
-            if ( BubbleOverlaps(randomLocation) )
-                { continue; }
+            // if ( BubbleOverlaps(randomLocation) )
+            //    { continue; }
             
             // Get node closest to this position that is already present in our database
             vector<NodeInfo> myClosestNodes = _spatialDb->GetClosestNodesByDistance(
-                randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Excluded );
-            if ( myClosestNodes.empty() )
+                randomLocation, numeric_limits<Distance>::max(), 2, Neighbours::Excluded );
+            if ( myClosestNodes.empty() ||
+               ( myClosestNodes.size() == 1 && myClosestNodes[0] == _myNodeInfo ) )
                 { continue; }
-            const auto &myClosestNode = myClosestNodes[0];
+            const auto &myClosestNode = myClosestNodes[0] != _myNodeInfo ?
+                myClosestNodes[0] : myClosestNodes[1];
             
             // Connect to closest node
             shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.profile() );
             if (connection == nullptr)
             {
-                LOG(INFO) << "Failed to contact node " << myClosestNode.profile().id();
+                LOG(DEBUG) << "Failed to contact node " << myClosestNode.profile().id();
                 continue;
             }
             
             // Ask closest node about its nodes closest to the random position
             vector<NodeInfo> gotClosestNodes = connection->GetClosestNodesByDistance(
                 randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Included );
-            if ( gotClosestNodes.empty() )
+            if ( gotClosestNodes.empty() || gotClosestNodes[0] == _myNodeInfo )
                 { continue; }
             const auto &gotClosestNode = gotClosestNodes[0];
             
             // Try to add node to our database
             bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( gotClosestNode,
-                NodeRelationType::Colleague, NodeContactRoleType::Initiator), connection );
+                NodeRelationType::Neighbour, NodeContactRoleType::Initiator), connection );
             if (! storedAsNeighbour) {
                 SafeStoreNode( NodeDbEntry( gotClosestNode,
                     NodeRelationType::Colleague, NodeContactRoleType::Initiator), connection );

@@ -64,6 +64,7 @@ public:
     const NetworkInterface& contact() const;
     
     bool operator==(const NodeProfile &other) const;
+    bool operator!=(const NodeProfile &other) const;
 };
 
 std::ostream& operator<<(std::ostream& out, const NodeProfile &value);
@@ -128,6 +129,7 @@ public:
     const GpsLocation& location() const;
     
     bool operator==(const NodeInfo &other) const;
+    bool operator!=(const NodeInfo &other) const;
 };
 
 std::ostream& operator<<(std::ostream& out, const NodeInfo &value);
