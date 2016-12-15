@@ -17,7 +17,7 @@ class InMemorySpatialDatabase : public ISpatialDatabase
     GpsLocation _myLocation;
     std::unordered_map<NodeId,NodeDbEntry> _nodes;
     
-    std::vector<NodeInfo> GetNodes(NodeRelationType relationType) const;
+    std::vector<NodeDbEntry> GetNodes(NodeRelationType relationType) const;
     
 public:
     
@@ -29,15 +29,20 @@ public:
     void Store (const NodeDbEntry &node, bool expires = true) override;
     void Update(const NodeDbEntry &node, bool expires = true) override;
     void Remove(const NodeId &nodeId) override;
-    
     void ExpireOldNodes() override;
+    
+    void AddListener(ServiceType serviceType,
+        std::shared_ptr<IChangeListener> listener) override;
+    void RemoveListener(ServiceType serviceType) override;
+    
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
-    std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
-    std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
+    std::vector<NodeDbEntry> GetNeighbourNodesByDistance() const override;
+    std::vector<NodeDbEntry> GetRandomNodes(
+        size_t maxNodeCount, Neighbours filter) const override;
     
-    std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &position,
+    std::vector<NodeDbEntry> GetClosestNodesByDistance(const GpsLocation &position,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
 

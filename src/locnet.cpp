@@ -80,6 +80,14 @@ void Node::DeregisterService(ServiceType serviceType)
 }
 
 
+void Node::AddListener(ServiceType serviceType, shared_ptr<IChangeListener> listener)
+    { _spatialDb->AddListener(serviceType, listener); }
+
+void Node::RemoveListener(ServiceType serviceType)
+    { _spatialDb->RemoveListener(serviceType); }
+
+
+
 shared_ptr<NodeInfo> Node::AcceptColleague(const NodeInfo &newNode)
 {
 // TODO Sanity checks are performed in SafeStoreNode, should we reject the request
@@ -136,21 +144,29 @@ shared_ptr<NodeInfo> Node::RenewNeighbour(const NodeInfo& node)
 
 
 
-vector<NodeInfo> Node::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
-    { return _spatialDb->GetRandomNodes(maxNodeCount, filter); }
-    
-vector<NodeInfo> Node::GetNeighbourNodesByDistance() const
-    { return _spatialDb->GetNeighbourNodesByDistance(); }
-    
 size_t Node::GetNodeCount() const
     { return _spatialDb->GetNodeCount(); }
+
+
+vector<NodeInfo> Node::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+{
+    vector<NodeDbEntry> entries( _spatialDb->GetRandomNodes(maxNodeCount, filter) );
+    return vector<NodeInfo>( entries.begin(), entries.end() );
+}
+    
+vector<NodeInfo> Node::GetNeighbourNodesByDistance() const
+{
+    vector<NodeDbEntry> entries( _spatialDb->GetNeighbourNodesByDistance() );
+    return vector<NodeInfo>( entries.begin(), entries.end() );
+}
     
     
 
 vector<NodeInfo> Node::GetClosestNodesByDistance(const GpsLocation& location,
     Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
 {
-    return _spatialDb->GetClosestNodesByDistance(location, radiusKm, maxNodeCount, filter);
+    vector<NodeDbEntry> entries( _spatialDb->GetClosestNodesByDistance(location, radiusKm, maxNodeCount, filter) );
+    return vector<NodeInfo>( entries.begin(), entries.end() );
 }
 
 
@@ -165,7 +181,7 @@ Distance Node::GetBubbleSize(const GpsLocation& location) const
 bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &nodeIdToIgnore) const
 {
     // Get our closest node to location, no matter the radius
-    vector<NodeInfo> closestNodes = _spatialDb->GetClosestNodesByDistance(
+    vector<NodeInfo> closestNodes = GetClosestNodesByDistance(
         newNodeLocation, numeric_limits<Distance>::max(), 2, Neighbours::Excluded);
     
     // If there are no points yet (i.e. map is still empty) or our single node is being updated, it cannot overlap
@@ -237,7 +253,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             case NodeRelationType::Neighbour:
             {
                 // Neighbour limit will be exceeded, check if new entry deserves to temporarilty go over limit
-                vector<NodeInfo> neighboursByDistance( _spatialDb->GetNeighbourNodesByDistance() );
+                vector<NodeInfo> neighboursByDistance( GetNeighbourNodesByDistance() );
                 if ( neighboursByDistance.size() >= NEIGHBOURHOOD_MAX_NODE_COUNT )
                 {
                     // If we have too many closer neighbours already, deny request
@@ -367,8 +383,7 @@ bool Node::InitializeWorld(const vector<NodeProfile> &seedNodes)
     LOG(DEBUG) << "Targeted node count is " << targetNodeCount;
     
     // Try why we either reached targeted node count or asked colleagues from all available nodes
-    while ( _spatialDb->GetNodeCount() < targetNodeCount &&
-            triedNodes.size() < _spatialDb->GetNodeCount() - 1 ) // Exclude self from tried count
+    while ( GetNodeCount() < targetNodeCount && triedNodes.size() < GetNodeCount() - 1 ) // Exclude self from tried count
     {
         if ( ! randomColleagueCandidates.empty() )
         {
@@ -383,10 +398,9 @@ bool Node::InitializeWorld(const vector<NodeProfile> &seedNodes)
             LOG(TRACE) << "Run out of colleague candites, asking randomly for more";
             
             // Get a shuffled list of all colleague nodes known so far
-            vector<NodeInfo> nodesKnownSoFar = _spatialDb->GetRandomNodes(
-                _spatialDb->GetNodeCount(), Neighbours::Excluded);
+            vector<NodeInfo> nodesKnownSoFar = GetRandomNodes( GetNodeCount(), Neighbours::Excluded );
             
-            for (const NodeInfo &nodeInfo : nodesKnownSoFar)
+            for (const auto &nodeInfo : nodesKnownSoFar)
             {
                 // Check if we tried it already
                 if ( find( triedNodes.begin(), triedNodes.end(), nodeInfo.profile().id() ) != triedNodes.end() )
@@ -414,7 +428,7 @@ bool Node::InitializeWorld(const vector<NodeProfile> &seedNodes)
         }
     }
     
-    LOG(DEBUG) << "World discovery finished, got " << _spatialDb->GetNodeCount() << " nodes";
+    LOG(DEBUG) << "World discovery finished, got " << GetNodeCount() << " nodes";
     return true;
 }
 
@@ -422,8 +436,7 @@ bool Node::InitializeWorld(const vector<NodeProfile> &seedNodes)
 
 bool Node::InitializeNeighbourhood()
 {
-    // Get the closest node known to us so far
-    vector<NodeInfo> newClosestNodes = _spatialDb->GetClosestNodesByDistance(
+    vector<NodeInfo> newClosestNodes = GetClosestNodesByDistance(
         _myNodeInfo.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
     if ( newClosestNodes.size() < 2 ) // First node is self
         { return false; }
@@ -510,7 +523,6 @@ bool Node::InitializeNeighbourhood()
 
 void Node::ExpireOldNodes()
 {
-    // TODO implement and notify listeners like Profile Server when this is performed
     _spatialDb->ExpireOldNodes();
 }
 
@@ -552,10 +564,10 @@ void Node::DiscoverUnknownAreas()
             //    { continue; }
             
             // Get node closest to this position that is already present in our database
-            vector<NodeInfo> myClosestNodes = _spatialDb->GetClosestNodesByDistance(
+            vector<NodeInfo> myClosestNodes = GetClosestNodesByDistance(
                 randomLocation, numeric_limits<Distance>::max(), 2, Neighbours::Excluded );
             if ( myClosestNodes.empty() ||
-               ( myClosestNodes.size() == 1 && myClosestNodes[0] == _myNodeInfo ) )
+               ( myClosestNodes.size() == 1 && _myNodeInfo == myClosestNodes[0] ) )
                 { continue; }
             const auto &myClosestNode = myClosestNodes[0] != _myNodeInfo ?
                 myClosestNodes[0] : myClosestNodes[1];

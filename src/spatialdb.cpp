@@ -86,6 +86,7 @@ bool FileExist(const string &fileName)
 }
 
 
+
 void ExecuteSql(sqlite3 *dbHandle, const string &sql)
 {
     char *errorMessage = nullptr;
@@ -97,6 +98,68 @@ void ExecuteSql(sqlite3 *dbHandle, const string &sql)
         LOG(ERROR) << "Error was: " << errorMessage;
         throw runtime_error(errorMessage);
     }
+}
+
+
+
+string LocationPointSql(const GpsLocation &location)
+{
+    // NOTE int-based numbers, no string or user input, so no SQL injection vulnerability
+    return string( "MakePoint(" +
+        to_string( location.longitude() ) + "," + 
+        to_string( location.latitude()  ) + ")" );
+}
+
+
+
+vector<NodeDbEntry> QueryEntries(sqlite3 *dbHandle, const GpsLocation &fromLocation,
+    const string &whereCondition = "", const string orderBy = "", const string &limit = "")
+{
+    sqlite3_stmt *statement;
+    string queryStr =
+        "SELECT id, addressType, ipAddress, port, X(location), Y(location), "
+            "relationType, roleType, expiresAt, "
+            "Distance(location, " + LocationPointSql(fromLocation) + ", 1) / 1000 AS dist_km "
+        "FROM nodes " +
+        whereCondition + " " +
+        orderBy + " " +
+        limit;
+    
+    //LOG(DEBUG) << "Running query: " << queryStr;
+    
+    int prepResult = sqlite3_prepare_v2( dbHandle, queryStr.c_str(), -1, &statement, nullptr );
+    if (prepResult != SQLITE_OK)
+    {
+        LOG(ERROR) << "Failed to prepare statement: " << queryStr;
+        throw runtime_error("Failed to prepare statement to get neighbourhood");
+    }
+
+    scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
+    
+    vector<NodeDbEntry> result;
+    while ( sqlite3_step(statement) == SQLITE_ROW )
+    {
+        const uint8_t *idPtr        = sqlite3_column_text  (statement, 0);
+        int            addrType     = sqlite3_column_int   (statement, 1);
+        const uint8_t *ipAddrPtr    = sqlite3_column_text  (statement, 2);
+        int            port         = sqlite3_column_int   (statement, 3);
+        double         longitude    = sqlite3_column_double(statement, 4);
+        double         latitude     = sqlite3_column_double(statement, 5);
+        int            relationType = sqlite3_column_int   (statement, 6);
+        int            roleType     = sqlite3_column_int   (statement, 7);
+        //int            expiresAt    = sqlite3_column_int   (statement, 8);
+        
+        NetworkInterface contact( static_cast<AddressType>(addrType),
+            reinterpret_cast<const char*>(ipAddrPtr), static_cast<TcpPort>(port) );
+        NodeInfo info( NodeProfile( reinterpret_cast<const char*>(idPtr), contact ),
+                       GpsLocation(latitude, longitude) );
+        result.emplace_back( info,
+            // TODO use some kind of checked conversion function from int to enums
+            static_cast<NodeRelationType>(relationType),
+            static_cast<NodeContactRoleType>(roleType) );
+    }
+    
+    return result;
 }
 
 
@@ -157,6 +220,18 @@ SpatiaLiteDatabase::~SpatiaLiteDatabase()
 }
 
 
+void SpatiaLiteDatabase::AddListener(ServiceType serviceType, shared_ptr<IChangeListener> listener)
+{
+    if (listener == nullptr)
+        { throw runtime_error("Attempt to register invalid listener"); }
+    _listeners[serviceType] = listener;
+}
+
+
+void SpatiaLiteDatabase::RemoveListener(ServiceType serviceType)
+    { _listeners.erase(serviceType); }
+
+
 
 //     char **results;
 //     int rows;
@@ -171,16 +246,6 @@ SpatiaLiteDatabase::~SpatiaLiteDatabase()
 //     }
 //     
 //     scope_exit freeMsg( [results] { sqlite3_free_table(results); } );
-
-
-
-string LocationPointSql(const GpsLocation &location)
-{
-    // NOTE int-based numbers, no string or user input, so no SQL injection vulnerability
-    return string( "MakePoint(" +
-        to_string( location.longitude() ) + "," + 
-        to_string( location.latitude()  ) + ")" );
-}
 
 
 
@@ -215,7 +280,8 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
 
 
 
-// Merge implementation of this function with GetNodes() to decrease duplication
+// TODO ideally we would just call QueryEntries() here, but have to manually bind id param
+//      to avoid SQL injection attacks. We could deduplicate at least some parts like result processing.
 shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
 {
     sqlite3_stmt *statement;
@@ -306,6 +372,9 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
         LOG(ERROR) << "Failed to run node store statement, error code: " << execResult;
         throw runtime_error("Failed to run node store statement");
     }
+    
+    for (const auto &listener : _listeners)
+        { listener.second->AddedNode(node); }
 }
 
 
@@ -356,12 +425,19 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
         LOG(ERROR) << "Affected row count for update should be 1, got : " << affectedRows;
         throw runtime_error("Wrong affected row count for update");
     }
+    
+    for (const auto &listener : _listeners)
+        { listener.second->UpdatedNode(node); }
 }
 
 
 
 void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
 {
+    shared_ptr<NodeDbEntry> storedNode = Load(nodeId);
+    if (storedNode == nullptr)
+        { throw runtime_error("Node to be removed is not present: " + nodeId); }
+    
     sqlite3_stmt *statement;
     string insertStr(
         "DELETE FROM nodes "
@@ -394,6 +470,9 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
         LOG(ERROR) << "Affected row count for delete should be 1, got : " << affectedRows;
         throw runtime_error("Wrong affected row count for delete");
     }
+    
+    for (const auto &listener : _listeners)
+        { listener.second->RemovedNode(*storedNode); }
 }
 
 
@@ -402,132 +481,60 @@ void SpatiaLiteDatabase::ExpireOldNodes()
 {
     // NOTE int-based number, no string or user input, so no SQL injection vulnerability
     time_t now = chrono::system_clock::to_time_t( chrono::system_clock::now() );
+    string expiredCondition( "WHERE expiresAt <= " + to_string(now) );
+    
+    vector<NodeDbEntry> expiredEntries = QueryEntries(_dbHandle, _myLocation, expiredCondition);
+    
     string expireStr(
-        "DELETE FROM nodes "
-        "WHERE expiresAt <= " + to_string(now) );
+        "DELETE FROM nodes " +
+        expiredCondition);
     ExecuteSql(_dbHandle, expireStr);
+    
+    for (const auto &entry : expiredEntries)
+    {
+        for (const auto &listener : _listeners)
+            { listener.second->RemovedNode(entry); }
+    }
 }
 
 
 
 vector<NodeDbEntry> SpatiaLiteDatabase::GetNodes(NodeContactRoleType roleType)
 {
-    sqlite3_stmt *statement;
-    string queryStr =
-        "SELECT id, addressType, ipAddress, port, X(location), Y(location), "
-            "relationType, roleType, expiresAt "
-        "FROM nodes "
-        "WHERE roleType = " + to_string( static_cast<int>(roleType) );
-    
-    //LOG(DEBUG) << "Running query: " << queryStr;
-    
-    int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
-    if (prepResult != SQLITE_OK)
-    {
-        LOG(ERROR) << "Failed to prepare statement: " << queryStr;
-        throw runtime_error("Failed to prepare statement to get nodes with roletype");
-    }
-
-    scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-    
-    vector<NodeDbEntry> result;
-    while ( sqlite3_step(statement) == SQLITE_ROW )
-    {
-        const uint8_t *idPtr        = sqlite3_column_text  (statement, 0);
-        int            addrType     = sqlite3_column_int   (statement, 1);
-        const uint8_t *ipAddrPtr    = sqlite3_column_text  (statement, 2);
-        int            port         = sqlite3_column_int   (statement, 3);
-        double         longitude    = sqlite3_column_double(statement, 4);
-        double         latitude     = sqlite3_column_double(statement, 5);
-        int            relationType = sqlite3_column_int   (statement, 6);
-        int            roleType     = sqlite3_column_int   (statement, 7);
-        //int            expiresAt    = sqlite3_column_int   (statement, 8);
-        
-        NetworkInterface contact( static_cast<AddressType>(addrType),
-            reinterpret_cast<const char*>(ipAddrPtr), static_cast<TcpPort>(port) );
-        NodeInfo info( NodeProfile( reinterpret_cast<const char*>(idPtr), contact ),
-                       GpsLocation(latitude, longitude) );
-        result.emplace_back( info, static_cast<NodeRelationType>(relationType),
-            static_cast<NodeContactRoleType>(roleType) );
-    }
-    
-    return result;
-}
-
-
-
-vector<NodeInfo> ListNodes(sqlite3 *dbHandle, const GpsLocation &fromLocation,
-    const string &whereCondition = "", const string orderBy = "", const string &limit = "")
-{
-    sqlite3_stmt *statement;
-    string queryStr =
-        "SELECT id, addressType, ipAddress, port, X(location), Y(location), "
-            "Distance(location, " + LocationPointSql(fromLocation) + ", 1) / 1000 AS dist_km "
-        "FROM nodes " +
-        whereCondition + " " +
-        orderBy + " " +
-        limit;
-    
-    //LOG(DEBUG) << "Running query: " << queryStr;
-    
-    int prepResult = sqlite3_prepare_v2( dbHandle, queryStr.c_str(), -1, &statement, nullptr );
-    if (prepResult != SQLITE_OK)
-    {
-        LOG(ERROR) << "Failed to prepare statement: " << queryStr;
-        throw runtime_error("Failed to prepare statement to get neighbourhood");
-    }
-
-    scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-    
-    vector<NodeInfo> result;
-    while ( sqlite3_step(statement) == SQLITE_ROW )
-    {
-        const uint8_t *idPtr     = sqlite3_column_text  (statement, 0);
-        int            addrType  = sqlite3_column_int   (statement, 1);
-        const uint8_t *ipAddrPtr = sqlite3_column_text  (statement, 2);
-        int            port      = sqlite3_column_int   (statement, 3);
-        double         longitude = sqlite3_column_double(statement, 4);
-        double         latitude  = sqlite3_column_double(statement, 5);
-        
-        NetworkInterface contact( static_cast<AddressType>(addrType),
-            reinterpret_cast<const char*>(ipAddrPtr), static_cast<TcpPort>(port) );
-        GpsLocation location(latitude, longitude);
-        result.emplace_back( NodeProfile( reinterpret_cast<const char*>(idPtr), contact ), location );
-    }
-    
-    return result;
+    return QueryEntries(_dbHandle, _myLocation,
+        "WHERE roleType = " + to_string( static_cast<int>(roleType) ) );
 }
 
 
 
 size_t SpatiaLiteDatabase::GetNodeCount() const
 {
-    vector<NodeInfo> nodes( ListNodes(_dbHandle, _myLocation) );
+    vector<NodeDbEntry> nodes( QueryEntries(_dbHandle, _myLocation) );
     return nodes.size();
 }
 
 
 
-vector<NodeInfo> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
+vector<NodeDbEntry> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 {
-    return ListNodes(_dbHandle, _myLocation,
+    return QueryEntries(_dbHandle, _myLocation,
         "WHERE relationType = " + to_string( static_cast<int>(NodeRelationType::Neighbour) ),
         "ORDER BY dist_km" );
 }
 
 
 
-vector<NodeInfo> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+vector<NodeDbEntry> SpatiaLiteDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
 {
     string whereCondition = filter == Neighbours::Included ? "" :
         "WHERE relationType = " + to_string( static_cast<int>(NodeRelationType::Colleague) );
-    return ListNodes(_dbHandle, _myLocation, whereCondition,
+    return QueryEntries(_dbHandle, _myLocation, whereCondition,
         "ORDER BY RANDOM()", "LIMIT " + to_string(maxNodeCount) );
 }
 
 
 
-vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(
+vector<NodeDbEntry> SpatiaLiteDatabase::GetClosestNodesByDistance(
     const GpsLocation& location, Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
 {
     string whereCondition = "WHERE (dist_km IS NULL OR dist_km <= " + to_string(radiusKm) + ")";
@@ -537,7 +544,7 @@ vector<NodeInfo> SpatiaLiteDatabase::GetClosestNodesByDistance(
             to_string( static_cast<int>(NodeRelationType::Colleague) );
     }
     
-    return ListNodes(_dbHandle, location,
+    return QueryEntries(_dbHandle, location,
         whereCondition,
         "ORDER BY dist_km",
         "LIMIT " + to_string(maxNodeCount) );

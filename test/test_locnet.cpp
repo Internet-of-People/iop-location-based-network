@@ -150,44 +150,44 @@ SCENARIO("Spatial database", "")
 
             THEN("closest nodes are properly selected") {
                 {
-                    vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
+                    vector<NodeDbEntry> closestNodes = geodb.GetClosestNodesByDistance(
                         TestData::Budapest, 20000.0, 2, Neighbours::Included );
                     REQUIRE( closestNodes.size() == 2 );
-                    REQUIRE( closestNodes[0] == TestData::NodeBudapest );
-                    REQUIRE( closestNodes[1] == TestData::NodeKecskemet );
+                    REQUIRE( closestNodes[0] == TestData::EntryBudapest);
+                    REQUIRE( closestNodes[1] == TestData::EntryKecskemet );
                 }
                 {
-                    vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
+                    vector<NodeDbEntry> closestNodes = geodb.GetClosestNodesByDistance(
                         TestData::Budapest, 20000.0, 1, Neighbours::Excluded );
                     REQUIRE( closestNodes.size() == 1 );
-                    REQUIRE( closestNodes[0] == TestData::NodeLondon );
+                    REQUIRE( closestNodes[0] == TestData::EntryLondon );
                 }
                 {
-                    vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
+                    vector<NodeDbEntry> closestNodes = geodb.GetClosestNodesByDistance(
                         TestData::Budapest, 20000.0, 1000, Neighbours::Included );
                     REQUIRE( closestNodes.size() == 6 );
-                    REQUIRE( closestNodes[0] == TestData::NodeBudapest );
-                    REQUIRE( closestNodes[1] == TestData::NodeKecskemet );
-                    REQUIRE( closestNodes[2] == TestData::NodeWien );
-                    REQUIRE( closestNodes[3] == TestData::NodeLondon );
-                    REQUIRE( closestNodes[4] == TestData::NodeNewYork );
-                    REQUIRE( closestNodes[5] == TestData::NodeCapeTown );
+                    REQUIRE( closestNodes[0] == TestData::EntryBudapest );
+                    REQUIRE( closestNodes[1] == TestData::EntryKecskemet );
+                    REQUIRE( closestNodes[2] == TestData::EntryWien );
+                    REQUIRE( closestNodes[3] == TestData::EntryLondon );
+                    REQUIRE( closestNodes[4] == TestData::EntryNewYork );
+                    REQUIRE( closestNodes[5] == TestData::EntryCapeTown );
                 }
                 {
-                    vector<NodeInfo> closestNodes = geodb.GetClosestNodesByDistance(
+                    vector<NodeDbEntry> closestNodes = geodb.GetClosestNodesByDistance(
                         TestData::Budapest, 5000.0, 1000, Neighbours::Excluded );
                     REQUIRE( closestNodes.size() == 1 );
-                    REQUIRE( closestNodes[0] == TestData::NodeLondon );
+                    REQUIRE( closestNodes[0] == TestData::EntryLondon );
                 }
             }
             
             THEN("random nodes are properly selected") {
                 {
-                    vector<NodeInfo> randomNodes = geodb.GetRandomNodes(2, Neighbours::Included);
+                    vector<NodeDbEntry> randomNodes = geodb.GetRandomNodes(2, Neighbours::Included);
                     REQUIRE( randomNodes.size() == 2 );
                 }
                 {
-                    vector<NodeInfo> randomNodes = geodb.GetRandomNodes(10, Neighbours::Excluded);
+                    vector<NodeDbEntry> randomNodes = geodb.GetRandomNodes(10, Neighbours::Excluded);
                     REQUIRE( randomNodes.size() == 3 );
                     REQUIRE( find( randomNodes.begin(), randomNodes.end(), TestData::EntryLondon ) != randomNodes.end() );
                     REQUIRE( find( randomNodes.begin(), randomNodes.end(), TestData::EntryNewYork ) != randomNodes.end() );
@@ -196,7 +196,7 @@ SCENARIO("Spatial database", "")
             }
             
             THEN("farthest neighbour is properly selected") {
-                vector<NodeInfo> neighboursByDistance( geodb.GetNeighbourNodesByDistance() );
+                vector<NodeDbEntry> neighboursByDistance( geodb.GetNeighbourNodesByDistance() );
                 REQUIRE( neighboursByDistance.size() == 2 );
                 REQUIRE( neighboursByDistance[0] == TestData::EntryKecskemet );
                 REQUIRE( neighboursByDistance[1] == TestData::EntryWien );

@@ -22,6 +22,9 @@ public:
     virtual void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) = 0;
     virtual void DeregisterService(ServiceType serviceType) = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
+    
+    virtual void AddListener(ServiceType serviceType, std::shared_ptr<IChangeListener> listener) = 0;
+    virtual void RemoveListener(ServiceType serviceType) = 0;
 };
 
 
@@ -78,9 +81,10 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     static std::random_device _randomDevice;
     
     NodeInfo _myNodeInfo;
-    std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     std::shared_ptr<ISpatialDatabase> _spatialDb;
     std::shared_ptr<INodeConnectionFactory> _connectionFactory;
+    
+    std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     
     std::shared_ptr<INodeMethods> SafeConnectTo(const NodeProfile &node);
     bool SafeStoreNode(const NodeDbEntry &entry,
@@ -111,6 +115,9 @@ public:
     // Local interface for services running on the same hardware
     void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) override;
     void DeregisterService(ServiceType serviceType) override;
+    
+    void AddListener(ServiceType serviceType, std::shared_ptr<IChangeListener> listener) override;
+    void RemoveListener(ServiceType serviceType) override;
     
     // Interface provided for the same network instances running on remote machines
     size_t GetNodeCount() const override;

@@ -78,8 +78,19 @@ void InMemorySpatialDatabase::ExpireOldNodes()
 }
 
 
+void InMemorySpatialDatabase::AddListener(
+    ServiceType, std::shared_ptr<IChangeListener>)
+{
+    // TODO maybe we could implement it here, but this class is useful for testing, not production
+}
 
-vector<NodeInfo> InMemorySpatialDatabase::GetClosestNodesByDistance(
+void InMemorySpatialDatabase::RemoveListener(ServiceType)
+{
+    // TODO maybe we could implement it here, but this class is useful for testing, not production
+}
+
+
+vector<NodeDbEntry> InMemorySpatialDatabase::GetClosestNodesByDistance(
     const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const
 {
     // Start with all nodes
@@ -89,23 +100,26 @@ vector<NodeInfo> InMemorySpatialDatabase::GetClosestNodesByDistance(
     
     // Remove nodes out of range
     auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-        [this, &location, maxRadiusKm](const NodeDbEntry &node) { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
+        [this, &location, maxRadiusKm](const NodeDbEntry &node)
+            { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
     remainingNodes.erase( newEnd, remainingNodes.end() );
 
     // Remove nodes with wrong relationType
     if (filter == Neighbours::Excluded) {
         newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-            [](const NodeDbEntry &node) { return node.relationType() == NodeRelationType::Neighbour; } );
+            [](const NodeDbEntry &node)
+                { return node.relationType() == NodeRelationType::Neighbour; } );
         remainingNodes.erase( newEnd, remainingNodes.end() );
     }
     
-    vector<NodeInfo> result;
+    vector<NodeDbEntry> result;
     while ( result.size() < maxNodeCount )
     {
         // Select closest element
         auto minElement = min_element( remainingNodes.begin(), remainingNodes.end(),
             [this, &location](const NodeDbEntry &one, const NodeDbEntry &other) {
-                return this->GetDistanceKm( location, one.location() ) < this->GetDistanceKm( location, other.location() ); } );
+                return this->GetDistanceKm( location, one.location() ) <
+                       this->GetDistanceKm( location, other.location() ); } );
         if (minElement == remainingNodes.end() )
             { break; }
 
@@ -117,7 +131,8 @@ vector<NodeInfo> InMemorySpatialDatabase::GetClosestNodesByDistance(
 }
 
 
-std::vector<NodeInfo>InMemorySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
+std::vector<NodeDbEntry>
+InMemorySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) const
 {
     // Start with all nodes
     vector<NodeDbEntry> remainingNodes;
@@ -127,11 +142,12 @@ std::vector<NodeInfo>InMemorySpatialDatabase::GetRandomNodes(size_t maxNodeCount
     // Remove nodes with wrong relationType
     if (filter == Neighbours::Excluded) {
         auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-            [](const NodeDbEntry &node) { return node.relationType() == NodeRelationType::Neighbour; } );
+            [](const NodeDbEntry &node)
+                { return node.relationType() == NodeRelationType::Neighbour; } );
         remainingNodes.erase( newEnd, remainingNodes.end() );
     }
 
-    vector<NodeInfo> result;
+    vector<NodeDbEntry> result;
     while ( ! remainingNodes.empty() && result.size() < maxNodeCount )
     {
         // Select random element from remaining nodes
@@ -146,9 +162,9 @@ std::vector<NodeInfo>InMemorySpatialDatabase::GetRandomNodes(size_t maxNodeCount
 }
 
 
-std::vector<NodeInfo> InMemorySpatialDatabase::GetNodes(NodeRelationType relationType) const
+std::vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeRelationType relationType) const
 {
-    vector<NodeInfo> result;
+    vector<NodeDbEntry> result;
     for (auto const &entry : _nodes)
     {
         if ( entry.second.relationType() == relationType )
@@ -176,11 +192,13 @@ vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeContactRoleType roleTy
 
 
 
-vector<NodeInfo> InMemorySpatialDatabase::GetNeighbourNodesByDistance() const
+vector<NodeDbEntry> InMemorySpatialDatabase::GetNeighbourNodesByDistance() const
 {
-    vector<NodeInfo> neighbours( GetNodes(NodeRelationType::Neighbour) );
-    sort( neighbours.begin(), neighbours.end(), [this] (const NodeInfo &one, const NodeInfo &other)
-        { return GetDistanceKm( one.location(), _myLocation ) < GetDistanceKm( other.location(), _myLocation ); } );
+    vector<NodeDbEntry> neighbours( GetNodes(NodeRelationType::Neighbour) );
+    sort( neighbours.begin(), neighbours.end(),
+        [this] (const NodeDbEntry &one, const NodeDbEntry &other)
+            { return GetDistanceKm( one.location(), _myLocation ) <
+                     GetDistanceKm( other.location(), _myLocation ); } );
     return neighbours;
 }
     

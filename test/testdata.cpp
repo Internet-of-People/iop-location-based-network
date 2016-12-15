@@ -26,6 +26,8 @@ NodeInfo TestData::NodeNewYork( NodeProfile("NewYorkId",
 NodeInfo TestData::NodeCapeTown( NodeProfile("CapeTownId",
     NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6376) ), CapeTown );
 
+NodeDbEntry TestData::EntryBudapest( NodeBudapest,
+    NodeRelationType::Self, NodeContactRoleType::Acceptor );
 NodeDbEntry TestData::EntryKecskemet( NodeKecskemet,
     NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
 NodeDbEntry TestData::EntryWien( NodeWien,

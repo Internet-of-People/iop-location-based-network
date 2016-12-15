@@ -238,6 +238,11 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
             return result;
         }
         
+        case iop::locnet::LocalServiceRequest::kNeighbourhoodChanged:
+            throw runtime_error("Invalid request type. This notification message is not supposed to be received "
+                                "but to sent out as notification to servers on the same host, "
+                                "only if GetNeighbourNodesRequest had flag keepAlive set.");
+        
         default: throw runtime_error("Missing or unknown local service operation");
     }
 }

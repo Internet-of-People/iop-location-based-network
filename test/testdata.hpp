@@ -24,6 +24,7 @@ struct TestData
     static NodeInfo NodeNewYork;
     static NodeInfo NodeCapeTown;
     
+    static NodeDbEntry EntryBudapest;
     static NodeDbEntry EntryKecskemet;
     static NodeDbEntry EntryWien;
     static NodeDbEntry EntryLondon;

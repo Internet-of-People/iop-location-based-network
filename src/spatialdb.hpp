@@ -4,6 +4,7 @@
 #include <chrono>
 #include <memory>
 #include <sqlite3.h>
+#include <unordered_map>
 #include <vector>
 
 #include "basic.hpp"
@@ -43,6 +44,19 @@ public:
 
 
 
+class IChangeListener
+{
+public:
+    
+    virtual ~IChangeListener();
+    
+    virtual void AddedNode  (const NodeDbEntry &node) = 0;
+    virtual void UpdatedNode(const NodeDbEntry &node) = 0;
+    virtual void RemovedNode(const NodeDbEntry &node) = 0;
+};
+
+
+
 class ISpatialDatabase
 {
 public:
@@ -54,17 +68,20 @@ public:
     virtual void Store (const NodeDbEntry &node, bool expires = true) = 0;
     virtual void Update(const NodeDbEntry &node, bool expires = true) = 0;
     virtual void Remove(const NodeId &nodeId) = 0;
-    
     virtual void ExpireOldNodes() = 0;
+    
+    virtual void AddListener(ServiceType serviceType, std::shared_ptr<IChangeListener> listener) = 0;
+    virtual void RemoveListener(ServiceType serviceType) = 0;
+    
     virtual std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) = 0;
 
     virtual size_t GetNodeCount() const = 0;
-    virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
+    virtual std::vector<NodeDbEntry> GetNeighbourNodesByDistance() const = 0;
     
-    virtual std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
-        Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
+    virtual std::vector<NodeDbEntry> GetClosestNodesByDistance(
+        const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
 
-    virtual std::vector<NodeInfo> GetRandomNodes(
+    virtual std::vector<NodeDbEntry> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const = 0;
 };
 
@@ -75,7 +92,10 @@ class SpatiaLiteDatabase : public ISpatialDatabase
     GpsLocation  _myLocation;
     sqlite3     *_dbHandle;
     void        *_spatialiteConnection;
+    
     std::chrono::duration<uint32_t> _entryExpirationPeriod;
+    
+    std::unordered_map<ServiceType, std::shared_ptr<IChangeListener>, EnumHasher> _listeners;
     
 public:
     
@@ -91,15 +111,19 @@ public:
     void Store (const NodeDbEntry &node, bool expires = true) override;
     void Update(const NodeDbEntry &node, bool expires = true) override;
     void Remove(const NodeId &nodeId) override;
-    
     void ExpireOldNodes() override;
+    
+    void AddListener(ServiceType serviceType, std::shared_ptr<IChangeListener> listener) override;
+    void RemoveListener(ServiceType serviceType) override;
+    
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
-    std::vector<NodeInfo> GetNeighbourNodesByDistance() const override;
-    std::vector<NodeInfo> GetRandomNodes(size_t maxNodeCount, Neighbours filter) const override;
+    std::vector<NodeDbEntry> GetNeighbourNodesByDistance() const override;
+    std::vector<NodeDbEntry> GetRandomNodes(
+        size_t maxNodeCount, Neighbours filter) const override;
     
-    std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
+    std::vector<NodeDbEntry> GetClosestNodesByDistance(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
 
