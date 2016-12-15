@@ -1,3 +1,4 @@
+#include <chrono>
 #include <functional>
 
 #include <easylogging++.h>
@@ -14,9 +15,12 @@ namespace LocNet
 
 
 static const size_t ThreadPoolSize = 1;
+static const size_t MaxMessageSize = 1024 * 1024;
+static const chrono::duration<uint32_t> NormalStreamExpirationPeriod    = chrono::seconds(10);
+static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
+
 static const size_t MessageHeaderSize = 5;
 static const size_t MessageSizeOffset = 1;
-static const size_t MaxMessageSize = 1024 * 1024;
 
 
 
@@ -134,6 +138,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(tcp::socket &socket) :
 {
     //_stream.rdbuf()->assign( tcp::v4(), socket.native_handle() );
     _stream.rdbuf()->assign( socket.local_endpoint().protocol(), socket.native_handle() );
+    _stream.expires_after(NormalStreamExpirationPeriod);
 }
 
 
@@ -143,6 +148,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &conta
     if (! _stream)
         { throw runtime_error("Session failed to connect: " + _stream.error().message() ); }
     LOG(DEBUG) << "Connected to " << contact;
+    _stream.expires_after(NormalStreamExpirationPeriod);
 }
 
 ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()
@@ -197,17 +203,16 @@ void ProtoBufTcpStreamSession::SendMessage(iop::locnet::MessageWithHeader& messa
 }
 
 
-// bool ProtoBufTcpStreamSession::IsAlive() const
-// {
-//     This doesn't really seem to work as on "normal" std::streamss
-//     return static_cast<bool>(_stream);
-// }
+// TODO CHECK This doesn't really seem to work as on "normal" std::streamss
+bool ProtoBufTcpStreamSession::IsAlive() const
+    { return _stream.good(); }
 
-
+void ProtoBufTcpStreamSession::KeepAlive()
+    { _stream.expires_after(KeepAliveStreamExpirationPeriod); }
+    
 void ProtoBufTcpStreamSession::Close()
-{
-    _stream.close();
-}
+    { _stream.close(); }
+
 
 
 

@@ -142,8 +142,8 @@ SCENARIO("Spatial database", "")
         }
         
         WHEN("when having several nodes") {
-            shared_ptr<ChangeCounter> listener( new ChangeCounter() );
-            geodb.AddListener(ServiceType::Profile, listener);
+            shared_ptr<ChangeCounter> listener( new ChangeCounter("TestListenerId") );
+            geodb.AddListener(listener);
             
             REQUIRE( listener->addedCount == 0 );
             REQUIRE( listener->updatedCount == 0 );
@@ -293,29 +293,16 @@ SCENARIO("Server registration", "")
 
 
 
-int main( int, const char* const [] )
+int main( int argc, const char* const argv[] )
 {
     // Disable logging to prevent flooding the console
     el::Configurations logConf;
     logConf.setToDefault();
-    logConf.setGlobally(el::ConfigurationType::Enabled, "false");
+    logConf.setGlobally(el::ConfigurationType::ToStandardOutput, "false");
     el::Loggers::reconfigureLogger("default", logConf);
     
-    // Perform all tests
-    Catch::Session session; // There must be exactly once instance
-
-//     // writing to session.configData() here sets defaults
-//     // this is the preferred way to set them
-// 
-//     int returnCode = session.applyCommandLine( argc, argv );
-//     if( returnCode != 0 ) // Indicates a command line error
-//         { return returnCode; }
-// 
-//     // writing to session.configData() or session.Config() here 
-//     // overrides command line args
-//     // only do this if you know you need to
-
-    try { return session.run(); }
+    Catch::Session session;
+    try { return session.run( argc, argv ); }
     catch (exception &e)
         { cerr << "Caught exception: " << e.what() << endl; }
 }

@@ -10,15 +10,13 @@ namespace LocNet
 {
 
 
+ChangeCounter::ChangeCounter(const ChangeListenerId& id) : _id(id) {}
 
-void ChangeCounter::AddedNode(const NodeDbEntry&)
-    { ++addedCount; }
+const ChangeListenerId& ChangeCounter::id() const   { return _id; }
 
-void ChangeCounter::UpdatedNode(const NodeDbEntry&)
-    { ++updatedCount; }
-
-void ChangeCounter::RemovedNode(const NodeDbEntry&)
-    { ++removedCount; }
+void ChangeCounter::AddedNode(const NodeDbEntry&)   { ++addedCount; }
+void ChangeCounter::UpdatedNode(const NodeDbEntry&) { ++updatedCount; }
+void ChangeCounter::RemovedNode(const NodeDbEntry&) { ++removedCount; }
 
 
 
@@ -90,13 +88,12 @@ void InMemorySpatialDatabase::ExpireOldNodes()
 }
 
 
-void InMemorySpatialDatabase::AddListener(
-    ServiceType, std::shared_ptr<IChangeListener>)
+void InMemorySpatialDatabase::AddListener(std::shared_ptr<IChangeListener>)
 {
     // TODO maybe we could implement it here, but this class is useful for testing, not production
 }
 
-void InMemorySpatialDatabase::RemoveListener(ServiceType)
+void InMemorySpatialDatabase::RemoveListener(ChangeListenerId)
 {
     // TODO maybe we could implement it here, but this class is useful for testing, not production
 }

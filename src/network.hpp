@@ -26,8 +26,8 @@ protected:
     std::vector<std::thread> _threadPool;
     bool _shutdownRequested;
     
-    virtual void AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket,
-        const asio::error_code &ec) = 0;
+    virtual void AsyncAcceptHandler( std::shared_ptr<asio::ip::tcp::socket> socket,
+                                     const asio::error_code &ec ) = 0;
 public:
     
     TcpServer(const NetworkInterface &listenOn);
@@ -40,10 +40,12 @@ public:
 
 class ProtoBufDispatchingTcpServer : public TcpServer
 {
+protected:
+    
     std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
     
-    void AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket,
-                            const asio::error_code &ec) override;
+    void AsyncAcceptHandler( std::shared_ptr<asio::ip::tcp::socket> socket,
+                             const asio::error_code &ec ) override;
 public:
     
     ProtoBufDispatchingTcpServer(const NetworkInterface &listenOn,
@@ -61,7 +63,8 @@ public:
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
     virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
     
-    //virtual bool IsAlive() const = 0;
+    virtual void KeepAlive() = 0;
+    virtual bool IsAlive() const = 0;
     virtual void Close() = 0;
 };
 
@@ -80,7 +83,8 @@ public:
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
     void SendMessage(iop::locnet::MessageWithHeader &message) override;
     
-    //bool IsAlive() const override;
+    void KeepAlive() override;
+    bool IsAlive() const override;
     void Close() override;
 };
 

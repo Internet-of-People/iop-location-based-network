@@ -43,12 +43,15 @@ public:
 };
 
 
+typedef std::string ChangeListenerId;
 
 class IChangeListener
 {
 public:
     
     virtual ~IChangeListener() {}
+    
+    virtual const ChangeListenerId& id() const = 0;
     
     virtual void AddedNode  (const NodeDbEntry &node) = 0;
     virtual void UpdatedNode(const NodeDbEntry &node) = 0;
@@ -70,8 +73,8 @@ public:
     virtual void Remove(const NodeId &nodeId) = 0;
     virtual void ExpireOldNodes() = 0;
     
-    virtual void AddListener(ServiceType serviceType, std::shared_ptr<IChangeListener> listener) = 0;
-    virtual void RemoveListener(ServiceType serviceType) = 0;
+    virtual void AddListener(std::shared_ptr<IChangeListener> listener) = 0;
+    virtual void RemoveListener(ChangeListenerId listenerId) = 0;
     
     virtual std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) = 0;
 
@@ -95,7 +98,7 @@ class SpatiaLiteDatabase : public ISpatialDatabase
     
     std::chrono::duration<uint32_t> _entryExpirationPeriod;
     
-    std::unordered_map<ServiceType, std::shared_ptr<IChangeListener>, EnumHasher> _listeners;
+    std::unordered_map<ChangeListenerId, std::shared_ptr<IChangeListener>> _listeners;
     
 public:
     
@@ -113,8 +116,8 @@ public:
     void Remove(const NodeId &nodeId) override;
     void ExpireOldNodes() override;
     
-    void AddListener(ServiceType serviceType, std::shared_ptr<IChangeListener> listener) override;
-    void RemoveListener(ServiceType serviceType) override;
+    void AddListener(std::shared_ptr<IChangeListener> listener) override;
+    void RemoveListener(ChangeListenerId listenerId) override;
     
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     

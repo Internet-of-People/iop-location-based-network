@@ -220,16 +220,16 @@ SpatiaLiteDatabase::~SpatiaLiteDatabase()
 }
 
 
-void SpatiaLiteDatabase::AddListener(ServiceType serviceType, shared_ptr<IChangeListener> listener)
+void SpatiaLiteDatabase::AddListener(shared_ptr<IChangeListener> listener)
 {
     if (listener == nullptr)
         { throw runtime_error("Attempt to register invalid listener"); }
-    _listeners[serviceType] = listener;
+    _listeners[ listener->id() ] = listener;
 }
 
 
-void SpatiaLiteDatabase::RemoveListener(ServiceType serviceType)
-    { _listeners.erase(serviceType); }
+void SpatiaLiteDatabase::RemoveListener(ChangeListenerId listenerId)
+    { _listeners.erase(listenerId); }
 
 
 

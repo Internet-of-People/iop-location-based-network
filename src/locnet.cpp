@@ -80,11 +80,11 @@ void Node::DeregisterService(ServiceType serviceType)
 }
 
 
-void Node::AddListener(ServiceType serviceType, shared_ptr<IChangeListener> listener)
-    { _spatialDb->AddListener(serviceType, listener); }
+void Node::AddListener(shared_ptr<IChangeListener> listener)
+    { _spatialDb->AddListener(listener); }
 
-void Node::RemoveListener(ServiceType serviceType)
-    { _spatialDb->RemoveListener(serviceType); }
+void Node::RemoveListener(ChangeListenerId listenerId)
+    { _spatialDb->RemoveListener(listenerId); }
 
 
 

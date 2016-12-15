@@ -23,8 +23,8 @@ public:
     virtual void DeregisterService(ServiceType serviceType) = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     
-    virtual void AddListener(ServiceType serviceType, std::shared_ptr<IChangeListener> listener) = 0;
-    virtual void RemoveListener(ServiceType serviceType) = 0;
+    virtual void AddListener(std::shared_ptr<IChangeListener> listener) = 0;
+    virtual void RemoveListener(ChangeListenerId listenerId) = 0;
 };
 
 
@@ -63,6 +63,16 @@ public:
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
 };
 
+
+
+class IChangeListenerFactory
+{
+public:
+    
+    virtual ~IChangeListenerFactory() {}
+    
+    virtual std::shared_ptr<IChangeListener> Create() = 0;
+};
 
 
 class INodeConnectionFactory
@@ -116,8 +126,8 @@ public:
     void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) override;
     void DeregisterService(ServiceType serviceType) override;
     
-    void AddListener(ServiceType serviceType, std::shared_ptr<IChangeListener> listener) override;
-    void RemoveListener(ServiceType serviceType) override;
+    void AddListener(std::shared_ptr<IChangeListener> listener) override;
+    void RemoveListener(ChangeListenerId listenerId) override;
     
     // Interface provided for the same network instances running on remote machines
     size_t GetNodeCount() const override;
