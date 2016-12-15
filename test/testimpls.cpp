@@ -11,6 +11,18 @@ namespace LocNet
 
 
 
+void ChangeCounter::AddedNode(const NodeDbEntry&)
+    { ++addedCount; }
+
+void ChangeCounter::UpdatedNode(const NodeDbEntry&)
+    { ++updatedCount; }
+
+void ChangeCounter::RemovedNode(const NodeDbEntry&)
+    { ++removedCount; }
+
+
+
+
 shared_ptr<INodeMethods> DummyNodeConnectionFactory::ConnectTo(const NodeProfile&)
 {
     return shared_ptr<INodeMethods>();

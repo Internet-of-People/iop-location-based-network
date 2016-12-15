@@ -142,12 +142,23 @@ SCENARIO("Spatial database", "")
         }
         
         WHEN("when having several nodes") {
+            shared_ptr<ChangeCounter> listener( new ChangeCounter() );
+            geodb.AddListener(ServiceType::Profile, listener);
+            
+            REQUIRE( listener->addedCount == 0 );
+            REQUIRE( listener->updatedCount == 0 );
+            REQUIRE( listener->removedCount == 0 );
+            
             geodb.Store(TestData::EntryKecskemet);
             geodb.Store(TestData::EntryLondon);
             geodb.Store(TestData::EntryNewYork);
             geodb.Store(TestData::EntryWien);
             geodb.Store(TestData::EntryCapeTown);
 
+            REQUIRE( listener->addedCount == 5 );
+            REQUIRE( listener->updatedCount == 0 );
+            REQUIRE( listener->removedCount == 0 );
+            
             THEN("closest nodes are properly selected") {
                 {
                     vector<NodeDbEntry> closestNodes = geodb.GetClosestNodesByDistance(
@@ -205,11 +216,19 @@ SCENARIO("Spatial database", "")
             THEN("Data is properly deleted") {
                 REQUIRE( geodb.GetNodeCount() == 6 );
                 
+                REQUIRE( listener->addedCount == 5 );
+                REQUIRE( listener->updatedCount == 0 );
+                REQUIRE( listener->removedCount == 0 );
+                
                 geodb.Remove( TestData::NodeKecskemet.profile().id() );
                 geodb.Remove( TestData::NodeLondon.profile().id() );
                 geodb.Remove( TestData::NodeNewYork.profile().id() );
                 geodb.Remove( TestData::NodeWien.profile().id() );
                 geodb.Remove( TestData::NodeCapeTown.profile().id() );
+                
+                REQUIRE( listener->addedCount == 5 );
+                REQUIRE( listener->updatedCount == 0 );
+                REQUIRE( listener->removedCount == 5 );
                 
                 REQUIRE( geodb.GetNodeCount() == 1 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
@@ -300,3 +319,4 @@ int main( int, const char* const [] )
     catch (exception &e)
         { cerr << "Caught exception: " << e.what() << endl; }
 }
+

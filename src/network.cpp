@@ -20,11 +20,9 @@ static const size_t MaxMessageSize = 1024 * 1024;
 
 
 
-TcpServer::TcpServer(const NetworkInterface &listenOn) :
-    _ioService(),
+TcpServer::TcpServer(const NetworkInterface &listenOn) : _ioService(),
     _acceptor( _ioService, tcp::endpoint( make_address( listenOn.address() ), listenOn.port() ) ),
-    _threadPool(), _keepThreadPoolBusy( new asio::io_service::work(_ioService) ),
-    _shutdownRequested(false)
+    _threadPool(), _shutdownRequested(false)
 {
     // Switch the acceptor to listening state
     LOG(DEBUG) << "Start accepting connections";
@@ -37,16 +35,18 @@ TcpServer::TcpServer(const NetworkInterface &listenOn) :
     // Start the specified number of job processor threads
     for (size_t idx = 0; idx < ThreadPoolSize; ++idx)
     {
-        _threadPool.push_back( thread(
-            [this] { _ioService.run(); } ) );
+        _threadPool.push_back( thread( [this]
+        {
+            while (! _shutdownRequested)
+                { _ioService.run(); }
+        } ) );
     }
 }
 
 
 TcpServer::~TcpServer()
 {
-    // Release lock that disables return from io_service.run() even if job queue is empty
-    _keepThreadPoolBusy.reset();
+    Shutdown();
     
     _ioService.stop();
     for (auto &thr : _threadPool)
@@ -55,9 +55,7 @@ TcpServer::~TcpServer()
 
 
 void TcpServer::Shutdown()
-{
-    _shutdownRequested = true;
-}
+    { _shutdownRequested = true; }
 
 
 

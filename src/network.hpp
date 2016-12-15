@@ -24,8 +24,6 @@ protected:
     asio::ip::tcp::acceptor _acceptor;
     
     std::vector<std::thread> _threadPool;
-    std::unique_ptr<asio::io_service::work> _keepThreadPoolBusy;
-
     bool _shutdownRequested;
     
     virtual void AsyncAcceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket,

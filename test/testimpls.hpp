@@ -9,6 +9,21 @@ namespace LocNet
 {
 
 
+class ChangeCounter : public IChangeListener
+{
+public:
+    
+    size_t addedCount   = 0;
+    size_t updatedCount = 0;
+    size_t removedCount = 0;
+    
+    void AddedNode  (const NodeDbEntry &node) override;
+    void UpdatedNode(const NodeDbEntry &node) override;
+    void RemovedNode(const NodeDbEntry &node) override;
+};
+
+
+
 // NOTE NOT PERSISTENT, suited for development/testing only
 class InMemorySpatialDatabase : public ISpatialDatabase
 {

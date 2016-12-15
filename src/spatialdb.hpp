@@ -48,7 +48,7 @@ class IChangeListener
 {
 public:
     
-    virtual ~IChangeListener();
+    virtual ~IChangeListener() {}
     
     virtual void AddedNode  (const NodeDbEntry &node) = 0;
     virtual void UpdatedNode(const NodeDbEntry &node) = 0;
