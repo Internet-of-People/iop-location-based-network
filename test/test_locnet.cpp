@@ -206,18 +206,32 @@ SCENARIO("Spatial database", "")
                 }
             }
             
-            THEN("farthest neighbour is properly selected") {
+            THEN("Neighbours are properly listed by distance") {
                 vector<NodeDbEntry> neighboursByDistance( geodb.GetNeighbourNodesByDistance() );
                 REQUIRE( neighboursByDistance.size() == 2 );
                 REQUIRE( neighboursByDistance[0] == TestData::EntryKecskemet );
                 REQUIRE( neighboursByDistance[1] == TestData::EntryWien );
             }
-            
-            THEN("Data is properly deleted") {
+            THEN("Data is properly updated and deleted") {
                 REQUIRE( geodb.GetNodeCount() == 6 );
+                REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 2 );
                 
+                NodeDbEntry updatedLondonEntry(TestData::NodeLondon,
+                    NodeRelationType::Neighbour, NodeContactRoleType::Initiator);
+                geodb.Update(updatedLondonEntry);
+                
+                shared_ptr<NodeDbEntry> londonEntry = geodb.Load( TestData::NodeLondon.profile().id() );
+                REQUIRE( *londonEntry == updatedLondonEntry );
+                
+                vector<NodeDbEntry> neighboursByDistance( geodb.GetNeighbourNodesByDistance() );
+                REQUIRE( geodb.GetNodeCount() == 6 );
+                REQUIRE( neighboursByDistance.size() == 3 );
+                REQUIRE( neighboursByDistance[0] == TestData::EntryKecskemet );
+                REQUIRE( neighboursByDistance[1] == TestData::EntryWien );
+                REQUIRE( neighboursByDistance[2] == updatedLondonEntry );
+
                 REQUIRE( listener->addedCount == 5 );
-                REQUIRE( listener->updatedCount == 0 );
+                REQUIRE( listener->updatedCount == 1 );
                 REQUIRE( listener->removedCount == 0 );
                 
                 geodb.Remove( TestData::NodeKecskemet.profile().id() );
@@ -227,7 +241,7 @@ SCENARIO("Spatial database", "")
                 geodb.Remove( TestData::NodeCapeTown.profile().id() );
                 
                 REQUIRE( listener->addedCount == 5 );
-                REQUIRE( listener->updatedCount == 0 );
+                REQUIRE( listener->updatedCount == 1 );
                 REQUIRE( listener->removedCount == 5 );
                 
                 REQUIRE( geodb.GetNodeCount() == 1 );

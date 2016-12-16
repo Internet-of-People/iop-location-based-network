@@ -203,6 +203,17 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     }
     else {
         LOG(DEBUG) << "Updating node information in database";
+        
+        vector<NodeDbEntry> selfEntries = QueryEntries( _dbHandle, _myLocation,
+            "WHERE relationType = " + to_string( static_cast<uint32_t>(NodeRelationType::Self) ) );
+        if ( selfEntries.size() > 1 )
+            { throw runtime_error("Multiple self instances found, database may have been tampered with."); }
+        if ( selfEntries.empty() )
+            { throw runtime_error("No self instance found, database may have been tampered with."); }
+        if ( selfEntries.front().profile().id() != myNodeInfo.profile().id() )
+            { throw runtime_error("Node id changed, database is invalidated. "
+                "Delete the database to register again to the network with the updated node id."); }
+        
         Update( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor), false );
     }
     LOG(DEBUG) << "Database ready with node count: " << GetNodeCount();
