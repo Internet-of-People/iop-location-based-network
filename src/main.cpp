@@ -36,10 +36,12 @@ int main(int argc, const char *argv[])
             myNodeInfo, config.dbPath(), config.dbExpirationPeriod() ) );
 
         shared_ptr<INodeConnectionFactory> connectionFactory( new TcpStreamConnectionFactory() );
-        Node node( myNodeInfo, geodb, connectionFactory, config.seedNodes() );
+        shared_ptr<Node> node( new Node( myNodeInfo, geodb, connectionFactory, config.seedNodes() ) );
 
-        shared_ptr<IProtoBufRequestDispatcher> dispatcher( new IncomingRequestDispatcher(node) );
-        ProtoBufDispatchingTcpServer tcpServer( myNodeInfo.profile().contact(), dispatcher );
+        shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
+            new IncomingRequestDispatcherFactory(node) );
+        ProtoBufDispatchingTcpServer tcpServer(
+            myNodeInfo.profile().contact(), dispatcherFactory );
 
         // Set up signal handlers to stop on Ctrl-C and further events
         bool ShutdownRequested = false;
@@ -61,8 +63,8 @@ int main(int argc, const char *argv[])
                 try
                 {
                     this_thread::sleep_for( config.dbMaintenancePeriod() );
-                    node.ExpireOldNodes();
-                    node.RenewNodeRelations();
+                    node->ExpireOldNodes();
+                    node->RenewNodeRelations();
                 }
                 catch (exception &ex)
                     { LOG(ERROR) << "Maintenance thread failed: " << ex.what(); }
@@ -77,7 +79,7 @@ int main(int argc, const char *argv[])
                 try
                 {
                     this_thread::sleep_for( config.discoveryPeriod() );
-                    node.DiscoverUnknownAreas();
+                    node->DiscoverUnknownAreas();
                 }
                 catch (exception &ex)
                     { LOG(ERROR) << "Periodic discovery thread failed: " << ex.what(); }

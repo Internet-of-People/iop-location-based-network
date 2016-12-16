@@ -224,12 +224,12 @@ void SpatiaLiteDatabase::AddListener(shared_ptr<IChangeListener> listener)
 {
     if (listener == nullptr)
         { throw runtime_error("Attempt to register invalid listener"); }
-    _listeners[ listener->id() ] = listener;
+    _listeners[ listener->sessionId() ] = listener;
 }
 
 
-void SpatiaLiteDatabase::RemoveListener(ChangeListenerId listenerId)
-    { _listeners.erase(listenerId); }
+void SpatiaLiteDatabase::RemoveListener(const SessionId &sessionId)
+    { _listeners.erase(sessionId); }
 
 
 

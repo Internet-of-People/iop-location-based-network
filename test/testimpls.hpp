@@ -11,7 +11,7 @@ namespace LocNet
 
 class ChangeCounter : public IChangeListener
 {
-    ChangeListenerId _id;
+    SessionId _sessionId;
     
 public:
     
@@ -19,9 +19,9 @@ public:
     size_t updatedCount = 0;
     size_t removedCount = 0;
     
-    ChangeCounter(const ChangeListenerId &id);
+    ChangeCounter(const SessionId &sessionId);
     
-    const ChangeListenerId& id() const override;
+    const SessionId& sessionId() const override;
     
     void AddedNode  (const NodeDbEntry &node) override;
     void UpdatedNode(const NodeDbEntry &node) override;
@@ -53,7 +53,7 @@ public:
     void ExpireOldNodes() override;
     
     void AddListener(std::shared_ptr<IChangeListener> listener) override;
-    void RemoveListener(ChangeListenerId listenerId) override;
+    void RemoveListener(const SessionId &listenerId) override;
     
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     

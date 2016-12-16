@@ -63,9 +63,9 @@ void TcpServer::Shutdown()
 
 
 
-ProtoBufDispatchingTcpServer::ProtoBufDispatchingTcpServer(
-        const NetworkInterface& listenOn, shared_ptr< IProtoBufRequestDispatcher > dispatcher) :
-    TcpServer(listenOn), _dispatcher(dispatcher) {}
+ProtoBufDispatchingTcpServer::ProtoBufDispatchingTcpServer( const NetworkInterface& listenOn,
+        shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory ) :
+    TcpServer(listenOn), _dispatcherFactory(dispatcherFactory) {}
 
 
 
@@ -77,7 +77,9 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
         LOG(ERROR) << "Failed to accept connection: " << ec;
         return;
     }
-    LOG(DEBUG) << "Connection accepted";
+    LOG(DEBUG) << "Connection accepted from "
+        << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << " to "
+        << socket->local_endpoint().address().to_string()  << ":" << socket->local_endpoint().port();
     
     // Keep accepting connections on the socket
     shared_ptr<tcp::socket> nextSocket( new tcp::socket(_ioService) );
@@ -89,12 +91,14 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
     {
         try
         {
-            ProtoBufTcpStreamSession session(*socket);
+            shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(*socket) );
+            shared_ptr<IProtoBufRequestDispatcher> dispatcher(
+                _dispatcherFactory->Create(session) );
 
             while (! _shutdownRequested)
             {
                 LOG(TRACE) << "Reading request";
-                shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session.ReceiveMessage() );
+                shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session->ReceiveMessage() );
                 if (! requestMsg)
                     { break; }
                 
@@ -102,7 +106,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                 unique_ptr<iop::locnet::Response> response;
                 try
                 {
-                    response = _dispatcher->Dispatch( requestMsg->body().request() );
+                    response = dispatcher->Dispatch( requestMsg->body().request() );
                     response->set_status(iop::locnet::Status::STATUS_OK);
                 }
                 catch (exception &ex)
@@ -117,7 +121,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                 iop::locnet::MessageWithHeader responseMsg;
                 responseMsg.mutable_body()->set_allocated_response( response.release() );
                 
-                session.SendMessage(responseMsg);
+                session->SendMessage(responseMsg);
             }
         }
         catch (exception &ex)
@@ -134,7 +138,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(tcp::socket &socket) :
-    _stream()
+    _id( to_string( socket.local_endpoint().port() ) ), _stream()
 {
     //_stream.rdbuf()->assign( tcp::v4(), socket.native_handle() );
     _stream.rdbuf()->assign( socket.local_endpoint().protocol(), socket.native_handle() );
@@ -143,6 +147,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(tcp::socket &socket) :
 
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &contact) :
+    _id( contact.address() + ":" + to_string( contact.port() ) ),
     _stream( contact.address(), to_string( contact.port() ) )
 {
     if (! _stream)
@@ -155,6 +160,10 @@ ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()
 {
     LOG(DEBUG) << "Session closed";
 }
+
+
+const SessionId& ProtoBufTcpStreamSession::id() const
+    { return _id; }
 
 
 
@@ -248,6 +257,108 @@ shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NodeProfile
     shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
     shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher) );
     return result;
+}
+
+
+
+IncomingRequestDispatcherFactory::IncomingRequestDispatcherFactory(shared_ptr<Node> node) :
+    _node(node) {}
+
+
+shared_ptr<IProtoBufRequestDispatcher> IncomingRequestDispatcherFactory::Create(
+    shared_ptr<IProtoBufNetworkSession> session )
+{
+    shared_ptr<IChangeListenerFactory> listenerFactory(
+        new ProtoBufTcpStreamChangeListenerFactory(session) );
+    return shared_ptr<IProtoBufRequestDispatcher>(
+        new IncomingRequestDispatcher(_node, listenerFactory) );
+}
+
+
+
+ProtoBufTcpStreamChangeListenerFactory::ProtoBufTcpStreamChangeListenerFactory(
+        shared_ptr<IProtoBufNetworkSession> session) :
+    _session(session) {}
+
+
+
+shared_ptr<IChangeListener> ProtoBufTcpStreamChangeListenerFactory::Create(
+    shared_ptr<ILocalServiceMethods> localService)
+{
+    shared_ptr<IProtoBufRequestDispatcher> dispatcher(
+        new ProtoBufRequestNetworkDispatcher(_session) );
+    return shared_ptr<IChangeListener>(
+        new ProtoBufTcpStreamChangeListener(_session, localService, dispatcher) );
+}
+
+
+
+ProtoBufTcpStreamChangeListener::ProtoBufTcpStreamChangeListener(
+        //const SessionId &sessionId,
+        shared_ptr<IProtoBufNetworkSession> session,
+        shared_ptr<ILocalServiceMethods> localService,
+        shared_ptr<IProtoBufRequestDispatcher> dispatcher ) :
+    _session(session), _localService(localService), _dispatcher(dispatcher)
+{
+    _session->KeepAlive();
+}
+
+
+ProtoBufTcpStreamChangeListener::~ProtoBufTcpStreamChangeListener()
+{
+    _localService->RemoveListener( _session->id() );
+}
+
+
+const SessionId& ProtoBufTcpStreamChangeListener::sessionId() const
+    { return _session->id(); }
+
+
+
+void ProtoBufTcpStreamChangeListener::AddedNode(const NodeDbEntry& node)
+{
+    if ( node.relationType() == NodeRelationType::Neighbour )
+    {
+        iop::locnet::Request req;
+        iop::locnet::NeighbourhoodChange *change =
+            req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
+        iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
+        Converter::FillProtoBuf(info, node);
+        
+        unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
+        // TODO what to do with response status codes here?
+    }
+}
+
+
+void ProtoBufTcpStreamChangeListener::UpdatedNode(const NodeDbEntry& node)
+{
+    if ( node.relationType() == NodeRelationType::Neighbour )
+    {
+        iop::locnet::Request req;
+        iop::locnet::NeighbourhoodChange *change =
+            req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
+        iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
+        Converter::FillProtoBuf(info, node);
+        
+        unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
+        // TODO what to do with response status codes here?
+    }
+}
+
+
+void ProtoBufTcpStreamChangeListener::RemovedNode(const NodeDbEntry& node)
+{
+    if ( node.relationType() == NodeRelationType::Neighbour )
+    {
+        iop::locnet::Request req;
+        iop::locnet::NeighbourhoodChange *change =
+            req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
+        change->set_removednodeid( node.profile().id() );
+        
+        unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
+        // TODO what to do with response status codes here?
+    }
 }
 
 

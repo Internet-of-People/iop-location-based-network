@@ -147,12 +147,16 @@ iop::locnet::NodeInfo* Converter::ToProtoBuf(const NodeInfo &info)
 
 
 
-IncomingRequestDispatcher::IncomingRequestDispatcher(LocNet::Node& node) :
-    _iLocalService(node), _iRemoteNode(node), _iClient(node) {}
+IncomingRequestDispatcher::IncomingRequestDispatcher(
+        shared_ptr<LocNet::Node> node, shared_ptr<IChangeListenerFactory> listenerFactory ) :
+    _iLocalService(node), _iRemoteNode(node), _iClient(node),
+    _listenerFactory(listenerFactory) {}
 
-IncomingRequestDispatcher::IncomingRequestDispatcher(ILocalServiceMethods& iLocalServices,
-                                     INodeMethods& iRemoteNode, IClientMethods& iClient) :
-    _iLocalService(iLocalServices), _iRemoteNode(iRemoteNode), _iClient(iClient) {}
+IncomingRequestDispatcher::IncomingRequestDispatcher( shared_ptr<ILocalServiceMethods> iLocalServices,
+        shared_ptr<INodeMethods> iRemoteNode, shared_ptr<IClientMethods> iClient,
+        shared_ptr<IChangeListenerFactory> listenerFactory ) :
+    _iLocalService(iLocalServices), _iRemoteNode(iRemoteNode), _iClient(iClient),
+    _listenerFactory(listenerFactory) {}
     
 
 
@@ -200,7 +204,7 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
             auto const &registerRequest = localServiceRequest.registerservice();
             ServiceType serviceType = Converter::FromProtoBuf( registerRequest.servicetype() );
             
-            _iLocalService.RegisterService( serviceType, Converter::FromProtoBuf( registerRequest.nodeprofile() ) );
+            _iLocalService->RegisterService( serviceType, Converter::FromProtoBuf( registerRequest.nodeprofile() ) );
             
             auto response = new iop::locnet::LocalServiceResponse();
             response->mutable_registerservice();
@@ -212,7 +216,7 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
             auto const &deregisterRequest = localServiceRequest.deregisterservice();
             ServiceType serviceType = Converter::FromProtoBuf( deregisterRequest.servicetype() );
             
-            _iLocalService.DeregisterService(serviceType);
+            _iLocalService->DeregisterService(serviceType);
             
             auto result = new iop::locnet::LocalServiceResponse();
             result->mutable_deregisterservice();
@@ -224,9 +228,7 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
             auto const &getneighboursRequest = localServiceRequest.getneighbournodes();
             bool keepAlive = getneighboursRequest.keepaliveandsendupdates();
             
-            // TODO how to handle here if keepAlive flag is set?
-            //      It effects thw lower network layer, but we're unaware of that here.
-            vector<NodeInfo> neighbours = _iLocalService.GetNeighbourNodesByDistance();
+            vector<NodeInfo> neighbours = _iLocalService->GetNeighbourNodesByDistance();
             
             auto result = new iop::locnet::LocalServiceResponse();
             auto response = result->mutable_getneighbournodes();
@@ -235,6 +237,13 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
                 iop::locnet::NodeInfo *info = response->add_nodes();
                 Converter::FillProtoBuf(info, neighbour);
             }
+            
+            if (keepAlive)
+            {
+                shared_ptr<IChangeListener> listener = _listenerFactory->Create(_iLocalService);
+                _iLocalService->AddListener(listener);
+            }
+            
             return result;
         }
         
@@ -257,7 +266,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
         case iop::locnet::RemoteNodeRequest::kAcceptColleague:
         {
             auto acceptColleagueReq = nodeRequest.acceptcolleague();
-            shared_ptr<NodeInfo> result = _iRemoteNode.AcceptColleague( Converter::FromProtoBuf(
+            shared_ptr<NodeInfo> result = _iRemoteNode->AcceptColleague( Converter::FromProtoBuf(
                 acceptColleagueReq.requestornodeinfo() ) );
             auto response = new iop::locnet::RemoteNodeResponse();
             response->mutable_acceptcolleague()->set_accepted( static_cast<bool>(result) );
@@ -271,7 +280,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
         case iop::locnet::RemoteNodeRequest::kRenewColleague:
         {
             auto renewColleagueReq = nodeRequest.renewcolleague();
-            shared_ptr<NodeInfo> result = _iRemoteNode.RenewColleague( Converter::FromProtoBuf(
+            shared_ptr<NodeInfo> result = _iRemoteNode->RenewColleague( Converter::FromProtoBuf(
                 renewColleagueReq.requestornodeinfo() ) );
             auto response = new iop::locnet::RemoteNodeResponse();
             response->mutable_renewcolleague()->set_accepted( static_cast<bool>(result) );
@@ -285,7 +294,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
         case iop::locnet::RemoteNodeRequest::kAcceptNeighbour:
         {
             auto acceptNeighbourReq = nodeRequest.acceptneighbour();
-            shared_ptr<NodeInfo> result = _iRemoteNode.AcceptNeighbour( Converter::FromProtoBuf(
+            shared_ptr<NodeInfo> result = _iRemoteNode->AcceptNeighbour( Converter::FromProtoBuf(
                 acceptNeighbourReq.requestornodeinfo() ) );
             auto response = new iop::locnet::RemoteNodeResponse();
             response->mutable_acceptneighbour()->set_accepted( static_cast<bool>(result) );
@@ -299,7 +308,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
         case iop::locnet::RemoteNodeRequest::kRenewNeighbour:
         {
             auto renewNeighbourReq = nodeRequest.renewneighbour();
-            shared_ptr<NodeInfo> result = _iRemoteNode.RenewNeighbour( Converter::FromProtoBuf(
+            shared_ptr<NodeInfo> result = _iRemoteNode->RenewNeighbour( Converter::FromProtoBuf(
                 renewNeighbourReq.requestornodeinfo() ) );
             auto response = new iop::locnet::RemoteNodeResponse();
             response->mutable_renewneighbour()->set_accepted( static_cast<bool>(result) );
@@ -312,7 +321,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
 
         case iop::locnet::RemoteNodeRequest::kGetNodeCount:
         {
-            size_t counter = _iRemoteNode.GetNodeCount();
+            size_t counter = _iRemoteNode->GetNodeCount();
             auto response = new iop::locnet::RemoteNodeResponse();
             response->mutable_getnodecount()->set_nodecount(counter);
             return response;
@@ -324,7 +333,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             Neighbours neighbourFilter = randomNodesReq.includeneighbours() ?
                 Neighbours::Included : Neighbours::Excluded;
                 
-            vector<NodeInfo> randomNodes = _iRemoteNode.GetRandomNodes(
+            vector<NodeInfo> randomNodes = _iRemoteNode->GetRandomNodes(
                 randomNodesReq.maxnodecount(), neighbourFilter );
             
             auto result = new iop::locnet::RemoteNodeResponse();
@@ -344,7 +353,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             Neighbours neighbourFilter = closestRequest.includeneighbours() ?
                 Neighbours::Included : Neighbours::Excluded;
             
-            vector<NodeInfo> closeNodes( _iRemoteNode.GetClosestNodesByDistance( location,
+            vector<NodeInfo> closeNodes( _iRemoteNode->GetClosestNodesByDistance( location,
                 closestRequest.maxradiuskm(), closestRequest.maxnodecount(), neighbourFilter) );
             
             auto result = new iop::locnet::RemoteNodeResponse();
@@ -370,7 +379,7 @@ iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
     {
         case iop::locnet::ClientRequest::kGetServices:
         {
-            auto const &services = _iClient.GetServices();
+            auto const &services = _iClient->GetServices();
             
             auto result = new iop::locnet::ClientResponse();
             auto response = result->mutable_getservices();
@@ -385,7 +394,7 @@ iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
         
         case iop::locnet::ClientRequest::kGetNeighbourNodes:
         {
-            vector<NodeInfo> neighbours = _iClient.GetNeighbourNodesByDistance();
+            vector<NodeInfo> neighbours = _iClient->GetNeighbourNodesByDistance();
             
             auto result = new iop::locnet::ClientResponse();
             auto response = result->mutable_getneighbournodes();
@@ -404,7 +413,7 @@ iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
             Neighbours neighbourFilter = closestRequest.includeneighbours() ?
                 Neighbours::Included : Neighbours::Excluded;
             
-            vector<NodeInfo> closeNodes( _iClient.GetClosestNodesByDistance( location,
+            vector<NodeInfo> closeNodes( _iClient->GetClosestNodesByDistance( location,
                 closestRequest.maxradiuskm(), closestRequest.maxnodecount(), neighbourFilter) );
             
             auto result = new iop::locnet::ClientResponse();

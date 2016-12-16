@@ -24,7 +24,7 @@ public:
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     
     virtual void AddListener(std::shared_ptr<IChangeListener> listener) = 0;
-    virtual void RemoveListener(ChangeListenerId listenerId) = 0;
+    virtual void RemoveListener(const SessionId &listenerId) = 0;
 };
 
 
@@ -71,7 +71,8 @@ public:
     
     virtual ~IChangeListenerFactory() {}
     
-    virtual std::shared_ptr<IChangeListener> Create() = 0;
+    virtual std::shared_ptr<IChangeListener> Create(
+        std::shared_ptr<ILocalServiceMethods> localService) = 0;
 };
 
 
@@ -127,7 +128,7 @@ public:
     void DeregisterService(ServiceType serviceType) override;
     
     void AddListener(std::shared_ptr<IChangeListener> listener) override;
-    void RemoveListener(ChangeListenerId listenerId) override;
+    void RemoveListener(const SessionId &sessionId) override;
     
     // Interface provided for the same network instances running on remote machines
     size_t GetNodeCount() const override;

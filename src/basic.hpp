@@ -11,11 +11,14 @@ namespace LocNet
 {
 
 
+typedef float       GpsCoordinate;
+typedef float       Distance;
+
 typedef std::string NodeId;
 typedef std::string Address;
 typedef uint16_t    TcpPort;
-typedef float       GpsCoordinate;
-typedef float       Distance;
+
+typedef std::string SessionId;
 
 
 

@@ -38,27 +38,13 @@ public:
 
 
 
-class ProtoBufDispatchingTcpServer : public TcpServer
-{
-protected:
-    
-    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
-    
-    void AsyncAcceptHandler( std::shared_ptr<asio::ip::tcp::socket> socket,
-                             const asio::error_code &ec ) override;
-public:
-    
-    ProtoBufDispatchingTcpServer(const NetworkInterface &listenOn,
-        std::shared_ptr<IProtoBufRequestDispatcher> dispatcher);
-};
-
-
-
 class IProtoBufNetworkSession
 {
 public:
  
     virtual ~IProtoBufNetworkSession() {}
+    
+    virtual const SessionId& id() const = 0;
     
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
     virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
@@ -70,8 +56,51 @@ public:
 
 
 
+class IProtoBufRequestDispatcherFactory
+{
+public:
+    
+    virtual ~IProtoBufRequestDispatcherFactory() {}
+    
+    virtual std::shared_ptr<IProtoBufRequestDispatcher> Create(
+        std::shared_ptr<IProtoBufNetworkSession> session ) = 0;
+};
+
+
+
+class ProtoBufDispatchingTcpServer : public TcpServer
+{
+protected:
+    
+    std::shared_ptr<IProtoBufRequestDispatcherFactory> _dispatcherFactory;
+    
+    void AsyncAcceptHandler( std::shared_ptr<asio::ip::tcp::socket> socket,
+                             const asio::error_code &ec ) override;
+public:
+    
+    ProtoBufDispatchingTcpServer( const NetworkInterface &listenOn,
+        std::shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory );
+};
+
+
+
+class IncomingRequestDispatcherFactory : public IProtoBufRequestDispatcherFactory
+{
+    std::shared_ptr<Node> _node;
+    
+public:
+    
+    IncomingRequestDispatcherFactory(std::shared_ptr<Node> node);
+    
+    std::shared_ptr<IProtoBufRequestDispatcher> Create(
+        std::shared_ptr<IProtoBufNetworkSession> session ) override;
+};
+
+
+
 class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
 {
+    SessionId               _id;
     asio::ip::tcp::iostream _stream;
     
 public:
@@ -79,6 +108,8 @@ public:
     ProtoBufTcpStreamSession(asio::ip::tcp::socket &socket);
     ProtoBufTcpStreamSession(const NetworkInterface &contact);
     ~ProtoBufTcpStreamSession();
+    
+    const SessionId& id() const override;
     
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
     void SendMessage(iop::locnet::MessageWithHeader &message) override;
@@ -104,12 +135,49 @@ public:
 
 
 
-// TODO what will be the connection to asio::io_service? Is it needed at all on sync streams?
 class TcpStreamConnectionFactory : public INodeConnectionFactory
 {
 public:
     
     std::shared_ptr<INodeMethods> ConnectTo(const NodeProfile &node) override;
+};
+
+
+
+class ProtoBufTcpStreamChangeListenerFactory : public IChangeListenerFactory
+{
+    std::shared_ptr<IProtoBufNetworkSession> _session;
+    
+public:
+    
+    ProtoBufTcpStreamChangeListenerFactory(std::shared_ptr<IProtoBufNetworkSession> session);
+    
+    std::shared_ptr<IChangeListener> Create(
+        std::shared_ptr<ILocalServiceMethods> localService) override;
+};
+
+
+
+class ProtoBufTcpStreamChangeListener : public IChangeListener
+{
+    std::shared_ptr<IProtoBufNetworkSession>    _session;
+    std::shared_ptr<ILocalServiceMethods>       _localService;
+    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
+    
+public:
+    
+    ProtoBufTcpStreamChangeListener(
+        std::shared_ptr<IProtoBufNetworkSession> session,
+        std::shared_ptr<ILocalServiceMethods> localService,
+        std::shared_ptr<IProtoBufRequestDispatcher> dispatcher );
+    
+    ~ProtoBufTcpStreamChangeListener();
+    
+    const SessionId& sessionId() const override;
+    
+    void AddedNode  (const NodeDbEntry &node) override;
+    void UpdatedNode(const NodeDbEntry &node) override;
+    void RemovedNode(const NodeDbEntry &node) override;
 };
 
 

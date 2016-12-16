@@ -44,9 +44,11 @@ public:
 class IncomingRequestDispatcher : public IProtoBufRequestDispatcher
 {
     // TODO should we use some smart pointers here instead?
-    ILocalServiceMethods &_iLocalService;
-    INodeMethods         &_iRemoteNode;
-    IClientMethods       &_iClient;
+    std::shared_ptr<ILocalServiceMethods> _iLocalService;
+    std::shared_ptr<INodeMethods>         _iRemoteNode;
+    std::shared_ptr<IClientMethods>       _iClient;
+    
+    std::shared_ptr<IChangeListenerFactory> _listenerFactory;
     
     iop::locnet::LocalServiceResponse* DispatchLocalService(const iop::locnet::LocalServiceRequest &request);
     iop::locnet::RemoteNodeResponse* DispatchRemoteNode(const iop::locnet::RemoteNodeRequest &request);
@@ -54,10 +56,12 @@ class IncomingRequestDispatcher : public IProtoBufRequestDispatcher
     
 public:
     
-    IncomingRequestDispatcher(Node &node);
-    IncomingRequestDispatcher(ILocalServiceMethods &iLocalServices, INodeMethods &iRemoteNode, IClientMethods &iClient);
-    
-    virtual ~IncomingRequestDispatcher() {}
+    IncomingRequestDispatcher( std::shared_ptr<Node> node,
+        std::shared_ptr<IChangeListenerFactory> listenerFactory );
+    IncomingRequestDispatcher( std::shared_ptr<ILocalServiceMethods> iLocalServices,
+        std::shared_ptr<INodeMethods> iRemoteNode,
+        std::shared_ptr<IClientMethods> iClient,
+        std::shared_ptr<IChangeListenerFactory> listenerFactory );
     
     std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
 };
