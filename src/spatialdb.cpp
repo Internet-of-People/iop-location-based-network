@@ -66,6 +66,33 @@ bool NodeDbEntry::operator==(const NodeDbEntry& other) const
 
 
 
+void ThreadSafeChangeListenerRegistry::AddListener(shared_ptr<IChangeListener> listener)
+{
+    lock_guard<mutex> lock(_mutex);
+    if (listener == nullptr)
+        { throw runtime_error("Attempt to register invalid listener"); }
+    _listeners[ listener->sessionId() ] = listener;
+}
+
+
+void ThreadSafeChangeListenerRegistry::RemoveListener(const SessionId& sessionId)
+{
+    lock_guard<mutex> lock(_mutex);
+    _listeners.erase(sessionId);
+}
+
+
+vector<shared_ptr<IChangeListener>> ThreadSafeChangeListenerRegistry::listeners() const
+{
+    lock_guard<mutex> lock(_mutex);
+    vector<shared_ptr<IChangeListener>> result;
+    for (const auto &listenerEntry : _listeners)
+        { result.push_back(listenerEntry.second); }
+    return result;
+}
+
+
+
 
 // NOTE SQLite works fine without this as sqlite3_open also calls init()
 // struct StaticDatabaseInitializer {
@@ -232,15 +259,11 @@ SpatiaLiteDatabase::~SpatiaLiteDatabase()
 
 
 void SpatiaLiteDatabase::AddListener(shared_ptr<IChangeListener> listener)
-{
-    if (listener == nullptr)
-        { throw runtime_error("Attempt to register invalid listener"); }
-    _listeners[ listener->sessionId() ] = listener;
-}
+    { _listenerRegistry.AddListener(listener); }
 
 
 void SpatiaLiteDatabase::RemoveListener(const SessionId &sessionId)
-    { _listeners.erase(sessionId); }
+    { _listenerRegistry.RemoveListener(sessionId); }
 
 
 
@@ -384,8 +407,11 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
         throw runtime_error("Failed to run node store statement");
     }
     
-    for (const auto &listener : _listeners)
-        { listener.second->AddedNode(node); }
+    for ( auto listenerEntry : _listenerRegistry.listeners() )
+    {
+        // if ( auto listener = listenerEntry.lock() )
+            { listenerEntry->AddedNode(node); }
+    }
 }
 
 
@@ -437,8 +463,11 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
         throw runtime_error("Wrong affected row count for update");
     }
     
-    for (const auto &listener : _listeners)
-        { listener.second->UpdatedNode(node); }
+    for ( auto listenerEntry : _listenerRegistry.listeners() )
+    {
+        // if ( auto listener = listenerEntry.lock() )
+            { listenerEntry->UpdatedNode(node); }
+    }
 }
 
 
@@ -482,8 +511,11 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
         throw runtime_error("Wrong affected row count for delete");
     }
     
-    for (const auto &listener : _listeners)
-        { listener.second->RemovedNode(*storedNode); }
+    for ( auto listenerEntry : _listenerRegistry.listeners() )
+    {
+        // if ( auto listener = listenerEntry.lock() )
+            { listenerEntry->RemovedNode(*storedNode); }
+    }
 }
 
 
@@ -501,10 +533,13 @@ void SpatiaLiteDatabase::ExpireOldNodes()
         expiredCondition);
     ExecuteSql(_dbHandle, expireStr);
     
-    for (const auto &entry : expiredEntries)
+    for ( auto listenerEntry : _listenerRegistry.listeners() )
     {
-        for (const auto &listener : _listeners)
-            { listener.second->RemovedNode(entry); }
+        // if ( auto listener = listenerEntry.lock() )
+        {
+            for (const auto &entry : expiredEntries)
+                { listenerEntry->RemovedNode(entry); }
+        }
     }
 }
 

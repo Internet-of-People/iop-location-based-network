@@ -95,6 +95,9 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     std::shared_ptr<ISpatialDatabase> _spatialDb;
     std::shared_ptr<INodeConnectionFactory> _connectionFactory;
     
+    // TODO consider if this should be also persistant, thus included in SpatialDatabase.
+    // TODO If no need to be persistent, (though problems highly unlikely,) this is still not threadsafe.
+    //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     
     std::shared_ptr<INodeMethods> SafeConnectTo(const NodeProfile &node);

@@ -35,7 +35,7 @@ bool Config::Init(int argc, const char* argv[])
 static const string DESC_OPTIONAL_DEFAULT = "Optional, default value: ";
 
 static const char *DEFAULT_CONFIG_FILE  = "iop-locnet.cfg";
-static const char *DEFAULT_PORT         = "6371";
+static const char *DEFAULT_PORT         = "16980";
 static const char *DEFAULT_DBPATH       = "locnet.sqlite";
 //const string DBFILE_PATH = ":memory:"; // NOTE in-memory storage without a db file
 //const string DBFILE_PATH = "file:locnet.sqlite"; // NOTE this may be any file URL
@@ -58,8 +58,8 @@ const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::hour
 
 const vector<NodeProfile> EzParserConfig::_seedNodes {
     // TODO put some real seed nodes in here
-    NodeProfile( "BudapestSeedNodeId", NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6371) ),
-//  NodeProfile( NodeId("WienSeedNodeId"), NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6372) ),
+    NodeProfile( "BudapestSeedNodeId", NetworkInterface(AddressType::Ipv4, "127.0.0.1", 16980) ),
+//  NodeProfile( NodeId("WienSeedNodeId"), NetworkInterface(AddressType::Ipv4, "127.0.0.1", 16981) ),
 };
 
 

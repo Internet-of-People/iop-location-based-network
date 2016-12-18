@@ -16,8 +16,8 @@ namespace LocNet
 
 static const size_t ThreadPoolSize = 1;
 static const size_t MaxMessageSize = 1024 * 1024;
-static const chrono::duration<uint32_t> NormalStreamExpirationPeriod    = chrono::seconds(10);
-static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
+//static const chrono::duration<uint32_t> NormalStreamExpirationPeriod    = chrono::seconds(10);
+//static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
 
 static const size_t MessageHeaderSize = 5;
 static const size_t MessageSizeOffset = 1;
@@ -140,9 +140,9 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(tcp::socket &socket) :
     _id( to_string( socket.local_endpoint().port() ) ), _stream()
 {
-    //_stream.rdbuf()->assign( tcp::v4(), socket.native_handle() );
     _stream.rdbuf()->assign( socket.local_endpoint().protocol(), socket.native_handle() );
-    _stream.expires_after(NormalStreamExpirationPeriod);
+    // TODO handle session expiration
+    //_stream.expires_after(NormalStreamExpirationPeriod);
 }
 
 
@@ -153,7 +153,8 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &conta
     if (! _stream)
         { throw runtime_error("Session failed to connect: " + _stream.error().message() ); }
     LOG(DEBUG) << "Connected to " << contact;
-    _stream.expires_after(NormalStreamExpirationPeriod);
+    // TODO handle session expiration
+    //_stream.expires_after(NormalStreamExpirationPeriod);
 }
 
 ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()
@@ -178,6 +179,9 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 
 iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
 {
+    if (! _stream.good())
+        { return nullptr; }
+        
     // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
     _stream.read( &messageBytes[0], MessageHeaderSize );
@@ -217,7 +221,10 @@ bool ProtoBufTcpStreamSession::IsAlive() const
     { return _stream.good(); }
 
 void ProtoBufTcpStreamSession::KeepAlive()
-    { _stream.expires_after(KeepAliveStreamExpirationPeriod); }
+{
+    // TODO handle session expiration
+    //_stream.expires_after(KeepAliveStreamExpirationPeriod);
+}
     
 void ProtoBufTcpStreamSession::Close()
     { _stream.close(); }
@@ -294,24 +301,23 @@ shared_ptr<IChangeListener> ProtoBufTcpStreamChangeListenerFactory::Create(
 
 
 ProtoBufTcpStreamChangeListener::ProtoBufTcpStreamChangeListener(
-        //const SessionId &sessionId,
         shared_ptr<IProtoBufNetworkSession> session,
         shared_ptr<ILocalServiceMethods> localService,
         shared_ptr<IProtoBufRequestDispatcher> dispatcher ) :
-    _session(session), _localService(localService), _dispatcher(dispatcher)
+    _sessionId( session->id() ), _localService(localService), _dispatcher(dispatcher)
 {
-    _session->KeepAlive();
+    session->KeepAlive();
 }
 
 
 ProtoBufTcpStreamChangeListener::~ProtoBufTcpStreamChangeListener()
 {
-    _localService->RemoveListener( _session->id() );
+    _localService->RemoveListener(_sessionId);
 }
 
 
 const SessionId& ProtoBufTcpStreamChangeListener::sessionId() const
-    { return _session->id(); }
+    { return _sessionId; }
 
 
 

@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <sqlite3.h>
 #include <unordered_map>
 #include <vector>
@@ -88,6 +89,21 @@ public:
 
 
 
+class ThreadSafeChangeListenerRegistry
+{
+    std::unordered_map<SessionId, std::shared_ptr<IChangeListener>> _listeners;
+    mutable std::mutex _mutex;
+    
+public:
+    
+    std::vector<std::shared_ptr<IChangeListener>> listeners() const;
+    
+    void AddListener(std::shared_ptr<IChangeListener> listener);
+    void RemoveListener(const SessionId &sessionId);
+};
+
+
+
 class SpatiaLiteDatabase : public ISpatialDatabase
 {
     GpsLocation  _myLocation;
@@ -96,7 +112,7 @@ class SpatiaLiteDatabase : public ISpatialDatabase
     
     std::chrono::duration<uint32_t> _entryExpirationPeriod;
     
-    std::unordered_map<SessionId, std::shared_ptr<IChangeListener>> _listeners;
+    ThreadSafeChangeListenerRegistry _listenerRegistry;
     
 public:
     

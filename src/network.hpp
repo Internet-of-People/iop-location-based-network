@@ -160,7 +160,7 @@ public:
 
 class ProtoBufTcpStreamChangeListener : public IChangeListener
 {
-    std::shared_ptr<IProtoBufNetworkSession>    _session;
+    SessionId                                   _sessionId;
     std::shared_ptr<ILocalServiceMethods>       _localService;
     std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
     
