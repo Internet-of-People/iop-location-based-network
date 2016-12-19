@@ -481,7 +481,9 @@ size_t NodeMethodsProtoBufClient::GetNodeCount() const
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_getnodecount() )
         { throw runtime_error("Failed to get expected response"); }
         
-    return response->remotenode().getnodecount().nodecount();
+    auto result = response->remotenode().getnodecount().nodecount();
+    LOG(DEBUG) << "Request GetNodeCount() returned " << result;
+    return result;
 }
 
 
@@ -497,10 +499,12 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& 
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_acceptcolleague() )
         { throw runtime_error("Failed to get expected response"); }
     
-    return response->remotenode().acceptcolleague().accepted() ?
+    auto result = response->remotenode().acceptcolleague().accepted() ?
         shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
             response->remotenode().acceptcolleague().acceptornodeinfo() ) ) ) :
         shared_ptr<NodeInfo>();
+    LOG(DEBUG) << "Request AcceptColleague() returned " << static_cast<bool>(result);
+    return result;
 }
 
 
@@ -516,10 +520,12 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& n
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_renewcolleague() )
         { throw runtime_error("Failed to get expected response"); }
     
-    return response->remotenode().renewcolleague().accepted() ?
+    auto result = response->remotenode().renewcolleague().accepted() ?
         shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
             response->remotenode().renewcolleague().acceptornodeinfo() ) ) ) :
         shared_ptr<NodeInfo>();
+    LOG(DEBUG) << "Request RenewColleague() returned " << static_cast<bool>(result);
+    return result;
 }
 
 
@@ -535,10 +541,12 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& 
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_acceptneighbour() )
         { throw runtime_error("Failed to get expected response"); }
     
-    return response->remotenode().acceptneighbour().accepted() ?
+    auto result = response->remotenode().acceptneighbour().accepted() ?
         shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
             response->remotenode().acceptneighbour().acceptornodeinfo() ) ) ) :
         shared_ptr<NodeInfo>();
+    LOG(DEBUG) << "Request AcceptNeighbour() returned " << static_cast<bool>(result);
+    return result;
 }
 
 
@@ -554,10 +562,12 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& n
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_renewneighbour() )
         { throw runtime_error("Failed to get expected response"); }
     
-    return response->remotenode().renewneighbour().accepted() ?
+    auto result = response->remotenode().renewneighbour().accepted() ?
         shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
             response->remotenode().renewneighbour().acceptornodeinfo() ) ) ) :
         shared_ptr<NodeInfo>();
+    LOG(DEBUG) << "Request RenewNeighbour() returned " << static_cast<bool>(result);
+    return result;
 }
 
 
