@@ -143,7 +143,7 @@ SCENARIO("Spatial database", "")
         
         WHEN("when having several nodes") {
             shared_ptr<ChangeCounter> listener( new ChangeCounter("TestListenerId") );
-            geodb.AddListener(listener);
+            geodb.changeListenerRegistry().AddListener(listener);
             
             REQUIRE( listener->addedCount == 0 );
             REQUIRE( listener->updatedCount == 0 );

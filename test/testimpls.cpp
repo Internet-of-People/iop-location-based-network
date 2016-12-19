@@ -88,15 +88,9 @@ void InMemorySpatialDatabase::ExpireOldNodes()
 }
 
 
-void InMemorySpatialDatabase::AddListener(std::shared_ptr<IChangeListener>)
-{
-    // TODO maybe we could implement it here, but this class is useful for testing, not production
-}
+IChangeListenerRegistry& InMemorySpatialDatabase::changeListenerRegistry()
+    { return _listenerRegistry; }
 
-void InMemorySpatialDatabase::RemoveListener(const SessionId &)
-{
-    // TODO maybe we could implement it here, but this class is useful for testing, not production
-}
 
 
 vector<NodeDbEntry> InMemorySpatialDatabase::GetClosestNodesByDistance(

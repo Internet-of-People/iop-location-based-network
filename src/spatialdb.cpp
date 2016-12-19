@@ -258,12 +258,9 @@ SpatiaLiteDatabase::~SpatiaLiteDatabase()
 }
 
 
-void SpatiaLiteDatabase::AddListener(shared_ptr<IChangeListener> listener)
-    { _listenerRegistry.AddListener(listener); }
+IChangeListenerRegistry& SpatiaLiteDatabase::changeListenerRegistry()
+    { return _listenerRegistry; }
 
-
-void SpatiaLiteDatabase::RemoveListener(const SessionId &sessionId)
-    { _listenerRegistry.RemoveListener(sessionId); }
 
 
 

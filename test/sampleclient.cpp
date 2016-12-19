@@ -89,6 +89,7 @@ int main(int argc, const char* const argv[])
                     LOG(INFO) << "Sending acknowledgement";
                     iop::locnet::MessageWithHeader changeAckn;
                     changeAckn.mutable_body()->mutable_response()->mutable_localservice()->mutable_neighbourhoodupdated();
+                    changeAckn.set_header(1);
                     session->SendMessage(changeAckn);
                 }
             }

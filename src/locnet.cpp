@@ -81,10 +81,10 @@ void Node::DeregisterService(ServiceType serviceType)
 
 
 void Node::AddListener(shared_ptr<IChangeListener> listener)
-    { _spatialDb->AddListener(listener); }
+    { _spatialDb->changeListenerRegistry().AddListener(listener); }
 
 void Node::RemoveListener(const SessionId &sessionId)
-    { _spatialDb->RemoveListener(sessionId); }
+    { _spatialDb->changeListenerRegistry().RemoveListener(sessionId); }
 
 
 

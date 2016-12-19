@@ -59,9 +59,21 @@ public:
 
 
 
+class IChangeListenerRegistry
+{
+public:
+    
+    virtual ~IChangeListenerRegistry() {}
+    
+    virtual void AddListener(std::shared_ptr<IChangeListener> listener) = 0;
+    virtual void RemoveListener(const SessionId &sessionId) = 0;
+};
+
+
 class ISpatialDatabase
 {
 public:
+    
     virtual ~ISpatialDatabase() {}
     
     virtual Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const = 0;
@@ -72,8 +84,7 @@ public:
     virtual void Remove(const NodeId &nodeId) = 0;
     virtual void ExpireOldNodes() = 0;
     
-    virtual void AddListener(std::shared_ptr<IChangeListener> listener) = 0;
-    virtual void RemoveListener(const SessionId &sessionId) = 0;
+    virtual IChangeListenerRegistry& changeListenerRegistry() = 0;
     
     virtual std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) = 0;
 
@@ -89,10 +100,11 @@ public:
 
 
 
-class ThreadSafeChangeListenerRegistry
+class ThreadSafeChangeListenerRegistry : public IChangeListenerRegistry
 {
-    std::unordered_map<SessionId, std::shared_ptr<IChangeListener>> _listeners;
     mutable std::mutex _mutex;
+    
+    std::unordered_map<SessionId, std::shared_ptr<IChangeListener>> _listeners;
     
 public:
     
@@ -130,8 +142,7 @@ public:
     void Remove(const NodeId &nodeId) override;
     void ExpireOldNodes() override;
     
-    void AddListener(std::shared_ptr<IChangeListener> listener) override;
-    void RemoveListener(const SessionId &sessionId) override;
+    IChangeListenerRegistry& changeListenerRegistry() override;
     
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     

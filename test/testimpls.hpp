@@ -40,6 +40,8 @@ class InMemorySpatialDatabase : public ISpatialDatabase
     
     std::vector<NodeDbEntry> GetNodes(NodeRelationType relationType) const;
     
+    ThreadSafeChangeListenerRegistry _listenerRegistry;
+    
 public:
     
     InMemorySpatialDatabase(const NodeInfo &myNodeInfo);
@@ -52,8 +54,7 @@ public:
     void Remove(const NodeId &nodeId) override;
     void ExpireOldNodes() override;
     
-    void AddListener(std::shared_ptr<IChangeListener> listener) override;
-    void RemoveListener(const SessionId &listenerId) override;
+    IChangeListenerRegistry& changeListenerRegistry() override;
     
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
