@@ -338,14 +338,17 @@ ProtoBufTcpStreamChangeListener::ProtoBufTcpStreamChangeListener(
 
 
 ProtoBufTcpStreamChangeListener::~ProtoBufTcpStreamChangeListener()
-    { Deregister(); }
+{
+    Deregister();
+    LOG(DEBUG) << "ChangeListener destroyed";
+}
 
 void ProtoBufTcpStreamChangeListener::Deregister()
 {
     if ( ! _sessionId.empty() )
     {
+        LOG(DEBUG) << "ChangeListener deregistering for session " << _sessionId;
         _localService->RemoveListener(_sessionId);
-        LOG(DEBUG) << "ChangeListener deregistered for session " << _sessionId;
         _sessionId.clear();
     }
 }

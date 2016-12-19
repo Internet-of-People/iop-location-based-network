@@ -71,7 +71,9 @@ void ThreadSafeChangeListenerRegistry::AddListener(shared_ptr<IChangeListener> l
     lock_guard<mutex> lock(_mutex);
     if (listener == nullptr)
         { throw runtime_error("Attempt to register invalid listener"); }
+        
     _listeners[ listener->sessionId() ] = listener;
+    LOG(DEBUG) << "Registered ChangeListener for session " << listener->sessionId();
 }
 
 
@@ -79,6 +81,7 @@ void ThreadSafeChangeListenerRegistry::RemoveListener(const SessionId& sessionId
 {
     lock_guard<mutex> lock(_mutex);
     _listeners.erase(sessionId);
+    LOG(DEBUG) << "Deregistered ChangeListener for session " << sessionId;
 }
 
 
