@@ -89,9 +89,9 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
     // Serve connected client on separate thread
     thread serveSessionThread( [this, socket] // copy by value to keep socket alive
     {
+        shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(*socket) );
         try
         {
-            shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(*socket) );
             shared_ptr<IProtoBufRequestDispatcher> dispatcher(
                 _dispatcherFactory->Create(session) );
 
@@ -128,6 +128,8 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
         {
             LOG(ERROR) << "Session failed: " << ex.what();
         }
+        
+        LOG(INFO) << "Session " << session->id() << " finished";
     } );
     
     // Keep thread running independently, don't block io_service here by joining it
@@ -138,7 +140,8 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(tcp::socket &socket) :
-    _id( to_string( socket.local_endpoint().port() ) ), _stream()
+    _id( socket.remote_endpoint().address().to_string() + ":" + to_string( socket.remote_endpoint().port() ) ),
+    _stream()
 {
     _stream.rdbuf()->assign( socket.local_endpoint().protocol(), socket.native_handle() );
     // TODO handle session expiration
@@ -159,7 +162,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &conta
 
 ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()
 {
-    LOG(DEBUG) << "Session closed";
+    LOG(DEBUG) << "Session " << id() << " closed";
 }
 
 
@@ -179,14 +182,14 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 
 iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
 {
-    if (! _stream.good())
-        { return nullptr; }
+    if ( _stream.eof() )
+        { throw runtime_error("Session " + id() + " not alive"); }
         
     // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
     _stream.read( &messageBytes[0], MessageHeaderSize );
-    if (! _stream.good())
-        { return nullptr; }
+    if ( _stream.eof() )
+        { throw runtime_error("Session " + id() + " not alive"); }
     
     // Extract message size from the header to know how many bytes to read
     uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
@@ -197,12 +200,17 @@ iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
     // Extend buffer to fit remaining message size and read it
     messageBytes.resize(MessageHeaderSize + bodySize, 0);
     _stream.read( &messageBytes[0] + MessageHeaderSize, bodySize );
-    if (! _stream.good())
-        { return nullptr; }
+    if ( _stream.eof() )
+        { throw runtime_error("Session " + id() + " not alive"); }
 
     // Deserialize message from receive buffer, avoid leaks for failing cases with RAII-based unique_ptr
     unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );
     message->ParseFromString(messageBytes);
+    
+    string buffer;
+    google::protobuf::TextFormat::PrintToString(*message, &buffer);
+    LOG(TRACE) << "Session " << id() << " received message " << buffer;
+    
     return message.release();
 }
 
@@ -213,12 +221,12 @@ void ProtoBufTcpStreamSession::SendMessage(iop::locnet::MessageWithHeader& messa
     message.set_header(1);
     message.set_header( message.ByteSize() - MessageHeaderSize );
     _stream << message.SerializeAsString();
+    
+    string buffer;
+    google::protobuf::TextFormat::PrintToString(message, &buffer);
+    LOG(TRACE) << "Session " << id() << " sent message " << buffer;
 }
 
-
-// TODO CHECK This doesn't really seem to work as on "normal" std::streamss
-bool ProtoBufTcpStreamSession::IsAlive() const
-    { return _stream.good(); }
 
 void ProtoBufTcpStreamSession::KeepAlive()
 {
@@ -226,8 +234,12 @@ void ProtoBufTcpStreamSession::KeepAlive()
     //_stream.expires_after(KeepAliveStreamExpirationPeriod);
 }
     
-void ProtoBufTcpStreamSession::Close()
-    { _stream.close(); }
+// // TODO CHECK This doesn't really seem to work as on "normal" std::streamss
+// bool ProtoBufTcpStreamSession::IsAlive() const
+//     { return _stream.good(); }
+// 
+// void ProtoBufTcpStreamSession::Close()
+//     { _stream.close(); }
 
 
 
@@ -325,14 +337,21 @@ void ProtoBufTcpStreamChangeListener::AddedNode(const NodeDbEntry& node)
 {
     if ( node.relationType() == NodeRelationType::Neighbour )
     {
-        iop::locnet::Request req;
-        iop::locnet::NeighbourhoodChange *change =
-            req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
-        iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
-        Converter::FillProtoBuf(info, node);
-        
-        unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
-        // TODO what to do with response status codes here?
+        try
+        {
+            iop::locnet::Request req;
+            iop::locnet::NeighbourhoodChange *change =
+                req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
+            iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
+            Converter::FillProtoBuf(info, node);
+            
+            unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
+            // TODO what to do with response status codes here?
+        }
+        catch (exception &ex)
+        {
+            LOG(ERROR) << "Failed to send change notification";
+        }
     }
 }
 
@@ -341,14 +360,21 @@ void ProtoBufTcpStreamChangeListener::UpdatedNode(const NodeDbEntry& node)
 {
     if ( node.relationType() == NodeRelationType::Neighbour )
     {
-        iop::locnet::Request req;
-        iop::locnet::NeighbourhoodChange *change =
-            req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
-        iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
-        Converter::FillProtoBuf(info, node);
-        
-        unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
-        // TODO what to do with response status codes here?
+        try
+        {
+            iop::locnet::Request req;
+            iop::locnet::NeighbourhoodChange *change =
+                req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
+            iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
+            Converter::FillProtoBuf(info, node);
+            
+            unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
+            // TODO what to do with response status codes here?
+        }
+        catch (exception &ex)
+        {
+            LOG(ERROR) << "Failed to send change notification";
+        }
     }
 }
 
@@ -357,13 +383,20 @@ void ProtoBufTcpStreamChangeListener::RemovedNode(const NodeDbEntry& node)
 {
     if ( node.relationType() == NodeRelationType::Neighbour )
     {
-        iop::locnet::Request req;
-        iop::locnet::NeighbourhoodChange *change =
-            req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
-        change->set_removednodeid( node.profile().id() );
-        
-        unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
-        // TODO what to do with response status codes here?
+        try
+        {
+            iop::locnet::Request req;
+            iop::locnet::NeighbourhoodChange *change =
+                req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
+            change->set_removednodeid( node.profile().id() );
+            
+            unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
+            // TODO what to do with response status codes here?
+        }
+        catch (exception &ex)
+        {
+            LOG(ERROR) << "Failed to send change notification";
+        }
     }
 }
 

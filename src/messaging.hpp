@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include <google/protobuf/text_format.h>
+
 #include "IopLocNet.pb.h"
 #include "locnet.hpp"
 

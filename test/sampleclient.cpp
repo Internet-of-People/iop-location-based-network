@@ -3,8 +3,8 @@
 #include <thread>
 
 #include <asio.hpp>
+#define ELPP_THREAD_SAFE
 #include <easylogging++.h>
-#include <google/protobuf/text_format.h>
 
 #include "IopLocNet.pb.h"
 #include "network.hpp"
@@ -40,7 +40,7 @@ int main(int argc, const char* const argv[])
         LOG(INFO) << "Connecting to server " << nodeContact;
         shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(nodeContact) );
 
-        LOG(INFO) << "Sending getcolleaguenodecount request";
+        LOG(INFO) << "Sending getnodecount request";
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
         NodeMethodsProtoBufClient client(dispatcher);
         size_t colleagueCount = client.GetNodeCount();
@@ -75,21 +75,30 @@ int main(int argc, const char* const argv[])
                     LOG(INFO) << "Reading change notification";
                     unique_ptr<iop::locnet::MessageWithHeader> changeNote( session->ReceiveMessage() );
                     if (! changeNote)
-                        { break; }
-                    
-                    for (int idx = 0; idx < changeNote->body().request().localservice().neighbourhoodchanged().changes_size(); ++idx)
                     {
-                        const iop::locnet::NeighbourhoodChange &change =
-                            changeNote->body().request().localservice().neighbourhoodchanged().changes(idx);
-                        string buffer;
-                        google::protobuf::TextFormat::PrintToString(change, &buffer);
-                        LOG(INFO) << "  Change: " << buffer;
+                        LOG(ERROR) << "Received empty message";
+                        break;
                     }
+                    if ( ! changeNote->has_body() || ! changeNote->body().has_request() ||
+                         ! changeNote->body().request().has_localservice() )
+                    {
+                        LOG(ERROR) << "Received unexpected message";
+                        break;
+                    }
+                    
+//                     for (int idx = 0; idx < changeNote->body().request().localservice().neighbourhoodchanged().changes_size(); ++idx)
+//                     {
+//                         const iop::locnet::NeighbourhoodChange &change =
+//                             changeNote->body().request().localservice().neighbourhoodchanged().changes(idx);
+//                             
+//                         string buffer;
+//                         google::protobuf::TextFormat::PrintToString(change, &buffer);
+//                         LOG(INFO) << "  Change: " << buffer;
+//                     }
                     
                     LOG(INFO) << "Sending acknowledgement";
                     iop::locnet::MessageWithHeader changeAckn;
                     changeAckn.mutable_body()->mutable_response()->mutable_localservice()->mutable_neighbourhoodupdated();
-                    changeAckn.set_header(1);
                     session->SendMessage(changeAckn);
                 }
             }
@@ -97,7 +106,7 @@ int main(int argc, const char* const argv[])
             {
                 LOG(ERROR) << "Error: " << ex.what();
             }
-            LOG(INFO) << "Stopped to read notifications";
+            LOG(INFO) << "Stopped reading notifications";
         } );
         msgThread.detach();
         

@@ -69,8 +69,6 @@ SCENARIO("TCP networking", "[network]")
                     msgReceived->body().response().remotenode().getnodecount();
                 REQUIRE( response.nodecount() == 6 );
             }
-            
-            clientSession->Close();
         }
         
         THEN("It serves transparent clients using ProtoBuf/TCP protocol")

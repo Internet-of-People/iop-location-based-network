@@ -88,6 +88,7 @@ vector<shared_ptr<IChangeListener>> ThreadSafeChangeListenerRegistry::listeners(
     vector<shared_ptr<IChangeListener>> result;
     for (const auto &listenerEntry : _listeners)
         { result.push_back(listenerEntry.second); }
+    //LOG(DEBUG) << "Listener count " << result.size();
     return result;
 }
 

@@ -48,10 +48,11 @@ public:
     
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
     virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
-    
+
     virtual void KeepAlive() = 0;
-    virtual bool IsAlive() const = 0;
-    virtual void Close() = 0;
+// TODO implement these    
+//     virtual bool IsAlive() const = 0;
+//     virtual void Close() = 0;
 };
 
 
@@ -115,8 +116,9 @@ public:
     void SendMessage(iop::locnet::MessageWithHeader &message) override;
     
     void KeepAlive() override;
-    bool IsAlive() const override;
-    void Close() override;
+// TODO implement these
+//     bool IsAlive() const override;
+//     void Close() override;
 };
 
 

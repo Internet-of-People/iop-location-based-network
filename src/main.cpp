@@ -27,6 +27,8 @@ int main(int argc, const char *argv[])
         if (! configCreated)
             { return 1; }
         
+        el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
+        
         // Initialize server components
         const Config &config( Config::Instance() ); 
         NodeInfo myNodeInfo( config.myNodeInfo() );
@@ -93,7 +95,7 @@ int main(int argc, const char *argv[])
         while (! ShutdownRequested)
             { this_thread::sleep_for( chrono::milliseconds(50) ); }
         
-        LOG(INFO) << "Finished successfully";
+        LOG(INFO) << "Shutting down location-based network";
         return 0;
     }
     catch (exception &e)
