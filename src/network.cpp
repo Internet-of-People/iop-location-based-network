@@ -89,7 +89,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
     // Serve connected client on separate thread
     thread serveSessionThread( [this, socket] // copy by value to keep socket alive
     {
-        shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(*socket) );
+        shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(socket) );
         try
         {
             shared_ptr<IProtoBufRequestDispatcher> dispatcher(
@@ -106,6 +106,8 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                 unique_ptr<iop::locnet::Response> response;
                 try
                 {
+                    if ( ! requestMsg->has_body() || ! requestMsg->body().has_request() )
+                        { throw runtime_error("Invalid request"); }
                     response = dispatcher->Dispatch( requestMsg->body().request() );
                     response->set_status(iop::locnet::Status::STATUS_OK);
                 }
@@ -122,14 +124,23 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                 responseMsg.mutable_body()->set_allocated_response( response.release() );
                 
                 session->SendMessage(responseMsg);
+                
+                if ( requestMsg->has_body() && requestMsg->body().has_request() &&
+                     requestMsg->body().request().has_localservice() &&
+                     requestMsg->body().request().localservice().has_getneighbournodes() &&
+                     requestMsg->body().request().localservice().getneighbournodes().keepaliveandsendupdates() )
+                {
+                    LOG(DEBUG) << "GetNeighbourhood with keepalive is requested, breaking dispatch loop and serve only notifications through ChangeListener";
+                    break;
+                }
             }
         }
         catch (exception &ex)
         {
-            LOG(ERROR) << "Session failed: " << ex.what();
+            LOG(WARNING) << "Request dispatch loop failed: " << ex.what();
         }
         
-        LOG(INFO) << "Session " << session->id() << " finished";
+        LOG(INFO) << "Request dispatch loop for session " << session->id() << " finished";
     } );
     
     // Keep thread running independently, don't block io_service here by joining it
@@ -139,11 +150,15 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 
 
 
-ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(tcp::socket &socket) :
-    _id( socket.remote_endpoint().address().to_string() + ":" + to_string( socket.remote_endpoint().port() ) ),
-    _stream()
+ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socket) :
+    _id(), _stream(), _socket(socket)
 {
-    _stream.rdbuf()->assign( socket.local_endpoint().protocol(), socket.native_handle() );
+    if (! _socket)
+        { throw runtime_error("Invalid socket parameter"); }
+    
+    _id = socket->remote_endpoint().address().to_string() + ":" + to_string( socket->remote_endpoint().port() );
+    // TODO consider possible ownership problems of this construct
+    _stream.rdbuf()->assign( socket->local_endpoint().protocol(), socket->native_handle() );
     // TODO handle session expiration
     //_stream.expires_after(NormalStreamExpirationPeriod);
 }
@@ -323,9 +338,18 @@ ProtoBufTcpStreamChangeListener::ProtoBufTcpStreamChangeListener(
 
 
 ProtoBufTcpStreamChangeListener::~ProtoBufTcpStreamChangeListener()
+    { Deregister(); }
+
+void ProtoBufTcpStreamChangeListener::Deregister()
 {
-    _localService->RemoveListener(_sessionId);
+    if ( ! _sessionId.empty() )
+    {
+        _localService->RemoveListener(_sessionId);
+        LOG(DEBUG) << "ChangeListener deregistered for session " << _sessionId;
+        _sessionId.clear();
+    }
 }
+
 
 
 const SessionId& ProtoBufTcpStreamChangeListener::sessionId() const
@@ -351,6 +375,7 @@ void ProtoBufTcpStreamChangeListener::AddedNode(const NodeDbEntry& node)
         catch (exception &ex)
         {
             LOG(ERROR) << "Failed to send change notification";
+            Deregister();
         }
     }
 }
@@ -374,6 +399,7 @@ void ProtoBufTcpStreamChangeListener::UpdatedNode(const NodeDbEntry& node)
         catch (exception &ex)
         {
             LOG(ERROR) << "Failed to send change notification";
+            Deregister();
         }
     }
 }
@@ -396,6 +422,7 @@ void ProtoBufTcpStreamChangeListener::RemovedNode(const NodeDbEntry& node)
         catch (exception &ex)
         {
             LOG(ERROR) << "Failed to send change notification";
+            Deregister();
         }
     }
 }

@@ -101,12 +101,13 @@ public:
 
 class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
 {
-    SessionId               _id;
-    asio::ip::tcp::iostream _stream;
+    SessionId                               _id;
+    asio::ip::tcp::iostream                 _stream;
+    std::shared_ptr<asio::ip::tcp::socket>  _socket;
     
 public:
     
-    ProtoBufTcpStreamSession(asio::ip::tcp::socket &socket);
+    ProtoBufTcpStreamSession(std::shared_ptr<asio::ip::tcp::socket> socket);
     ProtoBufTcpStreamSession(const NetworkInterface &contact);
     ~ProtoBufTcpStreamSession();
     
@@ -174,6 +175,7 @@ public:
         std::shared_ptr<IProtoBufRequestDispatcher> dispatcher );
     
     ~ProtoBufTcpStreamChangeListener();
+    void Deregister();
     
     const SessionId& sessionId() const override;
     
