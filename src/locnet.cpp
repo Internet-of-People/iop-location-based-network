@@ -88,7 +88,7 @@ void Node::RemoveListener(const SessionId &sessionId)
 
 
 
-shared_ptr<NodeInfo> Node::AcceptColleague(const NodeInfo &newNode)
+shared_ptr<NodeInfo> Node::AcceptColleague(const NodeInfo &node)
 {
 // TODO Sanity checks are performed in SafeStoreNode, should we reject the request
 //      if the other node "forgot" about the existing relation or call the wrong method (accept vs renew)?
@@ -98,7 +98,7 @@ shared_ptr<NodeInfo> Node::AcceptColleague(const NodeInfo &newNode)
 //         { return false; } // We shouldn't have this colleague already
     
     bool success = SafeStoreNode( NodeDbEntry(
-        newNode, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
+        node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
     return success ? shared_ptr<NodeInfo>( new NodeInfo(_myNodeInfo) ) : shared_ptr<NodeInfo>();
 }
 

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <csignal>
 
+#define ELPP_THREAD_SAFE
 #include <easylogging++.h>
 
 #include "config.hpp"
@@ -28,6 +29,7 @@ int main(int argc, const char *argv[])
             { return 1; }
         
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
+        el::Loggers::reconfigureAllLoggers(el::Level::Trace, el::ConfigurationType::ToStandardOutput, "false");
         
         // Initialize server components
         const Config &config( Config::Instance() ); 
