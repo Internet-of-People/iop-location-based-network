@@ -19,6 +19,7 @@ namespace LocNet
 const string SpatiaLiteDatabase::IN_MEMORY_DB = ":memory:";
 
 const vector<string> SpatiaLiteDatabase::DatabaseInitCommands = {
+    "BEGIN TRANSACTION;",
     "SELECT InitSpatialMetadata();",
     "CREATE TABLE IF NOT EXISTS metainfo ( "
     "  key   TEXT PRIMARY KEY, "
@@ -35,7 +36,8 @@ const vector<string> SpatiaLiteDatabase::DatabaseInitCommands = {
     "  roleType     INT NOT NULL, "
     "  expiresAt    INT NOT NULL, " // Unix timestamp. NOTE consider implementing non expiring entries to have NULL here.
     "  location     POINT NOT NULL "
-    ");",
+    ");"
+    "END TRANSACTION;"
 };
 
 
@@ -226,7 +228,6 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     if (creatingDb)
     {
         LOG(INFO) << "No SpatiaLite database found, generating: " << dbPath;
-        LOG(INFO) << "This may take a long time ...";
         for (const string &command : DatabaseInitCommands)
             { ExecuteSql(_dbHandle, command); }
         LOG(INFO) << "Database initialized";
