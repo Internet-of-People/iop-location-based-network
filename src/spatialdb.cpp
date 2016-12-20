@@ -18,7 +18,7 @@ namespace LocNet
 
 const string SpatiaLiteDatabase::IN_MEMORY_DB = ":memory:";
 
-const vector<string> SpatiaLiteDatabase::DatabaseInitCommands = {
+const vector<string> DatabaseInitCommands = {
     "BEGIN TRANSACTION;",
     "SELECT InitSpatialMetadata();",
     "CREATE TABLE IF NOT EXISTS metainfo ( "
@@ -120,7 +120,7 @@ bool FileExist(const string &fileName)
 
 
 
-void SpatiaLiteDatabase::ExecuteSql(sqlite3 *dbHandle, const string &sql)
+void ExecuteSql(sqlite3 *dbHandle, const string &sql)
 {
     char *errorMessage = nullptr;
     int execResult = sqlite3_exec( dbHandle, sql.c_str(), nullptr, nullptr, &errorMessage );

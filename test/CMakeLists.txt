@@ -16,9 +16,3 @@ add_executable (sampleserver sampleserver.cpp testdata.cpp testimpls.cpp)
 target_include_directories (sampleserver PUBLIC
     "${CMAKE_SOURCE_DIR}/extlib" "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/generated")
 target_link_libraries (sampleserver LINK_PUBLIC iop-locnet protobuf pthread)
-
-
-add_executable (gendb gendb.cpp)
-target_include_directories (gendb PUBLIC
-    "${CMAKE_SOURCE_DIR}/extlib" "${CMAKE_SOURCE_DIR}/src")
-target_link_libraries (gendb LINK_PUBLIC iop-locnet pthread)

@@ -16,7 +16,7 @@ namespace LocNet
 
 static const size_t ThreadPoolSize = 1;
 static const size_t MaxMessageSize = 1024 * 1024;
-//static const chrono::duration<uint32_t> NormalStreamExpirationPeriod    = chrono::seconds(10);
+static const chrono::duration<uint32_t> NormalStreamExpirationPeriod    = chrono::seconds(10);
 //static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
 
 static const size_t MessageHeaderSize = 5;
@@ -166,13 +166,13 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &contact) :
     _id( contact.address() + ":" + to_string( contact.port() ) ),
-    _stream( contact.address(), to_string( contact.port() ) )
+    _stream()
 {
+    _stream.expires_after(NormalStreamExpirationPeriod);
+    _stream.connect( contact.address(), to_string( contact.port() ) );
     if (! _stream)
         { throw runtime_error("Session failed to connect: " + _stream.error().message() ); }
     LOG(DEBUG) << "Connected to " << contact;
-    // TODO handle session expiration
-    //_stream.expires_after(NormalStreamExpirationPeriod);
 }
 
 ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()

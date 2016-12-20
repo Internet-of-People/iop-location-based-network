@@ -57,11 +57,11 @@ const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod = chrono::h
 const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::hours(1);
 
 const vector<NodeProfile> EzParserConfig::_seedNodes {
-    NodeProfile( "Fermat1", NetworkInterface(AddressType::Ipv4, "ham1.fermat.cloud", 16980) ),
-    NodeProfile( "Fermat2", NetworkInterface(AddressType::Ipv4, "ham2.fermat.cloud", 16980) ),
-    NodeProfile( "Fermat3", NetworkInterface(AddressType::Ipv4, "ham3.fermat.cloud", 16980) ),
-    NodeProfile( "Fermat4", NetworkInterface(AddressType::Ipv4, "ham4.fermat.cloud", 16980) ),
-    NodeProfile( "Fermat5", NetworkInterface(AddressType::Ipv4, "ham5.fermat.cloud", 16980) ),
+    NodeProfile( "Fermat1", NetworkInterface(AddressType::Ipv4, "104.155.51.239",  16980) ),
+    NodeProfile( "Fermat2", NetworkInterface(AddressType::Ipv4, "104.199.126.235", 16980) ),
+    NodeProfile( "Fermat3", NetworkInterface(AddressType::Ipv4, "130.211.120.237", 16980) ),
+    NodeProfile( "Fermat4", NetworkInterface(AddressType::Ipv4, "104.199.219.45",  16980) ),
+    NodeProfile( "Fermat5", NetworkInterface(AddressType::Ipv4, "104.196.57.34",   16980) ),
 };
 
 

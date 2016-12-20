@@ -44,6 +44,7 @@ int main(int argc, const char *argv[])
 
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
             new IncomingRequestDispatcherFactory(node) );
+        LOG(INFO) << "Preparing TCP server";
         ProtoBufDispatchingTcpServer tcpServer(
             myNodeInfo.profile().contact(), dispatcherFactory );
 
