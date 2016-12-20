@@ -9,5 +9,7 @@ if ( CMAKE_COMPILER_IS_GNUCXX )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Wall -Wextra -pedantic -ansi")
 endif ( CMAKE_COMPILER_IS_GNUCXX )
 
+link_directories(/usr/local/lib)
+
 add_subdirectory(src)
 add_subdirectory(test)

@@ -11,5 +11,9 @@ add_executable (iop-locnetd main.cpp config.cpp)
 target_include_directories (iop-locnetd PUBLIC
     "${CMAKE_SOURCE_DIR}/extlib" "${CMAKE_SOURCE_DIR}/generated")
 target_link_libraries (iop-locnetd LINK_PUBLIC iop-locnet)
+
 install (TARGETS iop-locnetd DESTINATION bin)
 install (FILES ${CMAKE_SOURCE_DIR}/generated/locnet.sqlite DESTINATION etc)
+if(EXISTS "/usr/local/lib/libprotobuf.so.10.0.0")
+   install (FILES "/usr/local/lib/libprotobuf.so.10.0.0" DESTINATION lib)
+endif()
