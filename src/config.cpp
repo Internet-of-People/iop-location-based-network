@@ -36,7 +36,7 @@ static const string DESC_OPTIONAL_DEFAULT = "Optional, default value: ";
 
 static const char *DEFAULT_CONFIG_FILE  = "iop-locnet.cfg";
 static const char *DEFAULT_PORT         = "16980";
-static const char *DEFAULT_DBPATH       = "locnet.sqlite";
+static const char *DEFAULT_DBPATH       = "/usr/local/etc/locnet.sqlite";
 //const string DBFILE_PATH = ":memory:"; // NOTE in-memory storage without a db file
 //const string DBFILE_PATH = "file:locnet.sqlite"; // NOTE this may be any file URL
 
