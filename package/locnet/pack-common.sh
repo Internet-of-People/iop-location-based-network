@@ -1,4 +1,4 @@
-cd build
+cd ../../build
 sudo checkinstall \
     --install=no \
     --fstrans=yes \
@@ -11,7 +11,7 @@ sudo checkinstall \
     --pkgversion=0.0.1-a1 \
     --pkgarch=$(dpkg --print-architecture) \
     $@
-cd ..
+cd ../package/locnet
 
 
 # Package Description: IoP is a digital currency from Fermat for the Internet of People that enables instant payments to anyone, anywhere in the world.
