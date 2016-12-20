@@ -7,3 +7,7 @@ echo Generating C++ sources from protocol definitions
 protoc -I=/tmp/IopLocNet --cpp_out=. /tmp/IopLocNet/IopLocNet.proto
 rm -rf /tmp/IopLocNet
 
+# echo Generating empty SpatiaLite database
+# rm locnet.sqlite
+# ../build/test/gendb locnet.sqlite
+

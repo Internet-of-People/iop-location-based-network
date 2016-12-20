@@ -129,6 +129,10 @@ class SpatiaLiteDatabase : public ISpatialDatabase
 public:
     
     static const std::string IN_MEMORY_DB;
+    static const std::vector<std::string> DatabaseInitCommands;
+    
+    static void ExecuteSql(sqlite3 *dbHandle, const std::string &sql);
+    
     
     SpatiaLiteDatabase(const NodeInfo &myNodeInfo, const std::string &dbPath,
                        std::chrono::duration<uint32_t> expirationPeriod);

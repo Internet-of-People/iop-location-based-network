@@ -18,7 +18,7 @@ namespace LocNet
 
 const string SpatiaLiteDatabase::IN_MEMORY_DB = ":memory:";
 
-const vector<string> DatabaseInitCommands = {
+const vector<string> SpatiaLiteDatabase::DatabaseInitCommands = {
     "SELECT InitSpatialMetadata();",
     "CREATE TABLE IF NOT EXISTS metainfo ( "
     "  key   TEXT PRIMARY KEY, "
@@ -118,7 +118,7 @@ bool FileExist(const string &fileName)
 
 
 
-void ExecuteSql(sqlite3 *dbHandle, const string &sql)
+void SpatiaLiteDatabase::ExecuteSql(sqlite3 *dbHandle, const string &sql)
 {
     char *errorMessage = nullptr;
     int execResult = sqlite3_exec( dbHandle, sql.c_str(), nullptr, nullptr, &errorMessage );
@@ -210,12 +210,12 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     //      We might have to change to a more performant but more complicated model here.
     int openResult = sqlite3_open_v2 ( dbPath.c_str(), &_dbHandle,
          SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_URI, nullptr); // null: no vFS module to use
-    scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
     if (openResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to open/create SpatiaLite database file " << dbPath;
         throw runtime_error("Failed to open SpatiaLite database");
     }
+    scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
     
 //     LOG(INFO) << "SQLite version: " << sqlite3_libversion();
 //     LOG(INFO) << "SpatiaLite version: " << spatialite_version();

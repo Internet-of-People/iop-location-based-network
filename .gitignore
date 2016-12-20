@@ -2,4 +2,4 @@
 *.kdev*
 build
 logs
-locnet.sqlite
+
