@@ -589,6 +589,7 @@ vector<NodeInfo> NodeMethodsProtoBufClient::GetRandomNodes(
     vector<NodeInfo> result;
     for (int32_t idx = 0; idx < getRandResp.nodes_size(); ++idx)
         { result.push_back( Converter::FromProtoBuf( getRandResp.nodes(idx) ) ); }
+    LOG(DEBUG) << "Request GetRandomNodes() returned " << result.size() << " nodes";
     return result;
 }
 
@@ -614,6 +615,7 @@ vector<NodeInfo> NodeMethodsProtoBufClient::GetClosestNodesByDistance(
     vector<NodeInfo> result;
     for (int32_t idx = 0; idx < getNodeResp.nodes_size(); ++idx)
         { result.push_back( Converter::FromProtoBuf( getNodeResp.nodes(idx) ) ); }
+    LOG(DEBUG) << "Request GetClosestNodesByDistance() returned " << result.size() << " nodes";
     return result;
 }
 

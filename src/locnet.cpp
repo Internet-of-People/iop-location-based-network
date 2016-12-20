@@ -344,11 +344,8 @@ bool Node::InitializeWorld(const vector<NodeProfile> &seedNodes)
                 { continue; }
             
             // Try to add seed node to our network (no matter if fails)
-            bool seedAsNeighbour = SafeStoreNode( NodeDbEntry( selectedSeedNode, GpsLocation(0,0), // this will be queried in SafeStoreNode anyway
-                NodeRelationType::Neighbour, NodeContactRoleType::Initiator), seedNodeConnection );
-            if (! seedAsNeighbour) {
-                SafeStoreNode( NodeDbEntry(selectedSeedNode, GpsLocation(0,0), // this will be queried in SafeStoreNode anyway
-                    NodeRelationType::Colleague, NodeContactRoleType::Initiator), seedNodeConnection ); }
+            SafeStoreNode( NodeDbEntry(selectedSeedNode, GpsLocation(0,0), // this will be queried in SafeStoreNode anyway
+                NodeRelationType::Colleague, NodeContactRoleType::Initiator), seedNodeConnection );
             
             // Query both total node count and an initial list of random nodes to start with
             LOG(DEBUG) << "Getting node count from initial seed";
