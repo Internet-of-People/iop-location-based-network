@@ -11,6 +11,17 @@ namespace LocNet
 {
 
 
+
+static const uint16_t VERSION_MAJOR = 0;
+static const uint16_t VERSION_MINOR = 0;
+static const uint16_t VERSION_PATCH = 1;
+static const string   VERSION_TAG   = "a3";
+
+static const string LOCNET_VERSION =
+    to_string(VERSION_MAJOR) + "." + to_string(VERSION_MINOR) + "." +
+    to_string(VERSION_PATCH) + "-" + VERSION_TAG;
+
+
 unique_ptr<Config> Config::_instance(nullptr);
 
 const Config& Config::Instance()
@@ -31,6 +42,10 @@ bool Config::Init(int argc, const char* argv[])
 }
 
 
+const string& Config::version() const
+    { return LOCNET_VERSION; }
+
+
 
 static const string DESC_OPTIONAL_DEFAULT = "Optional, default value: ";
 
@@ -42,6 +57,7 @@ static const char *DEFAULT_DBPATH       = "locnet.sqlite";
 
 
 static const char *OPTNAME_HELP         = "--help";
+static const char *OPTNAME_VERSION      = "--version";
 static const char *OPTNAME_CONFIGFILE   = "--configfile";
 static const char *OPTNAME_NODEID       = "--nodeid";
 static const char *OPTNAME_IPADDRESS    = "--ipaddress";
@@ -81,25 +97,27 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
         0,              // Number of expected values
         0,              // Delimiter character if expecting multiple values
         "Show usage",   // Help message for this option
-        "-h", OPTNAME_HELP // Flag names
+        OPTNAME_HELP, "-h" // Flag names
     );
     
+    _optParser.add(DEFAULT_CONFIG_FILE, false, 0, 0, "Print version information.",
+        OPTNAME_VERSION);
     _optParser.add(DEFAULT_CONFIG_FILE, false, 1, 0, ( "Path to config file to load options from. " +
-        DESC_OPTIONAL_DEFAULT + DEFAULT_CONFIG_FILE ).c_str(), "-c", OPTNAME_CONFIGFILE);
+        DESC_OPTIONAL_DEFAULT + DEFAULT_CONFIG_FILE ).c_str(), OPTNAME_CONFIGFILE, "-c");
     _optParser.add("", true, 1, 0, "Public node id, should be an SHA256 hash "
-        "of the public key of this node", "-i", OPTNAME_NODEID);
+        "of the public key of this node", OPTNAME_NODEID, "-i");
     _optParser.add("", true, 1, 0, "IP address (either ipv4 or v6) of network interface "
-        "that can be used to connect to this node", "-a", OPTNAME_IPADDRESS);
+        "that can be used to connect to this node", OPTNAME_IPADDRESS, "-a");
     _optParser.add(DEFAULT_PORT, false, 1, 0, ( "TCP port number for connecting to this node. " +
-        DESC_OPTIONAL_DEFAULT + DEFAULT_PORT ).c_str(), "-p", OPTNAME_PORT);
+        DESC_OPTIONAL_DEFAULT + DEFAULT_PORT ).c_str(), OPTNAME_PORT, "-p");
     _optParser.add("", true, 1, 0, "GPS latitude of this server "
-        "as real number from range (-90,90)", "-y", OPTNAME_LATITUDE);
+        "as real number from range (-90,90)", OPTNAME_LATITUDE, "-y");
     _optParser.add("", true, 1, 0, "GPS longitude of this server "
-        "as real number from range (-180,180)", "-x", OPTNAME_LONGITUDE);
+        "as real number from range (-180,180)", OPTNAME_LONGITUDE, "-x");
     
     _optParser.add(DEFAULT_DBPATH, false, 1, 0, ( "Path to node database. For SQLite, value ':memory:' "
         "creates in-memory database that will not be saved to disk. " +
-        DESC_OPTIONAL_DEFAULT + DEFAULT_DBPATH ).c_str(), "-d", OPTNAME_DBPATH);
+        DESC_OPTIONAL_DEFAULT + DEFAULT_DBPATH ).c_str(), OPTNAME_DBPATH, "-d");
     
     
     _optParser.parse(argc, argv);
@@ -111,8 +129,9 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     else { cout << "Config file '" << filename << "' not found, using command line values only" << endl; }
     
     vector<string> badOptions;
-    bool requiredPassed = _optParser.gotRequired(badOptions);
-    if(! requiredPassed)
+    bool validateRequiredPassed = _optParser.gotRequired(badOptions);
+    if( ! validateRequiredPassed &&
+        ! ( _optParser.isSet(OPTNAME_HELP) || _optParser.isSet(OPTNAME_VERSION) ) )
     {
         for(size_t idx = 0; idx < badOptions.size(); ++idx)
             { cerr << "Missing required option " << badOptions[idx] << endl; }
@@ -125,7 +144,8 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
 //             { LOG(ERROR) << "Wrong number of values for option " << badOptions[idx]; }
 //     }
     
-    if ( _optParser.isSet(OPTNAME_HELP) || ! requiredPassed || ! valueCountPassed )
+    if ( ! _optParser.isSet(OPTNAME_VERSION) &&
+         ( _optParser.isSet(OPTNAME_HELP) || ! validateRequiredPassed || ! valueCountPassed ) )
     {
         string usage;
         _optParser.getUsage(usage);
@@ -133,6 +153,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
         return false;
     }
     
+    _versionRequested = _optParser.isSet(OPTNAME_VERSION);
     _optParser.get(OPTNAME_NODEID)->getString(_id);
     _optParser.get(OPTNAME_IPADDRESS)->getString(_ipAddr);
     _optParser.get(OPTNAME_LATITUDE)->getFloat(_latitude);
@@ -160,6 +181,9 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
 }
 
 
+
+bool EzParserConfig::versionRequested() const
+    { return _versionRequested; }
 
 const string& EzParserConfig::dbPath() const
     { return _dbPath; }

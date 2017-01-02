@@ -27,6 +27,9 @@ public:
 
     virtual ~Config() {}
     
+    virtual const std::string& version() const;
+    virtual bool versionRequested() const = 0;
+    
     virtual const NodeInfo& myNodeInfo() const = 0;
     virtual const std::vector<NodeProfile>& seedNodes() const = 0;
     
@@ -45,6 +48,7 @@ class EzParserConfig : public Config
     static const std::chrono::duration<uint32_t>    _dbExpirationPeriod;
     static const std::chrono::duration<uint32_t>    _discoveryPeriod;
     
+    bool            _versionRequested;
     NodeId          _id;
     Address         _ipAddr;
     TcpPort         _port;
@@ -57,6 +61,8 @@ class EzParserConfig : public Config
 public:
 
     bool Initialize(int argc, const char *argv[]) override;
+    
+    bool versionRequested() const override;
     
     const NodeInfo& myNodeInfo() const override;
     const std::vector<NodeProfile>& seedNodes() const override;

@@ -28,6 +28,13 @@ int main(int argc, const char *argv[])
         if (! configCreated)
             { return 1; }
         
+        if ( Config::Instance().versionRequested() )
+        {
+            cout << "Internet of People - Location based network " << Config::Instance().version() << endl;
+            return 0;
+        }
+        
+        
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
         el::Loggers::reconfigureAllLoggers(el::Level::Trace, el::ConfigurationType::ToStandardOutput, "false");
         
