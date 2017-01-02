@@ -47,10 +47,12 @@ const string& Config::version() const
 
 
 
-static const string DESC_OPTIONAL_DEFAULT = "Optional, default value: ";
+static const TcpPort DefaultPort        = 16980;
+static const string DEFAULT_PORT_STR    = to_string(DefaultPort);
 
+static const string DESC_OPTIONAL_DEFAULT = "Optional, default value: ";
+static const char *DEFAULT_PORT         = DEFAULT_PORT_STR.c_str();
 static const char *DEFAULT_CONFIG_FILE  = "iop-locnet.cfg";
-static const char *DEFAULT_PORT         = "16980";
 static const char *DEFAULT_DBPATH       = "locnet.sqlite";
 //const string DBFILE_PATH = ":memory:"; // NOTE in-memory storage without a db file
 //const string DBFILE_PATH = "file:locnet.sqlite"; // NOTE this may be any file URL
@@ -60,10 +62,11 @@ static const char *OPTNAME_HELP         = "--help";
 static const char *OPTNAME_VERSION      = "--version";
 static const char *OPTNAME_CONFIGFILE   = "--configfile";
 static const char *OPTNAME_NODEID       = "--nodeid";
-static const char *OPTNAME_IPADDRESS    = "--ipaddress";
+static const char *OPTNAME_HOST         = "--host";
 static const char *OPTNAME_PORT         = "--port";
 static const char *OPTNAME_LATITUDE     = "--latitude";
 static const char *OPTNAME_LONGITUDE    = "--longitude";
+static const char *OPTNAME_SEEDNODE     = "--seednode";
 
 static const char *OPTNAME_DBPATH       = "--dbpath";
 
@@ -72,12 +75,16 @@ const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::
 const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod = chrono::hours(24);
 const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::hours(1);
 
-const vector<NodeProfile> EzParserConfig::_seedNodes {
-    NodeProfile( "Fermat1", NetworkInterface(AddressType::Ipv4, "104.155.51.239",  16980) ),
-    NodeProfile( "Fermat2", NetworkInterface(AddressType::Ipv4, "104.199.126.235", 16980) ),
-    NodeProfile( "Fermat3", NetworkInterface(AddressType::Ipv4, "130.211.120.237", 16980) ),
-    NodeProfile( "Fermat4", NetworkInterface(AddressType::Ipv4, "104.199.219.45",  16980) ),
-    NodeProfile( "Fermat5", NetworkInterface(AddressType::Ipv4, "104.196.57.34",   16980) ),
+static const vector<Address> DefaultSeedNodes {
+    "ham4.fermat.cloud",
+    "ham5.fermat.cloud",
+    "ham6.fermat.cloud",
+    "ham7.fermat.cloud",
+//     NodeProfile( "Fermat1", NetworkInterface(AddressType::Ipv4, "104.155.51.239",  16980) ),
+//     NodeProfile( "Fermat2", NetworkInterface(AddressType::Ipv4, "104.199.126.235", 16980) ),
+//     NodeProfile( "Fermat3", NetworkInterface(AddressType::Ipv4, "130.211.120.237", 16980) ),
+//     NodeProfile( "Fermat4", NetworkInterface(AddressType::Ipv4, "104.199.219.45",  16980) ),
+//     NodeProfile( "Fermat5", NetworkInterface(AddressType::Ipv4, "104.196.57.34",   16980) ),
 };
 
 
@@ -106,14 +113,16 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
         DESC_OPTIONAL_DEFAULT + DEFAULT_CONFIG_FILE ).c_str(), OPTNAME_CONFIGFILE, "-c");
     _optParser.add("", true, 1, 0, "Public node id, should be an SHA256 hash "
         "of the public key of this node", OPTNAME_NODEID, "-i");
-    _optParser.add("", true, 1, 0, "IP address (either ipv4 or v6) of network interface "
-        "that can be used to connect to this node", OPTNAME_IPADDRESS, "-a");
+    _optParser.add("", true, 1, 0, "Host address (either DNS, ipv4 or v6) to be used externally "
+        "by other nodes or clients to connect to this node", OPTNAME_HOST, "-h");
     _optParser.add(DEFAULT_PORT, false, 1, 0, ( "TCP port number for connecting to this node. " +
         DESC_OPTIONAL_DEFAULT + DEFAULT_PORT ).c_str(), OPTNAME_PORT, "-p");
     _optParser.add("", true, 1, 0, "GPS latitude of this server "
         "as real number from range (-90,90)", OPTNAME_LATITUDE, "-y");
     _optParser.add("", true, 1, 0, "GPS longitude of this server "
         "as real number from range (-180,180)", OPTNAME_LONGITUDE, "-x");
+    _optParser.add("", false, 1, 0, "Host name of seed node to be used instead of default seeds. "
+        "You can repeat this option to define multiple custom seed nodes.", OPTNAME_SEEDNODE, "-s");
     
     _optParser.add(DEFAULT_DBPATH, false, 1, 0, ( "Path to node database. For SQLite, value ':memory:' "
         "creates in-memory database that will not be saved to disk. " +
@@ -155,7 +164,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     
     _versionRequested = _optParser.isSet(OPTNAME_VERSION);
     _optParser.get(OPTNAME_NODEID)->getString(_id);
-    _optParser.get(OPTNAME_IPADDRESS)->getString(_ipAddr);
+    _optParser.get(OPTNAME_HOST)->getString(_ipAddr);
     _optParser.get(OPTNAME_LATITUDE)->getFloat(_latitude);
     _optParser.get(OPTNAME_LONGITUDE)->getFloat(_longitude);
     _optParser.get(OPTNAME_DBPATH)->getString(_dbPath);
@@ -170,12 +179,17 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
 //     cout << pretty;
 //     cout << "-----" << endl;
     
-    
+    // TODO DNS entry also should be enabled as an address, how to handle this here?
     AddressType addrType = _ipAddr.find(':') == string::npos ?
         AddressType::Ipv4 : AddressType::Ipv6;
     _myNodeInfo.reset( new NodeInfo(
         NodeProfile(_id, NetworkInterface(addrType, _ipAddr, _port) ),
         GpsLocation(_latitude, _longitude) ) );
+    
+    vector<vector<string>> seedOptionVectors;
+    _optParser.get(OPTNAME_SEEDNODE)->getMultiStrings(seedOptionVectors);
+    for (auto const &seedVector : seedOptionVectors)
+        { _seedNodes.push_back( seedVector[0] ); }
     
     return true;
 }
@@ -191,8 +205,11 @@ const string& EzParserConfig::dbPath() const
 const NodeInfo& EzParserConfig::myNodeInfo() const
     { return *_myNodeInfo; }
 
-const vector<NodeProfile>& EzParserConfig::seedNodes() const
-    { return _seedNodes; }
+const vector<Address>& EzParserConfig::seedNodes() const
+    { return _seedNodes.empty() ? DefaultSeedNodes : _seedNodes; }
+
+TcpPort EzParserConfig::defaultPort() const
+    { return DefaultPort; }
 
 chrono::duration< uint32_t > EzParserConfig::dbMaintenancePeriod() const
     { return _dbMaintenancePeriod; }

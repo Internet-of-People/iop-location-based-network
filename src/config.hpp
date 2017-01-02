@@ -31,7 +31,8 @@ public:
     virtual bool versionRequested() const = 0;
     
     virtual const NodeInfo& myNodeInfo() const = 0;
-    virtual const std::vector<NodeProfile>& seedNodes() const = 0;
+    virtual const std::vector<Address>& seedNodes() const = 0;
+    virtual TcpPort defaultPort() const = 0;
     
     virtual const std::string& dbPath() const = 0;
     virtual std::chrono::duration<uint32_t> dbMaintenancePeriod() const = 0;
@@ -43,7 +44,6 @@ public:
 
 class EzParserConfig : public Config
 {
-    static const std::vector<NodeProfile>           _seedNodes;
     static const std::chrono::duration<uint32_t>    _dbMaintenancePeriod;
     static const std::chrono::duration<uint32_t>    _dbExpirationPeriod;
     static const std::chrono::duration<uint32_t>    _discoveryPeriod;
@@ -55,6 +55,7 @@ class EzParserConfig : public Config
     GpsCoordinate   _latitude;
     GpsCoordinate   _longitude;
     std::string     _dbPath;
+    std::vector<std::string> _seedNodes;
     
     std::unique_ptr<NodeInfo> _myNodeInfo;
     
@@ -65,7 +66,8 @@ public:
     bool versionRequested() const override;
     
     const NodeInfo& myNodeInfo() const override;
-    const std::vector<NodeProfile>& seedNodes() const override;
+    const std::vector<Address>& seedNodes() const override;
+    TcpPort defaultPort() const override;
     
     const std::string& dbPath() const override;
     std::chrono::duration<uint32_t> dbMaintenancePeriod() const override;

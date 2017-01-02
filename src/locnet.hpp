@@ -82,7 +82,7 @@ public:
     
     virtual ~INodeConnectionFactory() {}
     
-    virtual std::shared_ptr<INodeMethods> ConnectTo(const NodeProfile &node) = 0;
+    virtual std::shared_ptr<INodeMethods> ConnectTo(const NetworkInterface &contact) = 0;
 };
 
 
@@ -100,11 +100,11 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     
-    std::shared_ptr<INodeMethods> SafeConnectTo(const NodeProfile &node);
+    std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkInterface &contact);
     bool SafeStoreNode(const NodeDbEntry &entry,
         std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
     
-    bool InitializeWorld(const std::vector<NodeProfile> &seedNodes);
+    bool InitializeWorld(const std::vector<Address> &seedNodes, TcpPort defaultPort);
     bool InitializeNeighbourhood();
     
     Distance GetBubbleSize(const GpsLocation &location) const;
@@ -116,7 +116,7 @@ public:
     Node( const NodeInfo &myNodeInfo,
           std::shared_ptr<ISpatialDatabase> spatialDb,
           std::shared_ptr<INodeConnectionFactory> connectionFactory,
-          const std::vector<NodeProfile> &seedNodes );
+          const std::vector<Address> &seedNodes, TcpPort defaultPort );
 
     void ExpireOldNodes();
     void RenewNodeRelations();

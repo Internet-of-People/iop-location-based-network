@@ -27,10 +27,11 @@ int main(int argc, const char *argv[])
         bool configCreated = Config::Init(argc, argv);
         if (! configCreated)
             { return 1; }
-        
-        if ( Config::Instance().versionRequested() )
+
+        const Config &config( Config::Instance() ); 
+        if ( config.versionRequested() )
         {
-            cout << "Internet of People - Location based network " << Config::Instance().version() << endl;
+            cout << "Internet of People - Location based network " << config.version() << endl;
             return 0;
         }
         
@@ -39,7 +40,6 @@ int main(int argc, const char *argv[])
         el::Loggers::reconfigureAllLoggers(el::Level::Trace, el::ConfigurationType::ToStandardOutput, "false");
         
         // Initialize server components
-        const Config &config( Config::Instance() ); 
         NodeInfo myNodeInfo( config.myNodeInfo() );
         LOG(INFO) << "Initializing server with node info: " << myNodeInfo;
         
@@ -47,13 +47,13 @@ int main(int argc, const char *argv[])
             myNodeInfo, config.dbPath(), config.dbExpirationPeriod() ) );
 
         shared_ptr<INodeConnectionFactory> connectionFactory( new TcpStreamConnectionFactory() );
-        shared_ptr<Node> node( new Node( myNodeInfo, geodb, connectionFactory, config.seedNodes() ) );
+        shared_ptr<Node> node( new Node( myNodeInfo, geodb, connectionFactory, config.seedNodes(), config.defaultPort() ) );
 
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
             new IncomingRequestDispatcherFactory(node) );
         LOG(INFO) << "Preparing TCP server";
         ProtoBufDispatchingTcpServer tcpServer(
-            myNodeInfo.profile().contact(), dispatcherFactory );
+            myNodeInfo.profile().contact().port(), dispatcherFactory );
 
         // Set up signal handlers to stop on Ctrl-C and further events
         bool ShutdownRequested = false;

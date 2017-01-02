@@ -37,7 +37,7 @@ public:
     NodeDbEntry( const NodeProfile& profile, const GpsLocation& location,
                  NodeRelationType relationType, NodeContactRoleType roleType );
     
-    NodeRelationType  relationType() const;
+    NodeRelationType relationType() const;
     NodeContactRoleType roleType() const;
     
     bool operator==(const NodeDbEntry &other) const;

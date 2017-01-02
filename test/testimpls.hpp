@@ -73,7 +73,7 @@ class DummyNodeConnectionFactory: public INodeConnectionFactory
 {
 public:
     
-    std::shared_ptr<INodeMethods> ConnectTo(const NodeProfile &node) override;
+    std::shared_ptr<INodeMethods> ConnectTo(const NetworkInterface &contact) override;
 };
 
 

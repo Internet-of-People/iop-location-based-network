@@ -30,7 +30,7 @@ protected:
                                      const asio::error_code &ec ) = 0;
 public:
     
-    TcpServer(const NetworkInterface &listenOn);
+    TcpServer(TcpPort portNumber);
     virtual ~TcpServer();
     
     void Shutdown();
@@ -79,7 +79,7 @@ protected:
                              const asio::error_code &ec ) override;
 public:
     
-    ProtoBufDispatchingTcpServer( const NetworkInterface &listenOn,
+    ProtoBufDispatchingTcpServer( TcpPort portNumber,
         std::shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory );
 };
 
@@ -142,7 +142,7 @@ class TcpStreamConnectionFactory : public INodeConnectionFactory
 {
 public:
     
-    std::shared_ptr<INodeMethods> ConnectTo(const NodeProfile &node) override;
+    std::shared_ptr<INodeMethods> ConnectTo(const NetworkInterface &address) override;
 };
 
 

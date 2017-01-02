@@ -262,7 +262,7 @@ SCENARIO("Server registration", "")
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(nodeInfo,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
-        Node geonet(nodeInfo, geodb, connectionFactory, {});
+        Node geonet(nodeInfo, geodb, connectionFactory, {}, 1234);
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {

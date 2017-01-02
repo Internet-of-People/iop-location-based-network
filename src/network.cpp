@@ -24,8 +24,8 @@ static const size_t MessageSizeOffset = 1;
 
 
 
-TcpServer::TcpServer(const NetworkInterface &listenOn) : _ioService(),
-    _acceptor( _ioService, tcp::endpoint( make_address( listenOn.address() ), listenOn.port() ) ),
+TcpServer::TcpServer(TcpPort portNumber) : _ioService(),
+    _acceptor( _ioService, tcp::endpoint( tcp::v4(), portNumber ) ),
     _threadPool(), _shutdownRequested(false)
 {
     // Switch the acceptor to listening state
@@ -63,9 +63,9 @@ void TcpServer::Shutdown()
 
 
 
-ProtoBufDispatchingTcpServer::ProtoBufDispatchingTcpServer( const NetworkInterface& listenOn,
+ProtoBufDispatchingTcpServer::ProtoBufDispatchingTcpServer( TcpPort portNumber,
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory ) :
-    TcpServer(listenOn), _dispatcherFactory(dispatcherFactory) {}
+    TcpServer(portNumber), _dispatcherFactory(dispatcherFactory) {}
 
 
 
@@ -284,10 +284,10 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
 
 
 
-shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NodeProfile& node)
+shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NetworkInterface& address)
 {
-    LOG(DEBUG) << "Connecting to " << node;
-    shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession( node.contact() ) );
+    LOG(DEBUG) << "Connecting to " << address;
+    shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(address) );
     shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
     shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher) );
     return result;
