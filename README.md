@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/Fermat-ORG/iop-location-based-network.svg?branch=master)](https://travis-ci.org/Fermat-ORG/iop-location-based-network)
 
 Header-only dependencies already included in directory extlib:
-- easylogging++ 9.83, used for logging in the whole source,
+- easylogging++ 9.89, used for logging in the whole source,
   [download here](https://github.com/easylogging/easyloggingpp)
 - asio 1.11.0, used for networking,
   [download here](http://think-async.com/Asio/Download)

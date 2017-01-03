@@ -1,6 +1,9 @@
 #define CATCH_CONFIG_RUNNER
 //#define CATCH_CONFIG_MAIN
 #include <catch.hpp>
+
+// TODO thread safety should be turned on for test_network but it seems to cause segmentation faults (probably together with catch++)
+//#define ELPP_THREAD_SAFE
 #include <easylogging++.h>
 
 #include "testdata.hpp"
@@ -310,10 +313,7 @@ SCENARIO("Server registration", "")
 int main( int argc, const char* const argv[] )
 {
     // Disable logging to prevent flooding the console
-    el::Configurations logConf;
-    logConf.setToDefault();
-    logConf.setGlobally(el::ConfigurationType::ToStandardOutput, "false");
-    el::Loggers::reconfigureLogger("default", logConf);
+    el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToStandardOutput, "false");
     
     Catch::Session session;
     try { return session.run( argc, argv ); }
