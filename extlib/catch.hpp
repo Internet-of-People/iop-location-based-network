@@ -5841,11 +5841,12 @@ namespace Catch {
     extern SignalDefs signalDefs[];
     SignalDefs signalDefs[] = {
             { SIGINT,  "SIGINT - Terminal interrupt signal" },
-            { SIGILL,  "SIGILL - Illegal instruction signal" },
-            { SIGFPE,  "SIGFPE - Floating point error signal" },
-            { SIGSEGV, "SIGSEGV - Segmentation violation signal" },
             { SIGTERM, "SIGTERM - Termination request signal" },
-            { SIGABRT, "SIGABRT - Abort (abnormal termination) signal" }
+// NOTE custom modification: disabled some signal handlers to get proper core dumps on errors
+//            { SIGABRT, "SIGABRT - Abort (abnormal termination) signal" }
+//             { SIGFPE,  "SIGFPE - Floating point error signal" },
+//             { SIGILL,  "SIGILL - Illegal instruction signal" },
+//             { SIGSEGV, "SIGSEGV - Segmentation violation signal" },
         };
 
     struct FatalConditionHandler {
