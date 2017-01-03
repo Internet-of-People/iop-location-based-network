@@ -92,7 +92,7 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     static std::random_device _randomDevice;
     
     NodeInfo _myNodeInfo;
-    std::shared_ptr<ISpatialDatabase> _spatialDb;
+    std::shared_ptr<ISpatialDatabase>       _spatialDb;
     std::shared_ptr<INodeConnectionFactory> _connectionFactory;
     
     // TODO consider if this should be also persistant, thus included in SpatialDatabase.
@@ -100,11 +100,15 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     
+    std::vector<Address>    _seedNodes;
+    TcpPort                 _defaultPort;
+    
     std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkInterface &contact);
     bool SafeStoreNode(const NodeDbEntry &entry,
         std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
     
-    bool InitializeWorld(const std::vector<Address> &seedNodes, TcpPort defaultPort);
+    void EnsureMapFilled();
+    bool InitializeWorld();
     bool InitializeNeighbourhood();
     
     Distance GetBubbleSize(const GpsLocation &location) const;

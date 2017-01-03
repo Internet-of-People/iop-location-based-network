@@ -34,7 +34,8 @@ Node::Node( const NodeInfo &myNodeInfo,
             shared_ptr<ISpatialDatabase> spatialDb,
             std::shared_ptr<INodeConnectionFactory> connectionFactory,
             const vector<Address> &seedNodes, TcpPort defaultPort ) :
-    _myNodeInfo(myNodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory)
+    _myNodeInfo(myNodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory),
+    _seedNodes(seedNodes), _defaultPort(defaultPort)
 {
     if (spatialDb == nullptr) {
         throw runtime_error("Invalid spatial database argument");
@@ -43,20 +44,29 @@ Node::Node( const NodeInfo &myNodeInfo,
         throw runtime_error("Invalid connection factory argument");
     }
     
-    if ( GetNodeCount() <= 1 && ! seedNodes.empty() )
+    EnsureMapFilled();
+}
+
+
+void Node::EnsureMapFilled()
+{
+    if ( GetNodeCount() <= 1 && ! _seedNodes.empty() )
     {
-        bool discoverySucceeded = InitializeWorld(seedNodes, defaultPort) && InitializeNeighbourhood();
+        LOG(INFO) << "Map is empty, discovering the network";
+        
+        bool discoverySucceeded = InitializeWorld() && InitializeNeighbourhood();
         if (! discoverySucceeded)
         {
             // This still might be normal if we're the very first seed node of the whole network
-            auto seedIt = find_if( seedNodes.begin(), seedNodes.end(),
+            auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
                 [this] (const Address &address) { return _myNodeInfo.profile().contact().address() == address; } );
-            if ( seedIt == seedNodes.end() )
+            if ( seedIt == _seedNodes.end() )
                  { throw runtime_error("Network discovery failed"); }
             else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
         }
     }
 }
+
 
 
 const unordered_map<ServiceType,ServiceProfile,EnumHasher>& Node::GetServices() const
@@ -318,22 +328,22 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
 
 
 
-bool Node::InitializeWorld(const vector<Address> &seedNodes, TcpPort defaultPort)
+bool Node::InitializeWorld()
 {
     // Initialize random generator and utility variables
-    uniform_int_distribution<int> fromRange( 0, seedNodes.size() - 1 );
+    uniform_int_distribution<int> fromRange( 0, _seedNodes.size() - 1 );
     vector<NetworkInterface> triedNodes;
     
     size_t nodeCountAtSeed = 0;
     vector<NodeInfo> randomColleagueCandidates;
-    while ( triedNodes.size() < seedNodes.size() )
+    while ( triedNodes.size() < _seedNodes.size() )
     {
         // Select random node from hardwired seed node list
         size_t selectedSeedNodeIdx = fromRange(_randomDevice);
-        const Address& selectedSeedAddress = seedNodes[selectedSeedNodeIdx];
+        const Address& selectedSeedAddress = _seedNodes[selectedSeedNodeIdx];
         
         // TODO should not hardwire IPv4 here
-        NetworkInterface selectedSeedContact(AddressType::Ipv4, selectedSeedAddress, defaultPort);
+        NetworkInterface selectedSeedContact(AddressType::Ipv4, selectedSeedAddress, _defaultPort);
         
         // If node has been already tried and failed, choose another one
         auto it = find( triedNodes.begin(), triedNodes.end(), selectedSeedContact );
@@ -373,7 +383,7 @@ bool Node::InitializeWorld(const vector<Address> &seedNodes, TcpPort defaultPort
     
     // Check if all seed nodes tried and failed
     if ( nodeCountAtSeed == 0 && randomColleagueCandidates.empty() &&
-         triedNodes.size() == seedNodes.size() )
+         triedNodes.size() == _seedNodes.size() )
     {
         // TODO reconsider error handling here, should we completely give up and maybe exit()?
         LOG(ERROR) << "All seed nodes have been tried and failed";
@@ -527,6 +537,7 @@ bool Node::InitializeNeighbourhood()
 void Node::ExpireOldNodes()
 {
     _spatialDb->ExpireOldNodes();
+    EnsureMapFilled();
 }
 
 

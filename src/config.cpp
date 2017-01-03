@@ -15,11 +15,11 @@ namespace LocNet
 static const uint16_t VERSION_MAJOR = 0;
 static const uint16_t VERSION_MINOR = 0;
 static const uint16_t VERSION_PATCH = 1;
-static const string   VERSION_TAG   = "a3";
+//static const string   VERSION_TAG   = "a3";
 
 static const string LOCNET_VERSION =
     to_string(VERSION_MAJOR) + "." + to_string(VERSION_MINOR) + "." +
-    to_string(VERSION_PATCH) + "-" + VERSION_TAG;
+    to_string(VERSION_PATCH); // + "-" + VERSION_TAG;
 
 
 unique_ptr<Config> Config::_instance(nullptr);
