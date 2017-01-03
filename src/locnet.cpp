@@ -233,9 +233,54 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
     {
         // We must not explicitly add or overwrite our own node info here.
         // Whether or not our own nodeinfo is stored in the db is an implementation detail of the SpatialDatabase.
-        if ( static_cast<const NodeInfo&>(plannedEntry) == _myNodeInfo )
+        if ( plannedEntry.profile().id() == _myNodeInfo.profile().id() ||
+             plannedEntry.relationType() == NodeRelationType::Self )
             { return false; }
      
+        // Validate if node is acceptable
+        shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( plannedEntry.profile().id() );
+        switch ( plannedEntry.relationType() )
+        {
+            case NodeRelationType::Colleague:
+            {
+                if (storedInfo != nullptr)
+                {
+                    // Existing colleague info may be upgraded to neighbour but not vica versa
+                    if ( storedInfo->relationType() == NodeRelationType::Neighbour )
+                        { return false; }
+                    if ( storedInfo->location() != plannedEntry.location() ) {
+                        // Node must not be moved away to a position that overlaps with anything other than itself
+                        if ( BubbleOverlaps( plannedEntry.location(), plannedEntry.profile().id() ) )
+                            { return false; }
+                    }
+                }
+                else {
+                    // Node must not overlap with other colleagues
+                    if ( BubbleOverlaps( plannedEntry.location() ) )
+                        { return false; }
+                }
+                break;
+            }
+            
+            case NodeRelationType::Neighbour:
+            {
+                // Neighbour limit will be exceeded, check if new entry deserves to temporarilty go over limit
+                vector<NodeInfo> neighboursByDistance( GetNeighbourNodesByDistance() );
+                if ( neighboursByDistance.size() >= NEIGHBOURHOOD_MAX_NODE_COUNT )
+                {
+                    // If we have too many closer neighbours already, deny request
+                    const NodeInfo &limitNeighbour = neighboursByDistance[NEIGHBOURHOOD_MAX_NODE_COUNT - 1];
+                    if ( _spatialDb->GetDistanceKm( limitNeighbour.location(), _myNodeInfo.location() ) <=
+                         _spatialDb->GetDistanceKm( _myNodeInfo.location(), plannedEntry.location() ) )
+                    { return false; }
+                }
+                break;
+            }
+            
+            default:
+                throw runtime_error("Unknown nodetype, missing implementation");
+        }
+        
         NodeDbEntry entryToWrite(plannedEntry);
         if ( plannedEntry.roleType() == NodeContactRoleType::Initiator )
         {
@@ -264,53 +309,19 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                 default: throw runtime_error("Unknown relationtype, missing implementation");
             }
             
+            // Request was denied
             if (freshInfo == nullptr)
                 { return false; }
-            entryToWrite = NodeDbEntry( *freshInfo, plannedEntry.relationType(), plannedEntry.roleType() );
-        }
-     
-        // Check if node is acceptable
-        shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( entryToWrite.profile().id() );
-        switch ( entryToWrite.relationType() )
-        {
-            case NodeRelationType::Colleague:
-            {
-                if (storedInfo != nullptr)
-                {
-                    // Existing colleague info may be upgraded to neighbour but not vica versa
-                    if ( storedInfo->relationType() == NodeRelationType::Neighbour )
-                        { return false; }
-                    if ( storedInfo->location() != entryToWrite.location() ) {
-                        // Node must not be moved away to a position that overlaps with anything other than itself
-                        if ( BubbleOverlaps( entryToWrite.location(), entryToWrite.profile().id() ) )
-                            { return false; }
-                    }
-                }
-                else {
-                    // Node must not overlap with other colleagues
-                    if ( BubbleOverlaps( entryToWrite.location() ) )
-                        { return false; }
-                }
-                break;
-            }
             
-            case NodeRelationType::Neighbour:
+            // Node identity is questionable
+            if ( freshInfo->profile().id() != plannedEntry.profile().id() )
             {
-                // Neighbour limit will be exceeded, check if new entry deserves to temporarilty go over limit
-                vector<NodeInfo> neighboursByDistance( GetNeighbourNodesByDistance() );
-                if ( neighboursByDistance.size() >= NEIGHBOURHOOD_MAX_NODE_COUNT )
-                {
-                    // If we have too many closer neighbours already, deny request
-                    const NodeInfo &limitNeighbour = neighboursByDistance[NEIGHBOURHOOD_MAX_NODE_COUNT - 1];
-                    if ( _spatialDb->GetDistanceKm( limitNeighbour.location(), _myNodeInfo.location() ) <=
-                         _spatialDb->GetDistanceKm( _myNodeInfo.location(), entryToWrite.location() ) )
-                    { return false; }
-                }
-                break;
+                LOG(WARNING) << "Asked permission from node with id " << plannedEntry.profile().id()
+                             << " but returned node info has node id " << freshInfo->profile().id();
+                return false;
             }
                 
-            default:
-                throw runtime_error("Unknown nodetype, missing implementation");
+            entryToWrite = NodeDbEntry( *freshInfo, plannedEntry.relationType(), plannedEntry.roleType() );
         }
         
         // TODO consider if all further possible sanity checks are done already
