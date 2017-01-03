@@ -34,6 +34,7 @@ public:
     virtual const std::vector<Address>& seedNodes() const = 0;
     virtual TcpPort defaultPort() const = 0;
     
+    virtual const std::string& logPath() const = 0;
     virtual const std::string& dbPath() const = 0;
     virtual std::chrono::duration<uint32_t> dbMaintenancePeriod() const = 0;
     virtual std::chrono::duration<uint32_t> dbExpirationPeriod() const = 0;
@@ -54,6 +55,7 @@ class EzParserConfig : public Config
     TcpPort         _port;
     GpsCoordinate   _latitude;
     GpsCoordinate   _longitude;
+    std::string     _logPath;
     std::string     _dbPath;
     std::vector<std::string> _seedNodes;
     
@@ -69,6 +71,7 @@ public:
     const std::vector<Address>& seedNodes() const override;
     TcpPort defaultPort() const override;
     
+    const std::string& logPath() const override;
     const std::string& dbPath() const override;
     std::chrono::duration<uint32_t> dbMaintenancePeriod() const override;
     std::chrono::duration<uint32_t> dbExpirationPeriod() const override;

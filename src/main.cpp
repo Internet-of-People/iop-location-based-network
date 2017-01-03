@@ -37,6 +37,7 @@ int main(int argc, const char *argv[])
         
         
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
+        el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Filename, config.logPath());
         el::Loggers::reconfigureAllLoggers(el::Level::Trace, el::ConfigurationType::ToStandardOutput, "false");
         
         // Initialize server components
