@@ -21,7 +21,8 @@ you should start binary `iop-locnetd`. Please check available options running
     iop-locnetd --help
 
 There are some optional arguments and also mandatory arguments that you have to specify.
-For configuration options you can use either the command line (assuming GPS location for Budapest)
+For configuration options you can use either the command line
+(assuming GPS location of Budapest)
 
     iop-locnetd --nodeid YourNodeIdHere \
                 --host your.external.host.address \
@@ -49,10 +50,11 @@ The project has multiple dependencies. Some of them are shipped with the sources
 others has to be installed independently.
 
 Header-only dependencies already included in directory `extlib`:
+- `asio` 1.11.0 standalone mode without Boost. Used for networking,
+  [download here](http://think-async.com/Asio/Download).
+  Note that this library is to be included in the C++ standard soon.
 - `easylogging++` 9.89, used for logging in the whole source,
   [download here](https://github.com/easylogging/easyloggingpp)
-- `asio` 1.11.0, used for networking,
-  [download here](http://think-async.com/Asio/Download)
 - `ezOptionParser` 0.2.2, used for handling options from command line and config files,
   [download here](http://ezoptionparser.sourceforge.net/)
 - `catch` 1.5.9, used only for testing,
