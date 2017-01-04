@@ -100,12 +100,12 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     
-    std::vector<Address>    _seedNodes;
-    TcpPort                 _defaultPort;
+    std::vector<NetworkInterface>    _seedNodes;
     
     std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkInterface &contact);
     bool SafeStoreNode(const NodeDbEntry &entry,
-        std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
+        std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>(),
+        bool isSeedNode = false);
     
     void EnsureMapFilled();
     bool InitializeWorld();
@@ -120,7 +120,7 @@ public:
     Node( const NodeInfo &myNodeInfo,
           std::shared_ptr<ISpatialDatabase> spatialDb,
           std::shared_ptr<INodeConnectionFactory> connectionFactory,
-          const std::vector<Address> &seedNodes, TcpPort defaultPort );
+          const std::vector<NetworkInterface> &seedNodes);
 
     void ExpireOldNodes();
     void RenewNodeRelations();

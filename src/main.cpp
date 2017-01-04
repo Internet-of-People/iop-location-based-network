@@ -48,7 +48,7 @@ int main(int argc, const char *argv[])
             myNodeInfo, config.dbPath(), config.dbExpirationPeriod() ) );
 
         shared_ptr<INodeConnectionFactory> connectionFactory( new TcpStreamConnectionFactory() );
-        shared_ptr<Node> node( new Node( myNodeInfo, geodb, connectionFactory, config.seedNodes(), config.defaultPort() ) );
+        shared_ptr<Node> node( new Node( myNodeInfo, geodb, connectionFactory, config.seedNodes() ) );
 
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
             new IncomingRequestDispatcherFactory(node) );

@@ -137,11 +137,11 @@ const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::
 const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod = chrono::hours(24);
 const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::hours(1);
 
-static const vector<Address> DefaultSeedNodes {
-    "ham4.fermat.cloud",
-    "ham5.fermat.cloud",
-    "ham6.fermat.cloud",
-    "ham7.fermat.cloud",
+static const vector<NetworkInterface> DefaultSeedNodes {
+    NetworkInterface(AddressType::Ipv4, "ham4.fermat.cloud", DefaultPort),
+    NetworkInterface(AddressType::Ipv4, "ham5.fermat.cloud", DefaultPort),
+    NetworkInterface(AddressType::Ipv4, "ham6.fermat.cloud", DefaultPort),
+    NetworkInterface(AddressType::Ipv4, "ham7.fermat.cloud", DefaultPort),
 //     NodeProfile( "Fermat1", NetworkInterface(AddressType::Ipv4, "104.155.51.239",  16980) ),
 //     NodeProfile( "Fermat2", NetworkInterface(AddressType::Ipv4, "104.199.126.235", 16980) ),
 //     NodeProfile( "Fermat3", NetworkInterface(AddressType::Ipv4, "130.211.120.237", 16980) ),
@@ -252,7 +252,8 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     vector<vector<string>> seedOptionVectors;
     _optParser.get(OPTNAME_SEEDNODE)->getMultiStrings(seedOptionVectors);
     for (auto const &seedVector : seedOptionVectors)
-        { _seedNodes.push_back( seedVector[0] ); }
+    // TODO should not hardwire IPv4 here
+        { _seedNodes.push_back( NetworkInterface(AddressType::Ipv4, seedVector[0], DefaultPort) ); }
     
     return true;
 }
@@ -271,7 +272,7 @@ const string& EzParserConfig::dbPath() const
 const NodeInfo& EzParserConfig::myNodeInfo() const
     { return *_myNodeInfo; }
 
-const vector<Address>& EzParserConfig::seedNodes() const
+const vector<NetworkInterface>& EzParserConfig::seedNodes() const
     { return _seedNodes.empty() ? DefaultSeedNodes : _seedNodes; }
 
 TcpPort EzParserConfig::defaultPort() const

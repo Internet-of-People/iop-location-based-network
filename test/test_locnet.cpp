@@ -265,7 +265,7 @@ SCENARIO("Server registration", "")
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(nodeInfo,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
-        Node geonet(nodeInfo, geodb, connectionFactory, {}, 1234);
+        Node geonet(nodeInfo, geodb, connectionFactory, {});
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {
@@ -313,6 +313,8 @@ SCENARIO("Server registration", "")
 int main( int argc, const char* const argv[] )
 {
     // Disable logging to prevent flooding the console
+    //el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Filename, "test.log");
+    el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToFile, "false");
     el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToStandardOutput, "false");
     
     Catch::Session session;

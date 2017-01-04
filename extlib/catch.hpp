@@ -5842,8 +5842,9 @@ namespace Catch {
     SignalDefs signalDefs[] = {
             { SIGINT,  "SIGINT - Terminal interrupt signal" },
             { SIGTERM, "SIGTERM - Termination request signal" },
-// NOTE custom modification: disabled some signal handlers to get proper core dumps on errors
-//            { SIGABRT, "SIGABRT - Abort (abnormal termination) signal" }
+// TODO remove this custom modification: disabled some signal handlers to get proper core dumps on errors
+//      until proper fix is available for https://github.com/philsquared/Catch/issues/611
+//             { SIGABRT, "SIGABRT - Abort (abnormal termination) signal" }
 //             { SIGFPE,  "SIGFPE - Floating point error signal" },
 //             { SIGILL,  "SIGILL - Illegal instruction signal" },
 //             { SIGSEGV, "SIGSEGV - Segmentation violation signal" },

@@ -33,9 +33,9 @@ random_device Node::_randomDevice;
 Node::Node( const NodeInfo &myNodeInfo,
             shared_ptr<ISpatialDatabase> spatialDb,
             std::shared_ptr<INodeConnectionFactory> connectionFactory,
-            const vector<Address> &seedNodes, TcpPort defaultPort ) :
+            const vector<NetworkInterface> &seedNodes ) :
     _myNodeInfo(myNodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory),
-    _seedNodes(seedNodes), _defaultPort(defaultPort)
+    _seedNodes(seedNodes)
 {
     if (spatialDb == nullptr) {
         throw runtime_error("Invalid spatial database argument");
@@ -56,12 +56,14 @@ void Node::EnsureMapFilled()
         
         bool discoverySucceeded = InitializeWorld() && InitializeNeighbourhood();
         if (! discoverySucceeded)
+            { LOG(WARNING) << "Failed to properly discover the full network, current node count is " << GetNodeCount(); }
+        if ( GetNodeCount() <= 1 )
         {
             // This still might be normal if we're the very first seed node of the whole network
             auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
-                [this] (const Address &address) { return _myNodeInfo.profile().contact().address() == address; } );
+                [this] (const NetworkInterface &contact) { return _myNodeInfo.profile().contact() == contact; } );
             if ( seedIt == _seedNodes.end() )
-                 { throw runtime_error("Network discovery failed"); }
+                 { throw runtime_error("Failed to discover any node of the network"); }
             else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
         }
     }
@@ -227,7 +229,8 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkInterface& contact)
 }
 
 
-bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethods> nodeConnection)
+bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethods> nodeConnection,
+                         bool isSeedNode)
 {
     try
     {
@@ -314,7 +317,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                 { return false; }
             
             // Node identity is questionable
-            if ( freshInfo->profile().id() != plannedEntry.profile().id() )
+            if ( ! isSeedNode && freshInfo->profile().id() != plannedEntry.profile().id() )
             {
                 LOG(WARNING) << "Asked permission from node with id " << plannedEntry.profile().id()
                              << " but returned node info has node id " << freshInfo->profile().id();
@@ -351,11 +354,8 @@ bool Node::InitializeWorld()
     {
         // Select random node from hardwired seed node list
         size_t selectedSeedNodeIdx = fromRange(_randomDevice);
-        const Address& selectedSeedAddress = _seedNodes[selectedSeedNodeIdx];
-        
-        // TODO should not hardwire IPv4 here
-        NetworkInterface selectedSeedContact(AddressType::Ipv4, selectedSeedAddress, _defaultPort);
-        
+        const NetworkInterface& selectedSeedContact = _seedNodes[selectedSeedNodeIdx];
+                
         // If node has been already tried and failed, choose another one
         auto it = find( triedNodes.begin(), triedNodes.end(), selectedSeedContact );
         if ( it != triedNodes.end() )
@@ -372,7 +372,7 @@ bool Node::InitializeWorld()
             
             // Try to add seed node to our network (no matter if fails)
             SafeStoreNode( NodeDbEntry( NodeProfile("DUMMY_NodeId", selectedSeedContact), GpsLocation(0,0), // nodeInfo will be queried in SafeStoreNode anyway
-                NodeRelationType::Colleague, NodeContactRoleType::Initiator ), seedNodeConnection );
+                NodeRelationType::Colleague, NodeContactRoleType::Initiator ), seedNodeConnection, true );
             
             // Query both total node count and an initial list of random nodes to start with
             LOG(DEBUG) << "Getting node count from initial seed";
@@ -406,8 +406,8 @@ bool Node::InitializeWorld()
         static_cast<size_t>(INIT_WORLD_NODE_FILL_TARGET_RATE * nodeCountAtSeed) );
     LOG(DEBUG) << "Targeted node count is " << targetNodeCount;
     
-    // Try why we either reached targeted node count or asked colleagues from all available nodes
-    while ( GetNodeCount() < targetNodeCount && triedNodes.size() < GetNodeCount() - 1 ) // Exclude self from tried count
+    // Keep trying until we either reached targeted node count or queried colleagues from all available nodes
+    while ( GetNodeCount() < targetNodeCount && triedNodes.size() < GetNodeCount() )
     {
         if ( ! randomColleagueCandidates.empty() )
         {
