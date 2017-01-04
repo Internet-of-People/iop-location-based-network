@@ -220,7 +220,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     {
         string usage;
         _optParser.getUsage(usage);
-        cerr << endl << usage << endl;
+        cerr << endl << usage;
         return false;
     }
     

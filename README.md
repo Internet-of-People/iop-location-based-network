@@ -3,13 +3,47 @@
 # iop-location-based-network
 [![Build Status](https://travis-ci.org/Fermat-ORG/iop-location-based-network.svg?branch=master)](https://travis-ci.org/Fermat-ORG/iop-location-based-network)
 
-## How to compile and Install
+## Use the packaged version
+
+Packages can be downloaded from the Fermat package repositories.
+You can either download manually from http://repo.fermat.community/
+or use the very same URL as a repository for your package manager,
+e.g. on Ubuntu add something like below into your `/etc/apt/sources.list.d`
+
+    deb [arch=amd64] http://repo.fermat.community/ 16.04 main
+
+More details are described in
+[this document](https://github.com/Fermat-ORG/iop-token/blob/beta/INSTALL.md).
+
+After you successfully installed or unpacked the binary distribution,
+you should start binary `iop-locnetd`. Please check available options running
+
+    iop-locnetd --help
+
+There are some optional arguments and also mandatory arguments that you have to specify.
+For configuration options you can use either the command line (assuming GPS location for Budapest)
+
+    iop-locnetd --nodeid YourNodeIdHere \
+                --host your.external.host.address \
+                --latitude 48.2081743 \
+                --longitude 16.3738189
+
+or you can save the options in exactly the same format into config file
+`/home/myuser/.iop-locnet/locnet.conf`
+and run the executable without any command line option.
+
+
+## Use the source, Luke
+
+For conventional usage, the preferred way of installing the software
+is using packages or installers created specifically for your operating system.
+We suggest compiling your own version for development or packaging for a new platform.
+
+### Dependencies
 
 Though we mostly used different Ubuntu versions during development,
 we use only standard C++11 features and platform-independent libraries.
-Consequently, our sources should also work on Windows or Mac OS with minimal efforts.
-
-### Dependencies
+Consequently, our sources should compile and work also on Windows or Mac OS with minimal efforts.
 
 The project has multiple dependencies. Some of them are shipped with the sources,
 others has to be installed independently.
