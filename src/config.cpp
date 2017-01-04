@@ -95,7 +95,7 @@ string GetApplicationDataDirectory()
         { throw runtime_error("Failed to create directory " + result); }
     return result;
 #elif MAC_OSX
-    string result = "/Library/Application Support/" + APPLICATION_DIRECTORY_RELATIVE_NAME + "/"; 
+    string result = GetPosixHomeDirectory() + "/Library/Application Support/" + APPLICATION_DIRECTORY_RELATIVE_NAME + "/"; 
     system( ("mkdir -p " + result).c_str() );
     return result;
 #else
