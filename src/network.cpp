@@ -198,13 +198,13 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
 {
     if ( _stream.eof() )
-        { throw runtime_error("Session " + id() + " not alive"); }
+        { throw runtime_error("Session " + id() + " closed connection, cannot read message"); }
         
     // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
     _stream.read( &messageBytes[0], MessageHeaderSize );
-    if ( _stream.eof() )
-        { throw runtime_error("Session " + id() + " not alive"); }
+    if ( _stream.fail() )
+        { throw runtime_error("Session " + id() + " failed to read message header"); }
     
     // Extract message size from the header to know how many bytes to read
     uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
@@ -215,8 +215,8 @@ iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
     // Extend buffer to fit remaining message size and read it
     messageBytes.resize(MessageHeaderSize + bodySize, 0);
     _stream.read( &messageBytes[0] + MessageHeaderSize, bodySize );
-    if ( _stream.eof() )
-        { throw runtime_error("Session " + id() + " not alive"); }
+    if ( _stream.fail() )
+        { throw runtime_error("Session " + id() + " failed to read full message body"); }
 
     // Deserialize message from receive buffer, avoid leaks for failing cases with RAII-based unique_ptr
     unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );

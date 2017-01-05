@@ -28,7 +28,7 @@ public:
 };
 
 
-// Interface provided for the same network instances running on remote machines
+// Interface provided for other nodes of the same network (running on remote machines)
 class INodeMethods
 {
 public:
@@ -87,6 +87,7 @@ public:
 
 
 
+// Implementation of all provided interfaces in a single class
 class Node : public ILocalServiceMethods, public IClientMethods, public INodeMethods
 {
     static std::random_device _randomDevice;
@@ -96,7 +97,9 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     std::shared_ptr<INodeConnectionFactory> _connectionFactory;
     
     // TODO consider if this should be also persistant, thus included in SpatialDatabase.
-    // TODO If no need to be persistent, (though problems highly unlikely,) this is still not threadsafe.
+    //      Pro: service list survives restart/crash, services don't have to detect restart and register again.
+    //      Con: if services are also restarted, will give false results.
+    // TODO If no need to be persistent, this is still not threadsafe.
     //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     
