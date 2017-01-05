@@ -8,7 +8,7 @@ sudo checkinstall \
     --pkglicense=MIT \
     --pkggroup=net \
     --pkgname=iop-locnet \
-    --pkgversion=0.0.1-a1 \
+    --pkgversion=0.0.1-a4 \
     --pkgarch=$(dpkg --print-architecture) \
     $@
 cd ../package/locnet

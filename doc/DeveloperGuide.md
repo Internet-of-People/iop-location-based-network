@@ -26,7 +26,8 @@ Though the source code is supposed to be functional, there is a lot of room for 
 Currently we are testing the network with the community.
 We should also build a test environment that runs a whole network (i.e. lots of nodes)
 on a single host to prove that the base algorithm and its current implementation
-works fine in practice.
+works fine in practice. That means that nodes can always discover the network,
+no network split can happen, etc.
 
 
 ## Technical debt
@@ -38,7 +39,14 @@ calling to (re)consider algorithms, error handling and other implementations.
 
 ### Error handling
 
-TODO Create own exception hierarchy so as we can return proper status codes for the messaging interface
+Currently status codes returned in ProtoBuf responses are completely lacking,
+only "some error occured" is returned to the other peer.
+Additionally, the status codes in the protocol definition are not really worked out yet.
+We should create our own exception hierarchy so as we can return proper status codes
+in the ProtoBuf responses.
+Additionally, status codes should be properly worked out and we should consider sharing
+status codes with other components, e.g. the Profile server and define codes
+in a shared file e.g. IopCommon.proto.
 
 
 ## Architecture
@@ -52,13 +60,16 @@ as the highest layer connecting business logic (locnet.cpp) with networking (net
 TODO separate network interfaces and check client access rights for different client types
 (local service, node and client).
 
+TODO improve both code structure and compile times by restructuring headers and
+using a specific framework header (e.g. asio, ezOptionParser, etc) only in a single h/cpp pair.
+
 
 ## Convenience
 
 TODO should automatically detect external address to be advertised for clients
 instead of mandatory parameter on the command line. We could either use an external service
-(like http://whatismyipaddress.com/) or nodes could report the ip address to each other
-when connected.
+(like http://whatismyipaddress.com/) or accepting nodes could report the detected client ip address
+to the connecting node.
 
 TODO Probably should use ~/.config/iop-locnet and ~/.local/iop-locnet
 instead of current ~/.iop-locnet
@@ -92,7 +103,7 @@ Socket connections are accepted asynchronously using asio using only a single th
 However, it is much harder to use async operations to implement interfaces
 not designed directly for an async workflow (e.g. NetworkSession).
 Consequently, each session currently uses its own separate thread.
-If this consumes to much resources (memory and context switch costs),
+If this consumes too much resources (memory and context switch costs),
 it might worth to implement sessions asynchronously.
 We might either redesign interfaces like session to directly support async operations or
 try to implement the same interface with async operations using something like

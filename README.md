@@ -3,7 +3,8 @@
 # iop-location-based-network
 [![Build Status](https://travis-ci.org/Fermat-ORG/iop-location-based-network.svg?branch=master)](https://travis-ci.org/Fermat-ORG/iop-location-based-network)
 
-## Use the packaged version
+
+## Using the packaged version
 
 Packages can be downloaded from the Fermat package repositories.
 You can either download manually from http://repo.fermat.community/
@@ -20,21 +21,22 @@ you should start binary `iop-locnetd`. Please check available options running
 
     iop-locnetd --help
 
-There are some optional arguments and also mandatory arguments that you have to specify.
-For configuration options you can use either the command line
-(assuming GPS location of Budapest)
+There are a lot of optional arguments but also some mandatory arguments that you must specify.
+For configuration options you can use the command line directly, e.g. assuming GPS location of Budapest
 
     iop-locnetd --nodeid YourNodeIdHere \
                 --host your.external.host.address \
                 --latitude 48.2081743 \
                 --longitude 16.3738189
 
-or you can save the options in exactly the same format into config file
+You may choose to save these options in exactly the same format into config file
 `/home/myuser/.iop-locnet/locnet.conf`
 and run the executable without any command line option.
+You can also locate your config file at a custom place and use option
+`--configfile` to specify its location.
 
 
-## Use the source, Luke
+## Using the sources
 
 For conventional usage, the preferred way of installing the software
 is using packages or installers created specifically for your operating system.
@@ -89,7 +91,7 @@ the provided script uses directory `build`. Thus from the project root you can r
     cd build
     cmake ..
 
-The steps afterwards are platform-dependent. E.g. CMake probably generates
+The steps afterwards are more platform-dependent. E.g. CMake probably generates
 Visual Studio project files on Windows, so you have to run the Visual Studio C++ compiler.
 For Linux, a `Makefile` is generated, so you can just execute
 
