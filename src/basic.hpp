@@ -22,6 +22,7 @@ typedef std::string SessionId;
 
 
 
+// TODO DNS entry also should be enabled as an address. Do we need this AddressType at all?
 enum class AddressType : uint8_t
 {
     Ipv4 = 1,
@@ -29,16 +30,20 @@ enum class AddressType : uint8_t
 };
 
 
+
 class NetworkInterface
 {
     AddressType _addressType;
     Address     _address;
     TcpPort     _port;
+
+    static AddressType getAddressType(const std::string &address);
     
 public:
     
     NetworkInterface();
     NetworkInterface(const NetworkInterface &other);
+    NetworkInterface(const Address &address, TcpPort port);
     NetworkInterface(AddressType addressType, const Address &address, TcpPort port);
     
     AddressType addressType() const;

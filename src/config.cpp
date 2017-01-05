@@ -17,11 +17,9 @@ namespace LocNet
 static const uint16_t VERSION_MAJOR = 0;
 static const uint16_t VERSION_MINOR = 0;
 static const uint16_t VERSION_PATCH = 1;
-//static const string   VERSION_TAG   = "a3";
 
-static const string LOCNET_VERSION =
-    to_string(VERSION_MAJOR) + "." + to_string(VERSION_MINOR) + "." +
-    to_string(VERSION_PATCH); // + "-" + VERSION_TAG;
+static const string LOCNET_VERSION = to_string(VERSION_MAJOR) + "." +
+    to_string(VERSION_MINOR) + "." + to_string(VERSION_PATCH);
 
 
 unique_ptr<Config> Config::_instance(nullptr);
@@ -138,17 +136,11 @@ const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod = chrono::h
 const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::hours(1);
 
 static const vector<NetworkInterface> DefaultSeedNodes {
-    NetworkInterface(AddressType::Ipv4, "ham4.fermat.cloud", DefaultPort),
-    NetworkInterface(AddressType::Ipv4, "ham5.fermat.cloud", DefaultPort),
-    NetworkInterface(AddressType::Ipv4, "ham6.fermat.cloud", DefaultPort),
-    NetworkInterface(AddressType::Ipv4, "ham7.fermat.cloud", DefaultPort),
-//     NodeProfile( "Fermat1", NetworkInterface(AddressType::Ipv4, "104.155.51.239",  16980) ),
-//     NodeProfile( "Fermat2", NetworkInterface(AddressType::Ipv4, "104.199.126.235", 16980) ),
-//     NodeProfile( "Fermat3", NetworkInterface(AddressType::Ipv4, "130.211.120.237", 16980) ),
-//     NodeProfile( "Fermat4", NetworkInterface(AddressType::Ipv4, "104.199.219.45",  16980) ),
-//     NodeProfile( "Fermat5", NetworkInterface(AddressType::Ipv4, "104.196.57.34",   16980) ),
+    NetworkInterface("ham4.fermat.cloud", DefaultPort),
+    NetworkInterface("ham5.fermat.cloud", DefaultPort),
+    NetworkInterface("ham6.fermat.cloud", DefaultPort),
+    NetworkInterface("ham7.fermat.cloud", DefaultPort),
 };
-
 
 
 bool EzParserConfig::Initialize(int argc, const char *argv[])
@@ -156,10 +148,11 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     ez::ezOptionParser _optParser;
     
     _optParser.overview = "Internet of People : Location Based Network";
-    _optParser.syntax   = "iop-locnetd [OPTIONS]";
+    _optParser.syntax   = "iop-locnetd [--option value]";
 //     _optParser.example  = "iop-locnetd -h\n\n";
 //     _optParser.footer   = "iop-locnetd v0.0.1\n";
     
+    // Set up all option details
     _optParser.add(
         "",             // Default value
         false,          // Is this a mandatory option?
@@ -190,15 +183,17 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     _optParser.add(DEFAULT_DBPATH.c_str(), false, 1, 0, ( "Path to log file. " +
         DESC_OPTIONAL_DEFAULT + DEFAULT_DBPATH ).c_str(), OPTNAME_DBPATH, "-d");
     
-    
+    // Perform parsing, first from command line ...
     _optParser.parse(argc, argv);
     
+    // ... then from config file if present (will not overwrite existing values)
     string filename;
     _optParser.get(OPTNAME_CONFIGFILE)->getString(filename);
     if ( _optParser.importFile( filename.c_str() ) )
          { cout << "Processed config file " << filename << endl; }
     else { cout << "Config file '" << filename << "' not found, using command line values only" << endl; }
     
+    // Check for missing mandatory options
     vector<string> badOptions;
     bool validateRequiredPassed = _optParser.gotRequired(badOptions);
     if( ! validateRequiredPassed &&
@@ -207,8 +202,9 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
         for(size_t idx = 0; idx < badOptions.size(); ++idx)
             { cerr << "Missing required option " << badOptions[idx] << endl; }
     }
-    
-    bool valueCountPassed = _optParser.gotExpected(badOptions);
+   
+// Could also check for option value counts but we currently don't use format --option val1,val2,val3
+//     bool valueCountPassed = _optParser.gotExpected(badOptions);
 //     if(! valueCountPassed)
 //     {
 //         for(size_t idx = 0; idx < badOptions.size(); ++idx)
@@ -216,7 +212,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
 //     }
     
     if ( ! _optParser.isSet(OPTNAME_VERSION) &&
-         ( _optParser.isSet(OPTNAME_HELP) || ! validateRequiredPassed || ! valueCountPassed ) )
+         ( _optParser.isSet(OPTNAME_HELP) || ! validateRequiredPassed ) ) // || ! valueCountPassed ) )
     {
         string usage;
         _optParser.getUsage(usage);
@@ -224,6 +220,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
         return false;
     }
     
+    // Fetch extracted option values from parser
     _versionRequested = _optParser.isSet(OPTNAME_VERSION);
     _optParser.get(OPTNAME_NODEID)->getString(_id);
     _optParser.get(OPTNAME_HOST)->getString(_ipAddr);
@@ -235,25 +232,21 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     unsigned long port;
     _optParser.get(OPTNAME_PORT)->getULong(port);
     _port = port;
+        
+    _myNodeInfo.reset( new NodeInfo(
+        NodeProfile(_id, NetworkInterface(_ipAddr, _port) ),
+        GpsLocation(_latitude, _longitude) ) );
+    
+    vector<vector<string>> seedOptionVectors;
+    _optParser.get(OPTNAME_SEEDNODE)->getMultiStrings(seedOptionVectors);
+    for (auto const &seedVector : seedOptionVectors)
+        { _seedNodes.push_back( NetworkInterface(seedVector[0], DefaultPort) ); }
     
 //     cout << "----- Pretty print" << endl;
 //     string pretty;
 //     _optParser.prettyPrint(pretty);
 //     cout << pretty;
 //     cout << "-----" << endl;
-    
-    // TODO DNS entry also should be enabled as an address, how to handle this here?
-    AddressType addrType = _ipAddr.find(':') == string::npos ?
-        AddressType::Ipv4 : AddressType::Ipv6;
-    _myNodeInfo.reset( new NodeInfo(
-        NodeProfile(_id, NetworkInterface(addrType, _ipAddr, _port) ),
-        GpsLocation(_latitude, _longitude) ) );
-    
-    vector<vector<string>> seedOptionVectors;
-    _optParser.get(OPTNAME_SEEDNODE)->getMultiStrings(seedOptionVectors);
-    for (auto const &seedVector : seedOptionVectors)
-    // TODO should not hardwire IPv4 here
-        { _seedNodes.push_back( NetworkInterface(AddressType::Ipv4, seedVector[0], DefaultPort) ); }
     
     return true;
 }

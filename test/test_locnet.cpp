@@ -66,7 +66,7 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
         }
     }
     
-    NodeProfile prof("NodeId", { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } );
+    NodeProfile prof("NodeId", { NetworkInterface("127.0.0.1", 6666) } );
     GIVEN("A node profile object") {
         THEN("its fields are properly filled in") {
             REQUIRE( prof.id() == "NodeId" );
@@ -119,11 +119,11 @@ SCENARIO("Spatial database", "")
         
         WHEN("adding nodes") {
             NodeDbEntry entry1( NodeProfile( "ColleagueNodeId1",
-                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
-                GpsLocation(1.0, 1.0), NodeRelationType::Colleague, NodeContactRoleType::Initiator );
+                { NetworkInterface("127.0.0.1", 6666) } ), GpsLocation(1.0, 1.0),
+                    NodeRelationType::Colleague, NodeContactRoleType::Initiator );
             NodeDbEntry entry2( NodeProfile( "NeighbourNodeId2",
-                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ),
-                GpsLocation(2.0, 2.0), NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
+                { NetworkInterface("127.0.0.1", 6666) } ), GpsLocation(2.0, 2.0),
+                    NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
             
             geodb.Store(entry1);
             geodb.Store(entry2);
@@ -261,7 +261,7 @@ SCENARIO("Server registration", "")
     GIVEN("The location based network") {
         GpsLocation loc(1.0, 2.0);
         NodeInfo nodeInfo( NodeProfile("NodeId",
-            { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 6666) } ), loc );
+            { NetworkInterface("127.0.0.1", 6666) } ), loc );
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(nodeInfo,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
@@ -276,10 +276,10 @@ SCENARIO("Server registration", "")
             }
         }
         ServiceProfile tokenService("Token",
-            { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 1111) } );
+            { NetworkInterface("127.0.0.1", 1111) } );
         WHEN("adding services") {
             ServiceProfile minterService("Minter",
-                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 2222) } );
+                { NetworkInterface("127.0.0.1", 2222) } );
             geonet.RegisterService(ServiceType::Token, tokenService);
             geonet.RegisterService(ServiceType::Minting, minterService);
             THEN("added servers appear on queries") {
@@ -293,7 +293,7 @@ SCENARIO("Server registration", "")
         }
         WHEN("removing servers") {
             ServiceProfile minterService("Minter",
-                { NetworkInterface(AddressType::Ipv4, "127.0.0.1", 2222) } );
+                { NetworkInterface("127.0.0.1", 2222) } );
             geonet.RegisterService(ServiceType::Token, tokenService);
             geonet.RegisterService(ServiceType::Minting, minterService);
             geonet.DeregisterService(ServiceType::Minting);

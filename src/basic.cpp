@@ -10,13 +10,22 @@ using namespace std;
 namespace LocNet
 {
 
+
+
 NetworkInterface::NetworkInterface() {}
     
 NetworkInterface::NetworkInterface(const NetworkInterface& other) :
     _addressType(other._addressType), _address(other._address), _port(other._port) {}
 
+NetworkInterface::NetworkInterface(const Address& address, TcpPort port) :
+    _addressType( getAddressType(address) ), _address(address), _port(port) {}
+
 NetworkInterface::NetworkInterface(AddressType addressType, const Address& address, TcpPort port) :
     _addressType(addressType), _address(address), _port(port) {}
+
+AddressType NetworkInterface::getAddressType(const string& address)
+    { return address.find(':') == string::npos ? AddressType::Ipv4 : AddressType::Ipv6; }
+
 
 AddressType NetworkInterface::addressType() const { return _addressType; }
 const Address& NetworkInterface::address() const { return _address; }

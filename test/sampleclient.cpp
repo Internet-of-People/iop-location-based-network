@@ -36,7 +36,7 @@ int main(int argc, const char* const argv[])
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
-        const NetworkInterface nodeContact(AddressType::Ipv4, host, port);
+        const NetworkInterface nodeContact(host, port);
         LOG(INFO) << "Connecting to server " << nodeContact;
         shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(nodeContact) );
 

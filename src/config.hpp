@@ -12,6 +12,8 @@ namespace LocNet
 
 
 
+// Abstract base class for project configuration.
+// Built with the singleton pattern.
 class Config
 {
     static std::unique_ptr<Config> _instance;
@@ -22,7 +24,10 @@ protected:
     
 public:
 
+    // Used to initialize a config instance with command line parameters, call only once
     static bool Init(int argc, const char *argv[]);
+    
+    // Used to access the singleton object after it's properly initialized
     static const Config& Instance();
 
     virtual ~Config() {}
@@ -43,6 +48,8 @@ public:
 
 
 
+// The currently preferred Config implementation using the ezOptionParser library
+// to parse options from the command line and/or config files.
 class EzParserConfig : public Config
 {
     static const std::chrono::duration<uint32_t>    _dbMaintenancePeriod;

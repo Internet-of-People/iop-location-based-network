@@ -334,7 +334,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
     }
     catch (exception &e)
     {
-        LOG(ERROR) << "Unexpected error storing node: " << e.what();
+        LOG(ERROR) << "Unexpected error validating and storing node: " << e.what();
     }
     
     return false;
@@ -419,7 +419,7 @@ bool Node::InitializeWorld()
         }
         else // We ran out of colleague candidates, try pick some more randomly
         {
-            LOG(TRACE) << "Run out of colleague candites, asking randomly for more";
+            LOG(TRACE) << "Run out of colleague candidates, asking randomly for more";
             
             // Get a shuffled list of all colleague nodes known so far
             vector<NodeInfo> nodesKnownSoFar = GetRandomNodes( GetNodeCount(), Neighbours::Excluded );
