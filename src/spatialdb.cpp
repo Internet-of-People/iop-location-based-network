@@ -72,7 +72,7 @@ void ThreadSafeChangeListenerRegistry::AddListener(shared_ptr<IChangeListener> l
 {
     lock_guard<mutex> lock(_mutex);
     if (listener == nullptr)
-        { throw runtime_error("Attempt to register invalid listener"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No listener instantiated"); }
         
     _listeners[ listener->sessionId() ] = listener;
     LOG(DEBUG) << "Registered ChangeListener for session " << listener->sessionId();
@@ -104,7 +104,7 @@ vector<shared_ptr<IChangeListener>> ThreadSafeChangeListenerRegistry::listeners(
 // struct StaticDatabaseInitializer {
 //     StaticDatabaseInitializer() {
 //         if ( sqlite3_initialize() != SQLITE_OK )
-//             { throw new runtime_error("Failed to initialize SQLite environment"); }
+//             { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to initialize SQLite environment"); }
 //     }
 // };
 // 
@@ -129,7 +129,7 @@ void ExecuteSql(sqlite3 *dbHandle, const string &sql)
     {
         LOG(ERROR) << "Failed to execute command: " << sql;
         LOG(ERROR) << "Error was: " << errorMessage;
-        throw runtime_error(errorMessage);
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, errorMessage);
     }
 }
 
@@ -164,7 +164,7 @@ vector<NodeDbEntry> QueryEntries(sqlite3 *dbHandle, const GpsLocation &fromLocat
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << queryStr;
-        throw runtime_error("Failed to prepare statement to get neighbourhood");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to prepare statement to get neighbourhood");
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
@@ -215,7 +215,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     if (openResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to open/create SpatiaLite database file " << dbPath;
-        throw runtime_error("Failed to open SpatiaLite database");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to open SpatiaLite database");
     }
     scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
     
@@ -237,9 +237,9 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     vector<NodeDbEntry> selfEntries = QueryEntries( _dbHandle, _myLocation,
         "WHERE relationType = " + to_string( static_cast<uint32_t>(NodeRelationType::Self) ) );
     if ( selfEntries.size() > 1 )
-        { throw runtime_error("Multiple self instances found, database may have been tampered with."); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Multiple self instances found, database may have been tampered with."); }
     if ( ! selfEntries.empty() && selfEntries.front().profile().id() != myNodeInfo.profile().id() )
-        { throw runtime_error("Node id changed, database is invalidated. Delete database file " +
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Node id changed, database is invalidated. Delete database file " +
             dbPath + " to force signing up to the network with the new node id."); }
     
     NodeDbEntry myNodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor);
@@ -275,7 +275,7 @@ IChangeListenerRegistry& SpatiaLiteDatabase::changeListenerRegistry()
 //     {
 //         scope_exit freeMsg( [errorMessage] { sqlite3_free(errorMessage); } );
 //         LOG(ERROR) << "Failed to query neighbours by distance: " << errorMessage;
-//         throw runtime_error(errorMessage);
+//         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, errorMessage);
 //     }
 //     
 //     scope_exit freeMsg( [results] { sqlite3_free_table(results); } );
@@ -296,7 +296,7 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << queryStr;
-        throw runtime_error("Failed to prepare statement for distance measurement");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to prepare statement for distance measurement");
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
@@ -304,7 +304,7 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
     if ( sqlite3_step(statement) != SQLITE_ROW )
     {
         LOG(ERROR) << "Failed to run distance query";
-        throw runtime_error("Failed to run distance query");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to run distance query");
     }
     
     double result = sqlite3_column_double(statement, 0);
@@ -330,13 +330,13 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << queryStr;
-        throw runtime_error("Failed to prepare statement to load node");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to prepare statement to load node");
     }
     
     if ( sqlite3_bind_text( statement, 1, nodeId.c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind load query node id param";
-        throw runtime_error("Failed to bind load query node id param");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind load query node id param");
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
@@ -377,7 +377,7 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << insertStr;
-        throw runtime_error("Failed to prepare statement for storing node entry");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to prepare statement for storing node entry");
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
@@ -396,14 +396,14 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
          sqlite3_bind_int(  statement, 7, expiresAt )                                      != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind node store statement params";
-        throw runtime_error("Failed to bind node store statement params");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node store statement params");
     }
     
     int execResult = sqlite3_step(statement);
     if (execResult != SQLITE_DONE)
     {
         LOG(ERROR) << "Failed to run node store statement, error code: " << execResult;
-        throw runtime_error("Failed to run node store statement");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to run node store statement");
     }
     
     for ( auto listenerEntry : _listenerRegistry.listeners() )
@@ -427,7 +427,7 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << insertStr;
-        throw runtime_error("Failed to prepare statement for updating node entry");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to prepare statement for updating node entry");
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
@@ -445,21 +445,21 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
          sqlite3_bind_text( statement, 7, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind node store statement params";
-        throw runtime_error("Failed to bind node store statement params");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node store statement params");
     }
     
     int execResult = sqlite3_step(statement);
     if (execResult != SQLITE_DONE)
     {
         LOG(ERROR) << "Failed to run node update statement, error code: " << execResult;
-        throw runtime_error("Failed to run node update statement");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to run node update statement");
     }
     
     int affectedRows = sqlite3_changes(_dbHandle);
     if (affectedRows != 1)
     {
         LOG(ERROR) << "Affected row count for update should be 1, got : " << affectedRows;
-        throw runtime_error("Wrong affected row count for update");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Wrong affected row count for update");
     }
     
     for ( auto listenerEntry : _listenerRegistry.listeners() )
@@ -475,7 +475,7 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
 {
     shared_ptr<NodeDbEntry> storedNode = Load(nodeId);
     if (storedNode == nullptr)
-        { throw runtime_error("Node to be removed is not present: " + nodeId); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Node to be removed is not present: " + nodeId); }
     
     sqlite3_stmt *statement;
     string insertStr(
@@ -485,7 +485,7 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << insertStr;
-        throw runtime_error("Failed to prepare statement for deleting node entry");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to prepare statement for deleting node entry");
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
@@ -493,21 +493,21 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
     if ( sqlite3_bind_text( statement, 1, nodeId.c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind node delete statement id param";
-        throw runtime_error("Failed to bind node delete statement id param");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node delete statement id param");
     }
     
     int execResult = sqlite3_step(statement);
     if (execResult != SQLITE_DONE)
     {
         LOG(ERROR) << "Failed to run node delete statement, error code: " << execResult;
-        throw runtime_error("Failed to run node delete statement");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to run node delete statement");
     }
     
     int affectedRows = sqlite3_changes(_dbHandle);
     if (affectedRows != 1)
     {
         LOG(ERROR) << "Affected row count for delete should be 1, got : " << affectedRows;
-        throw runtime_error("Wrong affected row count for delete");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Wrong affected row count for delete");
     }
     
     for ( auto listenerEntry : _listenerRegistry.listeners() )

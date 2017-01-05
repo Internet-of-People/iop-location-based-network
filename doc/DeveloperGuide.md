@@ -37,17 +37,6 @@ to come up with an initial version as soon as possible.
 Accordingly, you can find a lot of `// TODO` comments in the source
 calling to (re)consider algorithms, error handling and other implementations.
 
-### Error handling
-
-Currently status codes returned in ProtoBuf responses are completely lacking,
-only "some error occured" is returned to the other peer.
-Additionally, the status codes in the protocol definition are not really worked out yet.
-We should create our own exception hierarchy so as we can return proper status codes
-in the ProtoBuf responses.
-Additionally, status codes should be properly worked out and we should consider sharing
-status codes with other components, e.g. the Profile server and define codes
-in a shared file e.g. IopCommon.proto.
-
 
 ## Architecture
 

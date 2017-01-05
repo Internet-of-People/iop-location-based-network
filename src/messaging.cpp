@@ -32,6 +32,16 @@ void Converter::FillProtoBuf(iop::locnet::GpsLocation* target, const GpsLocation
 }
 
 
+iop::locnet::Status Converter::ToProtoBuf(ErrorCode value)
+{
+    switch(value)
+    {
+        // TODO
+        default: return iop::locnet::ERROR_INTERNAL;
+    }
+}
+
+
 iop::locnet::GpsLocation* Converter::ToProtoBuf(const GpsLocation &location)
 {
     auto result = new iop::locnet::GpsLocation();
@@ -55,7 +65,7 @@ ServiceType Converter::FromProtoBuf(iop::locnet::ServiceType value)
         case iop::locnet::ServiceType::Relay:       return ServiceType::Relay;
         case iop::locnet::ServiceType::Reputation:  return ServiceType::Reputation;
         case iop::locnet::ServiceType::Minting:     return ServiceType::Minting;
-        default: throw runtime_error("Missing or unknown service type");
+        default: throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown service type");
     }
 }
 
@@ -73,7 +83,7 @@ iop::locnet::ServiceType Converter::ToProtoBuf(ServiceType value)
         case ServiceType::Relay:        return iop::locnet::ServiceType::Relay;
         case ServiceType::Reputation:   return iop::locnet::ServiceType::Reputation;
         case ServiceType::Minting:      return iop::locnet::ServiceType::Minting;
-        default: throw runtime_error("Missing or unknown service type");
+        default: throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown service type");
     }
 }
 
@@ -82,7 +92,7 @@ iop::locnet::ServiceType Converter::ToProtoBuf(ServiceType value)
 NodeProfile Converter::FromProtoBuf(const iop::locnet::NodeProfile& value)
 {
     if ( ! value.has_contact() )
-        { throw runtime_error("No contact information for profile"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No contact information for profile"); }
     
     const iop::locnet::Contact &contact = value.contact();
     if ( contact.has_ipv4() )
@@ -91,7 +101,7 @@ NodeProfile Converter::FromProtoBuf(const iop::locnet::NodeProfile& value)
     else if ( contact.has_ipv6() )
         { return NodeProfile( value.nodeid(), NetworkInterface( AddressType::Ipv6,
             contact.ipv6().host(), contact.ipv6().port() ) ); }
-    else { throw runtime_error("Unknown address type"); }
+    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Unknown address type"); }
 }
 
 
@@ -120,7 +130,7 @@ void Converter::FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile
             targetContact->mutable_ipv6()->set_port( sourceContact.port() );
             break;
 
-        default: throw runtime_error("Missing or unknown address type");
+        default: throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown address type");
     }
 }
 
@@ -166,7 +176,7 @@ unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(const iop:
 {
     // TODO implement better version checks
     if ( request.version().empty() || request.version()[0] != '1' )
-        { throw runtime_error("Missing or unknown request version"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_UNSUPPORTED, "Missing or unknown request version"); }
     
     unique_ptr<iop::locnet::Response> result( new iop::locnet::Response() );
     auto &response = *result;
@@ -188,7 +198,7 @@ unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(const iop:
                 DispatchClient( request.client() ) );
             break;
             
-        default: throw runtime_error("Missing or unknown request type");
+        default: throw LocationNetworkError(ErrorCode::ERROR_UNKNOWN_SERVICE, "Missing or unknown request type");
     }
     
     return result;
@@ -254,11 +264,12 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
         }
         
         case iop::locnet::LocalServiceRequest::kNeighbourhoodChanged:
-            throw runtime_error("Invalid request type. This notification message is not supposed to be received "
-                                "but to sent out as notification to servers on the same host, "
-                                "only if GetNeighbourNodesRequest had flag keepAlive set.");
+            throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST,
+                "Invalid request type. This is a notification message: it's not supposed to be sent "
+                "as a request to this server but to be received as notification "
+                "after a GetNeighbourNodesRequest with flag keepAlive set.");
         
-        default: throw runtime_error("Missing or unknown local service operation");
+        default: throw LocationNetworkError(ErrorCode::ERROR_UNKNOWN_SERVICE, "Missing or unknown local service operation");
     }
 }
 
@@ -392,7 +403,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             return result;
         }
         
-        default: throw runtime_error("Missing or unknown remote node operation");
+        default: throw LocationNetworkError(ErrorCode::ERROR_UNKNOWN_SERVICE, "Missing or unknown remote node operation");
     }
 }
 
@@ -455,7 +466,7 @@ iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
             return result;
         }
         
-        default: throw runtime_error("Missing or unknown client operation");
+        default: throw LocationNetworkError(ErrorCode::ERROR_UNKNOWN_SERVICE, "Missing or unknown client operation");
     }
 }
 
@@ -466,7 +477,7 @@ NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRe
     _dispatcher(dispatcher)
 {
     if (! _dispatcher)
-        { throw runtime_error("Invalid dispatcher argument"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No dispatcher instantiated"); }
 }
 
 
@@ -479,8 +490,8 @@ size_t NodeMethodsProtoBufClient::GetNodeCount() const
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_getnodecount() )
-        { throw runtime_error("Failed to get expected response"); }
-        
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Failed to get expected response"); }
+    
     auto result = response->remotenode().getnodecount().nodecount();
     LOG(DEBUG) << "Request GetNodeCount() returned " << result;
     return result;
@@ -497,7 +508,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& 
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_acceptcolleague() )
-        { throw runtime_error("Failed to get expected response"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Failed to get expected response"); }
     
     auto result = response->remotenode().acceptcolleague().accepted() ?
         shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
@@ -518,7 +529,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& n
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_renewcolleague() )
-        { throw runtime_error("Failed to get expected response"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Failed to get expected response"); }
     
     auto result = response->remotenode().renewcolleague().accepted() ?
         shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
@@ -539,7 +550,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& 
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_acceptneighbour() )
-        { throw runtime_error("Failed to get expected response"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Failed to get expected response"); }
     
     auto result = response->remotenode().acceptneighbour().accepted() ?
         shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
@@ -560,7 +571,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& n
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_renewneighbour() )
-        { throw runtime_error("Failed to get expected response"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Failed to get expected response"); }
     
     auto result = response->remotenode().renewneighbour().accepted() ?
         shared_ptr<NodeInfo>( new NodeInfo( Converter::FromProtoBuf(
@@ -583,7 +594,7 @@ vector<NodeInfo> NodeMethodsProtoBufClient::GetRandomNodes(
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_getrandomnodes() )
-        { throw runtime_error("Failed to get expected response"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Failed to get expected response"); }
     
     const iop::locnet::GetRandomNodesResponse &getRandResp = response->remotenode().getrandomnodes();
     vector<NodeInfo> result;
@@ -609,7 +620,7 @@ vector<NodeInfo> NodeMethodsProtoBufClient::GetClosestNodesByDistance(
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
     if (! response || ! response->has_remotenode() || ! response->remotenode().has_getclosestnodes() )
-        { throw runtime_error("Failed to get expected response"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Failed to get expected response"); }
     
     const iop::locnet::GetClosestNodesByDistanceResponse &getNodeResp = response->remotenode().getclosestnodes();
     vector<NodeInfo> result;

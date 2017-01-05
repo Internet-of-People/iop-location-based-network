@@ -107,13 +107,21 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                 try
                 {
                     if ( ! requestMsg->has_body() || ! requestMsg->body().has_request() )
-                        { throw runtime_error("Invalid request"); }
+                        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing message body or request"); }
                     response = dispatcher->Dispatch( requestMsg->body().request() );
                     response->set_status(iop::locnet::Status::STATUS_OK);
                 }
+                catch (LocationNetworkError &lnex)
+                {
+                    LOG(WARNING) << "Failed to serve request with code "
+                        << static_cast<uint32_t>( lnex.code() ) << ": " << lnex.what();
+                    response.reset( new iop::locnet::Response() );
+                    response->set_status( Converter::ToProtoBuf( lnex.code() ) );
+                    response->set_details( lnex.what() );
+                }
                 catch (exception &ex)
                 {
-                    LOG(ERROR) << "Failed to serve request: " << ex.what();
+                    LOG(WARNING) << "Failed to serve request: " << ex.what();
                     response.reset( new iop::locnet::Response() );
                     response->set_status(iop::locnet::Status::ERROR_INTERNAL);
                     response->set_details( ex.what() );
@@ -154,7 +162,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
     _id(), _stream(), _socket(socket)
 {
     if (! _socket)
-        { throw runtime_error("Invalid socket parameter"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No socket instantiated"); }
     
     _id = socket->remote_endpoint().address().to_string() + ":" + to_string( socket->remote_endpoint().port() );
     // TODO consider possible ownership problems of this construct
@@ -171,7 +179,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &conta
     _stream.expires_after(NormalStreamExpirationPeriod);
     _stream.connect( contact.address(), to_string( contact.port() ) );
     if (! _stream)
-        { throw runtime_error("Session failed to connect: " + _stream.error().message() ); }
+        { throw LocationNetworkError(ErrorCode::ERROR_CONNECTION, "Session failed to connect: " + _stream.error().message() ); }
     LOG(DEBUG) << "Connected to " << contact;
 }
 
@@ -198,25 +206,25 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
 {
     if ( _stream.eof() )
-        { throw runtime_error("Session " + id() + " closed connection, cannot read message"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_PROTOCOL_VIOLATED, "Session " + id() + " closed connection, cannot read message"); }
         
     // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
     _stream.read( &messageBytes[0], MessageHeaderSize );
     if ( _stream.fail() )
-        { throw runtime_error("Session " + id() + " failed to read message header"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_PROTOCOL_VIOLATED, "Session " + id() + " failed to read message header"); }
     
     // Extract message size from the header to know how many bytes to read
     uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
     
     if (bodySize > MaxMessageSize)
-        { throw runtime_error( "Message size is over limit: " + to_string(bodySize) ); }
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST,  "Message size is over limit: " + to_string(bodySize) ); }
     
     // Extend buffer to fit remaining message size and read it
     messageBytes.resize(MessageHeaderSize + bodySize, 0);
     _stream.read( &messageBytes[0] + MessageHeaderSize, bodySize );
     if ( _stream.fail() )
-        { throw runtime_error("Session " + id() + " failed to read full message body"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_PROTOCOL_VIOLATED, "Session " + id() + " failed to read full message body"); }
 
     // Deserialize message from receive buffer, avoid leaks for failing cases with RAII-based unique_ptr
     unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );
@@ -275,7 +283,7 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
     _session->SendMessage(reqMsg);
     unique_ptr<iop::locnet::MessageWithHeader> respMsg( _session->ReceiveMessage() );
     if ( ! respMsg || ! respMsg->has_body() || ! respMsg->body().has_response() )
-        { throw runtime_error("Got invalid response from remote node"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Got invalid response from remote node"); }
         
     unique_ptr<iop::locnet::Response> result(
         new iop::locnet::Response( respMsg->body().response() ) );

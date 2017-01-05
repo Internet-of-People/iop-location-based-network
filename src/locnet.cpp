@@ -38,10 +38,10 @@ Node::Node( const NodeInfo &myNodeInfo,
     _seedNodes(seedNodes)
 {
     if (spatialDb == nullptr) {
-        throw runtime_error("Invalid spatial database argument");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No spatial database instantiated");
     }
     if (connectionFactory == nullptr) {
-        throw runtime_error("Invalid connection factory argument");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No connection factory instantiated");
     }
     
     EnsureMapFilled();
@@ -63,7 +63,7 @@ void Node::EnsureMapFilled()
             auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
                 [this] (const NetworkInterface &contact) { return _myNodeInfo.profile().contact() == contact; } );
             if ( seedIt == _seedNodes.end() )
-                 { throw runtime_error("Failed to discover any node of the network"); }
+                 { throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Failed to discover any node of the network"); }
             else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
         }
     }
@@ -78,7 +78,7 @@ void Node::RegisterService(ServiceType serviceType, const ServiceProfile& servic
 {
     auto it = _services.find(serviceType);
     if ( it != _services.end() ) {
-        throw runtime_error("Service type is already registered");
+        throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Service type is already registered");
     }
     _services[serviceType] = serviceInfo;
 }
@@ -87,7 +87,7 @@ void Node::DeregisterService(ServiceType serviceType)
 {
     auto it = _services.find(serviceType);
     if ( it == _services.end() ) {
-        throw runtime_error("Service type was not registered");
+        throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Service type was not registered");
     }
     _services.erase(serviceType);
 }
@@ -281,7 +281,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             }
             
             default:
-                throw runtime_error("Unknown nodetype, missing implementation");
+                throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Unknown nodetype, missing implementation");
         }
         
         NodeDbEntry entryToWrite(plannedEntry);
@@ -309,7 +309,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                         nodeConnection->AcceptNeighbour(_myNodeInfo);
                     break;
                     
-                default: throw runtime_error("Unknown relationtype, missing implementation");
+                default: throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Unknown relationtype, missing implementation");
             }
             
             // Request was denied

@@ -11,7 +11,8 @@
 namespace LocNet
 {
 
-    
+
+
 // Local interface for services running on the same hardware
 class ILocalServiceMethods
 {

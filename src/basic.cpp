@@ -12,6 +12,17 @@ namespace LocNet
 
 
 
+LocationNetworkError::LocationNetworkError(ErrorCode code, const char* reason) :
+    runtime_error(reason), _code(code) {}
+
+LocationNetworkError::LocationNetworkError(ErrorCode code, const string& reason) :
+    runtime_error(reason), _code(code) {}
+
+ErrorCode LocationNetworkError::code() const
+    { return _code; }
+
+
+
 NetworkInterface::NetworkInterface() {}
     
 NetworkInterface::NetworkInterface(const NetworkInterface& other) :
@@ -23,6 +34,7 @@ NetworkInterface::NetworkInterface(const Address& address, TcpPort port) :
 NetworkInterface::NetworkInterface(AddressType addressType, const Address& address, TcpPort port) :
     _addressType(addressType), _address(address), _port(port) {}
 
+// TODO consider a smarter detection here if AddressType is needed at all
 AddressType NetworkInterface::getAddressType(const string& address)
     { return address.find(':') == string::npos ? AddressType::Ipv4 : AddressType::Ipv6; }
 
@@ -91,7 +103,7 @@ void GpsLocation::Validate()
     // Ensure latitude is from range (-90,90] and longitude is from (-180,180], note that range is exclusive at the bottom and inclusive at the top
     if ( _latitude <= -90. || 90. < _latitude ||
          _longitude <= -180. || 180. < _longitude )
-        { throw runtime_error("Invalid GPS location"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Invalid GPS location"); }
 }
 
 bool GpsLocation::operator==(const GpsLocation& other) const

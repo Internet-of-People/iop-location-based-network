@@ -24,6 +24,7 @@ struct Converter
     static void FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile &source);
     static void FillProtoBuf(iop::locnet::NodeInfo *target, const NodeInfo &source);
     
+    static iop::locnet::Status ToProtoBuf(ErrorCode value);
     static iop::locnet::ServiceType ToProtoBuf(ServiceType value);
     static iop::locnet::GpsLocation* ToProtoBuf(const GpsLocation &location);
     static iop::locnet::NodeProfile* ToProtoBuf(const NodeProfile &profile);

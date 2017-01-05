@@ -29,7 +29,7 @@ const Config& Config::Instance()
     if (! _instance)
     {
         LOG(ERROR) << "Implementation error: config was not properly initialized. Call Config::Init()!";
-        throw runtime_error("Config is uninitialized");
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Config is uninitialized");
     }
     return *_instance;
 }
@@ -59,7 +59,7 @@ string GetWindowsDirectory(int folderId = CSIDL_APPDATA, bool createDir = true)
     if ( SHGetSpecialFolderPathA(NULL, path, folderId, createDir) )
         { return path; }
 
-    throw runtime_error("Failed to get Windows user app directory");
+    throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to get Windows user app directory");
 }
 
 #else
@@ -90,7 +90,7 @@ string GetApplicationDataDirectory()
 #ifdef WIN32
     string result = GetWindowsDirectory() + "\\" + APPLICATION_DIRECTORY_RELATIVE_NAME + "\\";
     if ( ! CreateDirectory( result.c_str(), nullptr ) && ERROR_ALREADY_EXISTS != GetLastError() )
-        { throw runtime_error("Failed to create directory " + result); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to create directory " + result); }
     return result;
 #elif MAC_OSX
     string result = GetPosixHomeDirectory() + "/Library/Application Support/" + APPLICATION_DIRECTORY_RELATIVE_NAME + "/"; 
