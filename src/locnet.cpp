@@ -298,13 +298,13 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             switch ( plannedEntry.relationType() )
             {
                 case NodeRelationType::Colleague:
-                    freshInfo = _spatialDb->Load( entryToWrite.profile().id() ) ?
+                    freshInfo = storedInfo && storedInfo->relationType() == plannedEntry.relationType() ?
                         nodeConnection->RenewColleague(_myNodeInfo) :
                         nodeConnection->AcceptColleague(_myNodeInfo);
                     break;
                 
                 case NodeRelationType::Neighbour:
-                    freshInfo = _spatialDb->Load( entryToWrite.profile().id() ) ?
+                    freshInfo = storedInfo && storedInfo->relationType() == plannedEntry.relationType() ?
                         nodeConnection->RenewNeighbour(_myNodeInfo) :
                         nodeConnection->AcceptNeighbour(_myNodeInfo);
                     break;
