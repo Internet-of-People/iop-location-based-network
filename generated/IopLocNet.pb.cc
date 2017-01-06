@@ -1123,16 +1123,14 @@ void protobuf_AddDesc_IopLocNet_2eproto() {
     ".NodeProfile\"C\n\023GetServicesResponse\022,\n\010s"
     "ervices\030\001 \003(\0132\032.iop.locnet.ServiceProfil"
     "e\"*\n(GetNeighbourNodesByDistanceClientRe"
-    "quest*\302\001\n\006Status\022\r\n\tSTATUS_OK\020\000\022\034\n\030ERROR"
-    "_PROTOCOL_VIOLATION\020\001\022\025\n\021ERROR_UNSUPPORT"
-    "ED\020\002\022\026\n\022ERROR_UNAUTHORIZED\020\005\022\022\n\016ERROR_BA"
-    "D_ROLE\020\006\022\022\n\016ERROR_INTERNAL\020\010\022\033\n\027ERROR_IN"
-    "VALID_SIGNATURE\0204\022\027\n\023ERROR_INVALID_VALUE"
-    "\0206*\226\001\n\013ServiceType\022\020\n\014Unstructured\020\000\022\013\n\007"
-    "Content\020\001\022\013\n\007Latency\020\002\022\014\n\010Location\020\003\022\t\n\005"
-    "Token\020\n\022\013\n\007Profile\020\013\022\r\n\tProximity\020\014\022\t\n\005R"
-    "elay\020\r\022\016\n\nReputation\020\016\022\013\n\007Minting\020\017b\006pro"
-    "to3", 5083);
+    "quest*y\n\006Status\022\r\n\tSTATUS_OK\020\000\022\034\n\030ERROR_"
+    "PROTOCOL_VIOLATION\020\001\022\025\n\021ERROR_UNSUPPORTE"
+    "D\020\002\022\022\n\016ERROR_INTERNAL\020\010\022\027\n\023ERROR_INVALID"
+    "_VALUE\0206*\226\001\n\013ServiceType\022\020\n\014Unstructured"
+    "\020\000\022\013\n\007Content\020\001\022\013\n\007Latency\020\002\022\014\n\010Location"
+    "\020\003\022\t\n\005Token\020\n\022\013\n\007Profile\020\013\022\r\n\tProximity\020"
+    "\014\022\t\n\005Relay\020\r\022\016\n\nReputation\020\016\022\013\n\007Minting\020"
+    "\017b\006proto3", 5009);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IopLocNet.proto", &protobuf_RegisterTypes);
   MessageWithHeader::default_instance_ = new MessageWithHeader();
@@ -1236,10 +1234,7 @@ bool Status_IsValid(int value) {
     case 0:
     case 1:
     case 2:
-    case 5:
-    case 6:
     case 8:
-    case 52:
     case 54:
       return true;
     default:

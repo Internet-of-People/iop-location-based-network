@@ -36,8 +36,16 @@ iop::locnet::Status Converter::ToProtoBuf(ErrorCode value)
 {
     switch(value)
     {
-        // TODO
-        default: return iop::locnet::ERROR_INTERNAL;
+        case ErrorCode::ERROR_BAD_REQUEST:          return iop::locnet::Status::ERROR_PROTOCOL_VIOLATION;
+        case ErrorCode::ERROR_BAD_RESPONSE:         return iop::locnet::Status::ERROR_INTERNAL;
+        case ErrorCode::ERROR_CONCEPTUAL:           return iop::locnet::Status::ERROR_INTERNAL;
+        case ErrorCode::ERROR_CONNECTION:           return iop::locnet::Status::ERROR_INTERNAL;
+        case ErrorCode::ERROR_INTERNAL:             return iop::locnet::Status::ERROR_INTERNAL;
+        case ErrorCode::ERROR_INVALID_DATA:         return iop::locnet::Status::ERROR_INVALID_VALUE;
+        case ErrorCode::ERROR_INVALID_STATE:        return iop::locnet::Status::ERROR_INTERNAL;
+        case ErrorCode::ERROR_PROTOCOL_VIOLATION:   return iop::locnet::Status::ERROR_PROTOCOL_VIOLATION;
+        case ErrorCode::ERROR_UNSUPPORTED:          return iop::locnet::Status::ERROR_UNSUPPORTED;
+        default: throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Conversion for error code not implemented");
     }
 }
 
@@ -83,7 +91,7 @@ iop::locnet::ServiceType Converter::ToProtoBuf(ServiceType value)
         case ServiceType::Relay:        return iop::locnet::ServiceType::Relay;
         case ServiceType::Reputation:   return iop::locnet::ServiceType::Reputation;
         case ServiceType::Minting:      return iop::locnet::ServiceType::Minting;
-        default: throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown service type");
+        default: throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Conversion for service type not implemented");
     }
 }
 
@@ -198,7 +206,7 @@ unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(const iop:
                 DispatchClient( request.client() ) );
             break;
             
-        default: throw LocationNetworkError(ErrorCode::ERROR_UNKNOWN_SERVICE, "Missing or unknown request type");
+        default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown request type");
     }
     
     return result;
@@ -269,7 +277,7 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
                 "as a request to this server but to be received as notification "
                 "after a GetNeighbourNodesRequest with flag keepAlive set.");
         
-        default: throw LocationNetworkError(ErrorCode::ERROR_UNKNOWN_SERVICE, "Missing or unknown local service operation");
+        default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown local service operation");
     }
 }
 
@@ -403,7 +411,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             return result;
         }
         
-        default: throw LocationNetworkError(ErrorCode::ERROR_UNKNOWN_SERVICE, "Missing or unknown remote node operation");
+        default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown remote node operation");
     }
 }
 
@@ -466,7 +474,7 @@ iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
             return result;
         }
         
-        default: throw LocationNetworkError(ErrorCode::ERROR_UNKNOWN_SERVICE, "Missing or unknown client operation");
+        default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown client operation");
     }
 }
 

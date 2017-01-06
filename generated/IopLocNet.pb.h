@@ -79,10 +79,7 @@ enum Status {
   STATUS_OK = 0,
   ERROR_PROTOCOL_VIOLATION = 1,
   ERROR_UNSUPPORTED = 2,
-  ERROR_UNAUTHORIZED = 5,
-  ERROR_BAD_ROLE = 6,
   ERROR_INTERNAL = 8,
-  ERROR_INVALID_SIGNATURE = 52,
   ERROR_INVALID_VALUE = 54,
   Status_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   Status_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max

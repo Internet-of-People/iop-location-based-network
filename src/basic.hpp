@@ -25,20 +25,19 @@ typedef std::string SessionId;
 enum class ErrorCode : uint16_t
 {
     // Problems with incoming message
-    ERROR_UNSUPPORTED = 1,      // Unknown request version or protocol
-    ERROR_PROTOCOL_VIOLATED = 2,// Requests are not sent or responses not received as expected
-    ERROR_BAD_REQUEST = 3,      // Request is in invalid format or cannot be properly interpreted
-    ERROR_UNKNOWN_SERVICE = 4,  // Request is asking for an unknown resource/operation
-    ERROR_INVALID_DATA = 5,     // Invalid data provided as an rgument of an operation
-    ERROR_INVALID_STATE = 6,    // Operation is requested too early (e.g. without initialization) or too late (e.g. after resources are releasedd)
+    ERROR_UNSUPPORTED = 1,          // Unknown request version or protocol
+    ERROR_PROTOCOL_VIOLATION = 2,   // Requests are not sent or responses not received as expected
+    ERROR_BAD_REQUEST = 3,          // Request is in invalid format or cannot be properly interpreted
+    ERROR_INVALID_DATA = 4,         // Invalid data provided as an rgument of an operation
+    ERROR_INVALID_STATE = 5,        // Operation is requested too early (e.g. without initialization) or too late (e.g. after resources are releasedd)
     
     // Problems with outgoing messages
-    ERROR_CONNECTION = 96,      // Failed to connect to another peer
-    ERROR_BAD_RESPONSE = 97,    // Consumed service (i.e. remote network node) returned unexpected response message
+    ERROR_CONNECTION = 96,          // Failed to connect to another peer
+    ERROR_BAD_RESPONSE = 97,        // Consumed service (i.e. remote network node) returned unexpected response message
     
     // Problems inside the server 
-    ERROR_INTERNAL = 128,       // Implementation problem: this shouldn't happen, we are not well propared for this error.
-    ERROR_CONCEPTUAL = 129,     // Failure in the network design or discovery algorithm. We might need algorithmic changes if this occurs.
+    ERROR_INTERNAL = 128,           // Implementation problem: this shouldn't happen, we are not well propared for this error.
+    ERROR_CONCEPTUAL = 129,         // Failure in the network design or discovery algorithm. We might need algorithmic changes if this occurs.
 };
 
 
