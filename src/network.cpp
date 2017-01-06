@@ -206,25 +206,29 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
 {
     if ( _stream.eof() )
-        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Session " + id() + " closed connection, cannot read message"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE,
+            "Session " + id() + " connection is already closed, cannot read message"); }
         
     // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
     _stream.read( &messageBytes[0], MessageHeaderSize );
     if ( _stream.fail() )
-        { throw LocationNetworkError(ErrorCode::ERROR_PROTOCOL_VIOLATION, "Session " + id() + " failed to read message header"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_PROTOCOL_VIOLATION,
+            "Session " + id() + " failed to read message header, connection may have been closed by remote peer"); }
     
     // Extract message size from the header to know how many bytes to read
     uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
     
     if (bodySize > MaxMessageSize)
-        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST,  "Message size is over limit: " + to_string(bodySize) ); }
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST,
+            "Session " + id() + " message size is over limit: " + to_string(bodySize) ); }
     
     // Extend buffer to fit remaining message size and read it
     messageBytes.resize(MessageHeaderSize + bodySize, 0);
     _stream.read( &messageBytes[0] + MessageHeaderSize, bodySize );
     if ( _stream.fail() )
-        { throw LocationNetworkError(ErrorCode::ERROR_PROTOCOL_VIOLATION, "Session " + id() + " failed to read full message body"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_PROTOCOL_VIOLATION,
+            "Session " + id() + " failed to read full message body"); }
 
     // Deserialize message from receive buffer, avoid leaks for failing cases with RAII-based unique_ptr
     unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );

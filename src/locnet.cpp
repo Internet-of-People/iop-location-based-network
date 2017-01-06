@@ -402,8 +402,7 @@ bool Node::InitializeWorld()
     }
     
     // We received a reasonable random node list from a seed, try to fill in our world map
-    size_t targetNodeCount = max( NEIGHBOURHOOD_MAX_NODE_COUNT,
-        static_cast<size_t>(INIT_WORLD_NODE_FILL_TARGET_RATE * nodeCountAtSeed) );
+    size_t targetNodeCount = ceil( static_cast<size_t>(INIT_WORLD_NODE_FILL_TARGET_RATE * nodeCountAtSeed) );
     LOG(DEBUG) << "Targeted node count is " << targetNodeCount;
     
     // Keep trying until we either reached targeted node count or queried colleagues from all available nodes
@@ -414,6 +413,12 @@ bool Node::InitializeWorld()
             // Pick a single node from the candidate list and try to make it a colleague node
             NodeInfo nodeInfo( randomColleagueCandidates.back() );
             randomColleagueCandidates.pop_back();
+            
+            // Check if we tried it already
+            if ( find( triedNodes.begin(), triedNodes.end(), nodeInfo.profile().contact() ) != triedNodes.end() )
+                { continue; }
+            
+            triedNodes.push_back( nodeInfo.profile().contact() );
             
             SafeStoreNode( NodeDbEntry(nodeInfo, NodeRelationType::Colleague, NodeContactRoleType::Initiator) );
         }
@@ -426,14 +431,8 @@ bool Node::InitializeWorld()
             
             for (const auto &nodeInfo : nodesKnownSoFar)
             {
-                // Check if we tried it already
-                if ( find( triedNodes.begin(), triedNodes.end(), nodeInfo.profile().contact() ) != triedNodes.end() )
-                    { continue; }
-                    
                 try
                 {
-                    triedNodes.push_back( nodeInfo.profile().contact() );
-                    
                     // Connect to selected random node
                     shared_ptr<INodeMethods> randomConnection = SafeConnectTo( nodeInfo.profile().contact() );
                     if (randomConnection == nullptr)
@@ -452,7 +451,7 @@ bool Node::InitializeWorld()
         }
     }
     
-    LOG(DEBUG) << "World discovery finished, got " << GetNodeCount() << " nodes";
+    LOG(DEBUG) << "World discovery finished with node count " << GetNodeCount();
     return true;
 }
 
@@ -540,6 +539,7 @@ bool Node::InitializeNeighbourhood()
         }
     }
     
+    LOG(DEBUG) << "Neighbourhood discovery finished with node count " << GetNodeCount();
     return true;
 }
 
