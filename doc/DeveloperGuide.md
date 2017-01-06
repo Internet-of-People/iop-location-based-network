@@ -46,22 +46,28 @@ Consequently, network.h/cpp currently depends on messaging.h/cpp,
 but dependency might be better in the opposite direction: messaging may be seen
 as the highest layer connecting business logic (locnet.cpp) with networking (network.cpp).
 
-TODO separate network interfaces and check client access rights for different client types
-(local service, node and client).
+Interfaces of provided operations should be better separated and checked for proper access rights by
+different types of consumers (local service, node and client). This can be achieved
+either by exposing different interfaces on different TCP ports or
+offering different authentication methods on the same port for different consumer types.
 
-TODO improve both code structure and compile times by restructuring headers and
+We could improve both code structure and compile times. We could restructuring headers and
 using a specific framework header (e.g. asio, ezOptionParser, etc) only in a single h/cpp pair.
+We could also use precompiled headers to speed up compilation. We already tried it with the
+[cotire CMake plugin](https://github.com/sakra/cotire), but it didn't really seem to make a difference.
 
 
 ## Convenience
 
-TODO should automatically detect external address to be advertised for clients
-instead of mandatory parameter on the command line. We could either use an external service
-(like http://whatismyipaddress.com/) or accepting nodes could report the detected client ip address
-to the connecting node.
+We should automatically detect external network address to be advertised for clients
+instead of manually setting it to a mandatory parameter on the command line.
+We could either use an external service (like http://whatismyipaddress.com/)
+or we could report the detected client ip address to the connecting node
+after socket connections are accepted.
 
-TODO Probably should use ~/.config/iop-locnet and ~/.local/iop-locnet
-instead of current ~/.iop-locnet
+To make administration of the Linux version easier, we could separate project files
+into separate directories according to conventions of the distribution.
+E.g. we could use `~/.config/iop-locnet` and `~/.local/iop-locnet` instead of current `~/.iop-locnet`.
 
 When using config file, options could use format `option=value` instead/besides
 the current `--option value` format. If this is needed, we might have to use
@@ -72,18 +78,24 @@ a different command line parser library, it might not be supported by ezOptionPa
 
 ### Encryption and authentication
 
-TODO Use TLS for encryption and/or authentication of nodes and clients
+We should authenticate of nodes of the network and maybe also clients.
+We should consider if we transfer sensitive information that should be encrypted.
+TLS might be a good candidate for both tasks.
 
 ### Robustness and reliability
 
-TODO Identify attack vectors and protect from malicious nodes and clients, e.g.
+The main goal of the current implementation is to prove that the concept works.
+So far the network is quite vulnerable as it does not implement appropriate protection from attacks.
+If we find no conceptual problems we should identify attack vectors and protect from malicious nodes and clients, e.g.
 
 - Protect network interfaces, e.g. LocalService interface should be exposed only to localhost
-  and other nodes of the network should be authenticated to be accepted as colleague or neighbour
+  and other nodes of the network should be authenticated to be accepted as colleague or neighbour.
 - Use and check SHA256 hashes as node identifiers.
-- Check if provided node data is real, e.g. host is really accessible
-  on the reported network interface
-- Better enforce uniqueness of node ids and external addresses.
+- Check integirty of advertised information. E.g. validte host is really accessible
+  on the reported external address.
+- Ensure that uniqueness of sensitive data (e.g. node ids and probably external addresses)
+  is strictly enforced everywhere.
+- Ban misbehaving nodes.
 
 
 ## Performance
@@ -98,3 +110,16 @@ We might either redesign interfaces like session to directly support async opera
 try to implement the same interface with async operations using something like
 [Boost stackful courutines](http://www.boost.org/doc/libs/1_62_0/doc/html/boost_asio/overview/core/spawn.html)
 but then we would depend also on Boost.
+
+If connections take up too much resources, we could also improve code by expiring accepted
+inactive connections. Currently this is done only on the client side (connecting to other nodes) yet.
+Implementing this on the accepting side is harder because of the blocking implementation.
+Asio uses expiration timers to handle this which work fine most of the time,
+so you can just set up a timeout after a minute and the connection will be automatically closed.
+However, when the localservice interface receives a GetNeighbourhood request,
+it must keep the connection alive and send notifications when neighbourhood changes.
+Unfortunately we found no working way to disable the timer if it's already set up.
+Using asynch mode one can differentiate the "timer expired" event from the "timer disabled"
+event by checking an error code, but with the blocking streaming implementation
+we found that the stream is closed even when you disable the timer,
+probably this error code is not checked in the implementation as we'd expect.

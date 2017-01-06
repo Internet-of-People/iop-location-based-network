@@ -366,6 +366,7 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
 
 
 
+// TODO reduce SpatiaLite boilerplate in general as much as possible. Currently it's very repetitive.
 void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
 {
     sqlite3_stmt *statement;
