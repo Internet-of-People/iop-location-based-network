@@ -242,6 +242,9 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
      
         // Validate if node is acceptable
         shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( plannedEntry.profile().id() );
+        if ( storedInfo && storedInfo->relationType() == NodeRelationType::Self )
+            { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Forbidden operation: must not overwrite self here"); }
+        
         switch ( plannedEntry.relationType() )
         {
             case NodeRelationType::Colleague:
@@ -280,6 +283,9 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                 break;
             }
             
+            case NodeRelationType::Self:
+                throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Forbidden operation: must not overwrite self here");
+            
             default:
                 throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Unknown nodetype, missing implementation");
         }
@@ -308,7 +314,10 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                         nodeConnection->RenewNeighbour(_myNodeInfo) :
                         nodeConnection->AcceptNeighbour(_myNodeInfo);
                     break;
-                    
+                
+                case NodeRelationType::Self:
+                    throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Forbidden operation: must not overwrite self here");
+                
                 default: throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Unknown relationtype, missing implementation");
             }
             
@@ -323,7 +332,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                              << " but returned node info has node id " << freshInfo->profile().id();
                 return false;
             }
-                
+            
             entryToWrite = NodeDbEntry( *freshInfo, plannedEntry.relationType(), plannedEntry.roleType() );
         }
         
