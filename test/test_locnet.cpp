@@ -70,9 +70,19 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
     GIVEN("A node profile object") {
         THEN("its fields are properly filled in") {
             REQUIRE( prof.id() == "NodeId" );
-            REQUIRE( prof.contact().addressType() == AddressType::Ipv4 );
-            REQUIRE( prof.contact().address() == "127.0.0.1" );
             REQUIRE( prof.contact().port() == 6666 );
+            
+            REQUIRE( prof.contact().address() == "127.0.0.1" );
+            REQUIRE( prof.contact().isIpv4() );
+            REQUIRE( ! prof.contact().isIpv6() );
+            REQUIRE( prof.contact().isLoopback() );
+            
+            prof.contact().address( Address("1.2.3.4") );
+            
+            REQUIRE( prof.contact().address() == "1.2.3.4" );
+            REQUIRE( prof.contact().isIpv4() );
+            REQUIRE( ! prof.contact().isIpv6() );
+            REQUIRE( ! prof.contact().isLoopback() );
         }
     }
     
@@ -322,4 +332,5 @@ int main( int argc, const char* const argv[] )
     catch (exception &e)
         { cerr << "Caught exception: " << e.what() << endl; }
 }
+
 

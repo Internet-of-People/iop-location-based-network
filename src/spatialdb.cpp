@@ -29,7 +29,6 @@ const vector<string> DatabaseInitCommands = {
     "  VALUES ('version', '1');"
     "CREATE TABLE IF NOT EXISTS nodes ( "
     "  id           TEXT PRIMARY KEY, "
-    "  addressType  INT NOT NULL, "
     "  ipAddress    TEXT NOT NULL, "
     "  port         INT NOT NULL, "
     "  relationType INT NOT NULL, "
@@ -150,7 +149,7 @@ vector<NodeDbEntry> QueryEntries(sqlite3 *dbHandle, const GpsLocation &fromLocat
 {
     sqlite3_stmt *statement;
     string queryStr =
-        "SELECT id, addressType, ipAddress, port, X(location), Y(location), "
+        "SELECT id, ipAddress, port, X(location), Y(location), "
             "relationType, roleType, expiresAt, "
             "Distance(location, " + LocationPointSql(fromLocation) + ", 1) / 1000 AS dist_km "
         "FROM nodes " +
@@ -173,17 +172,16 @@ vector<NodeDbEntry> QueryEntries(sqlite3 *dbHandle, const GpsLocation &fromLocat
     while ( sqlite3_step(statement) == SQLITE_ROW )
     {
         const uint8_t *idPtr        = sqlite3_column_text  (statement, 0);
-        int            addrType     = sqlite3_column_int   (statement, 1);
-        const uint8_t *ipAddrPtr    = sqlite3_column_text  (statement, 2);
-        int            port         = sqlite3_column_int   (statement, 3);
-        double         longitude    = sqlite3_column_double(statement, 4);
-        double         latitude     = sqlite3_column_double(statement, 5);
-        int            relationType = sqlite3_column_int   (statement, 6);
-        int            roleType     = sqlite3_column_int   (statement, 7);
+        const uint8_t *ipAddrPtr    = sqlite3_column_text  (statement, 1);
+        int            port         = sqlite3_column_int   (statement, 2);
+        double         longitude    = sqlite3_column_double(statement, 3);
+        double         latitude     = sqlite3_column_double(statement, 4);
+        int            relationType = sqlite3_column_int   (statement, 5);
+        int            roleType     = sqlite3_column_int   (statement, 6);
         //int            expiresAt    = sqlite3_column_int   (statement, 8);
         
-        NetworkInterface contact( static_cast<AddressType>(addrType),
-            reinterpret_cast<const char*>(ipAddrPtr), static_cast<TcpPort>(port) );
+        NetworkInterface contact( reinterpret_cast<const char*>(ipAddrPtr),
+                                  static_cast<TcpPort>(port) );
         NodeInfo info( NodeProfile( reinterpret_cast<const char*>(idPtr), contact ),
                        GpsLocation(latitude, longitude) );
         result.emplace_back( info,
@@ -319,7 +317,7 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
 {
     sqlite3_stmt *statement;
     string queryStr =
-        "SELECT id, addressType, ipAddress, port, X(location), Y(location), "
+        "SELECT id, ipAddress, port, X(location), Y(location), "
                "relationType, roleType "
         "FROM nodes "
         "WHERE id=?";
@@ -345,16 +343,15 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
     if ( sqlite3_step(statement) == SQLITE_ROW )
     {
         const uint8_t *idPtr        = sqlite3_column_text  (statement, 0);
-        int            addrType     = sqlite3_column_int   (statement, 1);
-        const uint8_t *ipAddrPtr    = sqlite3_column_text  (statement, 2);
-        int            port         = sqlite3_column_int   (statement, 3);
-        double         longitude    = sqlite3_column_double(statement, 4);
-        double         latitude     = sqlite3_column_double(statement, 5);
-        int            relationType = sqlite3_column_int   (statement, 6);
-        int            roleType     = sqlite3_column_int   (statement, 7);
+        const uint8_t *ipAddrPtr    = sqlite3_column_text  (statement, 1);
+        int            port         = sqlite3_column_int   (statement, 2);
+        double         longitude    = sqlite3_column_double(statement, 3);
+        double         latitude     = sqlite3_column_double(statement, 4);
+        int            relationType = sqlite3_column_int   (statement, 5);
+        int            roleType     = sqlite3_column_int   (statement, 6);
         
-        NetworkInterface contact( static_cast<AddressType>(addrType),
-            reinterpret_cast<const char*>(ipAddrPtr), static_cast<TcpPort>(port) );
+        NetworkInterface contact( reinterpret_cast<const char*>(ipAddrPtr),
+                                  static_cast<TcpPort>(port) );
         GpsLocation location(latitude, longitude);
         // TODO create enums through checked "enum constructor" method
         result.reset( new NodeDbEntry(
@@ -372,8 +369,8 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
     sqlite3_stmt *statement;
     string insertStr(
         "INSERT INTO nodes "
-        "(id, addressType, ipAddress, port, relationType, roleType, expiresAt, location) VALUES "
-        "(?, ?, ?, ?, ?, ?, ?, " + LocationPointSql( node.location() ) + ")" );
+        "(id, ipAddress, port, relationType, roleType, expiresAt, location) VALUES "
+        "(?, ?, ?, ?, ?, ?, " + LocationPointSql( node.location() ) + ")" );
     int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
     {
@@ -389,12 +386,11 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
     const NetworkInterface &contact = node.profile().contact();
     // TODO abstract bind checks away, probably with functions, or maybe macros
     if ( sqlite3_bind_text( statement, 1, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 2, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||
-         sqlite3_bind_text( statement, 3, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 4, contact.port() )                                 != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 5, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 6, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 7, expiresAt )                                      != SQLITE_OK )
+         sqlite3_bind_text( statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 3, contact.port() )                                 != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 4, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 5, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 6, expiresAt )                                      != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind node store statement params";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node store statement params");
@@ -421,7 +417,7 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
     sqlite3_stmt *statement;
     string insertStr(
         "UPDATE nodes SET "
-        "  addressType=?, ipAddress=?, port=?, relationType=?, roleType=?, expiresAt=?, "
+        "  ipAddress=?, port=?, relationType=?, roleType=?, expiresAt=?, "
         "  location=" + LocationPointSql( node.location() ) + " "
         "WHERE id=?");
     int prepResult = sqlite3_prepare_v2( _dbHandle, insertStr.c_str(), -1, &statement, nullptr );
@@ -437,13 +433,12 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
         chrono::system_clock::to_time_t( chrono::system_clock::now() + _entryExpirationPeriod ) :
         numeric_limits<time_t>::max();
     const NetworkInterface &contact = node.profile().contact();
-    if ( sqlite3_bind_int(  statement, 1, static_cast<int>( contact.addressType() ) )      != SQLITE_OK ||
-         sqlite3_bind_text( statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 3, contact.port() )                                 != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 4, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 5, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 6, expiresAt )                                      != SQLITE_OK ||
-         sqlite3_bind_text( statement, 7, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
+    if ( sqlite3_bind_text( statement, 1, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 2, contact.port() )                                 != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 3, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 4, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 5, expiresAt )                                      != SQLITE_OK ||
+         sqlite3_bind_text( statement, 6, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind node store statement params";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node store statement params");

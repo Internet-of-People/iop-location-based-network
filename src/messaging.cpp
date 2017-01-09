@@ -104,11 +104,11 @@ NodeProfile Converter::FromProtoBuf(const iop::locnet::NodeProfile& value)
     
     const iop::locnet::Contact &contact = value.contact();
     if ( contact.has_ipv4() )
-        { return NodeProfile( value.nodeid(), NetworkInterface( AddressType::Ipv4,
-            contact.ipv4().host(), contact.ipv4().port() ) ); }
+        { return NodeProfile( value.nodeid(), NetworkInterface( NetworkInterface::AddressFromIpv4Bytes(
+            contact.ipv4().host() ), contact.ipv4().port() ) ); }
     else if ( contact.has_ipv6() )
-        { return NodeProfile( value.nodeid(), NetworkInterface( AddressType::Ipv6,
-            contact.ipv6().host(), contact.ipv6().port() ) ); }
+        { return NodeProfile( value.nodeid(), NetworkInterface( NetworkInterface::AddressFromIpv6Bytes(
+            contact.ipv6().host() ), contact.ipv6().port() ) ); }
     else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Unknown address type"); }
 }
 
@@ -126,20 +126,18 @@ void Converter::FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile
     
     target->set_nodeid( source.id() );
     iop::locnet::Contact *targetContact = target->mutable_contact();
-    switch( sourceContact.addressType() )
+    
+    if ( sourceContact.isIpv4() )
     {
-        case AddressType::Ipv4:
-            targetContact->mutable_ipv4()->set_host( sourceContact.address() );
-            targetContact->mutable_ipv4()->set_port( sourceContact.port() );
-            break;
-
-        case AddressType::Ipv6:
-            targetContact->mutable_ipv6()->set_host( sourceContact.address() );
-            targetContact->mutable_ipv6()->set_port( sourceContact.port() );
-            break;
-
-        default: throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown address type");
+        targetContact->mutable_ipv4()->set_port( sourceContact.port() );
+        targetContact->mutable_ipv4()->set_host( sourceContact.Ipv4Bytes() );
     }
+    else if ( sourceContact.isIpv6() )
+    {
+        targetContact->mutable_ipv6()->set_port( sourceContact.port() );
+        targetContact->mutable_ipv6()->set_host( sourceContact.Ipv6Bytes() );
+    }
+    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown address type"); }
 }
 
 iop::locnet::NodeProfile* Converter::ToProtoBuf(const NodeProfile &profile)

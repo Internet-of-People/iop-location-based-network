@@ -23,6 +23,59 @@ static const size_t MessageHeaderSize = 5;
 static const size_t MessageSizeOffset = 1;
 
 
+Address NetworkInterface::AddressFromIpv4Bytes(const std::string &bytes)
+{
+    address_v4::bytes_type v4AddrBytes;
+    copy( &bytes.front(), &bytes.front() + v4AddrBytes.size(), v4AddrBytes.data() );
+    address_v4 ipv4(v4AddrBytes);
+    return ipv4.to_string();
+}
+
+Address NetworkInterface::AddressFromIpv6Bytes(const std::string &bytes)
+{
+    address_v6::bytes_type v6AddrBytes;
+    copy( &bytes.front(), &bytes.front() + v6AddrBytes.size(), v6AddrBytes.data() );
+    address_v6 ipv6(v6AddrBytes);
+    return ipv6.to_string();
+}
+
+bool NetworkInterface::isIpv4() const
+{
+    try { return address::from_string(_address).is_v4(); }
+    catch (...) { return false; }
+}
+
+bool NetworkInterface::isIpv6() const
+{
+    try { return address::from_string(_address).is_v6(); }
+    catch (...) { return false; }
+}
+
+bool NetworkInterface::isLoopback() const
+{
+    try { return address::from_string(_address).is_loopback(); }
+    catch (...) { return false; }
+}
+
+string NetworkInterface::Ipv4Bytes() const
+{
+    string result;
+    auto bytes = address::from_string(_address).to_v4().to_bytes();
+    for (uint8_t byte : bytes)
+        { result.push_back(byte); }
+    return result;
+}
+
+string NetworkInterface::Ipv6Bytes() const
+{
+    string result;
+    auto bytes = address::from_string(_address).to_v6().to_bytes();
+    for (uint8_t byte : bytes)
+        { result.push_back(byte); }
+    return result;
+}
+
+
 
 TcpServer::TcpServer(TcpPort portNumber) : _ioService(),
     _acceptor( _ioService, tcp::endpoint( tcp::v4(), portNumber ) ),

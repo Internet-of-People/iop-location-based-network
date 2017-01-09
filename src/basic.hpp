@@ -55,38 +55,40 @@ public:
 
 
 
-// TODO DNS entry also should be enabled as an address. Do we need this AddressType at all?
-enum class AddressType : uint8_t
-{
-    Ipv4 = 1,
-    Ipv6 = 2,
-};
-
-
 
 class NetworkInterface
 {
-    AddressType _addressType;
     Address     _address;
     TcpPort     _port;
 
-    static AddressType getAddressType(const std::string &address);
-    
 public:
     
     NetworkInterface();
     NetworkInterface(const NetworkInterface &other);
     NetworkInterface(const Address &address, TcpPort port);
-    NetworkInterface(AddressType addressType, const Address &address, TcpPort port);
     
-    AddressType addressType() const;
     const Address& address() const;
     TcpPort port() const;
     
+    void address(const Address &address);
+    
     bool operator==(const NetworkInterface &other) const;
+    
+    // NOTE Needed for ProtoBuf format and implemented in network.cpp as being asio library-specific
+    // TODO consider splitting class into an interface here and an implementation in network
+    static Address AddressFromIpv4Bytes(const std::string &bytes);
+    static Address AddressFromIpv6Bytes(const std::string &bytes);
+    
+    bool isLoopback() const;
+    bool isIpv4() const;
+    bool isIpv6() const;
+    
+    std::string Ipv4Bytes() const;
+    std::string Ipv6Bytes() const;
 };
 
 std::ostream& operator<<(std::ostream& out, const NetworkInterface &value);
+
 
 
 class NodeProfile
@@ -102,6 +104,7 @@ public:
     NodeProfile(const NodeId &id, const NetworkInterface &contact);
     
     const NodeId& id() const;
+    NetworkInterface& contact();
     const NetworkInterface& contact() const;
     
     bool operator==(const NodeProfile &other) const;
@@ -166,6 +169,7 @@ public:
     NodeInfo(const NodeProfile &profile, const GpsLocation &location);
     NodeInfo(const NodeProfile &profile, GpsCoordinate latitude, GpsCoordinate longitude);
     
+    NodeProfile& profile();
     const NodeProfile& profile() const;
     const GpsLocation& location() const;
     

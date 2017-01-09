@@ -42,7 +42,7 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
         
         THEN("Local service GetNeighbours requests are properly served") {
             iop::locnet::Request request;
-            request.set_version("1");
+            request.set_version({1,0,0});
             request.mutable_localservice()->mutable_getneighbournodes();
                 
             shared_ptr<iop::locnet::Response> response = dispatcher.Dispatch(request);

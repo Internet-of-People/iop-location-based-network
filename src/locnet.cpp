@@ -76,19 +76,21 @@ const unordered_map<ServiceType,ServiceProfile,EnumHasher>& Node::GetServices() 
     
 void Node::RegisterService(ServiceType serviceType, const ServiceProfile& serviceInfo)
 {
-    auto it = _services.find(serviceType);
-    if ( it != _services.end() ) {
-        throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Service type is already registered");
-    }
+// NOTE this forbids registering again for connecting services after a restart
+//     auto it = _services.find(serviceType);
+//     if ( it != _services.end() ) {
+//         throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Service type is already registered");
+//     }
     _services[serviceType] = serviceInfo;
 }
 
 void Node::DeregisterService(ServiceType serviceType)
 {
-    auto it = _services.find(serviceType);
-    if ( it == _services.end() ) {
-        throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Service type was not registered");
-    }
+// NOTE RegisterService() does not check. This would result more complex services and would be assymetric, better don't check
+//     auto it = _services.find(serviceType);
+//     if ( it == _services.end() ) {
+//         throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Service type was not registered");
+//     }
     _services.erase(serviceType);
 }
 
@@ -216,10 +218,11 @@ bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &node
 }
 
 
+
 shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkInterface& contact)
 {
     // There is no point in connecting to ourselves
-    if ( contact == _myNodeInfo.profile().contact() )
+    if ( contact.isLoopback() || contact == _myNodeInfo.profile().contact() )
         { return shared_ptr<INodeMethods>(); }
     
     try { return _connectionFactory->ConnectTo(contact); }
@@ -227,6 +230,7 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkInterface& contact)
         { LOG(INFO) << "Failed to connect to " << contact << ": " << e.what(); }
     return shared_ptr<INodeMethods>();
 }
+
 
 
 bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethods> nodeConnection,

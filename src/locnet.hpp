@@ -100,7 +100,7 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     // TODO consider if this should be also persistant, thus included in SpatialDatabase.
     //      Pro: service list survives restart/crash, services don't have to detect restart and register again.
     //      Con: if services are also restarted, will give false results.
-    // TODO If no need to be persistent, this is still not threadsafe.
+    // TODO If no need to be persistent, this is still not threadsafe, though problems are highly unlikely.
     //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     

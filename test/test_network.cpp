@@ -46,7 +46,7 @@ SCENARIO("TCP networking", "[network]")
             {
                 iop::locnet::MessageWithHeader requestMsg;
                 requestMsg.mutable_body()->mutable_request()->mutable_localservice()->mutable_getneighbournodes();
-                requestMsg.mutable_body()->mutable_request()->set_version("1");
+                requestMsg.mutable_body()->mutable_request()->set_version({1,0,0});
                 clientSession->SendMessage(requestMsg);
                 
                 unique_ptr<iop::locnet::MessageWithHeader> msgReceived( clientSession->ReceiveMessage() );
@@ -60,7 +60,7 @@ SCENARIO("TCP networking", "[network]")
             {
                 iop::locnet::MessageWithHeader requestMsg;
                 requestMsg.mutable_body()->mutable_request()->mutable_remotenode()->mutable_getnodecount();
-                requestMsg.mutable_body()->mutable_request()->set_version("1");
+                requestMsg.mutable_body()->mutable_request()->set_version({1,0,0});
                 clientSession->SendMessage(requestMsg);
                 
                 unique_ptr<iop::locnet::MessageWithHeader> msgReceived( clientSession->ReceiveMessage() );

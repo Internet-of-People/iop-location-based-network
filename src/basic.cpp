@@ -26,27 +26,22 @@ ErrorCode LocationNetworkError::code() const
 NetworkInterface::NetworkInterface() {}
     
 NetworkInterface::NetworkInterface(const NetworkInterface& other) :
-    _addressType(other._addressType), _address(other._address), _port(other._port) {}
+    _address(other._address), _port(other._port) {}
 
 NetworkInterface::NetworkInterface(const Address& address, TcpPort port) :
-    _addressType( getAddressType(address) ), _address(address), _port(port) {}
-
-NetworkInterface::NetworkInterface(AddressType addressType, const Address& address, TcpPort port) :
-    _addressType(addressType), _address(address), _port(port) {}
-
-// TODO consider a smarter detection here if AddressType is needed at all
-AddressType NetworkInterface::getAddressType(const string& address)
-    { return address.find(':') == string::npos ? AddressType::Ipv4 : AddressType::Ipv6; }
+    _address(address), _port(port) {}
 
 
-AddressType NetworkInterface::addressType() const { return _addressType; }
 const Address& NetworkInterface::address() const { return _address; }
 TcpPort NetworkInterface::port() const { return _port; }
 
+void NetworkInterface::address(const Address& address)
+    { _address = address; }
+
+
 bool NetworkInterface::operator==(const NetworkInterface& other) const
 {
-    return  _addressType == other._addressType &&
-            _address == other._address &&
+    return  _address == other._address &&
             _port == other._port;
 }
 
@@ -68,6 +63,7 @@ NodeProfile::NodeProfile(const NodeId& id, const NetworkInterface &contact) :
     _id(id), _contact(contact) {}
 
 const NodeId& NodeProfile::id() const { return _id; }
+NetworkInterface& NodeProfile::contact() { return _contact; }
 const NetworkInterface& NodeProfile::contact() const { return _contact; }
 
 bool NodeProfile::operator==(const NodeProfile& other) const
@@ -133,6 +129,7 @@ NodeInfo::NodeInfo(const NodeProfile &profile, const GpsLocation &location) :
 NodeInfo::NodeInfo(const NodeProfile &profile, GpsCoordinate latitude, GpsCoordinate longitude) :
     _profile(profile), _location(latitude, longitude) {}
 
+NodeProfile& NodeInfo::profile() { return _profile; }
 const NodeProfile& NodeInfo::profile() const { return _profile; }
 const GpsLocation& NodeInfo::location() const { return _location; }
 
