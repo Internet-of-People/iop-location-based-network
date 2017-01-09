@@ -183,7 +183,7 @@ IncomingRequestDispatcher::IncomingRequestDispatcher( shared_ptr<ILocalServiceMe
 unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(const iop::locnet::Request& request)
 {
     // TODO implement better version checks
-    if ( request.version().empty() || request.version()[0] != '1' )
+    if ( request.version().empty() || request.version()[0] != 1 )
         { throw LocationNetworkError(ErrorCode::ERROR_UNSUPPORTED, "Missing or unknown request version"); }
     
     unique_ptr<iop::locnet::Response> result( new iop::locnet::Response() );
@@ -493,7 +493,6 @@ NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRe
 size_t NodeMethodsProtoBufClient::GetNodeCount() const
 {
     iop::locnet::Request request;
-    //request.set_version("1");
     request.mutable_remotenode()->mutable_getnodecount();
     
     unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
@@ -510,7 +509,6 @@ size_t NodeMethodsProtoBufClient::GetNodeCount() const
 shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& node)
 {
     iop::locnet::Request request;
-    //request.set_version("1");
     request.mutable_remotenode()->mutable_acceptcolleague()->set_allocated_requestornodeinfo(
         Converter::ToProtoBuf(node) );
     
@@ -531,7 +529,6 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& 
 shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& node)
 {
     iop::locnet::Request request;
-    //request.set_version("1");
     request.mutable_remotenode()->mutable_renewcolleague()->set_allocated_requestornodeinfo(
         Converter::ToProtoBuf(node) );
     
@@ -552,7 +549,6 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& n
 shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& node)
 {
     iop::locnet::Request request;
-    //request.set_version("1");
     request.mutable_remotenode()->mutable_acceptneighbour()->set_allocated_requestornodeinfo(
         Converter::ToProtoBuf(node) );
     
@@ -573,7 +569,6 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& 
 shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& node)
 {
     iop::locnet::Request request;
-    //request.set_version("1");
     request.mutable_remotenode()->mutable_renewneighbour()->set_allocated_requestornodeinfo(
         Converter::ToProtoBuf(node) );
     
@@ -595,7 +590,6 @@ vector<NodeInfo> NodeMethodsProtoBufClient::GetRandomNodes(
     size_t maxNodeCount, Neighbours filter) const
 {
     iop::locnet::Request request;
-    //request.set_version("1");
     iop::locnet::GetRandomNodesRequest *getRandReq = request.mutable_remotenode()->mutable_getrandomnodes();
     getRandReq->set_maxnodecount(maxNodeCount);
     getRandReq->set_includeneighbours( filter == Neighbours::Included );
@@ -618,7 +612,6 @@ vector<NodeInfo> NodeMethodsProtoBufClient::GetClosestNodesByDistance(
     const GpsLocation& location, Distance radiusKm, size_t maxNodeCount, Neighbours filter) const
 {
     iop::locnet::Request request;
-    //request.set_version("1");
     iop::locnet::GetClosestNodesByDistanceRequest *getNodeReq =
         request.mutable_remotenode()->mutable_getclosestnodes();
     getNodeReq->set_allocated_location( Converter::ToProtoBuf(location) );

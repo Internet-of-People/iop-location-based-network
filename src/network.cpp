@@ -95,21 +95,36 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
             shared_ptr<IProtoBufRequestDispatcher> dispatcher(
                 _dispatcherFactory->Create(session) );
 
-            while (! _shutdownRequested)
+            bool endMessageLoop = false;
+            while (! endMessageLoop && ! _shutdownRequested)
             {
-                LOG(TRACE) << "Reading request";
-                shared_ptr<iop::locnet::MessageWithHeader> requestMsg( session->ReceiveMessage() );
-                if (! requestMsg)
-                    { break; }
-                
-                LOG(TRACE) << "Serving request";
+                uint32_t messageId = 0;
+                shared_ptr<iop::locnet::MessageWithHeader> requestMsg;
                 unique_ptr<iop::locnet::Response> response;
+                
                 try
                 {
-                    if ( ! requestMsg->has_body() || ! requestMsg->body().has_request() )
+                    LOG(TRACE) << "Reading request";
+                    requestMsg.reset( session->ReceiveMessage() );
+
+                    if ( ! requestMsg || ! requestMsg->has_body() || ! requestMsg->body().has_request() )
                         { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing message body or request"); }
+                    
+                    LOG(TRACE) << "Serving request";
+                    messageId = requestMsg->body().id();
                     response = dispatcher->Dispatch( requestMsg->body().request() );
                     response->set_status(iop::locnet::Status::STATUS_OK);
+                    
+                    // TODO somehow this should be abstracted away and implemented in a nicer way
+                    if ( requestMsg->has_body() && requestMsg->body().has_request() &&
+                        requestMsg->body().request().has_localservice() &&
+                        requestMsg->body().request().localservice().has_getneighbournodes() &&
+                        requestMsg->body().request().localservice().getneighbournodes().keepaliveandsendupdates() )
+                    {
+                        LOG(DEBUG) << "GetNeighbourhood with keepalive is requested, ending dispatch loop and serve only notifications through ChangeListener";
+                        // NOTE Session will be still kept alive because its ahared_ptr is copied by the ChangeListener that sends notifications
+                        endMessageLoop = true;
+                    }
                 }
                 catch (LocationNetworkError &lnex)
                 {
@@ -118,6 +133,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     response.reset( new iop::locnet::Response() );
                     response->set_status( Converter::ToProtoBuf( lnex.code() ) );
                     response->set_details( lnex.what() );
+                    endMessageLoop = true;
                 }
                 catch (exception &ex)
                 {
@@ -125,22 +141,15 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     response.reset( new iop::locnet::Response() );
                     response->set_status(iop::locnet::Status::ERROR_INTERNAL);
                     response->set_details( ex.what() );
+                    endMessageLoop = true;
                 }
                 
                 LOG(TRACE) << "Sending response";
                 iop::locnet::MessageWithHeader responseMsg;
                 responseMsg.mutable_body()->set_allocated_response( response.release() );
+                responseMsg.mutable_body()->set_id(messageId);
                 
                 session->SendMessage(responseMsg);
-                
-                if ( requestMsg->has_body() && requestMsg->body().has_request() &&
-                     requestMsg->body().request().has_localservice() &&
-                     requestMsg->body().request().localservice().has_getneighbournodes() &&
-                     requestMsg->body().request().localservice().getneighbournodes().keepaliveandsendupdates() )
-                {
-                    LOG(DEBUG) << "GetNeighbourhood with keepalive is requested, breaking dispatch loop and serve only notifications through ChangeListener";
-                    break;
-                }
             }
         }
         catch (exception &ex)
@@ -279,7 +288,7 @@ ProtoBufRequestNetworkDispatcher::ProtoBufRequestNetworkDispatcher(shared_ptr<IP
 unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(const iop::locnet::Request& request)
 {
     iop::locnet::Request *clonedReq = new iop::locnet::Request(request);
-    clonedReq->set_version("1");
+    clonedReq->set_version({1,0,0});
     
     iop::locnet::MessageWithHeader reqMsg;
     reqMsg.mutable_body()->set_allocated_request(clonedReq);
@@ -291,6 +300,12 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
         
     unique_ptr<iop::locnet::Response> result(
         new iop::locnet::Response( respMsg->body().response() ) );
+    if ( result && result->status() != iop::locnet::Status::STATUS_OK )
+    {
+        LOG(WARNING) << "Session " << _session->id() << " received response code " << result->status()
+                     << ", error details: " << result->details();
+        throw LocationNetworkError( ErrorCode::ERROR_BAD_RESPONSE, result->details() );
+    }
     return result;
 }
 
