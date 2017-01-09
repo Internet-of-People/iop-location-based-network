@@ -222,7 +222,7 @@ bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &node
 shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkInterface& contact)
 {
     // There is no point in connecting to ourselves
-    if ( contact.isLoopback() || contact == _myNodeInfo.profile().contact() )
+    if ( contact == _myNodeInfo.profile().contact() || contact.isLoopback() )
         { return shared_ptr<INodeMethods>(); }
     
     try { return _connectionFactory->ConnectTo(contact); }

@@ -137,7 +137,11 @@ void Converter::FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile
         targetContact->mutable_ipv6()->set_port( sourceContact.port() );
         targetContact->mutable_ipv6()->set_host( sourceContact.Ipv6Bytes() );
     }
-    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown address type"); }
+    else
+    {
+        LOG(DEBUG) << "Missing or unknown address type for address " << sourceContact;
+        throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown address type");
+    }
 }
 
 iop::locnet::NodeProfile* Converter::ToProtoBuf(const NodeProfile &profile)
@@ -249,7 +253,7 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
             bool keepAlive = getneighboursRequest.keepaliveandsendupdates();
             
             vector<NodeInfo> neighbours = _iLocalService->GetNeighbourNodesByDistance();
-            LOG(DEBUG) << "Served GetNeighbourNodes() with keepalive" << keepAlive
+            LOG(DEBUG) << "Served GetNeighbourNodes() with keepalive " << keepAlive
                        << ", node count : " << neighbours.size();
             
             auto result = new iop::locnet::LocalServiceResponse();
