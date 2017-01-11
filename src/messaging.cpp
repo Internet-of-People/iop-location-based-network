@@ -103,13 +103,8 @@ NodeProfile Converter::FromProtoBuf(const iop::locnet::NodeProfile& value)
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No contact information for profile"); }
     
     const iop::locnet::Contact &contact = value.contact();
-    if ( contact.has_ipv4() )
-        { return NodeProfile( value.nodeid(), NetworkInterface( NetworkInterface::AddressFromIpv4Bytes(
-            contact.ipv4().host() ), contact.ipv4().port() ) ); }
-    else if ( contact.has_ipv6() )
-        { return NodeProfile( value.nodeid(), NetworkInterface( NetworkInterface::AddressFromIpv6Bytes(
-            contact.ipv6().host() ), contact.ipv6().port() ) ); }
-    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Unknown address type"); }
+    return NodeProfile( value.nodeid(), NetworkInterface(
+        NetworkInterface::AddressFromBytes( contact.ipaddress() ), contact.port() ) );
 }
 
 
@@ -126,22 +121,8 @@ void Converter::FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile
     
     target->set_nodeid( source.id() );
     iop::locnet::Contact *targetContact = target->mutable_contact();
-    
-    if ( sourceContact.isIpv4() )
-    {
-        targetContact->mutable_ipv4()->set_port( sourceContact.port() );
-        targetContact->mutable_ipv4()->set_host( sourceContact.Ipv4Bytes() );
-    }
-    else if ( sourceContact.isIpv6() )
-    {
-        targetContact->mutable_ipv6()->set_port( sourceContact.port() );
-        targetContact->mutable_ipv6()->set_host( sourceContact.Ipv6Bytes() );
-    }
-    else
-    {
-        LOG(DEBUG) << "Missing or unknown address type for address " << sourceContact;
-        throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown address type");
-    }
+    targetContact->set_port( sourceContact.port() );
+    targetContact->set_ipaddress( sourceContact.IpAddressBytes() );
 }
 
 iop::locnet::NodeProfile* Converter::ToProtoBuf(const NodeProfile &profile)
@@ -298,7 +279,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             shared_ptr<NodeInfo> result = _iRemoteNode->AcceptColleague(nodeInfo);
             LOG(DEBUG) << "Served AcceptColleague(" << nodeInfo
                        << "), accepted: " << static_cast<bool>(result);
-                       
+            
             auto response = new iop::locnet::RemoteNodeResponse();
             response->mutable_acceptcolleague()->set_accepted( static_cast<bool>(result) );
             if (result) {
@@ -483,8 +464,9 @@ iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
 
 
 
-NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher) :
-    _dispatcher(dispatcher)
+NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(
+    std::shared_ptr<IProtoBufRequestDispatcher> dispatcher, std::function<void(const Address&)> detectedIpCallback) :
+    _dispatcher(dispatcher), _detectedIpCallback(detectedIpCallback)
 {
     if (! _dispatcher)
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No dispatcher instantiated"); }
@@ -523,6 +505,13 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& 
             response->remotenode().acceptcolleague().acceptornodeinfo() ) ) ) :
         shared_ptr<NodeInfo>();
     LOG(DEBUG) << "Request AcceptColleague() returned " << static_cast<bool>(result);
+    
+    if (_detectedIpCallback)
+    {
+        string address = response->remotenode().acceptcolleague().remoteipaddress();
+        if ( ! address.empty() )
+            { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
+    }
     return result;
 }
 
@@ -543,6 +532,13 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& n
             response->remotenode().renewcolleague().acceptornodeinfo() ) ) ) :
         shared_ptr<NodeInfo>();
     LOG(DEBUG) << "Request RenewColleague() returned " << static_cast<bool>(result);
+    
+    if (_detectedIpCallback)
+    {
+        string address = response->remotenode().renewcolleague().remoteipaddress();
+        if ( ! address.empty() )
+            { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
+    }
     return result;
 }
 
@@ -563,6 +559,13 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& 
             response->remotenode().acceptneighbour().acceptornodeinfo() ) ) ) :
         shared_ptr<NodeInfo>();
     LOG(DEBUG) << "Request AcceptNeighbour() returned " << static_cast<bool>(result);
+    
+    if (_detectedIpCallback)
+    {
+        string address = response->remotenode().acceptneighbour().remoteipaddress();
+        if ( ! address.empty() )
+            { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
+    }
     return result;
 }
 
@@ -583,6 +586,13 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& n
             response->remotenode().renewneighbour().acceptornodeinfo() ) ) ) :
         shared_ptr<NodeInfo>();
     LOG(DEBUG) << "Request RenewNeighbour() returned " << static_cast<bool>(result);
+    
+    if (_detectedIpCallback)
+    {
+        string address = response->remotenode().renewneighbour().remoteipaddress();
+        if ( ! address.empty() )
+            { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
+    }
     return result;
 }
 

@@ -1,6 +1,7 @@
 #ifndef __LOCNET_ASIO_NETWORK_H__
 #define __LOCNET_ASIO_NETWORK_H__
 
+#include <functional>
 #include <memory>
 #include <thread>
 
@@ -45,12 +46,13 @@ public:
     virtual ~IProtoBufNetworkSession() {}
     
     virtual const SessionId& id() const = 0;
+    virtual const Address& remoteAddress() const = 0;
     
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
     virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
 
-    virtual void KeepAlive() = 0;
 // TODO implement these    
+//     virtual void KeepAlive() = 0;
 //     virtual bool IsAlive() const = 0;
 //     virtual void Close() = 0;
 };
@@ -102,6 +104,7 @@ public:
 class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
 {
     SessionId                               _id;
+    Address                                 _remoteAddress;
     asio::ip::tcp::iostream                 _stream;
     std::shared_ptr<asio::ip::tcp::socket>  _socket;
     
@@ -112,12 +115,13 @@ public:
     ~ProtoBufTcpStreamSession();
     
     const SessionId& id() const override;
+    const Address& remoteAddress() const override;
     
     iop::locnet::MessageWithHeader* ReceiveMessage() override;
     void SendMessage(iop::locnet::MessageWithHeader &message) override;
     
-    void KeepAlive() override;
 // TODO implement these
+//     void KeepAlive() override;
 //     bool IsAlive() const override;
 //     void Close() override;
 };
@@ -140,9 +144,13 @@ public:
 
 class TcpStreamConnectionFactory : public INodeConnectionFactory
 {
+    std::function<void(const Address&)> _detectedIpCallback;
+    
 public:
     
     std::shared_ptr<INodeMethods> ConnectTo(const NetworkInterface &address) override;
+    
+    void detectedIpCallback(std::function<void(const Address&)> detectedIpCallback);
 };
 
 

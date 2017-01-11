@@ -80,7 +80,7 @@ SCENARIO("TCP networking", "[network]")
             
             shared_ptr<IProtoBufRequestDispatcher> netDispatcher(
                 new ProtoBufRequestNetworkDispatcher(clientSession) );
-            NodeMethodsProtoBufClient client(netDispatcher);
+            NodeMethodsProtoBufClient client(netDispatcher, nullptr);
             
             size_t nodeCount = client.GetNodeCount();
             REQUIRE( nodeCount == 6 );

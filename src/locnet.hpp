@@ -24,9 +24,11 @@ public:
     virtual void DeregisterService(ServiceType serviceType) = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     
+    // NOTE methods used through this interface, but not exported to remote nodes
     virtual void AddListener(std::shared_ptr<IChangeListener> listener) = 0;
     virtual void RemoveListener(const SessionId &listenerId) = 0;
 };
+
 
 
 // Interface provided for other nodes of the same network (running on remote machines)
@@ -126,6 +128,8 @@ public:
           std::shared_ptr<INodeConnectionFactory> connectionFactory,
           const std::vector<NetworkInterface> &seedNodes);
 
+    void DetectedExternalAddress(const Address &address);
+    
     void ExpireOldNodes();
     void RenewNodeRelations();
     void DiscoverUnknownAreas();

@@ -46,7 +46,6 @@ public:
 
 class IncomingRequestDispatcher : public IProtoBufRequestDispatcher
 {
-    // TODO should we use some smart pointers here instead?
     std::shared_ptr<ILocalServiceMethods> _iLocalService;
     std::shared_ptr<INodeMethods>         _iRemoteNode;
     std::shared_ptr<IClientMethods>       _iClient;
@@ -54,13 +53,14 @@ class IncomingRequestDispatcher : public IProtoBufRequestDispatcher
     std::shared_ptr<IChangeListenerFactory> _listenerFactory;
     
     iop::locnet::LocalServiceResponse* DispatchLocalService(const iop::locnet::LocalServiceRequest &request);
-    iop::locnet::RemoteNodeResponse* DispatchRemoteNode(const iop::locnet::RemoteNodeRequest &request);
     iop::locnet::ClientResponse* DispatchClient(const iop::locnet::ClientRequest &request);
+    iop::locnet::RemoteNodeResponse* DispatchRemoteNode(const iop::locnet::RemoteNodeRequest &request);
     
 public:
     
     IncomingRequestDispatcher( std::shared_ptr<Node> node,
         std::shared_ptr<IChangeListenerFactory> listenerFactory );
+    
     IncomingRequestDispatcher( std::shared_ptr<ILocalServiceMethods> iLocalServices,
         std::shared_ptr<INodeMethods> iRemoteNode,
         std::shared_ptr<IClientMethods> iClient,
@@ -74,10 +74,12 @@ public:
 class NodeMethodsProtoBufClient : public INodeMethods
 {
     std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
+    std::function<void(const Address&)> _detectedIpCallback;
     
 public:
     
-    NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher);
+    NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher,
+                              std::function<void(const Address&)> detectedIpCallback);
     
     size_t GetNodeCount() const override;
     std::vector<NodeInfo> GetRandomNodes(

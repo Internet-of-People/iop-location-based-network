@@ -73,15 +73,11 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
             REQUIRE( prof.contact().port() == 6666 );
             
             REQUIRE( prof.contact().address() == "127.0.0.1" );
-            REQUIRE( prof.contact().isIpv4() );
-            REQUIRE( ! prof.contact().isIpv6() );
             REQUIRE( prof.contact().isLoopback() );
             
             prof.contact().address( Address("1.2.3.4") );
             
             REQUIRE( prof.contact().address() == "1.2.3.4" );
-            REQUIRE( prof.contact().isIpv4() );
-            REQUIRE( ! prof.contact().isIpv6() );
             REQUIRE( ! prof.contact().isLoopback() );
         }
     }

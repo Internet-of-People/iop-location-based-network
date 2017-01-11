@@ -23,33 +23,6 @@ static const size_t MessageHeaderSize = 5;
 static const size_t MessageSizeOffset = 1;
 
 
-Address NetworkInterface::AddressFromIpv4Bytes(const std::string &bytes)
-{
-    address_v4::bytes_type v4AddrBytes;
-    copy( &bytes.front(), &bytes.front() + v4AddrBytes.size(), v4AddrBytes.data() );
-    address_v4 ipv4(v4AddrBytes);
-    return ipv4.to_string();
-}
-
-Address NetworkInterface::AddressFromIpv6Bytes(const std::string &bytes)
-{
-    address_v6::bytes_type v6AddrBytes;
-    copy( &bytes.front(), &bytes.front() + v6AddrBytes.size(), v6AddrBytes.data() );
-    address_v6 ipv6(v6AddrBytes);
-    return ipv6.to_string();
-}
-
-bool NetworkInterface::isIpv4() const
-{
-    try { return address::from_string(_address).is_v4(); }
-    catch (...) { return false; }
-}
-
-bool NetworkInterface::isIpv6() const
-{
-    try { return address::from_string(_address).is_v6(); }
-    catch (...) { return false; }
-}
 
 bool NetworkInterface::isLoopback() const
 {
@@ -57,23 +30,48 @@ bool NetworkInterface::isLoopback() const
     catch (...) { return false; }
 }
 
-string NetworkInterface::Ipv4Bytes() const
+Address NetworkInterface::AddressFromBytes(const std::string &bytes)
+{
+    if ( bytes.size() == sizeof(address_v4::bytes_type) )
+    {
+        address_v4::bytes_type v4AddrBytes;
+        copy( &bytes.front(), &bytes.front() + v4AddrBytes.size(), v4AddrBytes.data() );
+        address_v4 ipv4(v4AddrBytes);
+        return ipv4.to_string();
+    }
+    else if ( bytes.size() == sizeof(address_v6::bytes_type) )
+    {
+        address_v6::bytes_type v6AddrBytes;
+        copy( &bytes.front(), &bytes.front() + v6AddrBytes.size(), v6AddrBytes.data() );
+        address_v6 ipv6(v6AddrBytes);
+        return ipv6.to_string();
+    }
+    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Invalid ip address bytearray size: " + bytes.size()); }
+}
+
+
+string NetworkInterface::AddressToBytes(const Address &addr)
 {
     string result;
-    auto bytes = address::from_string(_address).to_v4().to_bytes();
-    for (uint8_t byte : bytes)
-        { result.push_back(byte); }
+    auto ipAddress( address::from_string(addr) );
+    if ( ipAddress.is_v4() )
+    {
+        auto bytes = ipAddress.to_v4().to_bytes();
+        for (uint8_t byte : bytes)
+            { result.push_back(byte); }
+    }
+    else if ( ipAddress.is_v6() )
+    {
+        auto bytes = ipAddress.to_v6().to_bytes();
+        for (uint8_t byte : bytes)
+            { result.push_back(byte); }
+    }
+    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Unknown type of address: " + addr); }
     return result;
 }
 
-string NetworkInterface::Ipv6Bytes() const
-{
-    string result;
-    auto bytes = address::from_string(_address).to_v6().to_bytes();
-    for (uint8_t byte : bytes)
-        { result.push_back(byte); }
-    return result;
-}
+string  NetworkInterface::IpAddressBytes() const
+    { return AddressToBytes(_address); }
 
 
 
@@ -168,15 +166,41 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     response = dispatcher->Dispatch( requestMsg->body().request() );
                     response->set_status(iop::locnet::Status::STATUS_OK);
                     
-                    // TODO somehow this should be abstracted away and implemented in a nicer way
+                    // TODO the keepalive and ip detection features are violating the current
+                    //      business logic/messaging/network abstraction layers.
+                    //      This is not a nice implementation, abstractions should be better prepared for these features
                     if ( requestMsg->has_body() && requestMsg->body().has_request() &&
-                        requestMsg->body().request().has_localservice() &&
-                        requestMsg->body().request().localservice().has_getneighbournodes() &&
-                        requestMsg->body().request().localservice().getneighbournodes().keepaliveandsendupdates() )
+                         requestMsg->body().request().has_localservice() &&
+                         requestMsg->body().request().localservice().has_getneighbournodes() &&
+                         requestMsg->body().request().localservice().getneighbournodes().keepaliveandsendupdates() )
                     {
                         LOG(DEBUG) << "GetNeighbourhood with keepalive is requested, ending dispatch loop and serve only notifications through ChangeListener";
                         // NOTE Session will be still kept alive because its ahared_ptr is copied by the ChangeListener that sends notifications
                         endMessageLoop = true;
+                    }
+
+                    if ( response->has_remotenode() )
+                    {
+                        if ( response->remotenode().has_acceptcolleague() )
+                        {
+                            response->mutable_remotenode()->mutable_acceptcolleague()->set_remoteipaddress(
+                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                        }
+                        else if ( response->remotenode().has_renewcolleague() )
+                        {
+                            response->mutable_remotenode()->mutable_renewcolleague()->set_remoteipaddress(
+                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                        }
+                        else if ( response->remotenode().has_acceptneighbour() )
+                        {
+                            response->mutable_remotenode()->mutable_acceptneighbour()->set_remoteipaddress(
+                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                        }
+                        else if ( response->remotenode().has_renewneighbour() )
+                        {
+                            response->mutable_remotenode()->mutable_renewneighbour()->set_remoteipaddress(
+                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                        }
                     }
                 }
                 catch (LocationNetworkError &lnex)
@@ -221,12 +245,13 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socket) :
-    _id(), _stream(), _socket(socket)
+    _id(), _remoteAddress(), _stream(), _socket(socket)
 {
     if (! _socket)
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No socket instantiated"); }
     
-    _id = socket->remote_endpoint().address().to_string() + ":" + to_string( socket->remote_endpoint().port() );
+    _remoteAddress = socket->remote_endpoint().address().to_string();
+    _id = _remoteAddress + ":" + to_string( socket->remote_endpoint().port() );
     // TODO consider possible ownership problems of this construct
     _stream.rdbuf()->assign( socket->local_endpoint().protocol(), socket->native_handle() );
     // TODO handle session expiration
@@ -236,7 +261,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &contact) :
     _id( contact.address() + ":" + to_string( contact.port() ) ),
-    _stream()
+    _remoteAddress( contact.address() ), _stream()
 {
     _stream.expires_after(NormalStreamExpirationPeriod);
     _stream.connect( contact.address(), to_string( contact.port() ) );
@@ -254,6 +279,8 @@ ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()
 const SessionId& ProtoBufTcpStreamSession::id() const
     { return _id; }
 
+const Address& ProtoBufTcpStreamSession::remoteAddress() const
+    { return _remoteAddress; }
 
 
 uint32_t GetMessageSizeFromHeader(const char *bytes)
@@ -317,12 +344,10 @@ void ProtoBufTcpStreamSession::SendMessage(iop::locnet::MessageWithHeader& messa
 }
 
 
-void ProtoBufTcpStreamSession::KeepAlive()
-{
-    // TODO handle session expiration
-    //_stream.expires_after(KeepAliveStreamExpirationPeriod);
-}
-    
+// void ProtoBufTcpStreamSession::KeepAlive()
+// {
+//     _stream.expires_after(KeepAliveStreamExpirationPeriod);
+// }
 // // TODO CHECK This doesn't really seem to work as on "normal" std::streamss
 // bool ProtoBufTcpStreamSession::IsAlive() const
 //     { return _stream.good(); }
@@ -364,12 +389,16 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
 
 
 
+void TcpStreamConnectionFactory::detectedIpCallback(std::function<void(const Address&)> detectedIpCallback)
+    { _detectedIpCallback = detectedIpCallback; }
+
+
 shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NetworkInterface& address)
 {
     LOG(DEBUG) << "Connecting to " << address;
     shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(address) );
     shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
-    shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher) );
+    shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher, _detectedIpCallback) );
     return result;
 }
 
@@ -413,7 +442,7 @@ ProtoBufTcpStreamChangeListener::ProtoBufTcpStreamChangeListener(
         shared_ptr<IProtoBufRequestDispatcher> dispatcher ) :
     _sessionId( session->id() ), _localService(localService), _dispatcher(dispatcher)
 {
-    session->KeepAlive();
+    //session->KeepAlive();
 }
 
 

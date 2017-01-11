@@ -103,6 +103,13 @@ void Node::RemoveListener(const SessionId &sessionId)
 
 
 
+void Node::DetectedExternalAddress(const Address& address)
+{
+    LOG(INFO) << "Detected external IP address " << address;
+    _myNodeInfo.profile().contact().address(address);
+}
+
+
 shared_ptr<NodeInfo> Node::AcceptColleague(const NodeInfo &node)
 {
 // TODO Sanity checks are performed in SafeStoreNode, should we reject the request

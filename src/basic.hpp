@@ -74,17 +74,13 @@ public:
     
     bool operator==(const NetworkInterface &other) const;
     
-    // NOTE Needed for ProtoBuf format and implemented in network.cpp as being asio library-specific
+    // NOTE Implemented in network.cpp as being library-specific (currently with asio)
     // TODO consider splitting class into an interface here and an implementation in network
-    static Address AddressFromIpv4Bytes(const std::string &bytes);
-    static Address AddressFromIpv6Bytes(const std::string &bytes);
-    
     bool isLoopback() const;
-    bool isIpv4() const;
-    bool isIpv6() const;
     
-    std::string Ipv4Bytes() const;
-    std::string Ipv6Bytes() const;
+    static Address AddressFromBytes(const std::string &bytes);
+    static std::string AddressToBytes(const Address &address);
+    std::string IpAddressBytes() const;
 };
 
 std::ostream& operator<<(std::ostream& out, const NetworkInterface &value);

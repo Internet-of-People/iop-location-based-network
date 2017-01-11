@@ -72,13 +72,6 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* Contact_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   Contact_reflection_ = NULL;
-struct ContactOneofInstance {
-  const ::iop::locnet::IpAddress* ipv4_;
-  const ::iop::locnet::IpAddress* ipv6_;
-}* Contact_default_oneof_instance_ = NULL;
-const ::google::protobuf::Descriptor* IpAddress_descriptor_ = NULL;
-const ::google::protobuf::internal::GeneratedMessageReflection*
-  IpAddress_reflection_ = NULL;
 const ::google::protobuf::Descriptor* RegisterServiceRequest_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   RegisterServiceRequest_reflection_ = NULL;
@@ -345,10 +338,9 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeProfile, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeProfile, _is_default_instance_));
   Contact_descriptor_ = file->message_type(7);
-  static const int Contact_offsets_[3] = {
-    PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(Contact_default_oneof_instance_, ipv4_),
-    PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(Contact_default_oneof_instance_, ipv6_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Contact, ContactType_),
+  static const int Contact_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Contact, ipaddress_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Contact, port_),
   };
   Contact_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -358,28 +350,10 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       -1,
       -1,
       -1,
-      Contact_default_oneof_instance_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Contact, _oneof_case_[0]),
       sizeof(Contact),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Contact, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Contact, _is_default_instance_));
-  IpAddress_descriptor_ = file->message_type(8);
-  static const int IpAddress_offsets_[2] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(IpAddress, host_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(IpAddress, port_),
-  };
-  IpAddress_reflection_ =
-    ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
-      IpAddress_descriptor_,
-      IpAddress::default_instance_,
-      IpAddress_offsets_,
-      -1,
-      -1,
-      -1,
-      sizeof(IpAddress),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(IpAddress, _internal_metadata_),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(IpAddress, _is_default_instance_));
-  RegisterServiceRequest_descriptor_ = file->message_type(9);
+  RegisterServiceRequest_descriptor_ = file->message_type(8);
   static const int RegisterServiceRequest_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RegisterServiceRequest, servicetype_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RegisterServiceRequest, nodeprofile_),
@@ -395,7 +369,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(RegisterServiceRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RegisterServiceRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RegisterServiceRequest, _is_default_instance_));
-  RegisterServiceResponse_descriptor_ = file->message_type(10);
+  RegisterServiceResponse_descriptor_ = file->message_type(9);
   static const int RegisterServiceResponse_offsets_[1] = {
   };
   RegisterServiceResponse_reflection_ =
@@ -409,7 +383,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(RegisterServiceResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RegisterServiceResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RegisterServiceResponse, _is_default_instance_));
-  DeregisterServiceRequest_descriptor_ = file->message_type(11);
+  DeregisterServiceRequest_descriptor_ = file->message_type(10);
   static const int DeregisterServiceRequest_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeregisterServiceRequest, servicetype_),
   };
@@ -424,7 +398,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(DeregisterServiceRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeregisterServiceRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeregisterServiceRequest, _is_default_instance_));
-  DeregisterServiceResponse_descriptor_ = file->message_type(12);
+  DeregisterServiceResponse_descriptor_ = file->message_type(11);
   static const int DeregisterServiceResponse_offsets_[1] = {
   };
   DeregisterServiceResponse_reflection_ =
@@ -438,7 +412,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(DeregisterServiceResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeregisterServiceResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeregisterServiceResponse, _is_default_instance_));
-  GetNeighbourNodesByDistanceLocalRequest_descriptor_ = file->message_type(13);
+  GetNeighbourNodesByDistanceLocalRequest_descriptor_ = file->message_type(12);
   static const int GetNeighbourNodesByDistanceLocalRequest_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNeighbourNodesByDistanceLocalRequest, keepaliveandsendupdates_),
   };
@@ -453,7 +427,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetNeighbourNodesByDistanceLocalRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNeighbourNodesByDistanceLocalRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNeighbourNodesByDistanceLocalRequest, _is_default_instance_));
-  GpsLocation_descriptor_ = file->message_type(14);
+  GpsLocation_descriptor_ = file->message_type(13);
   static const int GpsLocation_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GpsLocation, latitude_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GpsLocation, longitude_),
@@ -469,7 +443,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GpsLocation),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GpsLocation, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GpsLocation, _is_default_instance_));
-  NodeInfo_descriptor_ = file->message_type(15);
+  NodeInfo_descriptor_ = file->message_type(14);
   static const int NodeInfo_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeInfo, profile_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeInfo, location_),
@@ -485,7 +459,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(NodeInfo),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeInfo, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeInfo, _is_default_instance_));
-  GetNeighbourNodesByDistanceResponse_descriptor_ = file->message_type(16);
+  GetNeighbourNodesByDistanceResponse_descriptor_ = file->message_type(15);
   static const int GetNeighbourNodesByDistanceResponse_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNeighbourNodesByDistanceResponse, nodes_),
   };
@@ -500,7 +474,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetNeighbourNodesByDistanceResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNeighbourNodesByDistanceResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNeighbourNodesByDistanceResponse, _is_default_instance_));
-  NeighbourhoodChange_descriptor_ = file->message_type(17);
+  NeighbourhoodChange_descriptor_ = file->message_type(16);
   static const int NeighbourhoodChange_offsets_[4] = {
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(NeighbourhoodChange_default_oneof_instance_, addednodeinfo_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(NeighbourhoodChange_default_oneof_instance_, updatednodeinfo_),
@@ -520,7 +494,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(NeighbourhoodChange),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeighbourhoodChange, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeighbourhoodChange, _is_default_instance_));
-  NeighbourhoodChangedNotificationRequest_descriptor_ = file->message_type(18);
+  NeighbourhoodChangedNotificationRequest_descriptor_ = file->message_type(17);
   static const int NeighbourhoodChangedNotificationRequest_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeighbourhoodChangedNotificationRequest, changes_),
   };
@@ -535,7 +509,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(NeighbourhoodChangedNotificationRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeighbourhoodChangedNotificationRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeighbourhoodChangedNotificationRequest, _is_default_instance_));
-  NeighbourhoodChangedNotificationResponse_descriptor_ = file->message_type(19);
+  NeighbourhoodChangedNotificationResponse_descriptor_ = file->message_type(18);
   static const int NeighbourhoodChangedNotificationResponse_offsets_[1] = {
   };
   NeighbourhoodChangedNotificationResponse_reflection_ =
@@ -549,7 +523,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(NeighbourhoodChangedNotificationResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeighbourhoodChangedNotificationResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeighbourhoodChangedNotificationResponse, _is_default_instance_));
-  RemoteNodeRequest_descriptor_ = file->message_type(20);
+  RemoteNodeRequest_descriptor_ = file->message_type(19);
   static const int RemoteNodeRequest_offsets_[8] = {
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeRequest_default_oneof_instance_, acceptcolleague_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeRequest_default_oneof_instance_, renewcolleague_),
@@ -573,7 +547,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(RemoteNodeRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RemoteNodeRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RemoteNodeRequest, _is_default_instance_));
-  RemoteNodeResponse_descriptor_ = file->message_type(21);
+  RemoteNodeResponse_descriptor_ = file->message_type(20);
   static const int RemoteNodeResponse_offsets_[8] = {
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeResponse_default_oneof_instance_, acceptcolleague_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(RemoteNodeResponse_default_oneof_instance_, renewcolleague_),
@@ -597,7 +571,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(RemoteNodeResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RemoteNodeResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RemoteNodeResponse, _is_default_instance_));
-  BuildNetworkRequest_descriptor_ = file->message_type(22);
+  BuildNetworkRequest_descriptor_ = file->message_type(21);
   static const int BuildNetworkRequest_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkRequest, requestornodeinfo_),
   };
@@ -612,10 +586,11 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(BuildNetworkRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkRequest, _is_default_instance_));
-  BuildNetworkResponse_descriptor_ = file->message_type(23);
-  static const int BuildNetworkResponse_offsets_[2] = {
+  BuildNetworkResponse_descriptor_ = file->message_type(22);
+  static const int BuildNetworkResponse_offsets_[3] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkResponse, accepted_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkResponse, acceptornodeinfo_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkResponse, remoteipaddress_),
   };
   BuildNetworkResponse_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -628,7 +603,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(BuildNetworkResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildNetworkResponse, _is_default_instance_));
-  GetNodeCountRequest_descriptor_ = file->message_type(24);
+  GetNodeCountRequest_descriptor_ = file->message_type(23);
   static const int GetNodeCountRequest_offsets_[1] = {
   };
   GetNodeCountRequest_reflection_ =
@@ -642,7 +617,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetNodeCountRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountRequest, _is_default_instance_));
-  GetNodeCountResponse_descriptor_ = file->message_type(25);
+  GetNodeCountResponse_descriptor_ = file->message_type(24);
   static const int GetNodeCountResponse_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountResponse, nodecount_),
   };
@@ -657,7 +632,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetNodeCountResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeCountResponse, _is_default_instance_));
-  GetRandomNodesRequest_descriptor_ = file->message_type(26);
+  GetRandomNodesRequest_descriptor_ = file->message_type(25);
   static const int GetRandomNodesRequest_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRandomNodesRequest, maxnodecount_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRandomNodesRequest, includeneighbours_),
@@ -673,7 +648,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetRandomNodesRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRandomNodesRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRandomNodesRequest, _is_default_instance_));
-  GetRandomNodesResponse_descriptor_ = file->message_type(27);
+  GetRandomNodesResponse_descriptor_ = file->message_type(26);
   static const int GetRandomNodesResponse_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRandomNodesResponse, nodes_),
   };
@@ -688,7 +663,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetRandomNodesResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRandomNodesResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRandomNodesResponse, _is_default_instance_));
-  GetClosestNodesByDistanceRequest_descriptor_ = file->message_type(28);
+  GetClosestNodesByDistanceRequest_descriptor_ = file->message_type(27);
   static const int GetClosestNodesByDistanceRequest_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetClosestNodesByDistanceRequest, location_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetClosestNodesByDistanceRequest, maxradiuskm_),
@@ -706,7 +681,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetClosestNodesByDistanceRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetClosestNodesByDistanceRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetClosestNodesByDistanceRequest, _is_default_instance_));
-  GetClosestNodesByDistanceResponse_descriptor_ = file->message_type(29);
+  GetClosestNodesByDistanceResponse_descriptor_ = file->message_type(28);
   static const int GetClosestNodesByDistanceResponse_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetClosestNodesByDistanceResponse, nodes_),
   };
@@ -721,7 +696,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetClosestNodesByDistanceResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetClosestNodesByDistanceResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetClosestNodesByDistanceResponse, _is_default_instance_));
-  ClientRequest_descriptor_ = file->message_type(30);
+  ClientRequest_descriptor_ = file->message_type(29);
   static const int ClientRequest_offsets_[4] = {
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(ClientRequest_default_oneof_instance_, getservices_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(ClientRequest_default_oneof_instance_, getneighbournodes_),
@@ -741,7 +716,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(ClientRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClientRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClientRequest, _is_default_instance_));
-  ClientResponse_descriptor_ = file->message_type(31);
+  ClientResponse_descriptor_ = file->message_type(30);
   static const int ClientResponse_offsets_[4] = {
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(ClientResponse_default_oneof_instance_, getservices_),
     PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(ClientResponse_default_oneof_instance_, getneighbournodes_),
@@ -761,7 +736,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(ClientResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClientResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClientResponse, _is_default_instance_));
-  GetServicesRequest_descriptor_ = file->message_type(32);
+  GetServicesRequest_descriptor_ = file->message_type(31);
   static const int GetServicesRequest_offsets_[1] = {
   };
   GetServicesRequest_reflection_ =
@@ -775,7 +750,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetServicesRequest),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetServicesRequest, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetServicesRequest, _is_default_instance_));
-  ServiceProfile_descriptor_ = file->message_type(33);
+  ServiceProfile_descriptor_ = file->message_type(32);
   static const int ServiceProfile_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServiceProfile, servicetype_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServiceProfile, profile_),
@@ -791,7 +766,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(ServiceProfile),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServiceProfile, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServiceProfile, _is_default_instance_));
-  GetServicesResponse_descriptor_ = file->message_type(34);
+  GetServicesResponse_descriptor_ = file->message_type(33);
   static const int GetServicesResponse_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetServicesResponse, services_),
   };
@@ -806,7 +781,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       sizeof(GetServicesResponse),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetServicesResponse, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetServicesResponse, _is_default_instance_));
-  GetNeighbourNodesByDistanceClientRequest_descriptor_ = file->message_type(35);
+  GetNeighbourNodesByDistanceClientRequest_descriptor_ = file->message_type(34);
   static const int GetNeighbourNodesByDistanceClientRequest_offsets_[1] = {
   };
   GetNeighbourNodesByDistanceClientRequest_reflection_ =
@@ -851,8 +826,6 @@ void protobuf_RegisterTypes(const ::std::string&) {
       NodeProfile_descriptor_, &NodeProfile::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
       Contact_descriptor_, &Contact::default_instance());
-  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-      IpAddress_descriptor_, &IpAddress::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
       RegisterServiceRequest_descriptor_, &RegisterServiceRequest::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
@@ -932,10 +905,7 @@ void protobuf_ShutdownFile_IopLocNet_2eproto() {
   delete NodeProfile::default_instance_;
   delete NodeProfile_reflection_;
   delete Contact::default_instance_;
-  delete Contact_default_oneof_instance_;
   delete Contact_reflection_;
-  delete IpAddress::default_instance_;
-  delete IpAddress_reflection_;
   delete RegisterServiceRequest::default_instance_;
   delete RegisterServiceRequest_reflection_;
   delete RegisterServiceResponse::default_instance_;
@@ -1041,96 +1011,94 @@ void protobuf_AddDesc_IopLocNet_2eproto() {
     "hangedNotificationResponseH\000B\032\n\030LocalSer"
     "viceResponseType\"C\n\013NodeProfile\022\016\n\006nodeI"
     "d\030\001 \001(\014\022$\n\007contact\030\002 \001(\0132\023.iop.locnet.Co"
-    "ntact\"f\n\007Contact\022%\n\004ipv4\030\001 \001(\0132\025.iop.loc"
-    "net.IpAddressH\000\022%\n\004ipv6\030\002 \001(\0132\025.iop.locn"
-    "et.IpAddressH\000B\r\n\013ContactType\"\'\n\tIpAddre"
-    "ss\022\014\n\004host\030\001 \001(\014\022\014\n\004port\030\002 \001(\r\"t\n\026Regist"
-    "erServiceRequest\022,\n\013serviceType\030\001 \001(\0162\027."
-    "iop.locnet.ServiceType\022,\n\013nodeProfile\030\002 "
-    "\001(\0132\027.iop.locnet.NodeProfile\"\031\n\027Register"
-    "ServiceResponse\"H\n\030DeregisterServiceRequ"
-    "est\022,\n\013serviceType\030\001 \001(\0162\027.iop.locnet.Se"
-    "rviceType\"\033\n\031DeregisterServiceResponse\"J"
-    "\n\'GetNeighbourNodesByDistanceLocalReques"
-    "t\022\037\n\027keepAliveAndSendUpdates\030\001 \001(\010\"2\n\013Gp"
-    "sLocation\022\020\n\010latitude\030\001 \001(\017\022\021\n\tlongitude"
-    "\030\002 \001(\017\"_\n\010NodeInfo\022(\n\007profile\030\001 \001(\0132\027.io"
-    "p.locnet.NodeProfile\022)\n\010location\030\002 \001(\0132\027"
-    ".iop.locnet.GpsLocation\"J\n#GetNeighbourN"
-    "odesByDistanceResponse\022#\n\005nodes\030\001 \003(\0132\024."
-    "iop.locnet.NodeInfo\"\234\001\n\023NeighbourhoodCha"
-    "nge\022-\n\raddedNodeInfo\030\001 \001(\0132\024.iop.locnet."
-    "NodeInfoH\000\022/\n\017updatedNodeInfo\030\002 \001(\0132\024.io"
-    "p.locnet.NodeInfoH\000\022\027\n\rremovedNodeId\030\003 \001"
-    "(\014H\000B\014\n\nChangeType\"[\n\'NeighbourhoodChang"
-    "edNotificationRequest\0220\n\007changes\030\001 \003(\0132\037"
-    ".iop.locnet.NeighbourhoodChange\"*\n(Neigh"
-    "bourhoodChangedNotificationResponse\"\331\003\n\021"
-    "RemoteNodeRequest\022:\n\017acceptColleague\030\001 \001"
-    "(\0132\037.iop.locnet.BuildNetworkRequestH\000\0229\n"
-    "\016renewColleague\030\002 \001(\0132\037.iop.locnet.Build"
-    "NetworkRequestH\000\022:\n\017acceptNeighbour\030\003 \001("
-    "\0132\037.iop.locnet.BuildNetworkRequestH\000\0229\n\016"
-    "renewNeighbour\030\004 \001(\0132\037.iop.locnet.BuildN"
-    "etworkRequestH\000\0227\n\014getNodeCount\030\005 \001(\0132\037."
-    "iop.locnet.GetNodeCountRequestH\000\022;\n\016getR"
-    "andomNodes\030\006 \001(\0132!.iop.locnet.GetRandomN"
-    "odesRequestH\000\022G\n\017getClosestNodes\030\007 \001(\0132,"
-    ".iop.locnet.GetClosestNodesByDistanceReq"
-    "uestH\000B\027\n\025RemoteNodeRequestType\"\342\003\n\022Remo"
-    "teNodeResponse\022;\n\017acceptColleague\030\001 \001(\0132"
-    " .iop.locnet.BuildNetworkResponseH\000\022:\n\016r"
-    "enewColleague\030\002 \001(\0132 .iop.locnet.BuildNe"
-    "tworkResponseH\000\022;\n\017acceptNeighbour\030\003 \001(\013"
-    "2 .iop.locnet.BuildNetworkResponseH\000\022:\n\016"
-    "renewNeighbour\030\004 \001(\0132 .iop.locnet.BuildN"
-    "etworkResponseH\000\0228\n\014getNodeCount\030\005 \001(\0132 "
-    ".iop.locnet.GetNodeCountResponseH\000\022<\n\016ge"
-    "tRandomNodes\030\006 \001(\0132\".iop.locnet.GetRando"
-    "mNodesResponseH\000\022H\n\017getClosestNodes\030\007 \001("
-    "\0132-.iop.locnet.GetClosestNodesByDistance"
-    "ResponseH\000B\030\n\026RemoteNodeResponseType\"F\n\023"
-    "BuildNetworkRequest\022/\n\021requestorNodeInfo"
-    "\030\001 \001(\0132\024.iop.locnet.NodeInfo\"X\n\024BuildNet"
-    "workResponse\022\020\n\010accepted\030\001 \001(\010\022.\n\020accept"
-    "orNodeInfo\030\002 \001(\0132\024.iop.locnet.NodeInfo\"\025"
-    "\n\023GetNodeCountRequest\")\n\024GetNodeCountRes"
-    "ponse\022\021\n\tnodeCount\030\001 \001(\r\"H\n\025GetRandomNod"
-    "esRequest\022\024\n\014maxNodeCount\030\001 \001(\r\022\031\n\021inclu"
-    "deNeighbours\030\002 \001(\010\"=\n\026GetRandomNodesResp"
-    "onse\022#\n\005nodes\030\001 \003(\0132\024.iop.locnet.NodeInf"
-    "o\"\223\001\n GetClosestNodesByDistanceRequest\022)"
-    "\n\010location\030\001 \001(\0132\027.iop.locnet.GpsLocatio"
-    "n\022\023\n\013maxRadiusKm\030\002 \001(\002\022\024\n\014maxNodeCount\030\003"
-    " \001(\r\022\031\n\021includeNeighbours\030\004 \001(\010\"H\n!GetCl"
-    "osestNodesByDistanceResponse\022#\n\005nodes\030\001 "
-    "\003(\0132\024.iop.locnet.NodeInfo\"\367\001\n\rClientRequ"
-    "est\0225\n\013getServices\030\001 \001(\0132\036.iop.locnet.Ge"
-    "tServicesRequestH\000\022Q\n\021getNeighbourNodes\030"
-    "\002 \001(\01324.iop.locnet.GetNeighbourNodesByDi"
-    "stanceClientRequestH\000\022G\n\017getClosestNodes"
-    "\030\003 \001(\0132,.iop.locnet.GetClosestNodesByDis"
-    "tanceRequestH\000B\023\n\021ClientRequestType\"\366\001\n\016"
-    "ClientResponse\0226\n\013getServices\030\001 \001(\0132\037.io"
-    "p.locnet.GetServicesResponseH\000\022L\n\021getNei"
-    "ghbourNodes\030\002 \001(\0132/.iop.locnet.GetNeighb"
-    "ourNodesByDistanceResponseH\000\022H\n\017getClose"
-    "stNodes\030\003 \001(\0132-.iop.locnet.GetClosestNod"
-    "esByDistanceResponseH\000B\024\n\022ClientResponse"
-    "Type\"\024\n\022GetServicesRequest\"h\n\016ServicePro"
-    "file\022,\n\013serviceType\030\001 \001(\0162\027.iop.locnet.S"
-    "erviceType\022(\n\007profile\030\002 \001(\0132\027.iop.locnet"
-    ".NodeProfile\"C\n\023GetServicesResponse\022,\n\010s"
-    "ervices\030\001 \003(\0132\032.iop.locnet.ServiceProfil"
-    "e\"*\n(GetNeighbourNodesByDistanceClientRe"
-    "quest*y\n\006Status\022\r\n\tSTATUS_OK\020\000\022\034\n\030ERROR_"
-    "PROTOCOL_VIOLATION\020\001\022\025\n\021ERROR_UNSUPPORTE"
-    "D\020\002\022\022\n\016ERROR_INTERNAL\020\010\022\027\n\023ERROR_INVALID"
-    "_VALUE\0206*\226\001\n\013ServiceType\022\020\n\014Unstructured"
-    "\020\000\022\013\n\007Content\020\001\022\013\n\007Latency\020\002\022\014\n\010Location"
-    "\020\003\022\t\n\005Token\020\n\022\013\n\007Profile\020\013\022\r\n\tProximity\020"
-    "\014\022\t\n\005Relay\020\r\022\016\n\nReputation\020\016\022\013\n\007Minting\020"
-    "\017b\006proto3", 5009);
+    "ntact\"*\n\007Contact\022\021\n\tipAddress\030\001 \001(\014\022\014\n\004p"
+    "ort\030\002 \001(\r\"t\n\026RegisterServiceRequest\022,\n\013s"
+    "erviceType\030\001 \001(\0162\027.iop.locnet.ServiceTyp"
+    "e\022,\n\013nodeProfile\030\002 \001(\0132\027.iop.locnet.Node"
+    "Profile\"\031\n\027RegisterServiceResponse\"H\n\030De"
+    "registerServiceRequest\022,\n\013serviceType\030\001 "
+    "\001(\0162\027.iop.locnet.ServiceType\"\033\n\031Deregist"
+    "erServiceResponse\"J\n\'GetNeighbourNodesBy"
+    "DistanceLocalRequest\022\037\n\027keepAliveAndSend"
+    "Updates\030\001 \001(\010\"2\n\013GpsLocation\022\020\n\010latitude"
+    "\030\001 \001(\017\022\021\n\tlongitude\030\002 \001(\017\"_\n\010NodeInfo\022(\n"
+    "\007profile\030\001 \001(\0132\027.iop.locnet.NodeProfile\022"
+    ")\n\010location\030\002 \001(\0132\027.iop.locnet.GpsLocati"
+    "on\"J\n#GetNeighbourNodesByDistanceRespons"
+    "e\022#\n\005nodes\030\001 \003(\0132\024.iop.locnet.NodeInfo\"\234"
+    "\001\n\023NeighbourhoodChange\022-\n\raddedNodeInfo\030"
+    "\001 \001(\0132\024.iop.locnet.NodeInfoH\000\022/\n\017updated"
+    "NodeInfo\030\002 \001(\0132\024.iop.locnet.NodeInfoH\000\022\027"
+    "\n\rremovedNodeId\030\003 \001(\014H\000B\014\n\nChangeType\"[\n"
+    "\'NeighbourhoodChangedNotificationRequest"
+    "\0220\n\007changes\030\001 \003(\0132\037.iop.locnet.Neighbour"
+    "hoodChange\"*\n(NeighbourhoodChangedNotifi"
+    "cationResponse\"\331\003\n\021RemoteNodeRequest\022:\n\017"
+    "acceptColleague\030\001 \001(\0132\037.iop.locnet.Build"
+    "NetworkRequestH\000\0229\n\016renewColleague\030\002 \001(\013"
+    "2\037.iop.locnet.BuildNetworkRequestH\000\022:\n\017a"
+    "cceptNeighbour\030\003 \001(\0132\037.iop.locnet.BuildN"
+    "etworkRequestH\000\0229\n\016renewNeighbour\030\004 \001(\0132"
+    "\037.iop.locnet.BuildNetworkRequestH\000\0227\n\014ge"
+    "tNodeCount\030\005 \001(\0132\037.iop.locnet.GetNodeCou"
+    "ntRequestH\000\022;\n\016getRandomNodes\030\006 \001(\0132!.io"
+    "p.locnet.GetRandomNodesRequestH\000\022G\n\017getC"
+    "losestNodes\030\007 \001(\0132,.iop.locnet.GetCloses"
+    "tNodesByDistanceRequestH\000B\027\n\025RemoteNodeR"
+    "equestType\"\342\003\n\022RemoteNodeResponse\022;\n\017acc"
+    "eptColleague\030\001 \001(\0132 .iop.locnet.BuildNet"
+    "workResponseH\000\022:\n\016renewColleague\030\002 \001(\0132 "
+    ".iop.locnet.BuildNetworkResponseH\000\022;\n\017ac"
+    "ceptNeighbour\030\003 \001(\0132 .iop.locnet.BuildNe"
+    "tworkResponseH\000\022:\n\016renewNeighbour\030\004 \001(\0132"
+    " .iop.locnet.BuildNetworkResponseH\000\0228\n\014g"
+    "etNodeCount\030\005 \001(\0132 .iop.locnet.GetNodeCo"
+    "untResponseH\000\022<\n\016getRandomNodes\030\006 \001(\0132\"."
+    "iop.locnet.GetRandomNodesResponseH\000\022H\n\017g"
+    "etClosestNodes\030\007 \001(\0132-.iop.locnet.GetClo"
+    "sestNodesByDistanceResponseH\000B\030\n\026RemoteN"
+    "odeResponseType\"F\n\023BuildNetworkRequest\022/"
+    "\n\021requestorNodeInfo\030\001 \001(\0132\024.iop.locnet.N"
+    "odeInfo\"q\n\024BuildNetworkResponse\022\020\n\010accep"
+    "ted\030\001 \001(\010\022.\n\020acceptorNodeInfo\030\002 \001(\0132\024.io"
+    "p.locnet.NodeInfo\022\027\n\017remoteIpAddress\030\003 \001"
+    "(\014\"\025\n\023GetNodeCountRequest\")\n\024GetNodeCoun"
+    "tResponse\022\021\n\tnodeCount\030\001 \001(\r\"H\n\025GetRando"
+    "mNodesRequest\022\024\n\014maxNodeCount\030\001 \001(\r\022\031\n\021i"
+    "ncludeNeighbours\030\002 \001(\010\"=\n\026GetRandomNodes"
+    "Response\022#\n\005nodes\030\001 \003(\0132\024.iop.locnet.Nod"
+    "eInfo\"\223\001\n GetClosestNodesByDistanceReque"
+    "st\022)\n\010location\030\001 \001(\0132\027.iop.locnet.GpsLoc"
+    "ation\022\023\n\013maxRadiusKm\030\002 \001(\002\022\024\n\014maxNodeCou"
+    "nt\030\003 \001(\r\022\031\n\021includeNeighbours\030\004 \001(\010\"H\n!G"
+    "etClosestNodesByDistanceResponse\022#\n\005node"
+    "s\030\001 \003(\0132\024.iop.locnet.NodeInfo\"\367\001\n\rClient"
+    "Request\0225\n\013getServices\030\001 \001(\0132\036.iop.locne"
+    "t.GetServicesRequestH\000\022Q\n\021getNeighbourNo"
+    "des\030\002 \001(\01324.iop.locnet.GetNeighbourNodes"
+    "ByDistanceClientRequestH\000\022G\n\017getClosestN"
+    "odes\030\003 \001(\0132,.iop.locnet.GetClosestNodesB"
+    "yDistanceRequestH\000B\023\n\021ClientRequestType\""
+    "\366\001\n\016ClientResponse\0226\n\013getServices\030\001 \001(\0132"
+    "\037.iop.locnet.GetServicesResponseH\000\022L\n\021ge"
+    "tNeighbourNodes\030\002 \001(\0132/.iop.locnet.GetNe"
+    "ighbourNodesByDistanceResponseH\000\022H\n\017getC"
+    "losestNodes\030\003 \001(\0132-.iop.locnet.GetCloses"
+    "tNodesByDistanceResponseH\000B\024\n\022ClientResp"
+    "onseType\"\024\n\022GetServicesRequest\"h\n\016Servic"
+    "eProfile\022,\n\013serviceType\030\001 \001(\0162\027.iop.locn"
+    "et.ServiceType\022(\n\007profile\030\002 \001(\0132\027.iop.lo"
+    "cnet.NodeProfile\"C\n\023GetServicesResponse\022"
+    ",\n\010services\030\001 \003(\0132\032.iop.locnet.ServicePr"
+    "ofile\"*\n(GetNeighbourNodesByDistanceClie"
+    "ntRequest*y\n\006Status\022\r\n\tSTATUS_OK\020\000\022\034\n\030ER"
+    "ROR_PROTOCOL_VIOLATION\020\001\022\025\n\021ERROR_UNSUPP"
+    "ORTED\020\002\022\022\n\016ERROR_INTERNAL\020\010\022\027\n\023ERROR_INV"
+    "ALID_VALUE\0206*\226\001\n\013ServiceType\022\020\n\014Unstruct"
+    "ured\020\000\022\013\n\007Content\020\001\022\013\n\007Latency\020\002\022\014\n\010Loca"
+    "tion\020\003\022\t\n\005Token\020\n\022\013\n\007Profile\020\013\022\r\n\tProxim"
+    "ity\020\014\022\t\n\005Relay\020\r\022\016\n\nReputation\020\016\022\013\n\007Mint"
+    "ing\020\017b\006proto3", 4933);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IopLocNet.proto", &protobuf_RegisterTypes);
   MessageWithHeader::default_instance_ = new MessageWithHeader();
@@ -1146,8 +1114,6 @@ void protobuf_AddDesc_IopLocNet_2eproto() {
   LocalServiceResponse_default_oneof_instance_ = new LocalServiceResponseOneofInstance();
   NodeProfile::default_instance_ = new NodeProfile();
   Contact::default_instance_ = new Contact();
-  Contact_default_oneof_instance_ = new ContactOneofInstance();
-  IpAddress::default_instance_ = new IpAddress();
   RegisterServiceRequest::default_instance_ = new RegisterServiceRequest();
   RegisterServiceResponse::default_instance_ = new RegisterServiceResponse();
   DeregisterServiceRequest::default_instance_ = new DeregisterServiceRequest();
@@ -1188,7 +1154,6 @@ void protobuf_AddDesc_IopLocNet_2eproto() {
   LocalServiceResponse::default_instance_->InitAsDefaultInstance();
   NodeProfile::default_instance_->InitAsDefaultInstance();
   Contact::default_instance_->InitAsDefaultInstance();
-  IpAddress::default_instance_->InitAsDefaultInstance();
   RegisterServiceRequest::default_instance_->InitAsDefaultInstance();
   RegisterServiceResponse::default_instance_->InitAsDefaultInstance();
   DeregisterServiceRequest::default_instance_->InitAsDefaultInstance();
@@ -4851,8 +4816,8 @@ void NodeProfile::set_allocated_contact(::iop::locnet::Contact* contact) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Contact::kIpv4FieldNumber;
-const int Contact::kIpv6FieldNumber;
+const int Contact::kIpAddressFieldNumber;
+const int Contact::kPortFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Contact::Contact()
@@ -4863,8 +4828,6 @@ Contact::Contact()
 
 void Contact::InitAsDefaultInstance() {
   _is_default_instance_ = true;
-  Contact_default_oneof_instance_->ipv4_ = const_cast< ::iop::locnet::IpAddress*>(&::iop::locnet::IpAddress::default_instance());
-  Contact_default_oneof_instance_->ipv6_ = const_cast< ::iop::locnet::IpAddress*>(&::iop::locnet::IpAddress::default_instance());
 }
 
 Contact::Contact(const Contact& from)
@@ -4877,8 +4840,10 @@ Contact::Contact(const Contact& from)
 
 void Contact::SharedCtor() {
     _is_default_instance_ = false;
+  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
-  clear_has_ContactType();
+  ipaddress_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  port_ = 0u;
 }
 
 Contact::~Contact() {
@@ -4887,9 +4852,7 @@ Contact::~Contact() {
 }
 
 void Contact::SharedDtor() {
-  if (has_ContactType()) {
-    clear_ContactType();
-  }
+  ipaddress_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != default_instance_) {
   }
 }
@@ -4919,28 +4882,10 @@ Contact* Contact::New(::google::protobuf::Arena* arena) const {
   return n;
 }
 
-void Contact::clear_ContactType() {
-// @@protoc_insertion_point(one_of_clear_start:iop.locnet.Contact)
-  switch(ContactType_case()) {
-    case kIpv4: {
-      delete ContactType_.ipv4_;
-      break;
-    }
-    case kIpv6: {
-      delete ContactType_.ipv6_;
-      break;
-    }
-    case CONTACTTYPE_NOT_SET: {
-      break;
-    }
-  }
-  _oneof_case_[0] = CONTACTTYPE_NOT_SET;
-}
-
-
 void Contact::Clear() {
 // @@protoc_insertion_point(message_clear_start:iop.locnet.Contact)
-  clear_ContactType();
+  ipaddress_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  port_ = 0u;
 }
 
 bool Contact::MergePartialFromCodedStream(
@@ -4953,395 +4898,11 @@ bool Contact::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional .iop.locnet.IpAddress ipv4 = 1;
-      case 1: {
-        if (tag == 10) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_ipv4()));
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(18)) goto parse_ipv6;
-        break;
-      }
-
-      // optional .iop.locnet.IpAddress ipv6 = 2;
-      case 2: {
-        if (tag == 18) {
-         parse_ipv6:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_ipv6()));
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectAtEnd()) goto success;
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormatLite::SkipField(input, tag));
-        break;
-      }
-    }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:iop.locnet.Contact)
-  return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:iop.locnet.Contact)
-  return false;
-#undef DO_
-}
-
-void Contact::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:iop.locnet.Contact)
-  // optional .iop.locnet.IpAddress ipv4 = 1;
-  if (has_ipv4()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, *ContactType_.ipv4_, output);
-  }
-
-  // optional .iop.locnet.IpAddress ipv6 = 2;
-  if (has_ipv6()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, *ContactType_.ipv6_, output);
-  }
-
-  // @@protoc_insertion_point(serialize_end:iop.locnet.Contact)
-}
-
-::google::protobuf::uint8* Contact::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:iop.locnet.Contact)
-  // optional .iop.locnet.IpAddress ipv4 = 1;
-  if (has_ipv4()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageNoVirtualToArray(
-        1, *ContactType_.ipv4_, false, target);
-  }
-
-  // optional .iop.locnet.IpAddress ipv6 = 2;
-  if (has_ipv6()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageNoVirtualToArray(
-        2, *ContactType_.ipv6_, false, target);
-  }
-
-  // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.Contact)
-  return target;
-}
-
-int Contact::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:iop.locnet.Contact)
-  int total_size = 0;
-
-  switch (ContactType_case()) {
-    // optional .iop.locnet.IpAddress ipv4 = 1;
-    case kIpv4: {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          *ContactType_.ipv4_);
-      break;
-    }
-    // optional .iop.locnet.IpAddress ipv6 = 2;
-    case kIpv6: {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          *ContactType_.ipv6_);
-      break;
-    }
-    case CONTACTTYPE_NOT_SET: {
-      break;
-    }
-  }
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = total_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-  return total_size;
-}
-
-void Contact::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:iop.locnet.Contact)
-  if (GOOGLE_PREDICT_FALSE(&from == this)) {
-    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
-  }
-  const Contact* source = 
-      ::google::protobuf::internal::DynamicCastToGenerated<const Contact>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:iop.locnet.Contact)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:iop.locnet.Contact)
-    MergeFrom(*source);
-  }
-}
-
-void Contact::MergeFrom(const Contact& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:iop.locnet.Contact)
-  if (GOOGLE_PREDICT_FALSE(&from == this)) {
-    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
-  }
-  switch (from.ContactType_case()) {
-    case kIpv4: {
-      mutable_ipv4()->::iop::locnet::IpAddress::MergeFrom(from.ipv4());
-      break;
-    }
-    case kIpv6: {
-      mutable_ipv6()->::iop::locnet::IpAddress::MergeFrom(from.ipv6());
-      break;
-    }
-    case CONTACTTYPE_NOT_SET: {
-      break;
-    }
-  }
-}
-
-void Contact::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:iop.locnet.Contact)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void Contact::CopyFrom(const Contact& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:iop.locnet.Contact)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool Contact::IsInitialized() const {
-
-  return true;
-}
-
-void Contact::Swap(Contact* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
-void Contact::InternalSwap(Contact* other) {
-  std::swap(ContactType_, other->ContactType_);
-  std::swap(_oneof_case_[0], other->_oneof_case_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-  std::swap(_cached_size_, other->_cached_size_);
-}
-
-::google::protobuf::Metadata Contact::GetMetadata() const {
-  protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::Metadata metadata;
-  metadata.descriptor = Contact_descriptor_;
-  metadata.reflection = Contact_reflection_;
-  return metadata;
-}
-
-#if PROTOBUF_INLINE_NOT_IN_HEADERS
-// Contact
-
-// optional .iop.locnet.IpAddress ipv4 = 1;
-bool Contact::has_ipv4() const {
-  return ContactType_case() == kIpv4;
-}
-void Contact::set_has_ipv4() {
-  _oneof_case_[0] = kIpv4;
-}
-void Contact::clear_ipv4() {
-  if (has_ipv4()) {
-    delete ContactType_.ipv4_;
-    clear_has_ContactType();
-  }
-}
- const ::iop::locnet::IpAddress& Contact::ipv4() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.Contact.ipv4)
-  return has_ipv4()
-      ? *ContactType_.ipv4_
-      : ::iop::locnet::IpAddress::default_instance();
-}
-::iop::locnet::IpAddress* Contact::mutable_ipv4() {
-  if (!has_ipv4()) {
-    clear_ContactType();
-    set_has_ipv4();
-    ContactType_.ipv4_ = new ::iop::locnet::IpAddress;
-  }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.Contact.ipv4)
-  return ContactType_.ipv4_;
-}
-::iop::locnet::IpAddress* Contact::release_ipv4() {
-  // @@protoc_insertion_point(field_release:iop.locnet.Contact.ipv4)
-  if (has_ipv4()) {
-    clear_has_ContactType();
-    ::iop::locnet::IpAddress* temp = ContactType_.ipv4_;
-    ContactType_.ipv4_ = NULL;
-    return temp;
-  } else {
-    return NULL;
-  }
-}
-void Contact::set_allocated_ipv4(::iop::locnet::IpAddress* ipv4) {
-  clear_ContactType();
-  if (ipv4) {
-    set_has_ipv4();
-    ContactType_.ipv4_ = ipv4;
-  }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.Contact.ipv4)
-}
-
-// optional .iop.locnet.IpAddress ipv6 = 2;
-bool Contact::has_ipv6() const {
-  return ContactType_case() == kIpv6;
-}
-void Contact::set_has_ipv6() {
-  _oneof_case_[0] = kIpv6;
-}
-void Contact::clear_ipv6() {
-  if (has_ipv6()) {
-    delete ContactType_.ipv6_;
-    clear_has_ContactType();
-  }
-}
- const ::iop::locnet::IpAddress& Contact::ipv6() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.Contact.ipv6)
-  return has_ipv6()
-      ? *ContactType_.ipv6_
-      : ::iop::locnet::IpAddress::default_instance();
-}
-::iop::locnet::IpAddress* Contact::mutable_ipv6() {
-  if (!has_ipv6()) {
-    clear_ContactType();
-    set_has_ipv6();
-    ContactType_.ipv6_ = new ::iop::locnet::IpAddress;
-  }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.Contact.ipv6)
-  return ContactType_.ipv6_;
-}
-::iop::locnet::IpAddress* Contact::release_ipv6() {
-  // @@protoc_insertion_point(field_release:iop.locnet.Contact.ipv6)
-  if (has_ipv6()) {
-    clear_has_ContactType();
-    ::iop::locnet::IpAddress* temp = ContactType_.ipv6_;
-    ContactType_.ipv6_ = NULL;
-    return temp;
-  } else {
-    return NULL;
-  }
-}
-void Contact::set_allocated_ipv6(::iop::locnet::IpAddress* ipv6) {
-  clear_ContactType();
-  if (ipv6) {
-    set_has_ipv6();
-    ContactType_.ipv6_ = ipv6;
-  }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.Contact.ipv6)
-}
-
-bool Contact::has_ContactType() const {
-  return ContactType_case() != CONTACTTYPE_NOT_SET;
-}
-void Contact::clear_has_ContactType() {
-  _oneof_case_[0] = CONTACTTYPE_NOT_SET;
-}
-Contact::ContactTypeCase Contact::ContactType_case() const {
-  return Contact::ContactTypeCase(_oneof_case_[0]);
-}
-#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
-
-// ===================================================================
-
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int IpAddress::kHostFieldNumber;
-const int IpAddress::kPortFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
-
-IpAddress::IpAddress()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:iop.locnet.IpAddress)
-}
-
-void IpAddress::InitAsDefaultInstance() {
-  _is_default_instance_ = true;
-}
-
-IpAddress::IpAddress(const IpAddress& from)
-  : ::google::protobuf::Message(),
-    _internal_metadata_(NULL) {
-  SharedCtor();
-  MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:iop.locnet.IpAddress)
-}
-
-void IpAddress::SharedCtor() {
-    _is_default_instance_ = false;
-  ::google::protobuf::internal::GetEmptyString();
-  _cached_size_ = 0;
-  host_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  port_ = 0u;
-}
-
-IpAddress::~IpAddress() {
-  // @@protoc_insertion_point(destructor:iop.locnet.IpAddress)
-  SharedDtor();
-}
-
-void IpAddress::SharedDtor() {
-  host_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (this != default_instance_) {
-  }
-}
-
-void IpAddress::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-}
-const ::google::protobuf::Descriptor* IpAddress::descriptor() {
-  protobuf_AssignDescriptorsOnce();
-  return IpAddress_descriptor_;
-}
-
-const IpAddress& IpAddress::default_instance() {
-  if (default_instance_ == NULL) protobuf_AddDesc_IopLocNet_2eproto();
-  return *default_instance_;
-}
-
-IpAddress* IpAddress::default_instance_ = NULL;
-
-IpAddress* IpAddress::New(::google::protobuf::Arena* arena) const {
-  IpAddress* n = new IpAddress;
-  if (arena != NULL) {
-    arena->Own(n);
-  }
-  return n;
-}
-
-void IpAddress::Clear() {
-// @@protoc_insertion_point(message_clear_start:iop.locnet.IpAddress)
-  host_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  port_ = 0u;
-}
-
-bool IpAddress::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:iop.locnet.IpAddress)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional bytes host = 1;
+      // optional bytes ipAddress = 1;
       case 1: {
         if (tag == 10) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_host()));
+                input, this->mutable_ipaddress()));
         } else {
           goto handle_unusual;
         }
@@ -5377,21 +4938,21 @@ bool IpAddress::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:iop.locnet.IpAddress)
+  // @@protoc_insertion_point(parse_success:iop.locnet.Contact)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:iop.locnet.IpAddress)
+  // @@protoc_insertion_point(parse_failure:iop.locnet.Contact)
   return false;
 #undef DO_
 }
 
-void IpAddress::SerializeWithCachedSizes(
+void Contact::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:iop.locnet.IpAddress)
-  // optional bytes host = 1;
-  if (this->host().size() > 0) {
+  // @@protoc_insertion_point(serialize_start:iop.locnet.Contact)
+  // optional bytes ipAddress = 1;
+  if (this->ipaddress().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->host(), output);
+      1, this->ipaddress(), output);
   }
 
   // optional uint32 port = 2;
@@ -5399,17 +4960,17 @@ void IpAddress::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->port(), output);
   }
 
-  // @@protoc_insertion_point(serialize_end:iop.locnet.IpAddress)
+  // @@protoc_insertion_point(serialize_end:iop.locnet.Contact)
 }
 
-::google::protobuf::uint8* IpAddress::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* Contact::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:iop.locnet.IpAddress)
-  // optional bytes host = 1;
-  if (this->host().size() > 0) {
+  // @@protoc_insertion_point(serialize_to_array_start:iop.locnet.Contact)
+  // optional bytes ipAddress = 1;
+  if (this->ipaddress().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        1, this->host(), target);
+        1, this->ipaddress(), target);
   }
 
   // optional uint32 port = 2;
@@ -5417,19 +4978,19 @@ void IpAddress::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->port(), target);
   }
 
-  // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.IpAddress)
+  // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.Contact)
   return target;
 }
 
-int IpAddress::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:iop.locnet.IpAddress)
+int Contact::ByteSize() const {
+// @@protoc_insertion_point(message_byte_size_start:iop.locnet.Contact)
   int total_size = 0;
 
-  // optional bytes host = 1;
-  if (this->host().size() > 0) {
+  // optional bytes ipAddress = 1;
+  if (this->ipaddress().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->host());
+        this->ipaddress());
   }
 
   // optional uint32 port = 2;
@@ -5445,134 +5006,134 @@ int IpAddress::ByteSize() const {
   return total_size;
 }
 
-void IpAddress::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:iop.locnet.IpAddress)
+void Contact::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:iop.locnet.Contact)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
-  const IpAddress* source = 
-      ::google::protobuf::internal::DynamicCastToGenerated<const IpAddress>(
+  const Contact* source = 
+      ::google::protobuf::internal::DynamicCastToGenerated<const Contact>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:iop.locnet.IpAddress)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:iop.locnet.Contact)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:iop.locnet.IpAddress)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:iop.locnet.Contact)
     MergeFrom(*source);
   }
 }
 
-void IpAddress::MergeFrom(const IpAddress& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:iop.locnet.IpAddress)
+void Contact::MergeFrom(const Contact& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:iop.locnet.Contact)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
-  if (from.host().size() > 0) {
+  if (from.ipaddress().size() > 0) {
 
-    host_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.host_);
+    ipaddress_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.ipaddress_);
   }
   if (from.port() != 0) {
     set_port(from.port());
   }
 }
 
-void IpAddress::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:iop.locnet.IpAddress)
+void Contact::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:iop.locnet.Contact)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void IpAddress::CopyFrom(const IpAddress& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:iop.locnet.IpAddress)
+void Contact::CopyFrom(const Contact& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:iop.locnet.Contact)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool IpAddress::IsInitialized() const {
+bool Contact::IsInitialized() const {
 
   return true;
 }
 
-void IpAddress::Swap(IpAddress* other) {
+void Contact::Swap(Contact* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void IpAddress::InternalSwap(IpAddress* other) {
-  host_.Swap(&other->host_);
+void Contact::InternalSwap(Contact* other) {
+  ipaddress_.Swap(&other->ipaddress_);
   std::swap(port_, other->port_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
 
-::google::protobuf::Metadata IpAddress::GetMetadata() const {
+::google::protobuf::Metadata Contact::GetMetadata() const {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::Metadata metadata;
-  metadata.descriptor = IpAddress_descriptor_;
-  metadata.reflection = IpAddress_reflection_;
+  metadata.descriptor = Contact_descriptor_;
+  metadata.reflection = Contact_reflection_;
   return metadata;
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
-// IpAddress
+// Contact
 
-// optional bytes host = 1;
-void IpAddress::clear_host() {
-  host_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// optional bytes ipAddress = 1;
+void Contact::clear_ipaddress() {
+  ipaddress_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- const ::std::string& IpAddress::host() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.IpAddress.host)
-  return host_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+ const ::std::string& Contact::ipaddress() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.Contact.ipAddress)
+  return ipaddress_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- void IpAddress::set_host(const ::std::string& value) {
+ void Contact::set_ipaddress(const ::std::string& value) {
   
-  host_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:iop.locnet.IpAddress.host)
+  ipaddress_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:iop.locnet.Contact.ipAddress)
 }
- void IpAddress::set_host(const char* value) {
+ void Contact::set_ipaddress(const char* value) {
   
-  host_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:iop.locnet.IpAddress.host)
+  ipaddress_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:iop.locnet.Contact.ipAddress)
 }
- void IpAddress::set_host(const void* value, size_t size) {
+ void Contact::set_ipaddress(const void* value, size_t size) {
   
-  host_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+  ipaddress_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:iop.locnet.IpAddress.host)
+  // @@protoc_insertion_point(field_set_pointer:iop.locnet.Contact.ipAddress)
 }
- ::std::string* IpAddress::mutable_host() {
+ ::std::string* Contact::mutable_ipaddress() {
   
-  // @@protoc_insertion_point(field_mutable:iop.locnet.IpAddress.host)
-  return host_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  // @@protoc_insertion_point(field_mutable:iop.locnet.Contact.ipAddress)
+  return ipaddress_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- ::std::string* IpAddress::release_host() {
-  // @@protoc_insertion_point(field_release:iop.locnet.IpAddress.host)
+ ::std::string* Contact::release_ipaddress() {
+  // @@protoc_insertion_point(field_release:iop.locnet.Contact.ipAddress)
   
-  return host_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  return ipaddress_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- void IpAddress::set_allocated_host(::std::string* host) {
-  if (host != NULL) {
+ void Contact::set_allocated_ipaddress(::std::string* ipaddress) {
+  if (ipaddress != NULL) {
     
   } else {
     
   }
-  host_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), host);
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.IpAddress.host)
+  ipaddress_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ipaddress);
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.Contact.ipAddress)
 }
 
 // optional uint32 port = 2;
-void IpAddress::clear_port() {
+void Contact::clear_port() {
   port_ = 0u;
 }
- ::google::protobuf::uint32 IpAddress::port() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.IpAddress.port)
+ ::google::protobuf::uint32 Contact::port() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.Contact.port)
   return port_;
 }
- void IpAddress::set_port(::google::protobuf::uint32 value) {
+ void Contact::set_port(::google::protobuf::uint32 value) {
   
   port_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.IpAddress.port)
+  // @@protoc_insertion_point(field_set:iop.locnet.Contact.port)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -10602,6 +10163,7 @@ void BuildNetworkRequest::set_allocated_requestornodeinfo(::iop::locnet::NodeInf
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int BuildNetworkResponse::kAcceptedFieldNumber;
 const int BuildNetworkResponse::kAcceptorNodeInfoFieldNumber;
+const int BuildNetworkResponse::kRemoteIpAddressFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 BuildNetworkResponse::BuildNetworkResponse()
@@ -10625,9 +10187,11 @@ BuildNetworkResponse::BuildNetworkResponse(const BuildNetworkResponse& from)
 
 void BuildNetworkResponse::SharedCtor() {
     _is_default_instance_ = false;
+  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
   accepted_ = false;
   acceptornodeinfo_ = NULL;
+  remoteipaddress_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 BuildNetworkResponse::~BuildNetworkResponse() {
@@ -10636,6 +10200,7 @@ BuildNetworkResponse::~BuildNetworkResponse() {
 }
 
 void BuildNetworkResponse::SharedDtor() {
+  remoteipaddress_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != default_instance_) {
     delete acceptornodeinfo_;
   }
@@ -10671,6 +10236,7 @@ void BuildNetworkResponse::Clear() {
   accepted_ = false;
   if (GetArenaNoVirtual() == NULL && acceptornodeinfo_ != NULL) delete acceptornodeinfo_;
   acceptornodeinfo_ = NULL;
+  remoteipaddress_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 bool BuildNetworkResponse::MergePartialFromCodedStream(
@@ -10703,6 +10269,19 @@ bool BuildNetworkResponse::MergePartialFromCodedStream(
          parse_acceptorNodeInfo:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_acceptornodeinfo()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(26)) goto parse_remoteIpAddress;
+        break;
+      }
+
+      // optional bytes remoteIpAddress = 3;
+      case 3: {
+        if (tag == 26) {
+         parse_remoteIpAddress:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_remoteipaddress()));
         } else {
           goto handle_unusual;
         }
@@ -10745,6 +10324,12 @@ void BuildNetworkResponse::SerializeWithCachedSizes(
       2, *this->acceptornodeinfo_, output);
   }
 
+  // optional bytes remoteIpAddress = 3;
+  if (this->remoteipaddress().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      3, this->remoteipaddress(), output);
+  }
+
   // @@protoc_insertion_point(serialize_end:iop.locnet.BuildNetworkResponse)
 }
 
@@ -10761,6 +10346,13 @@ void BuildNetworkResponse::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         2, *this->acceptornodeinfo_, false, target);
+  }
+
+  // optional bytes remoteIpAddress = 3;
+  if (this->remoteipaddress().size() > 0) {
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+        3, this->remoteipaddress(), target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.BuildNetworkResponse)
@@ -10781,6 +10373,13 @@ int BuildNetworkResponse::ByteSize() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->acceptornodeinfo_);
+  }
+
+  // optional bytes remoteIpAddress = 3;
+  if (this->remoteipaddress().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::BytesSize(
+        this->remoteipaddress());
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -10817,6 +10416,10 @@ void BuildNetworkResponse::MergeFrom(const BuildNetworkResponse& from) {
   if (from.has_acceptornodeinfo()) {
     mutable_acceptornodeinfo()->::iop::locnet::NodeInfo::MergeFrom(from.acceptornodeinfo());
   }
+  if (from.remoteipaddress().size() > 0) {
+
+    remoteipaddress_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.remoteipaddress_);
+  }
 }
 
 void BuildNetworkResponse::CopyFrom(const ::google::protobuf::Message& from) {
@@ -10845,6 +10448,7 @@ void BuildNetworkResponse::Swap(BuildNetworkResponse* other) {
 void BuildNetworkResponse::InternalSwap(BuildNetworkResponse* other) {
   std::swap(accepted_, other->accepted_);
   std::swap(acceptornodeinfo_, other->acceptornodeinfo_);
+  remoteipaddress_.Swap(&other->remoteipaddress_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -10910,6 +10514,50 @@ void BuildNetworkResponse::set_allocated_acceptornodeinfo(::iop::locnet::NodeInf
     
   }
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.BuildNetworkResponse.acceptorNodeInfo)
+}
+
+// optional bytes remoteIpAddress = 3;
+void BuildNetworkResponse::clear_remoteipaddress() {
+  remoteipaddress_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ const ::std::string& BuildNetworkResponse::remoteipaddress() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.BuildNetworkResponse.remoteIpAddress)
+  return remoteipaddress_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ void BuildNetworkResponse::set_remoteipaddress(const ::std::string& value) {
+  
+  remoteipaddress_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:iop.locnet.BuildNetworkResponse.remoteIpAddress)
+}
+ void BuildNetworkResponse::set_remoteipaddress(const char* value) {
+  
+  remoteipaddress_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:iop.locnet.BuildNetworkResponse.remoteIpAddress)
+}
+ void BuildNetworkResponse::set_remoteipaddress(const void* value, size_t size) {
+  
+  remoteipaddress_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:iop.locnet.BuildNetworkResponse.remoteIpAddress)
+}
+ ::std::string* BuildNetworkResponse::mutable_remoteipaddress() {
+  
+  // @@protoc_insertion_point(field_mutable:iop.locnet.BuildNetworkResponse.remoteIpAddress)
+  return remoteipaddress_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ ::std::string* BuildNetworkResponse::release_remoteipaddress() {
+  // @@protoc_insertion_point(field_release:iop.locnet.BuildNetworkResponse.remoteIpAddress)
+  
+  return remoteipaddress_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ void BuildNetworkResponse::set_allocated_remoteipaddress(::std::string* remoteipaddress) {
+  if (remoteipaddress != NULL) {
+    
+  } else {
+    
+  }
+  remoteipaddress_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), remoteipaddress);
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.BuildNetworkResponse.remoteIpAddress)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

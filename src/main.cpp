@@ -47,8 +47,10 @@ int main(int argc, const char *argv[])
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
             myNodeInfo, config.dbPath(), config.dbExpirationPeriod() ) );
 
-        shared_ptr<INodeConnectionFactory> connectionFactory( new TcpStreamConnectionFactory() );
+        TcpStreamConnectionFactory *connFactPtr = new TcpStreamConnectionFactory();
+        shared_ptr<INodeConnectionFactory> connectionFactory(connFactPtr);
         shared_ptr<Node> node( new Node( myNodeInfo, geodb, connectionFactory, config.seedNodes() ) );
+        connFactPtr->detectedIpCallback( [node](const Address &addr) { node->DetectedExternalAddress(addr); } );
 
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
             new IncomingRequestDispatcherFactory(node) );

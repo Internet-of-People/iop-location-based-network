@@ -42,7 +42,7 @@ int main(int argc, const char* const argv[])
 
         LOG(INFO) << "Sending getnodecount request";
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
-        NodeMethodsProtoBufClient client(dispatcher);
+        NodeMethodsProtoBufClient client(dispatcher, nullptr);
         size_t colleagueCount = client.GetNodeCount();
         LOG(INFO) << "Get node count " << colleagueCount;
         vector<NodeInfo> randomNodes = client.GetRandomNodes(10, Neighbours::Included);
