@@ -73,6 +73,7 @@ int main()
         shared_ptr<INodeConnectionFactory> connectionFactory(
             new DummyNodeConnectionFactory() );
         shared_ptr<Node> node( new Node( TestData::NodeBudapest, geodb, connectionFactory, {} ) );
+        node->EnsureMapFilled();
         
         const NetworkInterface &BudapestNodeContact(
             TestData::NodeBudapest.profile().contact() );

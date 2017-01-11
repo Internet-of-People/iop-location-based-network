@@ -163,12 +163,34 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     
                     LOG(TRACE) << "Serving request";
                     messageId = requestMsg->body().id();
-                    response = dispatcher->Dispatch( requestMsg->body().request() );
+                    auto request = requestMsg->mutable_body()->mutable_request();
+                    
+                    // TODO the ip detection and keepalive features are violating the current
+                    //      business logic: Node / messaging: Dispatcher / network abstraction: Session layers.
+                    //      This is not a nice implementation, abstractions should be better prepared for these features
+                    if ( request->has_remotenode() )
+                    {
+                        if ( request->remotenode().has_acceptcolleague() ) {
+                            request->mutable_remotenode()->mutable_acceptcolleague()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
+                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                        }
+                        else if ( request->remotenode().has_renewcolleague() ) {
+                            request->mutable_remotenode()->mutable_renewcolleague()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
+                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                        }
+                        else if ( request->remotenode().has_acceptneighbour() ) {
+                            request->mutable_remotenode()->mutable_acceptneighbour()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
+                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                        }
+                        else if ( request->remotenode().has_renewneighbour() ) {
+                            request->mutable_remotenode()->mutable_renewneighbour()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
+                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                        }
+                    }
+                    
+                    response = dispatcher->Dispatch(*request);
                     response->set_status(iop::locnet::Status::STATUS_OK);
                     
-                    // TODO the keepalive and ip detection features are violating the current
-                    //      business logic/messaging/network abstraction layers.
-                    //      This is not a nice implementation, abstractions should be better prepared for these features
                     if ( requestMsg->has_body() && requestMsg->body().has_request() &&
                          requestMsg->body().request().has_localservice() &&
                          requestMsg->body().request().localservice().has_getneighbournodes() &&
@@ -181,23 +203,19 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 
                     if ( response->has_remotenode() )
                     {
-                        if ( response->remotenode().has_acceptcolleague() )
-                        {
+                        if ( response->remotenode().has_acceptcolleague() ) {
                             response->mutable_remotenode()->mutable_acceptcolleague()->set_remoteipaddress(
                                 NetworkInterface::AddressToBytes( session->remoteAddress() ) );
                         }
-                        else if ( response->remotenode().has_renewcolleague() )
-                        {
+                        else if ( response->remotenode().has_renewcolleague() ) {
                             response->mutable_remotenode()->mutable_renewcolleague()->set_remoteipaddress(
                                 NetworkInterface::AddressToBytes( session->remoteAddress() ) );
                         }
-                        else if ( response->remotenode().has_acceptneighbour() )
-                        {
+                        else if ( response->remotenode().has_acceptneighbour() ) {
                             response->mutable_remotenode()->mutable_acceptneighbour()->set_remoteipaddress(
                                 NetworkInterface::AddressToBytes( session->remoteAddress() ) );
                         }
-                        else if ( response->remotenode().has_renewneighbour() )
-                        {
+                        else if ( response->remotenode().has_renewneighbour() ) {
                             response->mutable_remotenode()->mutable_renewneighbour()->set_remoteipaddress(
                                 NetworkInterface::AddressToBytes( session->remoteAddress() ) );
                         }
@@ -389,8 +407,11 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
 
 
 
-void TcpStreamConnectionFactory::detectedIpCallback(std::function<void(const Address&)> detectedIpCallback)
-    { _detectedIpCallback = detectedIpCallback; }
+void TcpStreamConnectionFactory::detectedIpCallback(function<void(const Address&)> detectedIpCallback)
+{
+    _detectedIpCallback = detectedIpCallback;
+    LOG(DEBUG) << "Callback for detecting external IP address is set " << static_cast<bool>(_detectedIpCallback); 
+}
 
 
 shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NetworkInterface& address)

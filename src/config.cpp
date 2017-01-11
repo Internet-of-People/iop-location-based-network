@@ -131,9 +131,9 @@ static const char *OPTNAME_DBPATH       = "--dbpath";
 static const char *OPTNAME_LOGPATH      = "--logpath";
 
 
-const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::hours(6);
+const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::hours(7);
 const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod = chrono::hours(24);
-const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::hours(1);
+const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::minutes(1);
 
 static const vector<NetworkInterface> DefaultSeedNodes {
     NetworkInterface("ham4.fermat.cloud", DefaultPort),
@@ -167,8 +167,8 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
         DESC_OPTIONAL_DEFAULT + DEFAULT_CONFIG_FILE ).c_str(), OPTNAME_CONFIGFILE, "-c");
     _optParser.add("", true, 1, 0, "Public node id, should be an SHA256 hash "
         "of the public key of this node", OPTNAME_NODEID, "-i");
-    _optParser.add("", true, 1, 0, "Host address (either DNS, ipv4 or v6) to be used externally "
-        "by other nodes or clients to connect to this node", OPTNAME_HOST, "-h");
+    _optParser.add("", false, 1, 0, "Externally accessible IP address (ipv4 or v6) to be advertised "
+        "for other nodes or clients. Required for seeds only, autodetected otherwise.", OPTNAME_HOST, "-h");
     _optParser.add(DEFAULT_PORT.c_str(), false, 1, 0, ( "TCP port number for connecting to this node. " +
         DESC_OPTIONAL_DEFAULT + DEFAULT_PORT ).c_str(), OPTNAME_PORT, "-p");
     _optParser.add("", true, 1, 0, "GPS latitude of this server "
@@ -203,7 +203,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
             { cerr << "Missing required option " << badOptions[idx] << endl; }
     }
    
-// Could also check for option value counts but we currently don't use format --option val1,val2,val3
+//     // Can also check for option value counts but we currently don't use format --option val1,val2,val3
 //     bool valueCountPassed = _optParser.gotExpected(badOptions);
 //     if(! valueCountPassed)
 //     {

@@ -46,6 +46,11 @@ Consequently, network.h/cpp currently depends on messaging.h/cpp,
 but dependency might be better in the opposite direction: messaging may be seen
 as the highest layer connecting business logic (locnet.cpp) with networking (network.cpp).
 
+A reconsideration of the current layering implementation (application: Node, messaging: Dispatcher, session: Session)
+is also necessary because features "connection keepalive" and "Ip autodetection"
+do not naturally fit into the picture, see the message loop implementation currently in
+`ProtoBufDispatchingTcpServer::AsyncAcceptHandler()`.
+
 Interfaces of provided operations should be better separated and checked for proper access rights by
 different types of consumers (local service, node and client). This can be achieved
 either by exposing different interfaces on different TCP ports or
@@ -58,12 +63,6 @@ We could also use precompiled headers to speed up compilation. We already tried 
 
 
 ## Convenience
-
-We should automatically detect external network address to be advertised for clients
-instead of manually setting it to a mandatory parameter on the command line.
-We could either use an external service (like http://whatismyipaddress.com/)
-or we could report the detected client ip address to the connecting node
-after socket connections are accepted.
 
 To make administration of the Linux version easier, we could separate project files
 into separate directories according to conventions of the distribution.

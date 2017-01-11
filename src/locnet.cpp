@@ -23,7 +23,7 @@ const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 50;
 const float    INIT_WORLD_NODE_FILL_TARGET_RATE     = 0.75;
 const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT  = 10;
 
-const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT     = 100;
+const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT     = 1;
 
 
 
@@ -43,8 +43,6 @@ Node::Node( const NodeInfo &myNodeInfo,
     if (connectionFactory == nullptr) {
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No connection factory instantiated");
     }
-    
-    EnsureMapFilled();
 }
 
 
@@ -103,6 +101,7 @@ void Node::RemoveListener(const SessionId &sessionId)
 
 
 
+// TODO consider if there are potential thread safety problems here, potentially may be called from any thread
 void Node::DetectedExternalAddress(const Address& address)
 {
     LOG(INFO) << "Detected external IP address " << address;
@@ -364,6 +363,8 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
 
 bool Node::InitializeWorld()
 {
+    LOG(DEBUG) << "Discovering world map for colleagues";
+    
     // Initialize random generator and utility variables
     uniform_int_distribution<int> fromRange( 0, _seedNodes.size() - 1 );
     vector<NetworkInterface> triedNodes;
@@ -422,7 +423,7 @@ bool Node::InitializeWorld()
     }
     
     // We received a reasonable random node list from a seed, try to fill in our world map
-    size_t targetNodeCount = ceil( static_cast<size_t>(INIT_WORLD_NODE_FILL_TARGET_RATE * nodeCountAtSeed) );
+    size_t targetNodeCount = static_cast<size_t>( ceil(INIT_WORLD_NODE_FILL_TARGET_RATE * nodeCountAtSeed) );
     LOG(DEBUG) << "Targeted node count is " << targetNodeCount;
     
     // Keep trying until we either reached targeted node count or queried colleagues from all available nodes
@@ -479,10 +480,15 @@ bool Node::InitializeWorld()
 
 bool Node::InitializeNeighbourhood()
 {
+    LOG(DEBUG) << "Discovering neighbourhood";
+    
     vector<NodeInfo> newClosestNodes = GetClosestNodesByDistance(
         _myNodeInfo.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
     if ( newClosestNodes.size() < 2 ) // First node is self
-        { return false; }
+    {
+        LOG(DEBUG) << "No other nodes are available beyond self, cannot get neighbour candidates";
+        return false;
+    }
     
     // Repeat asking the currently closest node for an even closer node until no new node discovered
     NodeInfo newClosestNode = newClosestNodes[1];
@@ -494,14 +500,14 @@ bool Node::InitializeNeighbourhood()
         {
             shared_ptr<INodeMethods> closestNodeConnection = SafeConnectTo( newClosestNode.profile().contact() );
             if (closestNodeConnection == nullptr) {
-                // TODO what to do if closest node is not reachable?
-                return false;
+                // TODO consider what better to do if closest node is not reachable?
+                continue;
             }
             
             newClosestNodes = closestNodeConnection->GetClosestNodesByDistance(
                 _myNodeInfo.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
             if ( newClosestNodes.empty() )
-                { break; }
+                { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Node returned empty node list result"); }
                 
             if ( newClosestNodes.front().profile().id() != _myNodeInfo.profile().id() )
                 { newClosestNode = newClosestNodes[0]; }
@@ -612,7 +618,7 @@ void Node::DiscoverUnknownAreas()
             vector<NodeInfo> myClosestNodes = GetClosestNodesByDistance(
                 randomLocation, numeric_limits<Distance>::max(), 2, Neighbours::Excluded );
             if ( myClosestNodes.empty() ||
-               ( myClosestNodes.size() == 1 && _myNodeInfo == myClosestNodes[0] ) )
+                 ( myClosestNodes.size() == 1 && _myNodeInfo == myClosestNodes[0] ) )
                 { continue; }
             const auto &myClosestNode = myClosestNodes[0] != _myNodeInfo ?
                 myClosestNodes[0] : myClosestNodes[1];

@@ -113,7 +113,6 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
         std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>(),
         bool isSeedNode = false);
     
-    void EnsureMapFilled();
     bool InitializeWorld();
     bool InitializeNeighbourhood();
     
@@ -128,6 +127,8 @@ public:
           std::shared_ptr<INodeConnectionFactory> connectionFactory,
           const std::vector<NetworkInterface> &seedNodes);
 
+    void EnsureMapFilled();
+    
     void DetectedExternalAddress(const Address &address);
     
     void ExpireOldNodes();

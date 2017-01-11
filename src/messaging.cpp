@@ -331,7 +331,7 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             auto nodeInfo( Converter::FromProtoBuf( renewNeighbourReq.requestornodeinfo() ) );
             
             shared_ptr<NodeInfo> result = _iRemoteNode->RenewNeighbour(nodeInfo);
-            LOG(DEBUG) << "Served AcceptNeighbour(" << nodeInfo
+            LOG(DEBUG) << "Served RenewNeighbour(" << nodeInfo
                        << "), accepted: " << static_cast<bool>(result);
                        
             auto response = new iop::locnet::RemoteNodeResponse();
@@ -508,7 +508,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& 
     
     if (_detectedIpCallback)
     {
-        string address = response->remotenode().acceptcolleague().remoteipaddress();
+        const string &address = response->remotenode().acceptcolleague().remoteipaddress();
         if ( ! address.empty() )
             { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
     }
@@ -535,7 +535,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& n
     
     if (_detectedIpCallback)
     {
-        string address = response->remotenode().renewcolleague().remoteipaddress();
+        const string &address = response->remotenode().renewcolleague().remoteipaddress();
         if ( ! address.empty() )
             { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
     }
@@ -562,7 +562,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& 
     
     if (_detectedIpCallback)
     {
-        string address = response->remotenode().acceptneighbour().remoteipaddress();
+        const string &address = response->remotenode().acceptneighbour().remoteipaddress();
         if ( ! address.empty() )
             { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
     }
@@ -589,7 +589,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& n
     
     if (_detectedIpCallback)
     {
-        string address = response->remotenode().renewneighbour().remoteipaddress();
+        const string &address = response->remotenode().renewneighbour().remoteipaddress();
         if ( ! address.empty() )
             { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
     }
