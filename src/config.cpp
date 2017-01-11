@@ -133,7 +133,7 @@ static const char *OPTNAME_LOGPATH      = "--logpath";
 
 const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::hours(7);
 const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod = chrono::hours(24);
-const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::minutes(1);
+const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::minutes(5);
 
 static const vector<NetworkInterface> DefaultSeedNodes {
     NetworkInterface("ham4.fermat.cloud", DefaultPort),

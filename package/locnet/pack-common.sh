@@ -1,3 +1,4 @@
+cp description-pak ../../build/
 cd ../../build
 sudo checkinstall \
     --install=no \

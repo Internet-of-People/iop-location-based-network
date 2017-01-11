@@ -23,7 +23,7 @@ const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 50;
 const float    INIT_WORLD_NODE_FILL_TARGET_RATE     = 0.75;
 const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT  = 10;
 
-const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT     = 1;
+const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT     = 5;
 
 
 
@@ -400,7 +400,7 @@ bool Node::InitializeWorld()
             nodeCountAtSeed = seedNodeConnection->GetNodeCount();
             LOG(DEBUG) << "Node count on seed is " << nodeCountAtSeed;
             randomColleagueCandidates = seedNodeConnection->GetRandomNodes(
-                min(INIT_WORLD_RANDOM_NODE_COUNT, nodeCountAtSeed), Neighbours::Excluded );
+                min(INIT_WORLD_RANDOM_NODE_COUNT, nodeCountAtSeed), Neighbours::Included );
             
             // If got a reasonable response from a seed server, stop contacting other seeds
             if ( nodeCountAtSeed > 0 && ! randomColleagueCandidates.empty() )
@@ -448,7 +448,7 @@ bool Node::InitializeWorld()
             LOG(TRACE) << "Run out of colleague candidates, asking randomly for more";
             
             // Get a shuffled list of all colleague nodes known so far
-            vector<NodeInfo> nodesKnownSoFar = GetRandomNodes( GetNodeCount(), Neighbours::Excluded );
+            vector<NodeInfo> nodesKnownSoFar = GetRandomNodes( GetNodeCount(), Neighbours::Included );
             
             for (const auto &nodeInfo : nodesKnownSoFar)
             {
