@@ -32,7 +32,9 @@ bool NetworkInterface::isLoopback() const
 
 Address NetworkInterface::AddressFromBytes(const std::string &bytes)
 {
-    if ( bytes.size() == sizeof(address_v4::bytes_type) )
+    if ( bytes.empty() )
+        { return Address(); }
+    else if ( bytes.size() == sizeof(address_v4::bytes_type) )
     {
         address_v4::bytes_type v4AddrBytes;
         copy( &bytes.front(), &bytes.front() + v4AddrBytes.size(), v4AddrBytes.data() );
@@ -53,6 +55,9 @@ Address NetworkInterface::AddressFromBytes(const std::string &bytes)
 string NetworkInterface::AddressToBytes(const Address &addr)
 {
     string result;
+    if ( addr.empty() )
+        { return result; }
+    
     auto ipAddress( address::from_string(addr) );
     if ( ipAddress.is_v4() )
     {
@@ -279,7 +284,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &contact) :
     _id( contact.address() + ":" + to_string( contact.port() ) ),
-    _remoteAddress( contact.address() ), _stream()
+    _remoteAddress( contact.address() ), _stream(), _socket()
 {
     _stream.expires_after(NormalStreamExpirationPeriod);
     _stream.connect( contact.address(), to_string( contact.port() ) );
