@@ -122,7 +122,7 @@ void Converter::FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile
     target->set_nodeid( source.id() );
     iop::locnet::Contact *targetContact = target->mutable_contact();
     targetContact->set_port( sourceContact.port() );
-    targetContact->set_ipaddress( sourceContact.IpAddressBytes() );
+    targetContact->set_ipaddress( sourceContact.AddressBytes() );
 }
 
 iop::locnet::NodeProfile* Converter::ToProtoBuf(const NodeProfile &profile)

@@ -75,7 +75,7 @@ string NetworkInterface::AddressToBytes(const Address &addr)
     return result;
 }
 
-string  NetworkInterface::IpAddressBytes() const
+string  NetworkInterface::AddressBytes() const
     { return AddressToBytes(_address); }
 
 
