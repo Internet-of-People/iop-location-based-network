@@ -206,10 +206,10 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     
     bool creatingDb = ! FileExist(dbPath);
     
-    // NOTE SQLITE_OPEN_FULLMUTEX performs operations sequentially using a mutex.
+    // TODO SQLITE_OPEN_FULLMUTEX performs operations sequentially using a mutex.
     //      We might have to change to a more performant but more complicated model here.
     int openResult = sqlite3_open_v2 ( dbPath.c_str(), &_dbHandle,
-         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_URI, nullptr); // null: no vFS module to use
+         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_URI, nullptr); // nullptr: no vFS module to use
     if (openResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to open/create SpatiaLite database file " << dbPath;
@@ -217,11 +217,11 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     }
     scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
     
-//     LOG(INFO) << "SQLite version: " << sqlite3_libversion();
-//     LOG(INFO) << "SpatiaLite version: " << spatialite_version();
-    
     spatialite_init_ex(_dbHandle, _spatialiteConnection, 0);
     scope_error cleanupOnError( [this] { spatialite_cleanup_ex(_spatialiteConnection); } );
+
+    LOG(TRACE) << "SQLite version: " << sqlite3_libversion();
+    LOG(TRACE) << "SpatiaLite version: " << spatialite_version();
     
     if (creatingDb)
     {
@@ -414,6 +414,7 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
 
 void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
 {
+    // TODO should we check here if Self entry is to be updated to something else?
     sqlite3_stmt *statement;
     string insertStr(
         "UPDATE nodes SET "
@@ -472,6 +473,8 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
     shared_ptr<NodeDbEntry> storedNode = Load(nodeId);
     if (storedNode == nullptr)
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Node to be removed is not present: " + nodeId); }
+    if ( storedNode->relationType() == NodeRelationType::Self )
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Attempt to delete self entry"); }
     
     sqlite3_stmt *statement;
     string insertStr(
@@ -519,7 +522,9 @@ void SpatiaLiteDatabase::ExpireOldNodes()
 {
     // NOTE int-based number, no string or user input, so no SQL injection vulnerability
     time_t now = chrono::system_clock::to_time_t( chrono::system_clock::now() );
-    string expiredCondition( "WHERE expiresAt <= " + to_string(now) );
+    string expiredCondition(
+        "WHERE expiresAt <= " + to_string(now) + " AND " +
+            "relationType != " + to_string( static_cast<uint32_t>(NodeRelationType::Self) ) );
     
     vector<NodeDbEntry> expiredEntries = QueryEntries(_dbHandle, _myLocation, expiredCondition);
     
