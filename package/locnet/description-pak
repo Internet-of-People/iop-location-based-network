@@ -1,5 +1,1 @@
-TODO
-
-Write a proper package description here.
-
-Empty line are checked to work fine here, unlike the command line.
+IoP-locnet is the Internet of People implementation of a location based server that builds, maintains and explores a geographical network of similar nodes, allowing search of nodes and services by location.
