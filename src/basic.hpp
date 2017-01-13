@@ -11,6 +11,7 @@ namespace LocNet
 {
 
 
+// Type definition of essential types used on multiple interfaces
 typedef float       GpsCoordinate;
 typedef float       Distance;
 
@@ -55,7 +56,7 @@ public:
 
 
 
-
+// Data holder class on a network entity to connect with.
 class NetworkInterface
 {
     Address     _address;
@@ -74,23 +75,24 @@ public:
     
     bool operator==(const NetworkInterface &other) const;
     
-    // NOTE Implemented in network.cpp as being library-specific (currently with asio)
+    // NOTE Following functions are implemented in network.cpp as being library-specific (currently with asio)
     // TODO consider splitting class into an interface here and an implementation in network
-    bool isLoopback() const;
-    
     static Address AddressFromBytes(const std::string &bytes);
     static std::string AddressToBytes(const Address &address);
-    std::string IpAddressBytes() const;
+    
+    std::string AddressBytes() const;
+    bool isLoopback() const;
 };
 
 std::ostream& operator<<(std::ostream& out, const NetworkInterface &value);
 
 
 
+// Data holder class for node details related to identity like id and network contact.
+// TODO will we also need a public key here later for validation?
 class NodeProfile
 {
-    NodeId _id;
-    // TODO will we also need a public key here?
+    NodeId           _id;
     NetworkInterface _contact;
     
 public:
@@ -114,15 +116,7 @@ typedef NodeProfile ServiceProfile;
 
 
 
-enum class NodeRelationType : uint8_t
-{
-    Colleague   = 1,
-    Neighbour   = 2,
-    Self        = 3,
-};
-
-
-
+// Data holder class for a GPS position (2D Latitude/longitude pair without height data).
 class GpsLocation
 {
     GpsCoordinate _latitude;
@@ -146,14 +140,7 @@ std::ostream& operator<<(std::ostream& out, const GpsLocation &value);
 
 
 
-enum class NodeContactRoleType : uint8_t
-{
-    Initiator   = 1,
-    Acceptor    = 2,
-};
-
-
-
+// Data holder class for complete node information exposed to the network.
 class NodeInfo
 {
     NodeProfile _profile;
@@ -177,6 +164,21 @@ std::ostream& operator<<(std::ostream& out, const NodeInfo &value);
 
 
 
+enum class NodeRelationType : uint8_t
+{
+    Colleague   = 1,
+    Neighbour   = 2,
+    Self        = 3,
+};
+
+
+enum class NodeContactRoleType : uint8_t
+{
+    Initiator   = 1,
+    Acceptor    = 2,
+};
+
+
 enum class ServiceType : uint8_t
 {
     // Low level networks
@@ -194,7 +196,7 @@ enum class ServiceType : uint8_t
     Minting     = 16,
 };
 
-// Utility class to enable hash classes to be used as a hash key until fixed in C++ standard
+// Utility class to enable enum classes to be used as a hash key until fixed in C++ standard
 // NOTE for simple (not class) enums, std::hash<int> also works instead of this class
 struct EnumHasher
 {
@@ -236,16 +238,6 @@ struct scope_success : public scope_exit
         scope_exit( [fun] { if( ! std::uncaught_exception() ) { fun(); } } ) {}
 };
 
-
-
-// // TODO how to use this without too much trouble?
-// #include <experimental/optional>
-// namespace std {
-//     // Class std::optional becomes standard only in C++17, but it's 2016 so we have only C++14.
-//     // It is currently available in the experimental namespace, so import it to the normal std namespace
-//     // to minimize later changes.
-//     template<typename T> using optional = std::experimental::optional<T>;
-// }
 
 
 } // namespace LocNet

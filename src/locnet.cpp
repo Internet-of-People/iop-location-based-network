@@ -17,7 +17,7 @@ namespace LocNet
 {
 
 
-const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT         = 50;
+const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT         = 50;   // Count limit for accepted neighbours.
 
 const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 50;
 const float    INIT_WORLD_NODE_FILL_TARGET_RATE     = 0.75;

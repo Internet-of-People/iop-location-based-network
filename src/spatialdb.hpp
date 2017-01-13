@@ -15,7 +15,8 @@
 namespace LocNet
 {
 
-    
+
+// Filter flag for node queries
 enum class Neighbours : uint8_t
 {
     Included = 1,
@@ -24,6 +25,7 @@ enum class Neighbours : uint8_t
 
 
 
+// Data holder class for full node information stored in the database.
 class NodeDbEntry : public NodeInfo
 {
     NodeRelationType  _relationType;
@@ -44,6 +46,7 @@ public:
 };
 
 
+// Interface to listen for any changes in the node map.
 class IChangeListener
 {
 public:
@@ -58,7 +61,7 @@ public:
 };
 
 
-
+// Interface where node listeners should be registered.
 class IChangeListenerRegistry
 {
 public:
@@ -70,6 +73,8 @@ public:
 };
 
 
+// A node database without any business logic that serves usual CRUD operations
+// plus some additional utility queries mostly based on ordering by node distance.
 class ISpatialDatabase
 {
 public:
@@ -100,6 +105,7 @@ public:
 
 
 
+// A simple map implementation of a listener registry, protected by a lock to be threadsafe.
 class ThreadSafeChangeListenerRegistry : public IChangeListenerRegistry
 {
     mutable std::mutex _mutex;
@@ -116,6 +122,7 @@ public:
 
 
 
+// A spatial database implementation that uses the SpatiaLite embedded SQL engine.
 class SpatiaLiteDatabase : public ISpatialDatabase
 {
     GpsLocation  _myLocation;

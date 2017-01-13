@@ -555,6 +555,7 @@ vector<NodeDbEntry> SpatiaLiteDatabase::GetNodes(NodeContactRoleType roleType)
 
 size_t SpatiaLiteDatabase::GetNodeCount() const
 {
+    // NOTE this would be better done by SELECT COUNT(*) but that would need a lot more boilerplate code again
     vector<NodeDbEntry> nodes( QueryEntries(_dbHandle, _myLocation) );
     return nodes.size();
 }

@@ -100,6 +100,9 @@ int main(int argc, const char *argv[])
                     this_thread::sleep_for( config.discoveryPeriod() );
                     LOG(DEBUG) << "Exploring white spots of the map";
                     node->DiscoverUnknownAreas();
+                    // TODO Neighbours may also expire and neighbourhood count may greatly decrease.
+                    //      Consider if we also should explore for new neighbour nodes here
+                    //      or is it enough to wait for newly arriving nodes to ask to be our neighbours?
                     LOG(DEBUG) << "Exploration finished";
                 }
                 catch (exception &ex)
@@ -109,7 +112,7 @@ int main(int argc, const char *argv[])
         discoveryThread.detach();
         
         // TODO we should do something more useful here instead of polling,
-        //      maybe run io_service::run, but don't know if it blocks or behaves with CTRL-C and other signals
+        //      maybe run io_service::run, does it block CTRL-C and other signals?
         // Avoid exiting from this thread
         while (! ShutdownRequested)
             { this_thread::sleep_for( chrono::milliseconds(50) ); }

@@ -75,7 +75,7 @@ string NetworkInterface::AddressToBytes(const Address &addr)
     return result;
 }
 
-string  NetworkInterface::IpAddressBytes() const
+string  NetworkInterface::AddressBytes() const
     { return AddressToBytes(_address); }
 
 
@@ -275,9 +275,12 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
     
     _remoteAddress = socket->remote_endpoint().address().to_string();
     _id = _remoteAddress + ":" + to_string( socket->remote_endpoint().port() );
-    // TODO consider possible ownership problems of this construct
+    // TODO this is a hack to transform a socket object into a blocking TCP stream,
+    //      we should consider possible ownership and other problems of this construct.
+    //      We have experienced very rare and undeterministic "Socket operation via non-socket"
+    //      system errors, probably this might cause it.
     _stream.rdbuf()->assign( socket->local_endpoint().protocol(), socket->native_handle() );
-    // TODO handle session expiration
+    // TODO handle session expiration for clients with no keepalive
     //_stream.expires_after(NormalStreamExpirationPeriod);
 }
 

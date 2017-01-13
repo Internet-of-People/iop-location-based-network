@@ -17,6 +17,8 @@ namespace LocNet
 
 
 
+// Abstract TCP server that accepts clients asynchronously on a specific port number
+// and has a customizable client accept callback to customize concrete provided service.
 class TcpServer
 {
 protected:
@@ -39,6 +41,11 @@ public:
 
 
 
+// Interface of a network session, i.e. a client connection that allows
+// sending and receiving protobuf messages (either request or response).
+// TODO this would be more independent if would send/receive byte arrays,
+//      but receiving a message we have to be aware of the message header
+//      to know how many bytes to read, it cannot be determined in advance.
 class IProtoBufNetworkSession
 {
 public:
@@ -51,7 +58,8 @@ public:
     virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
     virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
 
-// TODO implement these    
+// TODO Would be nice and more convenient to implement using these methods,
+//      but they do not seem to nicely fit ASIO
 //     virtual void KeepAlive() = 0;
 //     virtual bool IsAlive() const = 0;
 //     virtual void Close() = 0;
@@ -59,6 +67,8 @@ public:
 
 
 
+// Factory interface to create a dispatcher object for a session.
+// Implemented specifically for the keepalive feature, otherwise would not be needed.
 class IProtoBufRequestDispatcherFactory
 {
 public:
@@ -71,6 +81,7 @@ public:
 
 
 
+// Tcp server implementation that serves protobuf requests for accepted clients.
 class ProtoBufDispatchingTcpServer : public TcpServer
 {
 protected:
@@ -87,6 +98,8 @@ public:
 
 
 
+// Request dispatcher to serve incoming requests from clients.
+// Implemented specifically for the keepalive feature.
 class IncomingRequestDispatcherFactory : public IProtoBufRequestDispatcherFactory
 {
     std::shared_ptr<Node> _node;
@@ -101,6 +114,10 @@ public:
 
 
 
+// Network session that uses a blocking TCP stream for the easiest implementation.
+// TODO ideally would use async networking, but it's hard in C++
+//      to implement a simple (blocking) interface using async operations.
+//      Maybe boost stackful coroutines could be useful here, but we shouldn't depend on boost.
 class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
 {
     SessionId                               _id;
@@ -128,6 +145,8 @@ public:
 
 
 
+// A protobuf request dispatcher that delivers requests through a network session
+// and reads response messages from it.
 class ProtoBufRequestNetworkDispatcher : public IProtoBufRequestDispatcher
 {
     std::shared_ptr<IProtoBufNetworkSession> _session;
@@ -142,6 +161,7 @@ public:
 
 
 
+// Connection factory that creates a blocking TCP stream to communicate with remote node.
 class TcpStreamConnectionFactory : public INodeConnectionFactory
 {
     std::function<void(const Address&)> _detectedIpCallback;
@@ -155,6 +175,7 @@ public:
 
 
 
+// Factory implementation that creates ProtoBufTcpStreamChangeListener objects.
 class ProtoBufTcpStreamChangeListenerFactory : public IChangeListenerFactory
 {
     std::shared_ptr<IProtoBufNetworkSession> _session;
@@ -169,6 +190,8 @@ public:
 
 
 
+// Listener implementation that translates node notifications to protobuf
+// and uses a dispatcher to send them and notify a remote peer.
 class ProtoBufTcpStreamChangeListener : public IChangeListener
 {
     SessionId                                   _sessionId;

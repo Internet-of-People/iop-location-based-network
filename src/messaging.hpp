@@ -13,17 +13,23 @@ namespace LocNet
 {
 
 
+// Utility class to convert between the data representation
+// of the business logic and the messages of the protobuf protocol definition.
+// NOTE simply could be a namespace in the current form, no need for a class.
 struct Converter
 {
+    // Functions that convert from protobuf to internal representation, creating a new object
     static ServiceType FromProtoBuf(iop::locnet::ServiceType value);
     static GpsLocation FromProtoBuf(const iop::locnet::GpsLocation &value);
     static NodeProfile FromProtoBuf(const iop::locnet::NodeProfile &value);
     static NodeInfo FromProtoBuf(const iop::locnet::NodeInfo &value);
     
+    // Functions that fill up an existing protobuf object from the internal representation
     static void FillProtoBuf(iop::locnet::GpsLocation *target, const GpsLocation &source);
     static void FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile &source);
     static void FillProtoBuf(iop::locnet::NodeInfo *target, const NodeInfo &source);
     
+    // Functions that convert from the internal representation to protobuf, creating a new object
     static iop::locnet::Status ToProtoBuf(ErrorCode value);
     static iop::locnet::ServiceType ToProtoBuf(ServiceType value);
     static iop::locnet::GpsLocation* ToProtoBuf(const GpsLocation &location);
@@ -33,6 +39,7 @@ struct Converter
 
 
 
+// Interface to dispatch a request message to a specific recipient and return its response message
 class IProtoBufRequestDispatcher
 {
 public:
@@ -44,6 +51,10 @@ public:
 
 
 
+// Implement server functionality for this node for all interfaces.
+// Translate incoming protobuf requests to internal representation,
+// serve the request with our business logic,
+// then translate the result into a protobuf response
 class IncomingRequestDispatcher : public IProtoBufRequestDispatcher
 {
     std::shared_ptr<ILocalServiceMethods> _iLocalService;
@@ -71,6 +82,9 @@ public:
 
 
 
+// Create a proxy interface that communicates with another node through protobuf messages.
+// Translate methods into protobuf requests, send the request to the other node,
+// then translate its response into our internal representation.
 class NodeMethodsProtoBufClient : public INodeMethods
 {
     std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;

@@ -122,7 +122,7 @@ void Converter::FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile
     target->set_nodeid( source.id() );
     iop::locnet::Contact *targetContact = target->mutable_contact();
     targetContact->set_port( sourceContact.port() );
-    targetContact->set_ipaddress( sourceContact.IpAddressBytes() );
+    targetContact->set_ipaddress( sourceContact.AddressBytes() );
 }
 
 iop::locnet::NodeProfile* Converter::ToProtoBuf(const NodeProfile &profile)
@@ -165,7 +165,6 @@ IncomingRequestDispatcher::IncomingRequestDispatcher( shared_ptr<ILocalServiceMe
 
 unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(const iop::locnet::Request& request)
 {
-    // TODO implement better version checks
     if ( request.version().empty() || request.version()[0] != 1 )
         { throw LocationNetworkError(ErrorCode::ERROR_UNSUPPORTED, "Missing or unknown request version"); }
     
@@ -197,6 +196,8 @@ unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(const iop:
 
 
 
+// TODO All interface dispatchers ( DispatchLocalService(), DispatchRemoteNode(), DispatchClient() )
+//      simply translate between different data formats, ideally this should be generated.
 iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalService(
     const iop::locnet::LocalServiceRequest& localServiceRequest)
 {
@@ -474,6 +475,7 @@ NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(
 
 
 
+// TODO All methods simply translate between different data formats, ideally this should be generated.
 size_t NodeMethodsProtoBufClient::GetNodeCount() const
 {
     iop::locnet::Request request;

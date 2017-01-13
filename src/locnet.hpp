@@ -68,6 +68,9 @@ public:
 
 
 
+// Factory interface to create node listener objects.
+// Needed to properly separate the network/messaging layer and context from this code
+// that can be used to send notifications but otherwise completely independent.
 class IChangeListenerFactory
 {
 public:
@@ -79,6 +82,8 @@ public:
 };
 
 
+// Factory interface to return callable node methods for potentially remote nodes,
+// hiding away the exact way and complexity of communication.
 class INodeConnectionFactory
 {
 public:
@@ -106,7 +111,8 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     
-    std::vector<NetworkInterface>    _seedNodes;
+    std::vector<NetworkInterface> _seedNodes;
+    
     
     std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkInterface &contact);
     bool SafeStoreNode(const NodeDbEntry &entry,
