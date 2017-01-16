@@ -19,7 +19,6 @@ There are a lot of optional arguments but also some mandatory arguments that you
 For configuration options you can use the command line directly, e.g. assuming GPS location of Budapest
 
     iop-locnetd --nodeid YourNodeIdHere \
-                --host your.external.host.address \
                 --latitude 48.2081743 \
                 --longitude 16.3738189
 
