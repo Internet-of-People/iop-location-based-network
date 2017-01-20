@@ -19,7 +19,7 @@ namespace LocNet
 
 const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT         = 50;   // Count limit for accepted neighbours.
 
-const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 50;
+const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 2 * NEIGHBOURHOOD_MAX_NODE_COUNT;
 const float    INIT_WORLD_NODE_FILL_TARGET_RATE     = 0.75;
 const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT  = 10;
 
@@ -392,7 +392,7 @@ bool Node::InitializeWorld()
                 { continue; }
             
             // Try to add seed node to our network (no matter if fails)
-            SafeStoreNode( NodeDbEntry( NodeProfile("DUMMY_NodeId", selectedSeedContact), GpsLocation(0,0), // nodeInfo will be queried in SafeStoreNode anyway
+            SafeStoreNode( NodeDbEntry( NodeProfile("ThisNodeIdWillBeOverWritten", selectedSeedContact), GpsLocation(0,0), // nodeInfo will be queried in SafeStoreNode anyway
                 NodeRelationType::Colleague, NodeContactRoleType::Initiator ), seedNodeConnection, true );
             
             // Query both total node count and an initial list of random nodes to start with
@@ -611,6 +611,7 @@ void Node::DiscoverUnknownAreas()
         {
             // TODO consider: the resulted node might be very far away from the generated random node,
             //      so prefiltering might cause bad results, but it also spares network costs. Test and decide!
+            //      If this is not commented, we should separately take care about discovering new neighbours.
             // if ( BubbleOverlaps(randomLocation) )
             //    { continue; }
             
