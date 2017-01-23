@@ -37,7 +37,6 @@ public:
     
     virtual const NodeInfo& myNodeInfo() const = 0;
     virtual const std::vector<NetworkInterface>& seedNodes() const = 0;
-    virtual TcpPort defaultPort() const = 0;
     
     virtual const std::string& logPath() const = 0;
     virtual const std::string& dbPath() const = 0;
@@ -76,7 +75,6 @@ public:
     
     const NodeInfo& myNodeInfo() const override;
     const std::vector<NetworkInterface>& seedNodes() const override;
-    TcpPort defaultPort() const override;
     
     const std::string& logPath() const override;
     const std::string& dbPath() const override;

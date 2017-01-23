@@ -268,9 +268,6 @@ const NodeInfo& EzParserConfig::myNodeInfo() const
 const vector<NetworkInterface>& EzParserConfig::seedNodes() const
     { return _seedNodes.empty() ? DefaultSeedNodes : _seedNodes; }
 
-TcpPort EzParserConfig::defaultPort() const
-    { return DefaultPort; }
-
 chrono::duration< uint32_t > EzParserConfig::dbMaintenancePeriod() const
     { return _dbMaintenancePeriod; }
 
