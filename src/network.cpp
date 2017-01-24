@@ -80,12 +80,11 @@ string  NodeContact::AddressBytes() const
 
 
 
-TcpServer::TcpServer(TcpPort portNumber) : _ioService(),
-    _acceptor( _ioService, tcp::endpoint( tcp::v4(), portNumber ) ),
-    _threadPool(), _shutdownRequested(false)
+TcpServer::TcpServer(TcpPort portNumber) :
+    _acceptor( _ioService, tcp::endpoint( tcp::v4(), portNumber ) )
 {
     // Switch the acceptor to listening state
-    LOG(DEBUG) << "Start accepting connections";
+    LOG(DEBUG) << "Start accepting connections at port " << portNumber;
     _acceptor.listen();
     
     shared_ptr<tcp::socket> socket( new tcp::socket(_ioService) );
@@ -111,17 +110,25 @@ TcpServer::~TcpServer()
     _ioService.stop();
     for (auto &thr : _threadPool)
         { thr.join(); }
+    _threadPool.clear();
 }
 
 
 void TcpServer::Shutdown()
-    { _shutdownRequested = true; }
+{
+    _shutdownRequested = true;
+}
 
 
 
 ProtoBufDispatchingTcpServer::ProtoBufDispatchingTcpServer( TcpPort portNumber,
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory ) :
-    TcpServer(portNumber), _dispatcherFactory(dispatcherFactory) {}
+    TcpServer(portNumber), _dispatcherFactory(dispatcherFactory)
+{
+    if (_dispatcherFactory == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No dispatcher factory instantiated");
+    }
+}
 
 
 
@@ -433,18 +440,41 @@ shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NetworkEndp
 
 
 
-IncomingRequestDispatcherFactory::IncomingRequestDispatcherFactory(shared_ptr<Node> node) :
+LocalServiceRequestDispatcherFactory::LocalServiceRequestDispatcherFactory(
+    shared_ptr<ILocalServiceMethods> iLocal) : _iLocal(iLocal) {}
+
+
+shared_ptr<IProtoBufRequestDispatcher> LocalServiceRequestDispatcherFactory::Create(
+    shared_ptr<IProtoBufNetworkSession> session )
+{
+    shared_ptr<IChangeListenerFactory> listenerFactory(
+        new ProtoBufTcpStreamChangeListenerFactory(session) );
+    return shared_ptr<IProtoBufRequestDispatcher>(
+        new IncomingLocalServiceRequestDispatcher(_iLocal, listenerFactory) );
+}
+
+
+
+StaticDispatcherFactory::StaticDispatcherFactory(shared_ptr<IProtoBufRequestDispatcher> dispatcher) :
+    _dispatcher(dispatcher) {}
+
+shared_ptr<IProtoBufRequestDispatcher> StaticDispatcherFactory::Create(shared_ptr<IProtoBufNetworkSession>)
+    { return _dispatcher; }
+
+
+
+CombinedRequestDispatcherFactory::CombinedRequestDispatcherFactory(shared_ptr<Node> node) :
     _node(node) {}
 
-
-shared_ptr<IProtoBufRequestDispatcher> IncomingRequestDispatcherFactory::Create(
-    shared_ptr<IProtoBufNetworkSession> session )
+shared_ptr<IProtoBufRequestDispatcher> CombinedRequestDispatcherFactory::Create(
+    shared_ptr<IProtoBufNetworkSession> session)
 {
     shared_ptr<IChangeListenerFactory> listenerFactory(
         new ProtoBufTcpStreamChangeListenerFactory(session) );
     return shared_ptr<IProtoBufRequestDispatcher>(
         new IncomingRequestDispatcher(_node, listenerFactory) );
 }
+
 
 
 

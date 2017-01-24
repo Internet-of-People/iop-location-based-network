@@ -2,8 +2,6 @@
 //#define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 
-// TODO thread safety should be turned on for test_network but it seems to cause segmentation faults (probably together with catch++)
-//#define ELPP_THREAD_SAFE
 #include <easylogging++.h>
 
 #include "testdata.hpp"

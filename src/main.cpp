@@ -1,7 +1,6 @@
 #include <iostream>
 #include <csignal>
 
-#define ELPP_THREAD_SAFE
 #include <easylogging++.h>
 
 #include "config.hpp"
@@ -54,20 +53,32 @@ int main(int argc, const char *argv[])
         connFactPtr->detectedIpCallback( [node](const Address &addr) { node->DetectedExternalAddress(addr); } );
         node->EnsureMapFilled();
 
-        shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
-            new IncomingRequestDispatcherFactory(node) );
+        shared_ptr<IProtoBufRequestDispatcherFactory> localDispatcherFactory(
+            new LocalServiceRequestDispatcherFactory(node) );
+        shared_ptr<IProtoBufRequestDispatcherFactory> nodeDispatcherFactory(
+            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
+                new IncomingNodeRequestDispatcher(node) ) ) );
+        shared_ptr<IProtoBufRequestDispatcherFactory> clientDispatcherFactory(
+            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
+                new IncomingClientRequestDispatcher(node) ) ) );
         LOG(INFO) << "Preparing TCP server";
-// TODO this is just a hack to run tests
-        ProtoBufDispatchingTcpServer tcpServer(
-            myNodeInfo.profile().contact().nodePort(), dispatcherFactory );
+        
+        ProtoBufDispatchingTcpServer localTcpServer(
+            config.localServicePort(), localDispatcherFactory );
+        ProtoBufDispatchingTcpServer nodeTcpServer(
+            myNodeInfo.profile().contact().nodePort(), nodeDispatcherFactory );
+        ProtoBufDispatchingTcpServer clientTcpServer(
+            myNodeInfo.profile().contact().clientPort(), clientDispatcherFactory );
 
         // Set up signal handlers to stop on Ctrl-C and further events
         bool ShutdownRequested = false;
-        
-        mySignalHandlerFunc = [&ShutdownRequested, &tcpServer] (int)
+
+        mySignalHandlerFunc = [&ShutdownRequested, &localTcpServer, &nodeTcpServer, &clientTcpServer] (int)
         {
             ShutdownRequested = true;
-            tcpServer.Shutdown();
+            localTcpServer.Shutdown();
+            nodeTcpServer.Shutdown();
+            clientTcpServer.Shutdown();
         };
         
         signal(SIGINT,  signalHandler);
@@ -101,9 +112,6 @@ int main(int argc, const char *argv[])
                     this_thread::sleep_for( config.discoveryPeriod() );
                     LOG(DEBUG) << "Exploring white spots of the map";
                     node->DiscoverUnknownAreas();
-                    // TODO Neighbours may also expire and neighbourhood count may greatly decrease.
-                    //      Consider if we also should explore for new neighbour nodes here
-                    //      or is it enough to wait for newly arriving nodes to ask to be our neighbours?
                     LOG(DEBUG) << "Exploration finished";
                 }
                 catch (exception &ex)

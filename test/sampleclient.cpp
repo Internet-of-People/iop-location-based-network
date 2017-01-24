@@ -3,7 +3,6 @@
 #include <thread>
 
 #include <asio.hpp>
-#define ELPP_THREAD_SAFE
 #include <easylogging++.h>
 
 #include "IopLocNet.pb.h"

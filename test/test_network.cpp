@@ -29,11 +29,11 @@ SCENARIO("TCP networking", "[network]")
         geodb->Store(TestData::EntryWien);
         geodb->Store(TestData::EntryCapeTown);
 
-        shared_ptr<INodeConnectionFactory> connectionFactory(
-            new DummyNodeConnectionFactory() );
+        shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
         shared_ptr<Node> node( new Node( TestData::NodeBudapest, geodb, connectionFactory, {} ) );
+        
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
-            new IncomingRequestDispatcherFactory(node) );
+            new CombinedRequestDispatcherFactory(node) );
         ProtoBufDispatchingTcpServer tcpServer( BudapestNodeContact.nodePort(), dispatcherFactory );
         
         THEN("It serves clients via sync TCP")

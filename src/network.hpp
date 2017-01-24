@@ -23,19 +23,20 @@ class TcpServer
 {
 protected:
     
-    asio::io_service _ioService;
-    asio::ip::tcp::acceptor _acceptor;
-    
+    asio::io_service         _ioService;
     std::vector<std::thread> _threadPool;
-    bool _shutdownRequested;
+    bool                     _shutdownRequested;
+    
+    asio::ip::tcp::acceptor _acceptor;
     
     virtual void AsyncAcceptHandler( std::shared_ptr<asio::ip::tcp::socket> socket,
                                      const asio::error_code &ec ) = 0;
 public:
-    
+
     TcpServer(TcpPort portNumber);
     virtual ~TcpServer();
     
+    void Start();
     void Shutdown();
 };
 
@@ -100,18 +101,46 @@ public:
 
 // Request dispatcher to serve incoming requests from clients.
 // Implemented specifically for the keepalive feature.
-class IncomingRequestDispatcherFactory : public IProtoBufRequestDispatcherFactory
+class LocalServiceRequestDispatcherFactory : public IProtoBufRequestDispatcherFactory
 {
-    std::shared_ptr<Node> _node;
+    std::shared_ptr<ILocalServiceMethods> _iLocal;
     
 public:
     
-    IncomingRequestDispatcherFactory(std::shared_ptr<Node> node);
+    LocalServiceRequestDispatcherFactory(std::shared_ptr<ILocalServiceMethods> iLocal);
     
     std::shared_ptr<IProtoBufRequestDispatcher> Create(
         std::shared_ptr<IProtoBufNetworkSession> session ) override;
 };
 
+
+
+// Dispatcher factory that ignores the session and returns a simple dispatcher
+class StaticDispatcherFactory : public IProtoBufRequestDispatcherFactory
+{
+    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
+    
+public:
+    
+    StaticDispatcherFactory(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher);
+    
+    std::shared_ptr<IProtoBufRequestDispatcher> Create(
+        std::shared_ptr<IProtoBufNetworkSession> session ) override;
+};
+
+
+
+class CombinedRequestDispatcherFactory : public IProtoBufRequestDispatcherFactory
+{
+    std::shared_ptr<Node> _node;
+    
+public:
+    
+    CombinedRequestDispatcherFactory(std::shared_ptr<Node> node);
+    
+    std::shared_ptr<IProtoBufRequestDispatcher> Create(
+        std::shared_ptr<IProtoBufNetworkSession> session ) override;
+};
 
 
 // Network session that uses a blocking TCP stream for the easiest implementation.

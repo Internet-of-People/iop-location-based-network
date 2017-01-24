@@ -25,7 +25,6 @@ int main()
     try
     {
         LOG(INFO) << "Initializing server";
-// TODO move this commented code section to unit testing
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         geodb->Store(TestData::EntryKecskemet);
@@ -34,6 +33,7 @@ int main()
         geodb->Store(TestData::EntryWien);
         geodb->Store(TestData::EntryCapeTown);
         
+// TODO move this commented code section to unit testing
 //        LOG(INFO) << "Distance: " << geodb->GetDistanceKm(TestData::Budapest, TestData::Kecskemet);
 //         size_t nodeCount = geodb->GetNodeCount();
 //         LOG(INFO) << "Node count: " << nodeCount;
@@ -78,17 +78,25 @@ int main()
         const NodeContact &BudapestNodeContact(
             TestData::NodeBudapest.profile().contact() );
         
-        shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
-            new IncomingRequestDispatcherFactory(node) );
-        ProtoBufDispatchingTcpServer tcpServer( BudapestNodeContact.nodePort(), dispatcherFactory );
+        shared_ptr<IProtoBufRequestDispatcherFactory> nodeDispatcherFactory(
+            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
+                new IncomingNodeRequestDispatcher(node) ) ) );
+        shared_ptr<IProtoBufRequestDispatcherFactory> clientDispatcherFactory(
+            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
+                new IncomingClientRequestDispatcher(node) ) ) );
         
+        ProtoBufDispatchingTcpServer nodeTcpServer(
+            BudapestNodeContact.nodePort(), nodeDispatcherFactory );
+        ProtoBufDispatchingTcpServer clientTcpServer(
+            BudapestNodeContact.clientPort(), clientDispatcherFactory );
         
         bool ShutdownRequested = false;
 
-        mySignalHandlerFunc = [&ShutdownRequested, &tcpServer] (int)
+        mySignalHandlerFunc = [&ShutdownRequested, &nodeTcpServer, &clientTcpServer] (int)
         {
             ShutdownRequested = true;
-            tcpServer.Shutdown();
+            nodeTcpServer.Shutdown();
+            clientTcpServer.Shutdown();
         };
         
         std::signal(SIGINT,  signalHandler);
