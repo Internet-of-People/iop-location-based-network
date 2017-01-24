@@ -56,24 +56,54 @@ public:
 
 
 
-// Data holder class on a network entity to connect with.
-class NetworkInterface
+// Data holder class for a network endpoint to connect to.
+class NetworkEndpoint
 {
     Address     _address;
     TcpPort     _port;
+    
+public:
+    
+    NetworkEndpoint();
+    NetworkEndpoint(const NetworkEndpoint &other);
+    NetworkEndpoint(const Address &address, TcpPort port);
+    
+    Address address() const;
+    TcpPort port() const;
+    
+    bool operator==(const NetworkEndpoint &other) const;
+    
+    // NOTE Following functions are implemented in network.cpp as being library-specific (currently with asio)
+    bool isLoopback() const;
+};
+
+std::ostream& operator<<(std::ostream& out, const NetworkEndpoint &value);
+
+
+
+// Data holder class for contact data of a single (remote) node of the network to be advertised.
+class NodeContact
+{
+    Address     _address;
+    TcpPort     _nodePort;
+    TcpPort     _clientPort;
 
 public:
     
-    NetworkInterface();
-    NetworkInterface(const NetworkInterface &other);
-    NetworkInterface(const Address &address, TcpPort port);
+    NodeContact();
+    NodeContact(const NodeContact &other);
+    NodeContact(const Address &address, TcpPort nodePort, TcpPort clientPort);
     
     const Address& address() const;
-    TcpPort port() const;
+    TcpPort nodePort() const;
+    TcpPort clientPort() const;
+    
+    NetworkEndpoint nodeEndpoint() const;
+    NetworkEndpoint clientEndpoint() const;
     
     void address(const Address &address);
     
-    bool operator==(const NetworkInterface &other) const;
+    bool operator==(const NodeContact &other) const;
     
     // NOTE Following functions are implemented in network.cpp as being library-specific (currently with asio)
     // TODO consider splitting class into an interface here and an implementation in network
@@ -81,10 +111,9 @@ public:
     static std::string AddressToBytes(const Address &address);
     
     std::string AddressBytes() const;
-    bool isLoopback() const;
 };
 
-std::ostream& operator<<(std::ostream& out, const NetworkInterface &value);
+std::ostream& operator<<(std::ostream& out, const NodeContact &value);
 
 
 
@@ -92,18 +121,18 @@ std::ostream& operator<<(std::ostream& out, const NetworkInterface &value);
 // TODO will we also need a public key here later for validation?
 class NodeProfile
 {
-    NodeId           _id;
-    NetworkInterface _contact;
+    NodeId      _id;
+    NodeContact _contact;
     
 public:
     
     NodeProfile();
     NodeProfile(const NodeProfile &other);
-    NodeProfile(const NodeId &id, const NetworkInterface &contact);
+    NodeProfile(const NodeId &id, const NodeContact &contact);
     
     const NodeId& id() const;
-    NetworkInterface& contact();
-    const NetworkInterface& contact() const;
+    NodeContact& contact();
+    const NodeContact& contact() const;
     
     bool operator==(const NodeProfile &other) const;
     bool operator!=(const NodeProfile &other) const;

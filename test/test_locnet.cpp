@@ -66,19 +66,20 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
         }
     }
     
-    NodeProfile prof("NodeId", { NetworkInterface("127.0.0.1", 6666) } );
+    NodeProfile prof("NodeId", { NodeContact("127.0.0.1", 6666, 7777) } );
     GIVEN("A node profile object") {
         THEN("its fields are properly filled in") {
             REQUIRE( prof.id() == "NodeId" );
-            REQUIRE( prof.contact().port() == 6666 );
+            REQUIRE( prof.contact().nodePort() == 6666 );
+            REQUIRE( prof.contact().clientPort() == 7777 );
             
             REQUIRE( prof.contact().address() == "127.0.0.1" );
-            REQUIRE( prof.contact().isLoopback() );
+            REQUIRE( prof.contact().nodeEndpoint().isLoopback() );
             
             prof.contact().address( Address("1.2.3.4") );
             
             REQUIRE( prof.contact().address() == "1.2.3.4" );
-            REQUIRE( ! prof.contact().isLoopback() );
+            REQUIRE( ! prof.contact().nodeEndpoint().isLoopback() );
         }
     }
     
@@ -125,10 +126,10 @@ SCENARIO("Spatial database", "")
         
         WHEN("adding nodes") {
             NodeDbEntry entry1( NodeProfile( "ColleagueNodeId1",
-                { NetworkInterface("127.0.0.1", 6666) } ), GpsLocation(1.0, 1.0),
+                NodeContact("127.0.0.1", 6666, 7777) ), GpsLocation(1.0, 1.0),
                     NodeRelationType::Colleague, NodeContactRoleType::Initiator );
             NodeDbEntry entry2( NodeProfile( "NeighbourNodeId2",
-                { NetworkInterface("127.0.0.1", 6666) } ), GpsLocation(2.0, 2.0),
+                NodeContact("127.0.0.1", 8888, 9999) ), GpsLocation(2.0, 2.0),
                     NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
             
             geodb.Store(entry1);
@@ -267,7 +268,7 @@ SCENARIO("Server registration", "")
     GIVEN("The location based network") {
         GpsLocation loc(1.0, 2.0);
         NodeInfo nodeInfo( NodeProfile("NodeId",
-            { NetworkInterface("127.0.0.1", 6666) } ), loc );
+            NodeContact("127.0.0.1", 6666, 7777) ), loc );
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(nodeInfo,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
@@ -282,10 +283,10 @@ SCENARIO("Server registration", "")
             }
         }
         ServiceProfile tokenService("Token",
-            { NetworkInterface("127.0.0.1", 1111) } );
+            NodeContact("127.0.0.1", 1111, 2222) );
         WHEN("adding services") {
             ServiceProfile minterService("Minter",
-                { NetworkInterface("127.0.0.1", 2222) } );
+                NodeContact("127.0.0.1", 3333, 4444) );
             geonet.RegisterService(ServiceType::Token, tokenService);
             geonet.RegisterService(ServiceType::Minting, minterService);
             THEN("added servers appear on queries") {
@@ -299,7 +300,7 @@ SCENARIO("Server registration", "")
         }
         WHEN("removing servers") {
             ServiceProfile minterService("Minter",
-                { NetworkInterface("127.0.0.1", 2222) } );
+                NodeContact("127.0.0.1", 5555, 6666) );
             geonet.RegisterService(ServiceType::Token, tokenService);
             geonet.RegisterService(ServiceType::Minting, minterService);
             geonet.DeregisterService(ServiceType::Minting);

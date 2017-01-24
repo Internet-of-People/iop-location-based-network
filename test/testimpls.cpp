@@ -21,9 +21,14 @@ void ChangeCounter::RemovedNode(const NodeDbEntry&) { ++removedCount; }
 
 
 
-shared_ptr<INodeMethods> DummyNodeConnectionFactory::ConnectTo(const NetworkInterface&)
+shared_ptr<INodeMethods> DummyNodeConnectionFactory::ConnectTo(const NetworkEndpoint&)
 {
     return shared_ptr<INodeMethods>();
+}
+
+shared_ptr<IChangeListener> DummyChangeListenerFactory::Create(shared_ptr<ILocalServiceMethods>)
+{
+    return shared_ptr<IChangeListener>();
 }
 
 

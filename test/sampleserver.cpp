@@ -75,12 +75,12 @@ int main()
         shared_ptr<Node> node( new Node( TestData::NodeBudapest, geodb, connectionFactory, {} ) );
         node->EnsureMapFilled();
         
-        const NetworkInterface &BudapestNodeContact(
+        const NodeContact &BudapestNodeContact(
             TestData::NodeBudapest.profile().contact() );
         
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
             new IncomingRequestDispatcherFactory(node) );
-        ProtoBufDispatchingTcpServer tcpServer( BudapestNodeContact.port(), dispatcherFactory );
+        ProtoBufDispatchingTcpServer tcpServer( BudapestNodeContact.nodePort(), dispatcherFactory );
         
         
         bool ShutdownRequested = false;

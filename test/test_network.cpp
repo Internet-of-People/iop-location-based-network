@@ -18,7 +18,7 @@ SCENARIO("TCP networking", "[network]")
 {
     GIVEN("A configured Node and Tcp networking")
     {
-        const NetworkInterface &BudapestNodeContact(
+        const NodeContact &BudapestNodeContact(
             TestData::NodeBudapest.profile().contact() );
         
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
@@ -34,14 +34,14 @@ SCENARIO("TCP networking", "[network]")
         shared_ptr<Node> node( new Node( TestData::NodeBudapest, geodb, connectionFactory, {} ) );
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
             new IncomingRequestDispatcherFactory(node) );
-        ProtoBufDispatchingTcpServer tcpServer( BudapestNodeContact.port(), dispatcherFactory );
+        ProtoBufDispatchingTcpServer tcpServer( BudapestNodeContact.nodePort(), dispatcherFactory );
         
         THEN("It serves clients via sync TCP")
         {
-            const NetworkInterface &BudapestNodeContact(
+            const NodeContact &BudapestNodeContact(
                 TestData::NodeBudapest.profile().contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
-                new ProtoBufTcpStreamSession(BudapestNodeContact) );
+                new ProtoBufTcpStreamSession( BudapestNodeContact.nodeEndpoint() ) );
             
             {
                 iop::locnet::MessageWithHeader requestMsg;
@@ -73,10 +73,10 @@ SCENARIO("TCP networking", "[network]")
         
         THEN("It serves transparent clients using ProtoBuf/TCP protocol")
         {
-            const NetworkInterface &BudapestNodeContact(
+            const NodeContact &BudapestNodeContact(
                 TestData::NodeBudapest.profile().contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
-                new ProtoBufTcpStreamSession(BudapestNodeContact) );
+                new ProtoBufTcpStreamSession( BudapestNodeContact.nodeEndpoint() ) );
             
             shared_ptr<IProtoBufRequestDispatcher> netDispatcher(
                 new ProtoBufRequestNetworkDispatcher(clientSession) );

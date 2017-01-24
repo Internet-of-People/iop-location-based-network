@@ -51,31 +51,67 @@ public:
 
 
 
-// Implement server functionality for this node for all interfaces.
-// Translate incoming protobuf requests to internal representation,
-// serve the request with our business logic,
-// then translate the result into a protobuf response
-class IncomingRequestDispatcher : public IProtoBufRequestDispatcher
+// Dispatch messages to serve requests on the local service interface.
+// Translates incoming protobuf requests to internal representation, serves the request
+// with our business logic and translates the result into a protobuf response.
+class IncomingLocalServiceRequestDispatcher : public IProtoBufRequestDispatcher
 {
-    std::shared_ptr<ILocalServiceMethods> _iLocalService;
-    std::shared_ptr<INodeMethods>         _iRemoteNode;
-    std::shared_ptr<IClientMethods>       _iClient;
-    
+    std::shared_ptr<ILocalServiceMethods>   _iLocalService;
     std::shared_ptr<IChangeListenerFactory> _listenerFactory;
     
-    iop::locnet::LocalServiceResponse* DispatchLocalService(const iop::locnet::LocalServiceRequest &request);
-    iop::locnet::ClientResponse* DispatchClient(const iop::locnet::ClientRequest &request);
-    iop::locnet::RemoteNodeResponse* DispatchRemoteNode(const iop::locnet::RemoteNodeRequest &request);
+public:
+    
+    IncomingLocalServiceRequestDispatcher( std::shared_ptr<ILocalServiceMethods> iLocalService,
+        std::shared_ptr<IChangeListenerFactory> listenerFactory );
+    
+    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
+};
+
+
+
+// Dispatch messages to serve requests on the node interface.
+class IncomingNodeRequestDispatcher : public IProtoBufRequestDispatcher
+{
+    std::shared_ptr<INodeMethods> _iNode;
+    
+public:
+    
+    IncomingNodeRequestDispatcher(std::shared_ptr<INodeMethods> iNode);
+    
+    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
+};
+
+
+
+// Dispatch messages to serve requests on the client interface.
+class IncomingClientRequestDispatcher : public IProtoBufRequestDispatcher
+{
+    std::shared_ptr<IClientMethods> _iClient;
+    
+public:
+    
+    IncomingClientRequestDispatcher(std::shared_ptr<IClientMethods> iClient);
+    
+    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
+};
+
+
+// Unified server functionality, useful to serve requests of all interfaces on a single port.
+class IncomingRequestDispatcher : public IProtoBufRequestDispatcher
+{
+    std::shared_ptr<IncomingLocalServiceRequestDispatcher> _iLocalService;
+    std::shared_ptr<IncomingNodeRequestDispatcher>         _iRemoteNode;
+    std::shared_ptr<IncomingClientRequestDispatcher>       _iClient;
     
 public:
     
     IncomingRequestDispatcher( std::shared_ptr<Node> node,
         std::shared_ptr<IChangeListenerFactory> listenerFactory );
     
-    IncomingRequestDispatcher( std::shared_ptr<ILocalServiceMethods> iLocalServices,
-        std::shared_ptr<INodeMethods> iRemoteNode,
-        std::shared_ptr<IClientMethods> iClient,
-        std::shared_ptr<IChangeListenerFactory> listenerFactory );
+    IncomingRequestDispatcher(
+        std::shared_ptr<IncomingLocalServiceRequestDispatcher> iLocalServices,
+        std::shared_ptr<IncomingNodeRequestDispatcher> iRemoteNode,
+        std::shared_ptr<IncomingClientRequestDispatcher> iClient );
     
     std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
 };

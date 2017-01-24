@@ -36,7 +36,8 @@ public:
     virtual bool versionRequested() const = 0;
     
     virtual const NodeInfo& myNodeInfo() const = 0;
-    virtual const std::vector<NetworkInterface>& seedNodes() const = 0;
+    virtual TcpPort localServicePort() const = 0;
+    virtual const std::vector<NetworkEndpoint>& seedNodes() const = 0;
     
     virtual const std::string& logPath() const = 0;
     virtual const std::string& dbPath() const = 0;
@@ -58,12 +59,14 @@ class EzParserConfig : public Config
     bool            _versionRequested;
     NodeId          _id;
     Address         _ipAddr;
-    TcpPort         _port;
+    TcpPort         _nodePort;
+    TcpPort         _clientPort;
+    TcpPort         _localPort;
     GpsCoordinate   _latitude;
     GpsCoordinate   _longitude;
     std::string     _logPath;
     std::string     _dbPath;
-    std::vector<NetworkInterface> _seedNodes;
+    std::vector<NetworkEndpoint> _seedNodes;
     
     std::unique_ptr<NodeInfo> _myNodeInfo;
     
@@ -74,7 +77,8 @@ public:
     bool versionRequested() const override;
     
     const NodeInfo& myNodeInfo() const override;
-    const std::vector<NetworkInterface>& seedNodes() const override;
+    TcpPort localServicePort() const override;
+    const std::vector<NetworkEndpoint>& seedNodes() const override;
     
     const std::string& logPath() const override;
     const std::string& dbPath() const override;

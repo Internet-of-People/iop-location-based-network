@@ -28,15 +28,15 @@ int main(int argc, const char* const argv[])
 {
     try
     {
-        cout << "Usage: sampleclient [port] [host]" << endl;
+        cout << "Usage: sampleclient [host] [port]" << endl;
         
-        uint16_t port = argc >= 2 ? stoul( argv[1] ) : 16980;
-        string   host = argc >= 3 ? argv[2] : "localhost";
+        string   host = argc >= 2 ? argv[1] : "localhost";
+        uint16_t port = argc >= 3 ? stoul( argv[2] ) : 16980;
         
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
-        const NetworkInterface nodeContact(host, port);
+        const NetworkEndpoint nodeContact(host, port);
         LOG(INFO) << "Connecting to server " << nodeContact;
         shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(nodeContact) );
 

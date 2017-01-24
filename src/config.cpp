@@ -106,8 +106,12 @@ string GetApplicationDataDirectory()
 
 
 
-static const TcpPort DefaultPort        = 16980;
-static const string DEFAULT_PORT        = to_string(DefaultPort);
+static const TcpPort DefaultNodePort    = 16980;
+static const TcpPort DefaultClientPort  = 16981;
+static const TcpPort DefaultLocalPort   = 16982;
+static const string DEFAULT_NODE_PORT   = to_string(DefaultNodePort);
+static const string DEFAULT_CLIENT_PORT = to_string(DefaultClientPort);
+static const string DEFAULT_LOCAL_PORT  = to_string(DefaultLocalPort);
 
 static const string DESC_OPTIONAL_DEFAULT = "Optional, default value: ";
 static const string DEFAULT_CONFIG_FILE = GetApplicationDataDirectory() + "iop-locnet.cfg";
@@ -122,7 +126,9 @@ static const char *OPTNAME_VERSION      = "--version";
 static const char *OPTNAME_CONFIGFILE   = "--configfile";
 static const char *OPTNAME_NODEID       = "--nodeid";
 static const char *OPTNAME_HOST         = "--host";
-static const char *OPTNAME_PORT         = "--port";
+static const char *OPTNAME_NODE_PORT    = "--nodeport";
+static const char *OPTNAME_CLIENT_PORT  = "--clientport";
+static const char *OPTNAME_LOCAL_PORT   = "--localport";
 static const char *OPTNAME_LATITUDE     = "--latitude";
 static const char *OPTNAME_LONGITUDE    = "--longitude";
 static const char *OPTNAME_SEEDNODE     = "--seednode";
@@ -135,11 +141,11 @@ const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::
 const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod = chrono::hours(24);
 const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::minutes(5);
 
-static const vector<NetworkInterface> DefaultSeedNodes {
-    NetworkInterface("ham4.fermat.cloud", DefaultPort),
-    NetworkInterface("ham5.fermat.cloud", DefaultPort),
-    NetworkInterface("ham6.fermat.cloud", DefaultPort),
-    NetworkInterface("ham7.fermat.cloud", DefaultPort),
+static const vector<NetworkEndpoint> DefaultSeedNodes {
+    NetworkEndpoint("ham4.fermat.cloud", DefaultNodePort),
+    NetworkEndpoint("ham5.fermat.cloud", DefaultNodePort),
+    NetworkEndpoint("ham6.fermat.cloud", DefaultNodePort),
+    NetworkEndpoint("ham7.fermat.cloud", DefaultNodePort),
 };
 
 
@@ -162,26 +168,30 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
         OPTNAME_HELP, "-h" // Flag names
     );
     
-    _optParser.add("", false, 0, 0, "Print version information.", OPTNAME_VERSION);
+    _optParser.add("", false, 0, 0, "Print version information.", OPTNAME_VERSION, "-v");
     _optParser.add(DEFAULT_CONFIG_FILE.c_str(), false, 1, 0, ( "Path to config file to load options from. " +
-        DESC_OPTIONAL_DEFAULT + DEFAULT_CONFIG_FILE ).c_str(), OPTNAME_CONFIGFILE, "-c");
+        DESC_OPTIONAL_DEFAULT + DEFAULT_CONFIG_FILE ).c_str(), OPTNAME_CONFIGFILE);
     _optParser.add("", true, 1, 0, "Public node id, should be an SHA256 hash "
-        "of the public key of this node", OPTNAME_NODEID, "-i");
+        "of the public key of this node", OPTNAME_NODEID);
     _optParser.add("", false, 1, 0, "Externally accessible IP address (ipv4 or v6) to be advertised "
-        "for other nodes or clients. Required for seeds only, autodetected otherwise.", OPTNAME_HOST, "-h");
-    _optParser.add(DEFAULT_PORT.c_str(), false, 1, 0, ( "TCP port number for connecting to this node. " +
-        DESC_OPTIONAL_DEFAULT + DEFAULT_PORT ).c_str(), OPTNAME_PORT, "-p");
+        "for other nodes or clients. Required for seeds only, autodetected otherwise.", OPTNAME_HOST);
+    _optParser.add(DEFAULT_NODE_PORT.c_str(), false, 1, 0, ( "TCP port to serve node to node communication. " +
+        DESC_OPTIONAL_DEFAULT + DEFAULT_NODE_PORT ).c_str(), OPTNAME_NODE_PORT);
+    _optParser.add(DEFAULT_CLIENT_PORT.c_str(), false, 1, 0, ( "TCP port to serve client (i.e. end user) queries. " +
+        DESC_OPTIONAL_DEFAULT + DEFAULT_CLIENT_PORT ).c_str(), OPTNAME_CLIENT_PORT);
+    _optParser.add(DEFAULT_LOCAL_PORT.c_str(), false, 1, 0, ( "TCP port to serve other IoP services running on this node. " +
+        DESC_OPTIONAL_DEFAULT + DEFAULT_LOCAL_PORT ).c_str(), OPTNAME_LOCAL_PORT);
     _optParser.add("", true, 1, 0, "GPS latitude of this server "
-        "as real number from range (-90,90)", OPTNAME_LATITUDE, "-y");
+        "as real number from range (-90,90)", OPTNAME_LATITUDE);
     _optParser.add("", true, 1, 0, "GPS longitude of this server "
-        "as real number from range (-180,180)", OPTNAME_LONGITUDE, "-x");
+        "as real number from range (-180,180)", OPTNAME_LONGITUDE);
     _optParser.add("", false, 1, 0, "Host name of seed node to be used instead of default seeds. "
-        "You can repeat this option to define multiple custom seed nodes.", OPTNAME_SEEDNODE, "-s");
+        "You can repeat this option to define multiple custom seed nodes.", OPTNAME_SEEDNODE);
     
-    _optParser.add(DEFAULT_LOGPATH.c_str(), false, 1, 0, ( "TCP port number for connecting to this node. " +
-        DESC_OPTIONAL_DEFAULT + DEFAULT_LOGPATH ).c_str(), OPTNAME_LOGPATH, "-p");
-    _optParser.add(DEFAULT_DBPATH.c_str(), false, 1, 0, ( "Path to log file. " +
-        DESC_OPTIONAL_DEFAULT + DEFAULT_DBPATH ).c_str(), OPTNAME_DBPATH, "-d");
+    _optParser.add(DEFAULT_LOGPATH.c_str(), false, 1, 0, ( "Path to log file. " +
+        DESC_OPTIONAL_DEFAULT + DEFAULT_LOGPATH ).c_str(), OPTNAME_LOGPATH);
+    _optParser.add(DEFAULT_DBPATH.c_str(), false, 1, 0, ( "Path to db file. " +
+        DESC_OPTIONAL_DEFAULT + DEFAULT_DBPATH ).c_str(), OPTNAME_DBPATH);
     
     // Perform parsing, first from command line ...
     _optParser.parse(argc, argv);
@@ -229,18 +239,26 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     _optParser.get(OPTNAME_LOGPATH)->getString(_logPath);
     _optParser.get(OPTNAME_DBPATH)->getString(_dbPath);
     
-    unsigned long port;
-    _optParser.get(OPTNAME_PORT)->getULong(port);
-    _port = port;
-        
+    unsigned long nodePort;
+    _optParser.get(OPTNAME_NODE_PORT)->getULong(nodePort);
+    _nodePort = nodePort;
+    
+    unsigned long clientPort;
+    _optParser.get(OPTNAME_CLIENT_PORT)->getULong(clientPort);
+    _clientPort = clientPort;
+    
+    unsigned long localPort;
+    _optParser.get(OPTNAME_LOCAL_PORT)->getULong(localPort);
+    _localPort = localPort;
+    
     _myNodeInfo.reset( new NodeInfo(
-        NodeProfile(_id, NetworkInterface(_ipAddr, _port) ),
+        NodeProfile(_id, NodeContact(_ipAddr, _nodePort, _clientPort) ),
         GpsLocation(_latitude, _longitude) ) );
     
     vector<vector<string>> seedOptionVectors;
     _optParser.get(OPTNAME_SEEDNODE)->getMultiStrings(seedOptionVectors);
     for (auto const &seedVector : seedOptionVectors)
-        { _seedNodes.push_back( NetworkInterface(seedVector[0], DefaultPort) ); }
+        { _seedNodes.push_back( NetworkEndpoint(seedVector[0], DefaultNodePort) ); }
     
 //     cout << "----- Pretty print" << endl;
 //     string pretty;
@@ -265,8 +283,11 @@ const string& EzParserConfig::dbPath() const
 const NodeInfo& EzParserConfig::myNodeInfo() const
     { return *_myNodeInfo; }
 
-const vector<NetworkInterface>& EzParserConfig::seedNodes() const
+const vector<NetworkEndpoint>& EzParserConfig::seedNodes() const
     { return _seedNodes.empty() ? DefaultSeedNodes : _seedNodes; }
+
+TcpPort EzParserConfig::localServicePort() const
+    { return _localPort; }
 
 chrono::duration< uint32_t > EzParserConfig::dbMaintenancePeriod() const
     { return _dbMaintenancePeriod; }

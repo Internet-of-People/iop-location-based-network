@@ -23,33 +23,64 @@ ErrorCode LocationNetworkError::code() const
 
 
 
-NetworkInterface::NetworkInterface() {}
-    
-NetworkInterface::NetworkInterface(const NetworkInterface& other) :
+NetworkEndpoint::NetworkEndpoint() :
+    _address(), _port() {}
+
+NetworkEndpoint::NetworkEndpoint(const NetworkEndpoint& other) :
     _address(other._address), _port(other._port) {}
 
-NetworkInterface::NetworkInterface(const Address& address, TcpPort port) :
+NetworkEndpoint::NetworkEndpoint(const Address& address, TcpPort port) :
     _address(address), _port(port) {}
 
+Address NetworkEndpoint::address() const { return _address; }
+TcpPort NetworkEndpoint::port() const { return _port; }
 
-const Address& NetworkInterface::address() const { return _address; }
-TcpPort NetworkInterface::port() const { return _port; }
+ostream& operator<<(ostream &out, const NetworkEndpoint &value)
+    { return out << value.address() << ":" << value.port(); }
 
-void NetworkInterface::address(const Address& address)
+
+
+NodeContact::NodeContact() {}
+    
+NodeContact::NodeContact(const NodeContact& other) :
+    _address(other._address), _nodePort(other._nodePort), _clientPort(other._clientPort) {}
+
+NodeContact::NodeContact(const Address& address, TcpPort nodePort, TcpPort clientPort) :
+    _address(address), _nodePort(nodePort), _clientPort(clientPort) {}
+
+
+const Address& NodeContact::address() const { return _address; }
+TcpPort NodeContact::nodePort() const { return _nodePort; }
+TcpPort NodeContact::clientPort() const { return _clientPort; }
+
+NetworkEndpoint NodeContact::nodeEndpoint() const
+    { return NetworkEndpoint(_address, _nodePort); }
+
+NetworkEndpoint NodeContact::clientEndpoint() const
+    { return NetworkEndpoint(_address, _clientPort); }
+
+bool NetworkEndpoint::operator==(const NetworkEndpoint& other) const
+{
+    return _address == other._address &&
+           _port    == other._port;
+}
+
+
+
+void NodeContact::address(const Address& address)
     { _address = address; }
 
 
-bool NetworkInterface::operator==(const NetworkInterface& other) const
+bool NodeContact::operator==(const NodeContact& other) const
 {
-    return  _address == other._address &&
-            _port == other._port;
+    return  _address    == other._address &&
+            _nodePort   == other._nodePort &&
+            _clientPort == other._clientPort;
 }
 
 
-std::ostream& operator<<(std::ostream& out, const NetworkInterface &value)
-{
-    return out << value.address() << ":" << value.port();
-}
+ostream& operator<<(ostream &out, const NodeContact &value)
+    { return out << value.address() << ":" << value.nodePort() << "|" << value.clientPort(); }
 
 
 
@@ -59,12 +90,12 @@ NodeProfile::NodeProfile() :
 NodeProfile::NodeProfile(const NodeProfile& other) :
     _id(other._id), _contact(other._contact) {}
 
-NodeProfile::NodeProfile(const NodeId& id, const NetworkInterface &contact) :
+NodeProfile::NodeProfile(const NodeId& id, const NodeContact &contact) :
     _id(id), _contact(contact) {}
 
 const NodeId& NodeProfile::id() const { return _id; }
-NetworkInterface& NodeProfile::contact() { return _contact; }
-const NetworkInterface& NodeProfile::contact() const { return _contact; }
+NodeContact& NodeProfile::contact() { return _contact; }
+const NodeContact& NodeProfile::contact() const { return _contact; }
 
 bool NodeProfile::operator==(const NodeProfile& other) const
 {

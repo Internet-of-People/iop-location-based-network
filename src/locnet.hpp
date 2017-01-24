@@ -90,7 +90,7 @@ public:
     
     virtual ~INodeConnectionFactory() {}
     
-    virtual std::shared_ptr<INodeMethods> ConnectTo(const NetworkInterface &contact) = 0;
+    virtual std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &endpoint) = 0;
 };
 
 
@@ -111,10 +111,10 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
     std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
     
-    std::vector<NetworkInterface> _seedNodes;
+    std::vector<NetworkEndpoint> _seedNodes;
     
     
-    std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkInterface &contact);
+    std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkEndpoint &endpoint);
     bool SafeStoreNode(const NodeDbEntry &entry,
         std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>(),
         bool isSeedNode = false);
@@ -131,7 +131,7 @@ public:
     Node( const NodeInfo &myNodeInfo,
           std::shared_ptr<ISpatialDatabase> spatialDb,
           std::shared_ptr<INodeConnectionFactory> connectionFactory,
-          const std::vector<NetworkInterface> &seedNodes);
+          const std::vector<NetworkEndpoint> &seedNodes);
 
     void EnsureMapFilled();
     

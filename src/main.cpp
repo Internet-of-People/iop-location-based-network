@@ -57,8 +57,9 @@ int main(int argc, const char *argv[])
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
             new IncomingRequestDispatcherFactory(node) );
         LOG(INFO) << "Preparing TCP server";
+// TODO this is just a hack to run tests
         ProtoBufDispatchingTcpServer tcpServer(
-            myNodeInfo.profile().contact().port(), dispatcherFactory );
+            myNodeInfo.profile().contact().nodePort(), dispatcherFactory );
 
         // Set up signal handlers to stop on Ctrl-C and further events
         bool ShutdownRequested = false;

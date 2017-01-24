@@ -33,14 +33,14 @@ random_device Node::_randomDevice;
 Node::Node( const NodeInfo &myNodeInfo,
             shared_ptr<ISpatialDatabase> spatialDb,
             std::shared_ptr<INodeConnectionFactory> connectionFactory,
-            const vector<NetworkInterface> &seedNodes ) :
+            const vector<NetworkEndpoint> &seedNodes ) :
     _myNodeInfo(myNodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory),
     _seedNodes(seedNodes)
 {
-    if (spatialDb == nullptr) {
+    if (_spatialDb == nullptr) {
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No spatial database instantiated");
     }
-    if (connectionFactory == nullptr) {
+    if (_connectionFactory == nullptr) {
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No connection factory instantiated");
     }
 }
@@ -59,7 +59,8 @@ void Node::EnsureMapFilled()
         {
             // This still might be normal if we're the very first seed node of the whole network
             auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
-                [this] (const NetworkInterface &contact) { return _myNodeInfo.profile().contact() == contact; } );
+                [this] (const NetworkEndpoint &contact)
+                    { return _myNodeInfo.profile().contact().nodeEndpoint() == contact; } );
             if ( seedIt == _seedNodes.end() )
                  { throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Failed to discover any node of the network"); }
             else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
@@ -225,15 +226,15 @@ bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &node
 
 
 
-shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkInterface& contact)
+shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint)
 {
     // There is no point in connecting to ourselves
-    if ( contact == _myNodeInfo.profile().contact() || contact.isLoopback() )
+    if ( endpoint == _myNodeInfo.profile().contact().nodeEndpoint() || endpoint.isLoopback() )
         { return shared_ptr<INodeMethods>(); }
     
-    try { return _connectionFactory->ConnectTo(contact); }
+    try { return _connectionFactory->ConnectTo(endpoint); }
     catch (exception &e)
-        { LOG(INFO) << "Failed to connect to " << contact << ": " << e.what(); }
+        { LOG(INFO) << "Failed to connect to " << endpoint << ": " << e.what(); }
     return shared_ptr<INodeMethods>();
 }
 
@@ -305,7 +306,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
         {
             // If no connection argument is specified, try connecting to candidate node
             if (nodeConnection == nullptr)
-                { nodeConnection = SafeConnectTo( plannedEntry.profile().contact() ); }
+                { nodeConnection = SafeConnectTo( plannedEntry.profile().contact().nodeEndpoint() ); }
             if (nodeConnection == nullptr)
                 { return false; }
             
@@ -367,7 +368,7 @@ bool Node::InitializeWorld()
     
     // Initialize random generator and utility variables
     uniform_int_distribution<int> fromRange( 0, _seedNodes.size() - 1 );
-    vector<NetworkInterface> triedNodes;
+    vector<NetworkEndpoint> triedNodes;
     
     size_t nodeCountAtSeed = 0;
     vector<NodeInfo> randomColleagueCandidates;
@@ -375,7 +376,7 @@ bool Node::InitializeWorld()
     {
         // Select random node from hardwired seed node list
         size_t selectedSeedNodeIdx = fromRange(_randomDevice);
-        const NetworkInterface& selectedSeedContact = _seedNodes[selectedSeedNodeIdx];
+        const NetworkEndpoint& selectedSeedContact = _seedNodes[selectedSeedNodeIdx];
                 
         // If node has been already tried and failed, choose another one
         auto it = find( triedNodes.begin(), triedNodes.end(), selectedSeedContact );
@@ -392,7 +393,9 @@ bool Node::InitializeWorld()
                 { continue; }
             
             // Try to add seed node to our network (no matter if fails)
-            SafeStoreNode( NodeDbEntry( NodeProfile("ThisNodeIdWillBeOverWritten", selectedSeedContact), GpsLocation(0,0), // nodeInfo will be queried in SafeStoreNode anyway
+            // TODO a cleaner would be nice, but nodeInfo will be queried in SafeStoreNode anyway
+            SafeStoreNode( NodeDbEntry( NodeProfile( "ThisNodeIdWillBeOverWritten", 
+                NodeContact( selectedSeedContact.address(), selectedSeedContact.port(), 0 ) ), GpsLocation(0,0), 
                 NodeRelationType::Colleague, NodeContactRoleType::Initiator ), seedNodeConnection, true );
             
             // Query both total node count and an initial list of random nodes to start with
@@ -436,10 +439,10 @@ bool Node::InitializeWorld()
             randomColleagueCandidates.pop_back();
             
             // Check if we tried it already
-            if ( find( triedNodes.begin(), triedNodes.end(), nodeInfo.profile().contact() ) != triedNodes.end() )
+            if ( find( triedNodes.begin(), triedNodes.end(), nodeInfo.profile().contact().nodeEndpoint() ) != triedNodes.end() )
                 { continue; }
             
-            triedNodes.push_back( nodeInfo.profile().contact() );
+            triedNodes.push_back( nodeInfo.profile().contact().nodeEndpoint() );
             
             SafeStoreNode( NodeDbEntry(nodeInfo, NodeRelationType::Colleague, NodeContactRoleType::Initiator) );
         }
@@ -455,7 +458,7 @@ bool Node::InitializeWorld()
                 try
                 {
                     // Connect to selected random node
-                    shared_ptr<INodeMethods> randomConnection = SafeConnectTo( nodeInfo.profile().contact() );
+                    shared_ptr<INodeMethods> randomConnection = SafeConnectTo( nodeInfo.profile().contact().nodeEndpoint() );
                     if (randomConnection == nullptr)
                         { continue; }
                     
@@ -498,7 +501,7 @@ bool Node::InitializeNeighbourhood()
         oldClosestNode = newClosestNode;
         try
         {
-            shared_ptr<INodeMethods> closestNodeConnection = SafeConnectTo( newClosestNode.profile().contact() );
+            shared_ptr<INodeMethods> closestNodeConnection = SafeConnectTo( newClosestNode.profile().contact().nodeEndpoint() );
             if (closestNodeConnection == nullptr) {
                 // TODO consider what better to do if closest node is not reachable?
                 continue;
@@ -541,7 +544,7 @@ bool Node::InitializeNeighbourhood()
         try
         {
             // Try connecting to the node
-            shared_ptr<INodeMethods> candidateConnection = SafeConnectTo( neighbourCandidate.profile().contact() );
+            shared_ptr<INodeMethods> candidateConnection = SafeConnectTo( neighbourCandidate.profile().contact().nodeEndpoint() );
             if (candidateConnection == nullptr)
                 { continue; }
                 
@@ -625,7 +628,7 @@ void Node::DiscoverUnknownAreas()
                 myClosestNodes[0] : myClosestNodes[1];
             
             // Connect to closest node
-            shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.profile().contact() );
+            shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.profile().contact().nodeEndpoint() );
             if (connection == nullptr)
             {
                 LOG(DEBUG) << "Failed to contact node " << myClosestNode.profile().id();

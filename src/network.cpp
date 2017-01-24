@@ -24,13 +24,13 @@ static const size_t MessageSizeOffset = 1;
 
 
 
-bool NetworkInterface::isLoopback() const
+bool NetworkEndpoint::isLoopback() const
 {
     try { return address::from_string(_address).is_loopback(); }
     catch (...) { return false; }
 }
 
-Address NetworkInterface::AddressFromBytes(const std::string &bytes)
+Address NodeContact::AddressFromBytes(const std::string &bytes)
 {
     if ( bytes.empty() )
         { return Address(); }
@@ -52,7 +52,7 @@ Address NetworkInterface::AddressFromBytes(const std::string &bytes)
 }
 
 
-string NetworkInterface::AddressToBytes(const Address &addr)
+string NodeContact::AddressToBytes(const Address &addr)
 {
     string result;
     if ( addr.empty() )
@@ -75,7 +75,7 @@ string NetworkInterface::AddressToBytes(const Address &addr)
     return result;
 }
 
-string  NetworkInterface::AddressBytes() const
+string  NodeContact::AddressBytes() const
     { return AddressToBytes(_address); }
 
 
@@ -177,19 +177,19 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     {
                         if ( request->remotenode().has_acceptcolleague() ) {
                             request->mutable_remotenode()->mutable_acceptcolleague()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
-                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                                NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                         else if ( request->remotenode().has_renewcolleague() ) {
                             request->mutable_remotenode()->mutable_renewcolleague()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
-                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                                NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                         else if ( request->remotenode().has_acceptneighbour() ) {
                             request->mutable_remotenode()->mutable_acceptneighbour()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
-                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                                NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                         else if ( request->remotenode().has_renewneighbour() ) {
                             request->mutable_remotenode()->mutable_renewneighbour()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
-                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                                NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                     }
                     
@@ -210,19 +210,19 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     {
                         if ( response->remotenode().has_acceptcolleague() ) {
                             response->mutable_remotenode()->mutable_acceptcolleague()->set_remoteipaddress(
-                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                                NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                         else if ( response->remotenode().has_renewcolleague() ) {
                             response->mutable_remotenode()->mutable_renewcolleague()->set_remoteipaddress(
-                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                                NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                         else if ( response->remotenode().has_acceptneighbour() ) {
                             response->mutable_remotenode()->mutable_acceptneighbour()->set_remoteipaddress(
-                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                                NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                         else if ( response->remotenode().has_renewneighbour() ) {
                             response->mutable_remotenode()->mutable_renewneighbour()->set_remoteipaddress(
-                                NetworkInterface::AddressToBytes( session->remoteAddress() ) );
+                                NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                     }
                 }
@@ -285,15 +285,15 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
 }
 
 
-ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkInterface &contact) :
-    _id( contact.address() + ":" + to_string( contact.port() ) ),
-    _remoteAddress( contact.address() ), _stream(), _socket()
+ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkEndpoint &endpoint) :
+    _id( endpoint.address() + ":" + to_string( endpoint.port() ) ),
+    _remoteAddress( endpoint.address() ), _stream(), _socket()
 {
     _stream.expires_after(NormalStreamExpirationPeriod);
-    _stream.connect( contact.address(), to_string( contact.port() ) );
+    _stream.connect( endpoint.address(), to_string( endpoint.port() ) );
     if (! _stream)
         { throw LocationNetworkError(ErrorCode::ERROR_CONNECTION, "Session failed to connect: " + _stream.error().message() ); }
-    LOG(DEBUG) << "Connected to " << contact;
+    LOG(DEBUG) << "Connected to " << endpoint;
 }
 
 ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()
@@ -422,10 +422,10 @@ void TcpStreamConnectionFactory::detectedIpCallback(function<void(const Address&
 }
 
 
-shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NetworkInterface& address)
+shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NetworkEndpoint& endpoint)
 {
-    LOG(DEBUG) << "Connecting to " << address;
-    shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(address) );
+    LOG(DEBUG) << "Connecting to " << endpoint;
+    shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(endpoint) );
     shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
     shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher, _detectedIpCallback) );
     return result;

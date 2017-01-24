@@ -103,8 +103,8 @@ NodeProfile Converter::FromProtoBuf(const iop::locnet::NodeProfile& value)
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No contact information for profile"); }
     
     const iop::locnet::Contact &contact = value.contact();
-    return NodeProfile( value.nodeid(), NetworkInterface(
-        NetworkInterface::AddressFromBytes( contact.ipaddress() ), contact.port() ) );
+    return NodeProfile( value.nodeid(), NodeContact( NodeContact::AddressFromBytes(
+        contact.ipaddress() ), contact.nodeport(), contact.clientport() ) );
 }
 
 
@@ -117,11 +117,12 @@ NodeInfo Converter::FromProtoBuf(const iop::locnet::NodeInfo& value)
 
 void Converter::FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile &source)
 {
-    const NetworkInterface &sourceContact = source.contact();
+    const NodeContact &sourceContact = source.contact();
     
     target->set_nodeid( source.id() );
     iop::locnet::Contact *targetContact = target->mutable_contact();
-    targetContact->set_port( sourceContact.port() );
+    targetContact->set_nodeport( sourceContact.nodePort() );
+    targetContact->set_clientport( sourceContact.clientPort() );
     targetContact->set_ipaddress( sourceContact.AddressBytes() );
 }
 
@@ -150,57 +151,35 @@ iop::locnet::NodeInfo* Converter::ToProtoBuf(const NodeInfo &info)
 
 
 
-IncomingRequestDispatcher::IncomingRequestDispatcher(
-        shared_ptr<LocNet::Node> node, shared_ptr<IChangeListenerFactory> listenerFactory ) :
-    _iLocalService(node), _iRemoteNode(node), _iClient(node),
-    _listenerFactory(listenerFactory) {}
-
-IncomingRequestDispatcher::IncomingRequestDispatcher( shared_ptr<ILocalServiceMethods> iLocalServices,
-        shared_ptr<INodeMethods> iRemoteNode, shared_ptr<IClientMethods> iClient,
-        shared_ptr<IChangeListenerFactory> listenerFactory ) :
-    _iLocalService(iLocalServices), _iRemoteNode(iRemoteNode), _iClient(iClient),
-    _listenerFactory(listenerFactory) {}
-    
-
-
-unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(const iop::locnet::Request& request)
+IncomingLocalServiceRequestDispatcher::IncomingLocalServiceRequestDispatcher(
+        shared_ptr<ILocalServiceMethods> iLocalService, shared_ptr<IChangeListenerFactory> listenerFactory) :
+    _iLocalService(iLocalService), _listenerFactory(listenerFactory)
 {
-    if ( request.version().empty() || request.version()[0] != 1 )
-        { throw LocationNetworkError(ErrorCode::ERROR_UNSUPPORTED, "Missing or unknown request version"); }
-    
-    unique_ptr<iop::locnet::Response> result( new iop::locnet::Response() );
-    auto &response = *result;
-    
-    switch ( request.RequestType_case() )
-    {
-        case iop::locnet::Request::kLocalService:
-            response.set_allocated_localservice(
-                DispatchLocalService( request.localservice() ) );
-            break;
-            
-        case iop::locnet::Request::kRemoteNode:
-            response.set_allocated_remotenode( 
-                DispatchRemoteNode( request.remotenode() ) );
-            break;
-            
-        case iop::locnet::Request::kClient:
-            response.set_allocated_client(
-                DispatchClient( request.client() ) );
-            break;
-            
-        default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown request type");
+    if (_iLocalService == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No local service logic instantiated");
     }
-    
-    return result;
+    if (_listenerFactory == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No listener factory instantiated");
+    }
 }
 
 
 
-// TODO All interface dispatchers ( DispatchLocalService(), DispatchRemoteNode(), DispatchClient() )
-//      simply translate between different data formats, ideally this should be generated.
-iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalService(
-    const iop::locnet::LocalServiceRequest& localServiceRequest)
+// TODO Dispatchers simply translate between different data formats, ideally this should be generated.
+unique_ptr<iop::locnet::Response> IncomingLocalServiceRequestDispatcher::Dispatch(
+    const iop::locnet::Request& request)
 {
+    // TODO this version check is shared between different interfaces, use a shared implementation here
+    if ( request.version().empty() || request.version()[0] != 1 )
+        { throw LocationNetworkError(ErrorCode::ERROR_UNSUPPORTED, "Missing or unknown request version"); }
+    
+    if ( ! request.has_localservice() )
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "This interface serves only local service requests"); }
+    
+    const iop::locnet::LocalServiceRequest &localServiceRequest = request.localservice();
+    unique_ptr<iop::locnet::Response> result( new iop::locnet::Response() );
+    iop::locnet::LocalServiceResponse *localServiceResponse = result->mutable_localservice();
+    
     switch ( localServiceRequest.LocalServiceRequestType_case() )
     {
         case iop::locnet::LocalServiceRequest::kRegisterService:
@@ -211,9 +190,8 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
             _iLocalService->RegisterService( serviceType, Converter::FromProtoBuf( registerRequest.nodeprofile() ) );
             LOG(DEBUG) << "Served RegisterService()";
             
-            auto response = new iop::locnet::LocalServiceResponse();
-            response->mutable_registerservice();
-            return response;
+            localServiceResponse->mutable_registerservice();
+            break;
         }
             
         case iop::locnet::LocalServiceRequest::kDeregisterService:
@@ -224,9 +202,8 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
             _iLocalService->DeregisterService(serviceType);
             LOG(DEBUG) << "Served DeregisterService()";
             
-            auto result = new iop::locnet::LocalServiceResponse();
-            result->mutable_deregisterservice();
-            return result;
+            localServiceResponse->mutable_deregisterservice();
+            break;
         }
             
         case iop::locnet::LocalServiceRequest::kGetNeighbourNodes:
@@ -238,11 +215,10 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
             LOG(DEBUG) << "Served GetNeighbourNodes() with keepalive " << keepAlive
                        << ", node count : " << neighbours.size();
             
-            auto result = new iop::locnet::LocalServiceResponse();
-            auto response = result->mutable_getneighbournodes();
+            auto responseContent = localServiceResponse->mutable_getneighbournodes();
             for (auto const &neighbour : neighbours)
             {
-                iop::locnet::NodeInfo *info = response->add_nodes();
+                iop::locnet::NodeInfo *info = responseContent->add_nodes();
                 Converter::FillProtoBuf(info, neighbour);
             }
             
@@ -251,8 +227,7 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
                 shared_ptr<IChangeListener> listener = _listenerFactory->Create(_iLocalService);
                 _iLocalService->AddListener(listener);
             }
-            
-            return result;
+            break;
         }
         
         case iop::locnet::LocalServiceRequest::kNeighbourhoodChanged:
@@ -263,13 +238,34 @@ iop::locnet::LocalServiceResponse* IncomingRequestDispatcher::DispatchLocalServi
         
         default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown local service operation");
     }
+    
+    return result;
 }
 
 
 
-iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
-    const iop::locnet::RemoteNodeRequest& nodeRequest)
+IncomingNodeRequestDispatcher::IncomingNodeRequestDispatcher(shared_ptr<INodeMethods> iNode) :
+    _iNode(iNode)
 {
+    if (_iNode == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No remote node logic instantiated");
+    }
+}
+
+
+
+unique_ptr<iop::locnet::Response> IncomingNodeRequestDispatcher::Dispatch(const iop::locnet::Request& request)
+{
+    if ( request.version().empty() || request.version()[0] != 1 )
+        { throw LocationNetworkError(ErrorCode::ERROR_UNSUPPORTED, "Missing or unknown request version"); }
+    
+    if ( ! request.has_remotenode() )
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "This interface serves only remote node requests"); }
+    
+    const iop::locnet::RemoteNodeRequest &nodeRequest = request.remotenode();
+    unique_ptr<iop::locnet::Response> result( new iop::locnet::Response() );
+    iop::locnet::RemoteNodeResponse *nodeResponse = result->mutable_remotenode();
+    
     switch ( nodeRequest.RemoteNodeRequestType_case() )
     {
         case iop::locnet::RemoteNodeRequest::kAcceptColleague:
@@ -277,17 +273,16 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             auto acceptColleagueReq = nodeRequest.acceptcolleague();
             auto nodeInfo( Converter::FromProtoBuf( acceptColleagueReq.requestornodeinfo() ) );
             
-            shared_ptr<NodeInfo> result = _iRemoteNode->AcceptColleague(nodeInfo);
+            shared_ptr<NodeInfo> result = _iNode->AcceptColleague(nodeInfo);
             LOG(DEBUG) << "Served AcceptColleague(" << nodeInfo
                        << "), accepted: " << static_cast<bool>(result);
             
-            auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_acceptcolleague()->set_accepted( static_cast<bool>(result) );
+            nodeResponse->mutable_acceptcolleague()->set_accepted( static_cast<bool>(result) );
             if (result) {
-                response->mutable_acceptcolleague()->set_allocated_acceptornodeinfo(
+                nodeResponse->mutable_acceptcolleague()->set_allocated_acceptornodeinfo(
                     Converter::ToProtoBuf(*result) );
             }
-            return response;
+            break;
         }
         
         case iop::locnet::RemoteNodeRequest::kRenewColleague:
@@ -295,17 +290,16 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             auto renewColleagueReq = nodeRequest.renewcolleague();
             auto nodeInfo( Converter::FromProtoBuf( renewColleagueReq.requestornodeinfo() ) );
             
-            shared_ptr<NodeInfo> result = _iRemoteNode->RenewColleague(nodeInfo);
+            shared_ptr<NodeInfo> result = _iNode->RenewColleague(nodeInfo);
             LOG(DEBUG) << "Served RenewColleague(" << nodeInfo
                        << "), accepted: " << static_cast<bool>(result);
                        
-            auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_renewcolleague()->set_accepted( static_cast<bool>(result) );
+            nodeResponse->mutable_renewcolleague()->set_accepted( static_cast<bool>(result) );
             if (result) {
-                response->mutable_renewcolleague()->set_allocated_acceptornodeinfo(
+                nodeResponse->mutable_renewcolleague()->set_allocated_acceptornodeinfo(
                     Converter::ToProtoBuf(*result) );
             }
-            return response;
+            break;
         }
         
         case iop::locnet::RemoteNodeRequest::kAcceptNeighbour:
@@ -313,17 +307,16 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             auto acceptNeighbourReq = nodeRequest.acceptneighbour();
             auto nodeInfo( Converter::FromProtoBuf( acceptNeighbourReq.requestornodeinfo() ) );
             
-            shared_ptr<NodeInfo> result = _iRemoteNode->AcceptNeighbour(nodeInfo);
+            shared_ptr<NodeInfo> result = _iNode->AcceptNeighbour(nodeInfo);
             LOG(DEBUG) << "Served AcceptNeighbour(" << nodeInfo
                        << "), accepted: " << static_cast<bool>(result);
                        
-            auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_acceptneighbour()->set_accepted( static_cast<bool>(result) );
+            nodeResponse->mutable_acceptneighbour()->set_accepted( static_cast<bool>(result) );
             if (result) {
-                response->mutable_acceptneighbour()->set_allocated_acceptornodeinfo(
+                nodeResponse->mutable_acceptneighbour()->set_allocated_acceptornodeinfo(
                     Converter::ToProtoBuf(*result) );
             }
-            return response;
+            break;
         }
         
         case iop::locnet::RemoteNodeRequest::kRenewNeighbour:
@@ -331,27 +324,25 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             auto renewNeighbourReq = nodeRequest.renewneighbour();
             auto nodeInfo( Converter::FromProtoBuf( renewNeighbourReq.requestornodeinfo() ) );
             
-            shared_ptr<NodeInfo> result = _iRemoteNode->RenewNeighbour(nodeInfo);
+            shared_ptr<NodeInfo> result = _iNode->RenewNeighbour(nodeInfo);
             LOG(DEBUG) << "Served RenewNeighbour(" << nodeInfo
                        << "), accepted: " << static_cast<bool>(result);
                        
-            auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_renewneighbour()->set_accepted( static_cast<bool>(result) );
+            nodeResponse->mutable_renewneighbour()->set_accepted( static_cast<bool>(result) );
             if (result) {
-                response->mutable_renewneighbour()->set_allocated_acceptornodeinfo(
+                nodeResponse->mutable_renewneighbour()->set_allocated_acceptornodeinfo(
                     Converter::ToProtoBuf(*result) );
             }
-            return response;
+            break;
         }
 
         case iop::locnet::RemoteNodeRequest::kGetNodeCount:
         {
-            size_t counter = _iRemoteNode->GetNodeCount();
+            size_t counter = _iNode->GetNodeCount();
             LOG(DEBUG) << "Served GetNodeCount(), node count: " << counter;
             
-            auto response = new iop::locnet::RemoteNodeResponse();
-            response->mutable_getnodecount()->set_nodecount(counter);
-            return response;
+            nodeResponse->mutable_getnodecount()->set_nodecount(counter);
+            break;
         }
         
         case iop::locnet::RemoteNodeRequest::kGetRandomNodes:
@@ -360,18 +351,17 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             Neighbours neighbourFilter = randomNodesReq.includeneighbours() ?
                 Neighbours::Included : Neighbours::Excluded;
                 
-            vector<NodeInfo> randomNodes = _iRemoteNode->GetRandomNodes(
+            vector<NodeInfo> randomNodes = _iNode->GetRandomNodes(
                 randomNodesReq.maxnodecount(), neighbourFilter );
             LOG(DEBUG) << "Served GetRandomNodes(), node count: " << randomNodes.size();
             
-            auto result = new iop::locnet::RemoteNodeResponse();
-            auto response = result->mutable_getrandomnodes();
+            auto responseContent = nodeResponse->mutable_getrandomnodes();
             for (auto const &node : randomNodes)
             {
-                iop::locnet::NodeInfo *info = response->add_nodes();
+                iop::locnet::NodeInfo *info = responseContent->add_nodes();
                 Converter::FillProtoBuf(info, node);
             }
-            return result;
+            break;
         }
         
         case iop::locnet::RemoteNodeRequest::kGetClosestNodes:
@@ -381,29 +371,49 @@ iop::locnet::RemoteNodeResponse* IncomingRequestDispatcher::DispatchRemoteNode(
             Neighbours neighbourFilter = closestRequest.includeneighbours() ?
                 Neighbours::Included : Neighbours::Excluded;
             
-            vector<NodeInfo> closeNodes( _iRemoteNode->GetClosestNodesByDistance( location,
+            vector<NodeInfo> closeNodes( _iNode->GetClosestNodesByDistance( location,
                 closestRequest.maxradiuskm(), closestRequest.maxnodecount(), neighbourFilter) );
             LOG(DEBUG) << "Served GetClosestNodes(), node count: " << closeNodes.size();
             
-            auto result = new iop::locnet::RemoteNodeResponse();
-            auto response = result->mutable_getclosestnodes();
+            auto responseContent = nodeResponse->mutable_getclosestnodes();
             for (auto const &node : closeNodes)
             {
-                iop::locnet::NodeInfo *info = response->add_nodes();
+                iop::locnet::NodeInfo *info = responseContent->add_nodes();
                 Converter::FillProtoBuf(info, node);
             }
-            return result;
+            break;
         }
         
         default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown remote node operation");
+    }
+    
+    return result;
+}
+
+
+
+IncomingClientRequestDispatcher::IncomingClientRequestDispatcher(shared_ptr<IClientMethods> iClient) :
+    _iClient(iClient)
+{
+    if (_iClient == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No client logic instantiated");
     }
 }
 
 
 
-iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
-    const iop::locnet::ClientRequest& clientRequest)
+unique_ptr<iop::locnet::Response> IncomingClientRequestDispatcher::Dispatch(const iop::locnet::Request& request)
 {
+    if ( request.version().empty() || request.version()[0] != 1 )
+        { throw LocationNetworkError(ErrorCode::ERROR_UNSUPPORTED, "Missing or unknown request version"); }
+    
+    if ( ! request.has_client() )
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "This interface serves only client requests"); }
+    
+    const iop::locnet::ClientRequest &clientRequest = request.client();
+    unique_ptr<iop::locnet::Response> result( new iop::locnet::Response() );
+    iop::locnet::ClientResponse *clientResponse = result->mutable_client();
+    
     switch ( clientRequest.ClientRequestType_case() )
     {
         case iop::locnet::ClientRequest::kGetServices:
@@ -411,15 +421,14 @@ iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
             auto const &services = _iClient->GetServices();
             LOG(DEBUG) << "Served GetServices(), service count: " << services.size();
             
-            auto result = new iop::locnet::ClientResponse();
-            auto response = result->mutable_getservices();
+            auto responseContent = clientResponse->mutable_getservices();
             for (auto const &service : services)
             {
-                iop::locnet::ServiceProfile *entry = response->add_services();
+                iop::locnet::ServiceProfile *entry = responseContent->add_services();
                 entry->set_servicetype( Converter::ToProtoBuf(service.first) );
                 entry->set_allocated_profile( Converter::ToProtoBuf(service.second) );
             }
-            return result;
+            break;
         }
         
         case iop::locnet::ClientRequest::kGetNeighbourNodes:
@@ -427,14 +436,13 @@ iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
             vector<NodeInfo> neighbours = _iClient->GetNeighbourNodesByDistance();
             LOG(DEBUG) << "Served GetNeighbourNodes(), node count: " << neighbours.size();
             
-            auto result = new iop::locnet::ClientResponse();
-            auto response = result->mutable_getneighbournodes();
+            auto responseContent = clientResponse->mutable_getneighbournodes();
             for (auto const &neighbour : neighbours)
             {
-                iop::locnet::NodeInfo *info = response->add_nodes();
+                iop::locnet::NodeInfo *info = responseContent->add_nodes();
                 Converter::FillProtoBuf(info, neighbour);
             }
-            return result;
+            break;
         }
         
         case iop::locnet::ClientRequest::kGetClosestNodes:
@@ -448,20 +456,69 @@ iop::locnet::ClientResponse* IncomingRequestDispatcher::DispatchClient(
                 closestRequest.maxradiuskm(), closestRequest.maxnodecount(), neighbourFilter) );
             LOG(DEBUG) << "Served GetClosestNodes(), node count: " << closeNodes.size();
             
-            auto result = new iop::locnet::ClientResponse();
-            auto response = result->mutable_getclosestnodes();
+            auto responseContent = clientResponse->mutable_getclosestnodes();
             for (auto const &node : closeNodes)
             {
-                iop::locnet::NodeInfo *info = response->add_nodes();
+                iop::locnet::NodeInfo *info = responseContent->add_nodes();
                 Converter::FillProtoBuf(info, node);
             }
-            return result;
+            break;
         }
         
         default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown client operation");
     }
+    
+    return result;
 }
 
+
+
+IncomingRequestDispatcher::IncomingRequestDispatcher(
+        shared_ptr<LocNet::Node> node, shared_ptr<IChangeListenerFactory> listenerFactory ) :
+    _iLocalService( new IncomingLocalServiceRequestDispatcher(node, listenerFactory) ),
+    _iRemoteNode( new IncomingNodeRequestDispatcher(node) ),
+    _iClient( new IncomingClientRequestDispatcher(node) )
+{
+    if (node == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No node instantiated");
+    }
+}
+
+IncomingRequestDispatcher::IncomingRequestDispatcher(
+        shared_ptr<IncomingLocalServiceRequestDispatcher> iLocalServices,
+        shared_ptr<IncomingNodeRequestDispatcher> iRemoteNode,
+        shared_ptr<IncomingClientRequestDispatcher> iClient ) :
+    _iLocalService(iLocalServices), _iRemoteNode(iRemoteNode), _iClient(iClient)
+{
+    if (_iLocalService == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No local request dispatcher instantiated");
+    }
+    if (_iRemoteNode == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No node request dispatcher instantiated");
+    }
+    if (_iClient == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No client request dispatcher instantiated");
+    }
+}
+    
+
+
+unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(const iop::locnet::Request& request)
+{
+    switch ( request.RequestType_case() )
+    {
+        case iop::locnet::Request::kLocalService:
+            return _iLocalService->Dispatch(request);
+            
+        case iop::locnet::Request::kRemoteNode:
+            return _iRemoteNode->Dispatch(request);
+            
+        case iop::locnet::Request::kClient:
+            return _iClient->Dispatch(request);
+            
+        default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown request type");
+    }
+}
 
 
 
@@ -512,7 +569,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptColleague(const NodeInfo& 
     {
         const string &address = response->remotenode().acceptcolleague().remoteipaddress();
         if ( ! address.empty() )
-            { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
+            { _detectedIpCallback( NodeContact::AddressFromBytes(address) ); }
     }
     return result;
 }
@@ -539,7 +596,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewColleague(const NodeInfo& n
     {
         const string &address = response->remotenode().renewcolleague().remoteipaddress();
         if ( ! address.empty() )
-            { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
+            { _detectedIpCallback( NodeContact::AddressFromBytes(address) ); }
     }
     return result;
 }
@@ -566,7 +623,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::AcceptNeighbour(const NodeInfo& 
     {
         const string &address = response->remotenode().acceptneighbour().remoteipaddress();
         if ( ! address.empty() )
-            { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
+            { _detectedIpCallback( NodeContact::AddressFromBytes(address) ); }
     }
     return result;
 }
@@ -593,7 +650,7 @@ shared_ptr<NodeInfo> NodeMethodsProtoBufClient::RenewNeighbour(const NodeInfo& n
     {
         const string &address = response->remotenode().renewneighbour().remoteipaddress();
         if ( ! address.empty() )
-            { _detectedIpCallback( NetworkInterface::AddressFromBytes(address) ); }
+            { _detectedIpCallback( NodeContact::AddressFromBytes(address) ); }
     }
     return result;
 }

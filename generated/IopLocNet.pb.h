@@ -289,11 +289,17 @@ class Contact : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::std::string* release_ipaddress();
   void set_allocated_ipaddress(::std::string* ipaddress);
 
-  // optional uint32 port = 2;
-  void clear_port();
-  static const int kPortFieldNumber = 2;
-  ::google::protobuf::uint32 port() const;
-  void set_port(::google::protobuf::uint32 value);
+  // optional uint32 nodePort = 2;
+  void clear_nodeport();
+  static const int kNodePortFieldNumber = 2;
+  ::google::protobuf::uint32 nodeport() const;
+  void set_nodeport(::google::protobuf::uint32 value);
+
+  // optional uint32 clientPort = 3;
+  void clear_clientport();
+  static const int kClientPortFieldNumber = 3;
+  ::google::protobuf::uint32 clientport() const;
+  void set_clientport(::google::protobuf::uint32 value);
 
   // @@protoc_insertion_point(class_scope:iop.locnet.Contact)
  private:
@@ -301,7 +307,8 @@ class Contact : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
   ::google::protobuf::internal::ArenaStringPtr ipaddress_;
-  ::google::protobuf::uint32 port_;
+  ::google::protobuf::uint32 nodeport_;
+  ::google::protobuf::uint32 clientport_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_IopLocNet_2eproto();
   friend void protobuf_AssignDesc_IopLocNet_2eproto();
@@ -3790,18 +3797,32 @@ inline void Contact::set_allocated_ipaddress(::std::string* ipaddress) {
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.Contact.ipAddress)
 }
 
-// optional uint32 port = 2;
-inline void Contact::clear_port() {
-  port_ = 0u;
+// optional uint32 nodePort = 2;
+inline void Contact::clear_nodeport() {
+  nodeport_ = 0u;
 }
-inline ::google::protobuf::uint32 Contact::port() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.Contact.port)
-  return port_;
+inline ::google::protobuf::uint32 Contact::nodeport() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.Contact.nodePort)
+  return nodeport_;
 }
-inline void Contact::set_port(::google::protobuf::uint32 value) {
+inline void Contact::set_nodeport(::google::protobuf::uint32 value) {
   
-  port_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.Contact.port)
+  nodeport_ = value;
+  // @@protoc_insertion_point(field_set:iop.locnet.Contact.nodePort)
+}
+
+// optional uint32 clientPort = 3;
+inline void Contact::clear_clientport() {
+  clientport_ = 0u;
+}
+inline ::google::protobuf::uint32 Contact::clientport() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.Contact.clientPort)
+  return clientport_;
+}
+inline void Contact::set_clientport(::google::protobuf::uint32 value) {
+  
+  clientport_ = value;
+  // @@protoc_insertion_point(field_set:iop.locnet.Contact.clientPort)
 }
 
 // -------------------------------------------------------------------

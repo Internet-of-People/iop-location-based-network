@@ -128,7 +128,7 @@ class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
 public:
     
     ProtoBufTcpStreamSession(std::shared_ptr<asio::ip::tcp::socket> socket);
-    ProtoBufTcpStreamSession(const NetworkInterface &contact);
+    ProtoBufTcpStreamSession(const NetworkEndpoint &endpoint);
     ~ProtoBufTcpStreamSession();
     
     const SessionId& id() const override;
@@ -168,7 +168,7 @@ class TcpStreamConnectionFactory : public INodeConnectionFactory
     
 public:
     
-    std::shared_ptr<INodeMethods> ConnectTo(const NetworkInterface &address) override;
+    std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &address) override;
     
     void detectedIpCallback(std::function<void(const Address&)> detectedIpCallback);
 };

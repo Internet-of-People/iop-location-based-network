@@ -73,7 +73,15 @@ class DummyNodeConnectionFactory: public INodeConnectionFactory
 {
 public:
     
-    std::shared_ptr<INodeMethods> ConnectTo(const NetworkInterface &contact) override;
+    std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &endpoint) override;
+};
+
+
+class DummyChangeListenerFactory: public IChangeListenerFactory
+{
+public:
+    
+    std::shared_ptr<IChangeListener> Create(std::shared_ptr<ILocalServiceMethods> localService) override;
 };
 
 
