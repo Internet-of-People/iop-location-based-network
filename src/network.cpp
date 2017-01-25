@@ -81,6 +81,7 @@ string  NodeContact::AddressBytes() const
 
 
 TcpServer::TcpServer(TcpPort portNumber) :
+    _ioService(), _threadPool(), _shutdownRequested(false),
     _acceptor( _ioService, tcp::endpoint( tcp::v4(), portNumber ) )
 {
     // Switch the acceptor to listening state

@@ -20,6 +20,13 @@ to come up with an initial version as soon as possible.
 Accordingly, you can find a lot of `// TODO` comments in the source
 calling to (re)consider algorithms, error handling and other implementations.
 
+Though using the easylogging++ library is very convenient, we recently experienced some strange bugs with it.
+To be thread-safe it needs to have `#define ELPP_THREAD_SAFE` in all files where it's used,
+currently this is set as compiler option with cmake. However, we experienced very rare and undeterministic
+errors like "pure virtual method called" with a stacktrace pointing to construction of logger objects.
+Probably it calls a method of an uninitialized derived class during construction.
+If these occur and cannot be easily fixed, we may have to use a different logging library.
+
 
 ## Architecture
 
@@ -33,11 +40,6 @@ A reconsideration of the current layering implementation (application: Node, mes
 is also necessary because features "connection keepalive" and "Ip autodetection"
 do not naturally fit into the picture, see the message loop implementation currently in
 `ProtoBufDispatchingTcpServer::AsyncAcceptHandler()`.
-
-Interfaces of provided operations should be better separated and checked for proper access rights by
-different types of consumers (local service, node and client). This can be achieved
-either by exposing different interfaces on different TCP ports or
-offering different authentication methods on the same port for different consumer types.
 
 We could improve both code structure and compile times. We could restructuring headers and
 using a specific framework header (e.g. asio, ezOptionParser, etc) only in a single h/cpp pair.
