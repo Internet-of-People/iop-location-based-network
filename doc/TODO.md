@@ -9,8 +9,9 @@ Though the source code is supposed to be functional, there is a lot of room for 
 Currently we are testing the network with the community.
 We should also build a test environment that runs a whole network (i.e. lots of nodes)
 on a single host to prove that the base algorithm and its current implementation
-works fine in practice. That means that nodes can always discover the network,
-no network split can happen, etc.
+works fine in practice. That means that nodes should always discover the network,
+no network split should happen without network blocks, a splitted network
+should automatically reunite when network blocking is lifted, etc.
 
 
 ## Technical debt
@@ -23,12 +24,25 @@ calling to (re)consider algorithms, error handling and other implementations.
 Though using the easylogging++ library is very convenient, we recently experienced some strange bugs with it.
 To be thread-safe it needs to have `#define ELPP_THREAD_SAFE` in all files where it's used,
 currently this is set as compiler option with cmake. However, we experienced very rare and undeterministic
-errors like "pure virtual method called" with a stacktrace pointing to construction of logger objects.
-Probably it calls a method of an uninitialized derived class during construction.
-If these occur and cannot be easily fixed, we may have to use a different logging library.
+errors (e.g. "pure virtual method called", probably it calls a method of an uninitialized derived class
+during construction) with a stacktrace pointing to construction of logger objects.
+If these continue to occur and cannot be easily fixed by upgrading to later bugfix releases,
+we may have to use a different logging library.
 
 
 ## Architecture
+
+Our current implementation uses a local database to store just a sparse subset of all the nodes
+of the network, but this is not necessarily the only direction.
+We could also experiment with using a distributed hash table (DHT).
+The advantage would be having a single, full node list of the whole network,
+readable by every node. Each node could write only its own details
+(e.g. when joining the network or changing its IP addresS).
+Note that this direction has shortcomings to solve: as far as we know
+it would not work locally if a country blocks external internet access,
+see e.g. Great Firewall of China. However, it might be possible to create
+our own solution reusing some parts of DHT protocols and forging a custom solution.
+We just didn't have enough time and expertise to fully discover this direction.
 
 During prototyping, features were added layer by layer,
 starting from the application layer through messaging down to networking.
@@ -41,10 +55,12 @@ is also necessary because features "connection keepalive" and "Ip autodetection"
 do not naturally fit into the picture, see the message loop implementation currently in
 `ProtoBufDispatchingTcpServer::AsyncAcceptHandler()`.
 
-We could improve both code structure and compile times. We could restructuring headers and
-using a specific framework header (e.g. asio, ezOptionParser, etc) only in a single h/cpp pair.
-We could also use precompiled headers to speed up compilation. We already tried it with the
-[cotire CMake plugin](https://github.com/sakra/cotire), but it didn't really seem to make a difference.
+We could improve both code structure and compile times. One direction could be restructuring
+sources and using a specific framework header (e.g. asio, ezOptionParser, etc)
+only in a single h/cpp pair so every huge framework header is compiled only once.
+Another approach could be using precompiled headers to speed up compilation.
+We already tried the [cotire CMake plugin](https://github.com/sakra/cotire),
+but it didn't seem to make a difference.
 
 
 ## Convenience
