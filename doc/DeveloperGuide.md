@@ -1,7 +1,40 @@
 # Overview
 
+This software implements a node instance of the location based network.
+Multiple such nodes form and maintain a geographically organized network
+that allows searching for nodes and their hosted services
+(e.g. profile server) by location.
 
-## Project architecture
+Creating this implementation we had the following important design goals:
+- scale to a huge number of nodes (potentially millions)
+- survive both adding/losing a large number of nodes and the
+  appearance of a national network block (e.g. the Chinese Firewall)
+
+Consequently we made these decisions:
+- there are no distinguished supernodes, all nodes are equal
+- the full list of nodes may be too large, thus for nodes it should be enough
+  to store only a part of the whole network.
+- each node has its own unique local network map that is redundant with the map of other nodes
+- nodes should know the geographically closer part of the network better,
+  as the distance increases it knows less.
+
+Consequently, nodes implement an algorithm that helps them pick which nodes they
+need to know about and which nodes they don’t.
+The Network Map of each node consists of two parts with different goals and properties.
+The Neighborhood Map aims to maintain a comprehensive list of the closest nodes.
+The World Map aims to provide a rough coverage of the rest of the world
+outside the neighborhood. To prevent too much data and limit node density,
+the World Map picks only a single node from each area.
+Covered areas are defined with circular “bubbles” drawn around single nodes that must not overlap.
+The World Map uses a changing bubble size to have a denser local and sparser remote node density.
+So the greater the area, the bigger bubbles are, i.e. less nodes are included.
+Area bubbles are defined autonomously and are specific to the Network Map of each node.
+There is no node count limit for the World Map, the increasing size of bubbles
+serves as a limit for node counts. For the Neighborhood Map the bubbles may overlap,
+so nodes have a maximal count of neighboring nodes.
+
+
+# Project architecture
 
 Directories, files and sources are organized as follows:
 - `doc` contains project documentation like this file
@@ -15,10 +48,10 @@ Directories, files and sources are organized as follows:
     to older distributions where it's not yet available
   - `locnet` contains scripts to pack our own binaries
 - `src` contains the source files for this software
-  - `config` defines an interface as a collection of all configuration settings
+  - `config.h/cpp` defines an interface collecting all configuration settings
     of the software and provides an implementation that parses options
-    from command line or a config file.
-  - `basic` `h/cpp` collects the essential typedefs, data holder structures
+    from the command line or a config file.
+  - `basic` collects the essential typedefs, data holder structures
     and some utility classes used as basic building blocks in other sources
   - `spatialdb` defines an interface of a node database allowing search by location
     and gives an implementation with the SpatiaLite (an SQLite extension) engine
@@ -44,10 +77,7 @@ This redundancy is intentional: prevents direct dependance of the core applicati
 from generated sources used in another layer (messaging) and also
 allows extending the sources with additional messaging frameworks if necessary.
 
-## Components and workflow
 
-TODO
-
-## Summary of ProtoBuf definitions
+# Components and workflow
 
 TODO
