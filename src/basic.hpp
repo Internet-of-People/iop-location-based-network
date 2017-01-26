@@ -4,6 +4,7 @@
 #include <exception>
 #include <functional>
 #include <iostream>
+#include <unordered_map>
 
 
 
@@ -64,7 +65,6 @@ class NetworkEndpoint
     
 public:
     
-    NetworkEndpoint();
     NetworkEndpoint(const NetworkEndpoint &other);
     NetworkEndpoint(const Address &address, TcpPort port);
     
@@ -72,6 +72,7 @@ public:
     TcpPort port() const;
     
     bool operator==(const NetworkEndpoint &other) const;
+    bool operator!=(const NetworkEndpoint &other) const;
     
     // NOTE Following functions are implemented in network.cpp as being library-specific (currently with asio)
     bool isLoopback() const;
@@ -90,7 +91,6 @@ class NodeContact
 
 public:
     
-    NodeContact();
     NodeContact(const NodeContact &other);
     NodeContact(const Address &address, TcpPort nodePort, TcpPort clientPort);
     
@@ -104,6 +104,7 @@ public:
     void address(const Address &address);
     
     bool operator==(const NodeContact &other) const;
+    bool operator!=(const NodeContact &other) const;
     
     // NOTE Following functions are implemented in network.cpp as being library-specific (currently with asio)
     // TODO consider splitting class into an interface here and an implementation in network
@@ -114,34 +115,6 @@ public:
 };
 
 std::ostream& operator<<(std::ostream& out, const NodeContact &value);
-
-
-
-// Data holder class for node details related to identity like id and network contact.
-// TODO will we also need a public key here later for validation?
-class NodeProfile
-{
-    NodeId      _id;
-    NodeContact _contact;
-    
-public:
-    
-    NodeProfile();
-    NodeProfile(const NodeProfile &other);
-    NodeProfile(const NodeId &id, const NodeContact &contact);
-    
-    const NodeId& id() const;
-    NodeContact& contact();
-    const NodeContact& contact() const;
-    
-    bool operator==(const NodeProfile &other) const;
-    bool operator!=(const NodeProfile &other) const;
-};
-
-std::ostream& operator<<(std::ostream& out, const NodeProfile &value);
-
-
-typedef NodeProfile ServiceProfile;
 
 
 
@@ -169,45 +142,6 @@ std::ostream& operator<<(std::ostream& out, const GpsLocation &value);
 
 
 
-// Data holder class for complete node information exposed to the network.
-class NodeInfo
-{
-    NodeProfile _profile;
-    GpsLocation _location;
-    
-public:
-    
-    NodeInfo(const NodeInfo &other);
-    NodeInfo(const NodeProfile &profile, const GpsLocation &location);
-    NodeInfo(const NodeProfile &profile, GpsCoordinate latitude, GpsCoordinate longitude);
-    
-    NodeProfile& profile();
-    const NodeProfile& profile() const;
-    const GpsLocation& location() const;
-    
-    bool operator==(const NodeInfo &other) const;
-    bool operator!=(const NodeInfo &other) const;
-};
-
-std::ostream& operator<<(std::ostream& out, const NodeInfo &value);
-
-
-
-enum class NodeRelationType : uint8_t
-{
-    Colleague   = 1,
-    Neighbour   = 2,
-    Self        = 3,
-};
-
-
-enum class NodeContactRoleType : uint8_t
-{
-    Initiator   = 1,
-    Acceptor    = 2,
-};
-
-
 enum class ServiceType : uint8_t
 {
     // Low level networks
@@ -232,6 +166,77 @@ struct EnumHasher
     template <typename EnumType>
     std::size_t operator()(EnumType e) const // static_cast any type to size_t using type deduction
         { return static_cast<std::size_t>(e); }
+};
+
+
+
+class ServiceInfo
+{
+    ServiceType _type;
+    TcpPort     _port;
+    //NodeId  _instanceId;
+    
+public:
+    
+    ServiceInfo(); // Required to be a value in a map
+    ServiceInfo(const ServiceInfo &other);
+    ServiceInfo(ServiceType type, TcpPort port); //, const NodeId &instanceId);
+    
+    ServiceType type() const;
+    TcpPort port() const;
+    // const NodeId& instanceId() const;
+    
+    bool operator==(const ServiceInfo &other) const;
+    bool operator!=(const ServiceInfo &other) const;
+};
+
+
+
+// Data holder class for complete node information exposed to the network,
+// including node identity, network contact and position.
+// TODO will we also need a public key here later as part of the identity?
+class NodeInfo
+{
+    typedef std::unordered_map<ServiceType, ServiceInfo, EnumHasher> Services;
+    
+    NodeId      _id;
+    GpsLocation _location;
+    NodeContact _contact;
+    // Services    _services;
+    
+public:
+    
+    NodeInfo(const NodeInfo &other);
+    NodeInfo( const NodeId &id, const GpsLocation &location, const NodeContact &contact );
+        // const std::unordered_map<ServiceType, ServiceInfo, EnumHasher> &services );
+    
+    const NodeId& id() const;
+    const GpsLocation& location() const;
+    const NodeContact& contact() const;
+    //const Services& services() const;
+    
+    NodeContact& contact();
+    
+    bool operator==(const NodeInfo &other) const;
+    bool operator!=(const NodeInfo &other) const;
+};
+
+std::ostream& operator<<(std::ostream& out, const NodeInfo &value);
+
+
+
+enum class NodeRelationType : uint8_t
+{
+    Colleague   = 1,
+    Neighbour   = 2,
+    Self        = 3,
+};
+
+
+enum class NodeContactRoleType : uint8_t
+{
+    Initiator   = 1,
+    Acceptor    = 2,
 };
 
 

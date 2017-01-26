@@ -60,7 +60,7 @@ void Node::EnsureMapFilled()
             // This still might be normal if we're the very first seed node of the whole network
             auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
                 [this] (const NetworkEndpoint &contact)
-                    { return _myNodeInfo.profile().contact().nodeEndpoint() == contact; } );
+                    { return _myNodeInfo.contact().nodeEndpoint() == contact; } );
             if ( seedIt == _seedNodes.end() )
                  { throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Failed to discover any node of the network"); }
             else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
@@ -70,17 +70,17 @@ void Node::EnsureMapFilled()
 
 
 
-const unordered_map<ServiceType,ServiceProfile,EnumHasher>& Node::GetServices() const
+const unordered_map<ServiceType,ServiceInfo,EnumHasher>& Node::GetServices() const
     { return _services; }
     
-void Node::RegisterService(ServiceType serviceType, const ServiceProfile& serviceInfo)
+void Node::RegisterService(const ServiceInfo& serviceInfo)
 {
 // NOTE this forbids registering again for connecting services after a restart
 //     auto it = _services.find(serviceType);
 //     if ( it != _services.end() ) {
 //         throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Service type is already registered");
 //     }
-    _services[serviceType] = serviceInfo;
+    _services[ serviceInfo.type() ] = serviceInfo;
 }
 
 void Node::DeregisterService(ServiceType serviceType)
@@ -105,8 +105,11 @@ void Node::RemoveListener(const SessionId &sessionId)
 // TODO consider if there are potential thread safety problems here, potentially may be called from any thread
 void Node::DetectedExternalAddress(const Address& address)
 {
-    LOG(INFO) << "Detected external IP address " << address;
-    _myNodeInfo.profile().contact().address(address);
+    if (! address.empty() )
+    {
+        LOG(INFO) << "Detected external IP address " << address;
+        _myNodeInfo.contact().address(address);
+    }
 }
 
 
@@ -115,7 +118,7 @@ shared_ptr<NodeInfo> Node::AcceptColleague(const NodeInfo &node)
 // TODO Sanity checks are performed in SafeStoreNode, should we reject the request
 //      if the other node "forgot" about the existing relation or call the wrong method (accept vs renew)?
 //      Should the two methods maybe merged instead?
-//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.id() );
 //     if (storedInfo != nullptr)
 //         { return false; } // We shouldn't have this colleague already
     
@@ -128,7 +131,7 @@ shared_ptr<NodeInfo> Node::AcceptColleague(const NodeInfo &node)
 shared_ptr<NodeInfo> Node::RenewColleague(const NodeInfo& node)
 {
 // TODO Store conditions are checked in SafeStoreNode, should we reject the request?
-//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.id() );
 //     if (storedInfo == nullptr)
 //         { return false; } // We should have this colleague already
 
@@ -142,7 +145,7 @@ shared_ptr<NodeInfo> Node::RenewColleague(const NodeInfo& node)
 shared_ptr<NodeInfo> Node::AcceptNeighbour(const NodeInfo &node)
 {
 // TODO Store conditions are checked in SafeStoreNode, should we reject the request?
-//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.id() );
 //     if (storedInfo != nullptr)
 //         { return false; } // We shouldn't have this colleague already
     
@@ -155,7 +158,7 @@ shared_ptr<NodeInfo> Node::AcceptNeighbour(const NodeInfo &node)
 shared_ptr<NodeInfo> Node::RenewNeighbour(const NodeInfo& node)
 {
 // TODO Store conditions are checked in SafeStoreNode, should we reject the request?
-//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.profile().id() );
+//     shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( node.id() );
 //     if (storedInfo == nullptr)
 //         { return false; } // We should have this colleague already
         
@@ -208,11 +211,11 @@ bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &node
     
     // If there are no points yet (i.e. map is still empty) or our single node is being updated, it cannot overlap
     if ( closestNodes.empty() ||
-       ( closestNodes.size() == 1 && closestNodes.front().profile().id() == nodeIdToIgnore ) )
+       ( closestNodes.size() == 1 && closestNodes.front().id() == nodeIdToIgnore ) )
         { return false; }
     
     // If updating a node with specified nodeId, ignore overlapping with itself
-    const GpsLocation &myClosesNodeLocation = closestNodes.front().profile().id() != nodeIdToIgnore ?
+    const GpsLocation &myClosesNodeLocation = closestNodes.front().id() != nodeIdToIgnore ?
         closestNodes.front().location() : closestNodes.back().location();
         
     // Get bubble sizes of both locations
@@ -229,7 +232,7 @@ bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &node
 shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint)
 {
     // There is no point in connecting to ourselves
-    if ( endpoint == _myNodeInfo.profile().contact().nodeEndpoint() || endpoint.isLoopback() )
+    if ( endpoint == _myNodeInfo.contact().nodeEndpoint() || endpoint.isLoopback() )
         { return shared_ptr<INodeMethods>(); }
     
     try { return _connectionFactory->ConnectTo(endpoint); }
@@ -247,12 +250,12 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
     {
         // We must not explicitly add or overwrite our own node info here.
         // Whether or not our own nodeinfo is stored in the db is an implementation detail of the SpatialDatabase.
-        if ( plannedEntry.profile().id() == _myNodeInfo.profile().id() ||
+        if ( plannedEntry.id() == _myNodeInfo.id() ||
              plannedEntry.relationType() == NodeRelationType::Self )
             { return false; }
      
         // Validate if node is acceptable
-        shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( plannedEntry.profile().id() );
+        shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( plannedEntry.id() );
         if ( storedInfo && storedInfo->relationType() == NodeRelationType::Self )
             { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Forbidden operation: must not overwrite self here"); }
         
@@ -267,7 +270,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                         { return false; }
                     if ( storedInfo->location() != plannedEntry.location() ) {
                         // Node must not be moved away to a position that overlaps with anything other than itself
-                        if ( BubbleOverlaps( plannedEntry.location(), plannedEntry.profile().id() ) )
+                        if ( BubbleOverlaps( plannedEntry.location(), plannedEntry.id() ) )
                             { return false; }
                     }
                 }
@@ -306,7 +309,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
         {
             // If no connection argument is specified, try connecting to candidate node
             if (nodeConnection == nullptr)
-                { nodeConnection = SafeConnectTo( plannedEntry.profile().contact().nodeEndpoint() ); }
+                { nodeConnection = SafeConnectTo( plannedEntry.contact().nodeEndpoint() ); }
             if (nodeConnection == nullptr)
                 { return false; }
             
@@ -337,10 +340,10 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                 { return false; }
             
             // Node identity is questionable
-            if ( ! isSeedNode && freshInfo->profile().id() != plannedEntry.profile().id() )
+            if ( ! isSeedNode && freshInfo->id() != plannedEntry.id() )
             {
-                LOG(WARNING) << "Asked permission from node with id " << plannedEntry.profile().id()
-                             << " but returned node info has node id " << freshInfo->profile().id();
+                LOG(WARNING) << "Asked permission from node with id " << plannedEntry.id()
+                             << " but returned node info has node id " << freshInfo->id();
                 return false;
             }
             
@@ -394,8 +397,8 @@ bool Node::InitializeWorld()
             
             // Try to add seed node to our network (no matter if fails)
             // TODO a cleaner would be nice, but nodeInfo will be queried in SafeStoreNode anyway
-            SafeStoreNode( NodeDbEntry( NodeProfile( "ThisNodeIdWillBeOverWritten", 
-                NodeContact( selectedSeedContact.address(), selectedSeedContact.port(), 0 ) ), GpsLocation(0,0), 
+            SafeStoreNode( NodeDbEntry( NodeInfo( "ThisNodeIdWillBeOverWritten", 
+                GpsLocation(0,0), NodeContact( selectedSeedContact.address(), selectedSeedContact.port(), 0 ) ), 
                 NodeRelationType::Colleague, NodeContactRoleType::Initiator ), seedNodeConnection, true );
             
             // Query both total node count and an initial list of random nodes to start with
@@ -439,10 +442,10 @@ bool Node::InitializeWorld()
             randomColleagueCandidates.pop_back();
             
             // Check if we tried it already
-            if ( find( triedNodes.begin(), triedNodes.end(), nodeInfo.profile().contact().nodeEndpoint() ) != triedNodes.end() )
+            if ( find( triedNodes.begin(), triedNodes.end(), nodeInfo.contact().nodeEndpoint() ) != triedNodes.end() )
                 { continue; }
             
-            triedNodes.push_back( nodeInfo.profile().contact().nodeEndpoint() );
+            triedNodes.push_back( nodeInfo.contact().nodeEndpoint() );
             
             SafeStoreNode( NodeDbEntry(nodeInfo, NodeRelationType::Colleague, NodeContactRoleType::Initiator) );
         }
@@ -458,7 +461,7 @@ bool Node::InitializeWorld()
                 try
                 {
                     // Connect to selected random node
-                    shared_ptr<INodeMethods> randomConnection = SafeConnectTo( nodeInfo.profile().contact().nodeEndpoint() );
+                    shared_ptr<INodeMethods> randomConnection = SafeConnectTo( nodeInfo.contact().nodeEndpoint() );
                     if (randomConnection == nullptr)
                         { continue; }
                     
@@ -501,7 +504,7 @@ bool Node::InitializeNeighbourhood()
         oldClosestNode = newClosestNode;
         try
         {
-            shared_ptr<INodeMethods> closestNodeConnection = SafeConnectTo( newClosestNode.profile().contact().nodeEndpoint() );
+            shared_ptr<INodeMethods> closestNodeConnection = SafeConnectTo( newClosestNode.contact().nodeEndpoint() );
             if (closestNodeConnection == nullptr) {
                 // TODO consider what better to do if closest node is not reachable?
                 continue;
@@ -512,7 +515,7 @@ bool Node::InitializeNeighbourhood()
             if ( newClosestNodes.empty() )
                 { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Node returned empty node list result"); }
                 
-            if ( newClosestNodes.front().profile().id() != _myNodeInfo.profile().id() )
+            if ( newClosestNodes.front().id() != _myNodeInfo.id() )
                 { newClosestNode = newClosestNodes[0]; }
             else if ( newClosestNodes.size() > 1 )
                 { newClosestNode = newClosestNodes[1]; }
@@ -522,7 +525,7 @@ bool Node::InitializeNeighbourhood()
             // TODO consider what else to do here
         }
     }
-    while ( oldClosestNode.profile().id() != newClosestNode.profile().id() );
+    while ( oldClosestNode.id() != newClosestNode.id() );
     
     deque<NodeInfo> nodesToAskQueue{newClosestNode};
     unordered_set<string> askedNodeIds;
@@ -537,14 +540,14 @@ bool Node::InitializeNeighbourhood()
         nodesToAskQueue.pop_front();
         
         // Skip it if has been processed already
-        auto askedIt = find( askedNodeIds.begin(), askedNodeIds.end(), neighbourCandidate.profile().id() );
+        auto askedIt = find( askedNodeIds.begin(), askedNodeIds.end(), neighbourCandidate.id() );
         if ( askedIt != askedNodeIds.end() )
             { continue; }
             
         try
         {
             // Try connecting to the node
-            shared_ptr<INodeMethods> candidateConnection = SafeConnectTo( neighbourCandidate.profile().contact().nodeEndpoint() );
+            shared_ptr<INodeMethods> candidateConnection = SafeConnectTo( neighbourCandidate.contact().nodeEndpoint() );
             if (candidateConnection == nullptr)
                 { continue; }
                 
@@ -558,7 +561,7 @@ bool Node::InitializeNeighbourhood()
                 INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT, Neighbours::Included );
             
             // Mark current node as processed and append its new neighbours to our todo list
-            askedNodeIds.insert( neighbourCandidate.profile().id() );
+            askedNodeIds.insert( neighbourCandidate.id() );
             nodesToAskQueue.insert( nodesToAskQueue.end(),
                 newNeighbourCandidates.begin(), newNeighbourCandidates.end() );
         }
@@ -590,12 +593,12 @@ void Node::RenewNodeRelations()
         try
         {
             bool renewed = SafeStoreNode(node);
-            LOG(DEBUG) << "Attempted renewing relation with node " << node.profile().id() << ", result: " << renewed;
+            LOG(DEBUG) << "Attempted renewing relation with node " << node.id() << ", result: " << renewed;
         }
         catch (exception &e)
         {
             LOG(WARNING) << "Unexpected error renewing relation for node "
-                         << node.profile().id() << " : " << e.what();
+                         << node.id() << " : " << e.what();
         }
     }
 }
@@ -628,10 +631,10 @@ void Node::DiscoverUnknownAreas()
                 myClosestNodes[0] : myClosestNodes[1];
             
             // Connect to closest node
-            shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.profile().contact().nodeEndpoint() );
+            shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.contact().nodeEndpoint() );
             if (connection == nullptr)
             {
-                LOG(DEBUG) << "Failed to contact node " << myClosestNode.profile().id();
+                LOG(DEBUG) << "Failed to contact node " << myClosestNode.id();
                 continue;
             }
             

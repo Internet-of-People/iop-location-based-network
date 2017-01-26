@@ -42,7 +42,6 @@ class BuildNetworkRequest;
 class BuildNetworkResponse;
 class ClientRequest;
 class ClientResponse;
-class Contact;
 class DeregisterServiceRequest;
 class DeregisterServiceResponse;
 class GetClosestNodesByDistanceRequest;
@@ -64,15 +63,15 @@ class MessageWithHeader;
 class NeighbourhoodChange;
 class NeighbourhoodChangedNotificationRequest;
 class NeighbourhoodChangedNotificationResponse;
+class NodeContact;
 class NodeInfo;
-class NodeProfile;
 class RegisterServiceRequest;
 class RegisterServiceResponse;
 class RemoteNodeRequest;
 class RemoteNodeResponse;
 class Request;
 class Response;
-class ServiceProfile;
+class ServiceInfo;
 
 enum Status {
   STATUS_OK = 0,
@@ -218,32 +217,32 @@ class GpsLocation : public ::google::protobuf::Message /* @@protoc_insertion_poi
 };
 // -------------------------------------------------------------------
 
-class Contact : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.Contact) */ {
+class NodeContact : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.NodeContact) */ {
  public:
-  Contact();
-  virtual ~Contact();
+  NodeContact();
+  virtual ~NodeContact();
 
-  Contact(const Contact& from);
+  NodeContact(const NodeContact& from);
 
-  inline Contact& operator=(const Contact& from) {
+  inline NodeContact& operator=(const NodeContact& from) {
     CopyFrom(from);
     return *this;
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const Contact& default_instance();
+  static const NodeContact& default_instance();
 
-  void Swap(Contact* other);
+  void Swap(NodeContact* other);
 
   // implements Message ----------------------------------------------
 
-  inline Contact* New() const { return New(NULL); }
+  inline NodeContact* New() const { return New(NULL); }
 
-  Contact* New(::google::protobuf::Arena* arena) const;
+  NodeContact* New(::google::protobuf::Arena* arena) const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const Contact& from);
-  void MergeFrom(const Contact& from);
+  void CopyFrom(const NodeContact& from);
+  void MergeFrom(const NodeContact& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -262,7 +261,7 @@ class Contact : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(Contact* other);
+  void InternalSwap(NodeContact* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return _internal_metadata_.arena();
@@ -301,7 +300,7 @@ class Contact : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::google::protobuf::uint32 clientport() const;
   void set_clientport(::google::protobuf::uint32 value);
 
-  // @@protoc_insertion_point(class_scope:iop.locnet.Contact)
+  // @@protoc_insertion_point(class_scope:iop.locnet.NodeContact)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -315,104 +314,7 @@ class Contact : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   friend void protobuf_ShutdownFile_IopLocNet_2eproto();
 
   void InitAsDefaultInstance();
-  static Contact* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class NodeProfile : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.NodeProfile) */ {
- public:
-  NodeProfile();
-  virtual ~NodeProfile();
-
-  NodeProfile(const NodeProfile& from);
-
-  inline NodeProfile& operator=(const NodeProfile& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const NodeProfile& default_instance();
-
-  void Swap(NodeProfile* other);
-
-  // implements Message ----------------------------------------------
-
-  inline NodeProfile* New() const { return New(NULL); }
-
-  NodeProfile* New(::google::protobuf::Arena* arena) const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const NodeProfile& from);
-  void MergeFrom(const NodeProfile& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const {
-    return InternalSerializeWithCachedSizesToArray(false, output);
-  }
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  void InternalSwap(NodeProfile* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return _internal_metadata_.arena();
-  }
-  inline void* MaybeArenaPtr() const {
-    return _internal_metadata_.raw_arena_ptr();
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional bytes nodeId = 1;
-  void clear_nodeid();
-  static const int kNodeIdFieldNumber = 1;
-  const ::std::string& nodeid() const;
-  void set_nodeid(const ::std::string& value);
-  void set_nodeid(const char* value);
-  void set_nodeid(const void* value, size_t size);
-  ::std::string* mutable_nodeid();
-  ::std::string* release_nodeid();
-  void set_allocated_nodeid(::std::string* nodeid);
-
-  // optional .iop.locnet.Contact contact = 2;
-  bool has_contact() const;
-  void clear_contact();
-  static const int kContactFieldNumber = 2;
-  const ::iop::locnet::Contact& contact() const;
-  ::iop::locnet::Contact* mutable_contact();
-  ::iop::locnet::Contact* release_contact();
-  void set_allocated_contact(::iop::locnet::Contact* contact);
-
-  // @@protoc_insertion_point(class_scope:iop.locnet.NodeProfile)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  bool _is_default_instance_;
-  ::google::protobuf::internal::ArenaStringPtr nodeid_;
-  ::iop::locnet::Contact* contact_;
-  mutable int _cached_size_;
-  friend void  protobuf_AddDesc_IopLocNet_2eproto();
-  friend void protobuf_AssignDesc_IopLocNet_2eproto();
-  friend void protobuf_ShutdownFile_IopLocNet_2eproto();
-
-  void InitAsDefaultInstance();
-  static NodeProfile* default_instance_;
+  static NodeContact* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -476,19 +378,30 @@ class NodeInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   // accessors -------------------------------------------------------
 
-  // optional .iop.locnet.NodeProfile profile = 1;
-  bool has_profile() const;
-  void clear_profile();
-  static const int kProfileFieldNumber = 1;
-  const ::iop::locnet::NodeProfile& profile() const;
-  ::iop::locnet::NodeProfile* mutable_profile();
-  ::iop::locnet::NodeProfile* release_profile();
-  void set_allocated_profile(::iop::locnet::NodeProfile* profile);
+  // optional bytes nodeId = 1;
+  void clear_nodeid();
+  static const int kNodeIdFieldNumber = 1;
+  const ::std::string& nodeid() const;
+  void set_nodeid(const ::std::string& value);
+  void set_nodeid(const char* value);
+  void set_nodeid(const void* value, size_t size);
+  ::std::string* mutable_nodeid();
+  ::std::string* release_nodeid();
+  void set_allocated_nodeid(::std::string* nodeid);
 
-  // optional .iop.locnet.GpsLocation location = 2;
+  // optional .iop.locnet.NodeContact contact = 2;
+  bool has_contact() const;
+  void clear_contact();
+  static const int kContactFieldNumber = 2;
+  const ::iop::locnet::NodeContact& contact() const;
+  ::iop::locnet::NodeContact* mutable_contact();
+  ::iop::locnet::NodeContact* release_contact();
+  void set_allocated_contact(::iop::locnet::NodeContact* contact);
+
+  // optional .iop.locnet.GpsLocation location = 3;
   bool has_location() const;
   void clear_location();
-  static const int kLocationFieldNumber = 2;
+  static const int kLocationFieldNumber = 3;
   const ::iop::locnet::GpsLocation& location() const;
   ::iop::locnet::GpsLocation* mutable_location();
   ::iop::locnet::GpsLocation* release_location();
@@ -499,7 +412,8 @@ class NodeInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
-  ::iop::locnet::NodeProfile* profile_;
+  ::google::protobuf::internal::ArenaStringPtr nodeid_;
+  ::iop::locnet::NodeContact* contact_;
   ::iop::locnet::GpsLocation* location_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_IopLocNet_2eproto();
@@ -508,6 +422,95 @@ class NodeInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   void InitAsDefaultInstance();
   static NodeInfo* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ServiceInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.ServiceInfo) */ {
+ public:
+  ServiceInfo();
+  virtual ~ServiceInfo();
+
+  ServiceInfo(const ServiceInfo& from);
+
+  inline ServiceInfo& operator=(const ServiceInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ServiceInfo& default_instance();
+
+  void Swap(ServiceInfo* other);
+
+  // implements Message ----------------------------------------------
+
+  inline ServiceInfo* New() const { return New(NULL); }
+
+  ServiceInfo* New(::google::protobuf::Arena* arena) const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ServiceInfo& from);
+  void MergeFrom(const ServiceInfo& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const {
+    return InternalSerializeWithCachedSizesToArray(false, output);
+  }
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(ServiceInfo* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return _internal_metadata_.arena();
+  }
+  inline void* MaybeArenaPtr() const {
+    return _internal_metadata_.raw_arena_ptr();
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional .iop.locnet.ServiceType type = 1;
+  void clear_type();
+  static const int kTypeFieldNumber = 1;
+  ::iop::locnet::ServiceType type() const;
+  void set_type(::iop::locnet::ServiceType value);
+
+  // optional uint32 port = 2;
+  void clear_port();
+  static const int kPortFieldNumber = 2;
+  ::google::protobuf::uint32 port() const;
+  void set_port(::google::protobuf::uint32 value);
+
+  // @@protoc_insertion_point(class_scope:iop.locnet.ServiceInfo)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  bool _is_default_instance_;
+  int type_;
+  ::google::protobuf::uint32 port_;
+  mutable int _cached_size_;
+  friend void  protobuf_AddDesc_IopLocNet_2eproto();
+  friend void protobuf_AssignDesc_IopLocNet_2eproto();
+  friend void protobuf_ShutdownFile_IopLocNet_2eproto();
+
+  void InitAsDefaultInstance();
+  static ServiceInfo* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1345,28 +1348,21 @@ class RegisterServiceRequest : public ::google::protobuf::Message /* @@protoc_in
 
   // accessors -------------------------------------------------------
 
-  // optional .iop.locnet.ServiceType serviceType = 1;
-  void clear_servicetype();
-  static const int kServiceTypeFieldNumber = 1;
-  ::iop::locnet::ServiceType servicetype() const;
-  void set_servicetype(::iop::locnet::ServiceType value);
-
-  // optional .iop.locnet.NodeProfile nodeProfile = 2;
-  bool has_nodeprofile() const;
-  void clear_nodeprofile();
-  static const int kNodeProfileFieldNumber = 2;
-  const ::iop::locnet::NodeProfile& nodeprofile() const;
-  ::iop::locnet::NodeProfile* mutable_nodeprofile();
-  ::iop::locnet::NodeProfile* release_nodeprofile();
-  void set_allocated_nodeprofile(::iop::locnet::NodeProfile* nodeprofile);
+  // optional .iop.locnet.ServiceInfo service = 1;
+  bool has_service() const;
+  void clear_service();
+  static const int kServiceFieldNumber = 1;
+  const ::iop::locnet::ServiceInfo& service() const;
+  ::iop::locnet::ServiceInfo* mutable_service();
+  ::iop::locnet::ServiceInfo* release_service();
+  void set_allocated_service(::iop::locnet::ServiceInfo* service);
 
   // @@protoc_insertion_point(class_scope:iop.locnet.RegisterServiceRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
-  ::iop::locnet::NodeProfile* nodeprofile_;
-  int servicetype_;
+  ::iop::locnet::ServiceInfo* service_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_IopLocNet_2eproto();
   friend void protobuf_AssignDesc_IopLocNet_2eproto();
@@ -3460,98 +3456,6 @@ class GetServicesRequest : public ::google::protobuf::Message /* @@protoc_insert
 };
 // -------------------------------------------------------------------
 
-class ServiceProfile : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.ServiceProfile) */ {
- public:
-  ServiceProfile();
-  virtual ~ServiceProfile();
-
-  ServiceProfile(const ServiceProfile& from);
-
-  inline ServiceProfile& operator=(const ServiceProfile& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const ServiceProfile& default_instance();
-
-  void Swap(ServiceProfile* other);
-
-  // implements Message ----------------------------------------------
-
-  inline ServiceProfile* New() const { return New(NULL); }
-
-  ServiceProfile* New(::google::protobuf::Arena* arena) const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const ServiceProfile& from);
-  void MergeFrom(const ServiceProfile& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const {
-    return InternalSerializeWithCachedSizesToArray(false, output);
-  }
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  void InternalSwap(ServiceProfile* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return _internal_metadata_.arena();
-  }
-  inline void* MaybeArenaPtr() const {
-    return _internal_metadata_.raw_arena_ptr();
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional .iop.locnet.ServiceType serviceType = 1;
-  void clear_servicetype();
-  static const int kServiceTypeFieldNumber = 1;
-  ::iop::locnet::ServiceType servicetype() const;
-  void set_servicetype(::iop::locnet::ServiceType value);
-
-  // optional .iop.locnet.NodeProfile profile = 2;
-  bool has_profile() const;
-  void clear_profile();
-  static const int kProfileFieldNumber = 2;
-  const ::iop::locnet::NodeProfile& profile() const;
-  ::iop::locnet::NodeProfile* mutable_profile();
-  ::iop::locnet::NodeProfile* release_profile();
-  void set_allocated_profile(::iop::locnet::NodeProfile* profile);
-
-  // @@protoc_insertion_point(class_scope:iop.locnet.ServiceProfile)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  bool _is_default_instance_;
-  ::iop::locnet::NodeProfile* profile_;
-  int servicetype_;
-  mutable int _cached_size_;
-  friend void  protobuf_AddDesc_IopLocNet_2eproto();
-  friend void protobuf_AssignDesc_IopLocNet_2eproto();
-  friend void protobuf_ShutdownFile_IopLocNet_2eproto();
-
-  void InitAsDefaultInstance();
-  static ServiceProfile* default_instance_;
-};
-// -------------------------------------------------------------------
-
 class GetServicesResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.GetServicesResponse) */ {
  public:
   GetServicesResponse();
@@ -3612,16 +3516,16 @@ class GetServicesResponse : public ::google::protobuf::Message /* @@protoc_inser
 
   // accessors -------------------------------------------------------
 
-  // repeated .iop.locnet.ServiceProfile services = 1;
+  // repeated .iop.locnet.ServiceInfo services = 1;
   int services_size() const;
   void clear_services();
   static const int kServicesFieldNumber = 1;
-  const ::iop::locnet::ServiceProfile& services(int index) const;
-  ::iop::locnet::ServiceProfile* mutable_services(int index);
-  ::iop::locnet::ServiceProfile* add_services();
-  ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceProfile >*
+  const ::iop::locnet::ServiceInfo& services(int index) const;
+  ::iop::locnet::ServiceInfo* mutable_services(int index);
+  ::iop::locnet::ServiceInfo* add_services();
+  ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo >*
       mutable_services();
-  const ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceProfile >&
+  const ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo >&
       services() const;
 
   // @@protoc_insertion_point(class_scope:iop.locnet.GetServicesResponse)
@@ -3629,7 +3533,7 @@ class GetServicesResponse : public ::google::protobuf::Message /* @@protoc_inser
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
-  ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceProfile > services_;
+  ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo > services_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_IopLocNet_2eproto();
   friend void protobuf_AssignDesc_IopLocNet_2eproto();
@@ -3751,156 +3655,156 @@ inline void GpsLocation::set_longitude(::google::protobuf::int32 value) {
 
 // -------------------------------------------------------------------
 
-// Contact
+// NodeContact
 
 // optional bytes ipAddress = 1;
-inline void Contact::clear_ipaddress() {
+inline void NodeContact::clear_ipaddress() {
   ipaddress_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Contact::ipaddress() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.Contact.ipAddress)
+inline const ::std::string& NodeContact::ipaddress() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.NodeContact.ipAddress)
   return ipaddress_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Contact::set_ipaddress(const ::std::string& value) {
+inline void NodeContact::set_ipaddress(const ::std::string& value) {
   
   ipaddress_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:iop.locnet.Contact.ipAddress)
+  // @@protoc_insertion_point(field_set:iop.locnet.NodeContact.ipAddress)
 }
-inline void Contact::set_ipaddress(const char* value) {
+inline void NodeContact::set_ipaddress(const char* value) {
   
   ipaddress_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:iop.locnet.Contact.ipAddress)
+  // @@protoc_insertion_point(field_set_char:iop.locnet.NodeContact.ipAddress)
 }
-inline void Contact::set_ipaddress(const void* value, size_t size) {
+inline void NodeContact::set_ipaddress(const void* value, size_t size) {
   
   ipaddress_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:iop.locnet.Contact.ipAddress)
+  // @@protoc_insertion_point(field_set_pointer:iop.locnet.NodeContact.ipAddress)
 }
-inline ::std::string* Contact::mutable_ipaddress() {
+inline ::std::string* NodeContact::mutable_ipaddress() {
   
-  // @@protoc_insertion_point(field_mutable:iop.locnet.Contact.ipAddress)
+  // @@protoc_insertion_point(field_mutable:iop.locnet.NodeContact.ipAddress)
   return ipaddress_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Contact::release_ipaddress() {
-  // @@protoc_insertion_point(field_release:iop.locnet.Contact.ipAddress)
+inline ::std::string* NodeContact::release_ipaddress() {
+  // @@protoc_insertion_point(field_release:iop.locnet.NodeContact.ipAddress)
   
   return ipaddress_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Contact::set_allocated_ipaddress(::std::string* ipaddress) {
+inline void NodeContact::set_allocated_ipaddress(::std::string* ipaddress) {
   if (ipaddress != NULL) {
     
   } else {
     
   }
   ipaddress_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ipaddress);
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.Contact.ipAddress)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.NodeContact.ipAddress)
 }
 
 // optional uint32 nodePort = 2;
-inline void Contact::clear_nodeport() {
+inline void NodeContact::clear_nodeport() {
   nodeport_ = 0u;
 }
-inline ::google::protobuf::uint32 Contact::nodeport() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.Contact.nodePort)
+inline ::google::protobuf::uint32 NodeContact::nodeport() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.NodeContact.nodePort)
   return nodeport_;
 }
-inline void Contact::set_nodeport(::google::protobuf::uint32 value) {
+inline void NodeContact::set_nodeport(::google::protobuf::uint32 value) {
   
   nodeport_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.Contact.nodePort)
+  // @@protoc_insertion_point(field_set:iop.locnet.NodeContact.nodePort)
 }
 
 // optional uint32 clientPort = 3;
-inline void Contact::clear_clientport() {
+inline void NodeContact::clear_clientport() {
   clientport_ = 0u;
 }
-inline ::google::protobuf::uint32 Contact::clientport() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.Contact.clientPort)
+inline ::google::protobuf::uint32 NodeContact::clientport() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.NodeContact.clientPort)
   return clientport_;
 }
-inline void Contact::set_clientport(::google::protobuf::uint32 value) {
+inline void NodeContact::set_clientport(::google::protobuf::uint32 value) {
   
   clientport_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.Contact.clientPort)
+  // @@protoc_insertion_point(field_set:iop.locnet.NodeContact.clientPort)
 }
 
 // -------------------------------------------------------------------
 
-// NodeProfile
+// NodeInfo
 
 // optional bytes nodeId = 1;
-inline void NodeProfile::clear_nodeid() {
+inline void NodeInfo::clear_nodeid() {
   nodeid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& NodeProfile::nodeid() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.NodeProfile.nodeId)
+inline const ::std::string& NodeInfo::nodeid() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.NodeInfo.nodeId)
   return nodeid_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void NodeProfile::set_nodeid(const ::std::string& value) {
+inline void NodeInfo::set_nodeid(const ::std::string& value) {
   
   nodeid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:iop.locnet.NodeProfile.nodeId)
+  // @@protoc_insertion_point(field_set:iop.locnet.NodeInfo.nodeId)
 }
-inline void NodeProfile::set_nodeid(const char* value) {
+inline void NodeInfo::set_nodeid(const char* value) {
   
   nodeid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:iop.locnet.NodeProfile.nodeId)
+  // @@protoc_insertion_point(field_set_char:iop.locnet.NodeInfo.nodeId)
 }
-inline void NodeProfile::set_nodeid(const void* value, size_t size) {
+inline void NodeInfo::set_nodeid(const void* value, size_t size) {
   
   nodeid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:iop.locnet.NodeProfile.nodeId)
+  // @@protoc_insertion_point(field_set_pointer:iop.locnet.NodeInfo.nodeId)
 }
-inline ::std::string* NodeProfile::mutable_nodeid() {
+inline ::std::string* NodeInfo::mutable_nodeid() {
   
-  // @@protoc_insertion_point(field_mutable:iop.locnet.NodeProfile.nodeId)
+  // @@protoc_insertion_point(field_mutable:iop.locnet.NodeInfo.nodeId)
   return nodeid_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* NodeProfile::release_nodeid() {
-  // @@protoc_insertion_point(field_release:iop.locnet.NodeProfile.nodeId)
+inline ::std::string* NodeInfo::release_nodeid() {
+  // @@protoc_insertion_point(field_release:iop.locnet.NodeInfo.nodeId)
   
   return nodeid_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void NodeProfile::set_allocated_nodeid(::std::string* nodeid) {
+inline void NodeInfo::set_allocated_nodeid(::std::string* nodeid) {
   if (nodeid != NULL) {
     
   } else {
     
   }
   nodeid_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), nodeid);
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.NodeProfile.nodeId)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.NodeInfo.nodeId)
 }
 
-// optional .iop.locnet.Contact contact = 2;
-inline bool NodeProfile::has_contact() const {
+// optional .iop.locnet.NodeContact contact = 2;
+inline bool NodeInfo::has_contact() const {
   return !_is_default_instance_ && contact_ != NULL;
 }
-inline void NodeProfile::clear_contact() {
+inline void NodeInfo::clear_contact() {
   if (GetArenaNoVirtual() == NULL && contact_ != NULL) delete contact_;
   contact_ = NULL;
 }
-inline const ::iop::locnet::Contact& NodeProfile::contact() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.NodeProfile.contact)
+inline const ::iop::locnet::NodeContact& NodeInfo::contact() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.NodeInfo.contact)
   return contact_ != NULL ? *contact_ : *default_instance_->contact_;
 }
-inline ::iop::locnet::Contact* NodeProfile::mutable_contact() {
+inline ::iop::locnet::NodeContact* NodeInfo::mutable_contact() {
   
   if (contact_ == NULL) {
-    contact_ = new ::iop::locnet::Contact;
+    contact_ = new ::iop::locnet::NodeContact;
   }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.NodeProfile.contact)
+  // @@protoc_insertion_point(field_mutable:iop.locnet.NodeInfo.contact)
   return contact_;
 }
-inline ::iop::locnet::Contact* NodeProfile::release_contact() {
-  // @@protoc_insertion_point(field_release:iop.locnet.NodeProfile.contact)
+inline ::iop::locnet::NodeContact* NodeInfo::release_contact() {
+  // @@protoc_insertion_point(field_release:iop.locnet.NodeInfo.contact)
   
-  ::iop::locnet::Contact* temp = contact_;
+  ::iop::locnet::NodeContact* temp = contact_;
   contact_ = NULL;
   return temp;
 }
-inline void NodeProfile::set_allocated_contact(::iop::locnet::Contact* contact) {
+inline void NodeInfo::set_allocated_contact(::iop::locnet::NodeContact* contact) {
   delete contact_;
   contact_ = contact;
   if (contact) {
@@ -3908,52 +3812,10 @@ inline void NodeProfile::set_allocated_contact(::iop::locnet::Contact* contact) 
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.NodeProfile.contact)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.NodeInfo.contact)
 }
 
-// -------------------------------------------------------------------
-
-// NodeInfo
-
-// optional .iop.locnet.NodeProfile profile = 1;
-inline bool NodeInfo::has_profile() const {
-  return !_is_default_instance_ && profile_ != NULL;
-}
-inline void NodeInfo::clear_profile() {
-  if (GetArenaNoVirtual() == NULL && profile_ != NULL) delete profile_;
-  profile_ = NULL;
-}
-inline const ::iop::locnet::NodeProfile& NodeInfo::profile() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.NodeInfo.profile)
-  return profile_ != NULL ? *profile_ : *default_instance_->profile_;
-}
-inline ::iop::locnet::NodeProfile* NodeInfo::mutable_profile() {
-  
-  if (profile_ == NULL) {
-    profile_ = new ::iop::locnet::NodeProfile;
-  }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.NodeInfo.profile)
-  return profile_;
-}
-inline ::iop::locnet::NodeProfile* NodeInfo::release_profile() {
-  // @@protoc_insertion_point(field_release:iop.locnet.NodeInfo.profile)
-  
-  ::iop::locnet::NodeProfile* temp = profile_;
-  profile_ = NULL;
-  return temp;
-}
-inline void NodeInfo::set_allocated_profile(::iop::locnet::NodeProfile* profile) {
-  delete profile_;
-  profile_ = profile;
-  if (profile) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.NodeInfo.profile)
-}
-
-// optional .iop.locnet.GpsLocation location = 2;
+// optional .iop.locnet.GpsLocation location = 3;
 inline bool NodeInfo::has_location() const {
   return !_is_default_instance_ && location_ != NULL;
 }
@@ -3989,6 +3851,38 @@ inline void NodeInfo::set_allocated_location(::iop::locnet::GpsLocation* locatio
     
   }
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.NodeInfo.location)
+}
+
+// -------------------------------------------------------------------
+
+// ServiceInfo
+
+// optional .iop.locnet.ServiceType type = 1;
+inline void ServiceInfo::clear_type() {
+  type_ = 0;
+}
+inline ::iop::locnet::ServiceType ServiceInfo::type() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ServiceInfo.type)
+  return static_cast< ::iop::locnet::ServiceType >(type_);
+}
+inline void ServiceInfo::set_type(::iop::locnet::ServiceType value) {
+  
+  type_ = value;
+  // @@protoc_insertion_point(field_set:iop.locnet.ServiceInfo.type)
+}
+
+// optional uint32 port = 2;
+inline void ServiceInfo::clear_port() {
+  port_ = 0u;
+}
+inline ::google::protobuf::uint32 ServiceInfo::port() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ServiceInfo.port)
+  return port_;
+}
+inline void ServiceInfo::set_port(::google::protobuf::uint32 value) {
+  
+  port_ = value;
+  // @@protoc_insertion_point(field_set:iop.locnet.ServiceInfo.port)
 }
 
 // -------------------------------------------------------------------
@@ -5014,56 +4908,42 @@ inline LocalServiceResponse::LocalServiceResponseTypeCase LocalServiceResponse::
 
 // RegisterServiceRequest
 
-// optional .iop.locnet.ServiceType serviceType = 1;
-inline void RegisterServiceRequest::clear_servicetype() {
-  servicetype_ = 0;
+// optional .iop.locnet.ServiceInfo service = 1;
+inline bool RegisterServiceRequest::has_service() const {
+  return !_is_default_instance_ && service_ != NULL;
 }
-inline ::iop::locnet::ServiceType RegisterServiceRequest::servicetype() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.RegisterServiceRequest.serviceType)
-  return static_cast< ::iop::locnet::ServiceType >(servicetype_);
+inline void RegisterServiceRequest::clear_service() {
+  if (GetArenaNoVirtual() == NULL && service_ != NULL) delete service_;
+  service_ = NULL;
 }
-inline void RegisterServiceRequest::set_servicetype(::iop::locnet::ServiceType value) {
+inline const ::iop::locnet::ServiceInfo& RegisterServiceRequest::service() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.RegisterServiceRequest.service)
+  return service_ != NULL ? *service_ : *default_instance_->service_;
+}
+inline ::iop::locnet::ServiceInfo* RegisterServiceRequest::mutable_service() {
   
-  servicetype_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.RegisterServiceRequest.serviceType)
-}
-
-// optional .iop.locnet.NodeProfile nodeProfile = 2;
-inline bool RegisterServiceRequest::has_nodeprofile() const {
-  return !_is_default_instance_ && nodeprofile_ != NULL;
-}
-inline void RegisterServiceRequest::clear_nodeprofile() {
-  if (GetArenaNoVirtual() == NULL && nodeprofile_ != NULL) delete nodeprofile_;
-  nodeprofile_ = NULL;
-}
-inline const ::iop::locnet::NodeProfile& RegisterServiceRequest::nodeprofile() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.RegisterServiceRequest.nodeProfile)
-  return nodeprofile_ != NULL ? *nodeprofile_ : *default_instance_->nodeprofile_;
-}
-inline ::iop::locnet::NodeProfile* RegisterServiceRequest::mutable_nodeprofile() {
-  
-  if (nodeprofile_ == NULL) {
-    nodeprofile_ = new ::iop::locnet::NodeProfile;
+  if (service_ == NULL) {
+    service_ = new ::iop::locnet::ServiceInfo;
   }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.RegisterServiceRequest.nodeProfile)
-  return nodeprofile_;
+  // @@protoc_insertion_point(field_mutable:iop.locnet.RegisterServiceRequest.service)
+  return service_;
 }
-inline ::iop::locnet::NodeProfile* RegisterServiceRequest::release_nodeprofile() {
-  // @@protoc_insertion_point(field_release:iop.locnet.RegisterServiceRequest.nodeProfile)
+inline ::iop::locnet::ServiceInfo* RegisterServiceRequest::release_service() {
+  // @@protoc_insertion_point(field_release:iop.locnet.RegisterServiceRequest.service)
   
-  ::iop::locnet::NodeProfile* temp = nodeprofile_;
-  nodeprofile_ = NULL;
+  ::iop::locnet::ServiceInfo* temp = service_;
+  service_ = NULL;
   return temp;
 }
-inline void RegisterServiceRequest::set_allocated_nodeprofile(::iop::locnet::NodeProfile* nodeprofile) {
-  delete nodeprofile_;
-  nodeprofile_ = nodeprofile;
-  if (nodeprofile) {
+inline void RegisterServiceRequest::set_allocated_service(::iop::locnet::ServiceInfo* service) {
+  delete service_;
+  service_ = service;
+  if (service) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RegisterServiceRequest.nodeProfile)
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RegisterServiceRequest.service)
 }
 
 // -------------------------------------------------------------------
@@ -6738,89 +6618,33 @@ inline ClientResponse::ClientResponseTypeCase ClientResponse::ClientResponseType
 
 // -------------------------------------------------------------------
 
-// ServiceProfile
-
-// optional .iop.locnet.ServiceType serviceType = 1;
-inline void ServiceProfile::clear_servicetype() {
-  servicetype_ = 0;
-}
-inline ::iop::locnet::ServiceType ServiceProfile::servicetype() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.ServiceProfile.serviceType)
-  return static_cast< ::iop::locnet::ServiceType >(servicetype_);
-}
-inline void ServiceProfile::set_servicetype(::iop::locnet::ServiceType value) {
-  
-  servicetype_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.ServiceProfile.serviceType)
-}
-
-// optional .iop.locnet.NodeProfile profile = 2;
-inline bool ServiceProfile::has_profile() const {
-  return !_is_default_instance_ && profile_ != NULL;
-}
-inline void ServiceProfile::clear_profile() {
-  if (GetArenaNoVirtual() == NULL && profile_ != NULL) delete profile_;
-  profile_ = NULL;
-}
-inline const ::iop::locnet::NodeProfile& ServiceProfile::profile() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.ServiceProfile.profile)
-  return profile_ != NULL ? *profile_ : *default_instance_->profile_;
-}
-inline ::iop::locnet::NodeProfile* ServiceProfile::mutable_profile() {
-  
-  if (profile_ == NULL) {
-    profile_ = new ::iop::locnet::NodeProfile;
-  }
-  // @@protoc_insertion_point(field_mutable:iop.locnet.ServiceProfile.profile)
-  return profile_;
-}
-inline ::iop::locnet::NodeProfile* ServiceProfile::release_profile() {
-  // @@protoc_insertion_point(field_release:iop.locnet.ServiceProfile.profile)
-  
-  ::iop::locnet::NodeProfile* temp = profile_;
-  profile_ = NULL;
-  return temp;
-}
-inline void ServiceProfile::set_allocated_profile(::iop::locnet::NodeProfile* profile) {
-  delete profile_;
-  profile_ = profile;
-  if (profile) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_set_allocated:iop.locnet.ServiceProfile.profile)
-}
-
-// -------------------------------------------------------------------
-
 // GetServicesResponse
 
-// repeated .iop.locnet.ServiceProfile services = 1;
+// repeated .iop.locnet.ServiceInfo services = 1;
 inline int GetServicesResponse::services_size() const {
   return services_.size();
 }
 inline void GetServicesResponse::clear_services() {
   services_.Clear();
 }
-inline const ::iop::locnet::ServiceProfile& GetServicesResponse::services(int index) const {
+inline const ::iop::locnet::ServiceInfo& GetServicesResponse::services(int index) const {
   // @@protoc_insertion_point(field_get:iop.locnet.GetServicesResponse.services)
   return services_.Get(index);
 }
-inline ::iop::locnet::ServiceProfile* GetServicesResponse::mutable_services(int index) {
+inline ::iop::locnet::ServiceInfo* GetServicesResponse::mutable_services(int index) {
   // @@protoc_insertion_point(field_mutable:iop.locnet.GetServicesResponse.services)
   return services_.Mutable(index);
 }
-inline ::iop::locnet::ServiceProfile* GetServicesResponse::add_services() {
+inline ::iop::locnet::ServiceInfo* GetServicesResponse::add_services() {
   // @@protoc_insertion_point(field_add:iop.locnet.GetServicesResponse.services)
   return services_.Add();
 }
-inline ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceProfile >*
+inline ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo >*
 GetServicesResponse::mutable_services() {
   // @@protoc_insertion_point(field_mutable_list:iop.locnet.GetServicesResponse.services)
   return &services_;
 }
-inline const ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceProfile >&
+inline const ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo >&
 GetServicesResponse::services() const {
   // @@protoc_insertion_point(field_list:iop.locnet.GetServicesResponse.services)
   return services_;
@@ -6831,8 +6655,6 @@ GetServicesResponse::services() const {
 // GetNeighbourNodesByDistanceClientRequest
 
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

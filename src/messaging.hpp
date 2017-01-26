@@ -20,20 +20,20 @@ struct Converter
 {
     // Functions that convert from protobuf to internal representation, creating a new object
     static ServiceType FromProtoBuf(iop::locnet::ServiceType value);
+    static ServiceInfo FromProtoBuf(const iop::locnet::ServiceInfo &value);
     static GpsLocation FromProtoBuf(const iop::locnet::GpsLocation &value);
-    static NodeProfile FromProtoBuf(const iop::locnet::NodeProfile &value);
     static NodeInfo FromProtoBuf(const iop::locnet::NodeInfo &value);
     
     // Functions that fill up an existing protobuf object from the internal representation
+    static void FillProtoBuf(iop::locnet::ServiceInfo *target, const ServiceInfo &source);
     static void FillProtoBuf(iop::locnet::GpsLocation *target, const GpsLocation &source);
-    static void FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile &source);
     static void FillProtoBuf(iop::locnet::NodeInfo *target, const NodeInfo &source);
     
     // Functions that convert from the internal representation to protobuf, creating a new object
     static iop::locnet::Status ToProtoBuf(ErrorCode value);
     static iop::locnet::ServiceType ToProtoBuf(ServiceType value);
+    static iop::locnet::ServiceInfo* ToProtoBuf(const ServiceInfo &value);
     static iop::locnet::GpsLocation* ToProtoBuf(const GpsLocation &location);
-    static iop::locnet::NodeProfile* ToProtoBuf(const NodeProfile &profile);
     static iop::locnet::NodeInfo* ToProtoBuf(const NodeInfo &info);
 };
 

@@ -232,7 +232,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     
     // Fetch extracted option values from parser
     _versionRequested = _optParser.isSet(OPTNAME_VERSION);
-    _optParser.get(OPTNAME_NODEID)->getString(_id);
+    _optParser.get(OPTNAME_NODEID)->getString(_nodeId);
     _optParser.get(OPTNAME_HOST)->getString(_ipAddr);
     _optParser.get(OPTNAME_LATITUDE)->getFloat(_latitude);
     _optParser.get(OPTNAME_LONGITUDE)->getFloat(_longitude);
@@ -251,9 +251,8 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     _optParser.get(OPTNAME_LOCAL_PORT)->getULong(localPort);
     _localPort = localPort;
     
-    _myNodeInfo.reset( new NodeInfo(
-        NodeProfile(_id, NodeContact(_ipAddr, _nodePort, _clientPort) ),
-        GpsLocation(_latitude, _longitude) ) );
+    _myNodeInfo.reset( new NodeInfo( _nodeId, GpsLocation(_latitude, _longitude),
+        NodeContact(_ipAddr, _nodePort, _clientPort) ) );
     
     vector<vector<string>> seedOptionVectors;
     _optParser.get(OPTNAME_SEEDNODE)->getMultiStrings(seedOptionVectors);

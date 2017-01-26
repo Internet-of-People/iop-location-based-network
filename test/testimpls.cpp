@@ -46,12 +46,11 @@ InMemorySpatialDatabase::InMemorySpatialDatabase(const NodeInfo& myNodeInfo) :
 
 void InMemorySpatialDatabase::Store(const NodeDbEntry &node, bool)
 {
-    auto it = _nodes.find( node.profile().id() );
+    auto it = _nodes.find( node.id() );
     if ( it != _nodes.end() ) {
         throw runtime_error("Node is already present");
     }
-    _nodes.emplace( unordered_map<std::string,NodeDbEntry>::value_type(
-        node.profile().id(), node ) );
+    _nodes.emplace( unordered_map<std::string,NodeDbEntry>::value_type( node.id(), node ) );
 }
 
 
@@ -68,7 +67,7 @@ shared_ptr<NodeDbEntry> InMemorySpatialDatabase::Load(const string &nodeId) cons
 
 void InMemorySpatialDatabase::Update(const NodeDbEntry &node, bool)
 {
-    auto it = _nodes.find( node.profile().id() );
+    auto it = _nodes.find( node.id() );
     if ( it == _nodes.end() ) {
         throw runtime_error("Node is not found");
     }

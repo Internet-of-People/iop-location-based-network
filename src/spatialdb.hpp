@@ -5,7 +5,6 @@
 #include <memory>
 #include <mutex>
 #include <sqlite3.h>
-#include <unordered_map>
 #include <vector>
 
 #include "basic.hpp"
@@ -28,15 +27,13 @@ enum class Neighbours : uint8_t
 // Data holder class for full node information stored in the database.
 class NodeDbEntry : public NodeInfo
 {
-    NodeRelationType  _relationType;
+    NodeRelationType    _relationType;
     NodeContactRoleType _roleType;
     
 public:
     
     NodeDbEntry(const NodeDbEntry& other);
     NodeDbEntry( const NodeInfo& info,
-                 NodeRelationType relationType, NodeContactRoleType roleType );
-    NodeDbEntry( const NodeProfile& profile, const GpsLocation& location,
                  NodeRelationType relationType, NodeContactRoleType roleType );
     
     NodeRelationType relationType() const;

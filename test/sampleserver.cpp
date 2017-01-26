@@ -75,8 +75,7 @@ int main()
         shared_ptr<Node> node( new Node( TestData::NodeBudapest, geodb, connectionFactory, {} ) );
         node->EnsureMapFilled();
         
-        const NodeContact &BudapestNodeContact(
-            TestData::NodeBudapest.profile().contact() );
+        const NodeContact &BudapestNodeContact( TestData::NodeBudapest.contact() );
         
         shared_ptr<IProtoBufRequestDispatcherFactory> nodeDispatcherFactory(
             new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(

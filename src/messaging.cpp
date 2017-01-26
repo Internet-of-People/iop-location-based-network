@@ -97,39 +97,34 @@ iop::locnet::ServiceType Converter::ToProtoBuf(ServiceType value)
 
 
 
-NodeProfile Converter::FromProtoBuf(const iop::locnet::NodeProfile& value)
+ServiceInfo Converter::FromProtoBuf(const iop::locnet::ServiceInfo& value)
 {
-    if ( ! value.has_contact() )
-        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No contact information for profile"); }
-    
-    const iop::locnet::Contact &contact = value.contact();
-    return NodeProfile( value.nodeid(), NodeContact( NodeContact::AddressFromBytes(
-        contact.ipaddress() ), contact.nodeport(), contact.clientport() ) );
+    return ServiceInfo( FromProtoBuf( value.type() ), value.port() );
 }
 
 
 NodeInfo Converter::FromProtoBuf(const iop::locnet::NodeInfo& value)
 {
-    return NodeInfo( FromProtoBuf( value.profile() ), FromProtoBuf( value.location() ) );
-}
-
-
-
-void Converter::FillProtoBuf(iop::locnet::NodeProfile *target, const NodeProfile &source)
-{
-    const NodeContact &sourceContact = source.contact();
+    if ( ! value.has_contact() )
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No contact information for node"); }
     
-    target->set_nodeid( source.id() );
-    iop::locnet::Contact *targetContact = target->mutable_contact();
-    targetContact->set_nodeport( sourceContact.nodePort() );
-    targetContact->set_clientport( sourceContact.clientPort() );
-    targetContact->set_ipaddress( sourceContact.AddressBytes() );
+    const iop::locnet::NodeContact &contact = value.contact();
+    return NodeInfo( value.nodeid(), FromProtoBuf( value.location() ), NodeContact(
+        NodeContact::AddressFromBytes( contact.ipaddress() ), contact.nodeport(), contact.clientport() ) );
 }
 
-iop::locnet::NodeProfile* Converter::ToProtoBuf(const NodeProfile &profile)
+
+
+void Converter::FillProtoBuf(iop::locnet::ServiceInfo *target, const ServiceInfo &source)
 {
-    auto result = new iop::locnet::NodeProfile();
-    FillProtoBuf(result, profile);
+    target->set_type( ToProtoBuf( source.type() ) );
+    target->set_port( source.port() );
+}
+
+iop::locnet::ServiceInfo* Converter::ToProtoBuf(const ServiceInfo &info)
+{
+    auto result = new iop::locnet::ServiceInfo();
+    FillProtoBuf(result, info);
     return result;
 }
 
@@ -138,8 +133,15 @@ iop::locnet::NodeProfile* Converter::ToProtoBuf(const NodeProfile &profile)
 void Converter::FillProtoBuf(
     iop::locnet::NodeInfo *target, const NodeInfo &source)
 {
-    target->set_allocated_profile( ToProtoBuf( source.profile() ) );
+    target->set_nodeid( source.id() );
     target->set_allocated_location( ToProtoBuf( source.location() ) );
+    
+    const NodeContact &sourceContact = source.contact();
+    iop::locnet::NodeContact *targetContact = target->mutable_contact();
+    
+    targetContact->set_nodeport( sourceContact.nodePort() );
+    targetContact->set_clientport( sourceContact.clientPort() );
+    targetContact->set_ipaddress( sourceContact.AddressBytes() );
 }
 
 iop::locnet::NodeInfo* Converter::ToProtoBuf(const NodeInfo &info)
@@ -185,9 +187,9 @@ unique_ptr<iop::locnet::Response> IncomingLocalServiceRequestDispatcher::Dispatc
         case iop::locnet::LocalServiceRequest::kRegisterService:
         {
             auto const &registerRequest = localServiceRequest.registerservice();
-            ServiceType serviceType = Converter::FromProtoBuf( registerRequest.servicetype() );
+            ServiceInfo service = Converter::FromProtoBuf( registerRequest.service() );
             
-            _iLocalService->RegisterService( serviceType, Converter::FromProtoBuf( registerRequest.nodeprofile() ) );
+            _iLocalService->RegisterService(service);
             LOG(DEBUG) << "Served RegisterService()";
             
             localServiceResponse->mutable_registerservice();
@@ -424,9 +426,8 @@ unique_ptr<iop::locnet::Response> IncomingClientRequestDispatcher::Dispatch(cons
             auto responseContent = clientResponse->mutable_getservices();
             for (auto const &service : services)
             {
-                iop::locnet::ServiceProfile *entry = responseContent->add_services();
-                entry->set_servicetype( Converter::ToProtoBuf(service.first) );
-                entry->set_allocated_profile( Converter::ToProtoBuf(service.second) );
+                iop::locnet::ServiceInfo *serviceInfo = responseContent->add_services();
+                Converter::FillProtoBuf(serviceInfo, service.second);
             }
             break;
         }

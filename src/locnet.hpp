@@ -20,7 +20,7 @@ public:
     
     virtual ~ILocalServiceMethods() {}
     
-    virtual void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) = 0;
+    virtual void RegisterService(const ServiceInfo &serviceInfo) = 0;
     virtual void DeregisterService(ServiceType serviceType) = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     
@@ -59,7 +59,7 @@ public:
     
     virtual ~IClientMethods() {}
 
-    virtual const std::unordered_map<ServiceType,ServiceProfile,EnumHasher>& GetServices() const = 0;
+    virtual const std::unordered_map<ServiceType,ServiceInfo,EnumHasher>& GetServices() const = 0;
     
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     virtual std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
@@ -109,7 +109,7 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     //      Con: if services are also restarted, will give false results.
     // TODO If no need to be persistent, this is still not threadsafe, though problems are highly unlikely.
     //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
-    std::unordered_map<ServiceType, ServiceProfile, EnumHasher> _services;
+    std::unordered_map<ServiceType, ServiceInfo, EnumHasher> _services;
     
     std::vector<NetworkEndpoint> _seedNodes;
     
@@ -142,11 +142,11 @@ public:
     void DiscoverUnknownAreas();
     
     // Interface provided to serve higher level services and clients
-    const std::unordered_map<ServiceType,ServiceProfile,EnumHasher>& GetServices() const override;
+    const std::unordered_map<ServiceType,ServiceInfo,EnumHasher>& GetServices() const override;
     // + GetClosestNodes() which is the same as for network instances on remote machines
     
     // Local interface for services running on the same hardware
-    void RegisterService(ServiceType serviceType, const ServiceProfile &serviceInfo) override;
+    void RegisterService(const ServiceInfo &serviceInfo) override;
     void DeregisterService(ServiceType serviceType) override;
     
     void AddListener(std::shared_ptr<IChangeListener> listener) override;

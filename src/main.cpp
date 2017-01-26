@@ -66,9 +66,9 @@ int main(int argc, const char *argv[])
         ProtoBufDispatchingTcpServer localTcpServer(
             config.localServicePort(), localDispatcherFactory );
         ProtoBufDispatchingTcpServer nodeTcpServer(
-            myNodeInfo.profile().contact().nodePort(), nodeDispatcherFactory );
+            myNodeInfo.contact().nodePort(), nodeDispatcherFactory );
         ProtoBufDispatchingTcpServer clientTcpServer(
-            myNodeInfo.profile().contact().clientPort(), clientDispatcherFactory );
+            myNodeInfo.contact().clientPort(), clientDispatcherFactory );
 
         // Set up signal handlers to stop on Ctrl-C and further events
         bool ShutdownRequested = false;

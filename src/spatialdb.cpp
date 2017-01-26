@@ -19,14 +19,17 @@ namespace LocNet
 const string SpatiaLiteDatabase::IN_MEMORY_DB = ":memory:";
 
 const vector<string> DatabaseInitCommands = {
-    "BEGIN TRANSACTION;",
+"BEGIN TRANSACTION;",
     "SELECT InitSpatialMetadata();",
+    
     "CREATE TABLE IF NOT EXISTS metainfo ( "
     "  key   TEXT PRIMARY KEY, "
     "  value TEXT NOT NULL "
     ");"
+    
     "INSERT INTO metainfo (key, value) "
     "  VALUES ('version', '1');"
+    
     "CREATE TABLE IF NOT EXISTS nodes ( "
     "  id           TEXT PRIMARY KEY, "
     "  ipAddress    TEXT NOT NULL, "
@@ -37,8 +40,9 @@ const vector<string> DatabaseInitCommands = {
     "  expiresAt    INT NOT NULL, " // Unix timestamp. NOTE consider implementing non expiring entries to have NULL here.
     "  location     POINT NOT NULL "
     ");"
-    "END TRANSACTION;"
-};
+    
+    
+"END TRANSACTION;" };
 
 
 
@@ -49,10 +53,6 @@ NodeDbEntry::NodeDbEntry(const NodeDbEntry& other) :
 NodeDbEntry::NodeDbEntry( const NodeInfo& info,
                           NodeRelationType relationType, NodeContactRoleType roleType) :
     NodeInfo(info), _relationType(relationType), _roleType(roleType) {}
-
-NodeDbEntry::NodeDbEntry( const NodeProfile& profile, const GpsLocation& location,
-                          NodeRelationType relationType, NodeContactRoleType roleType ) :
-    NodeInfo(profile, location), _relationType(relationType), _roleType(roleType) {}
 
 
 NodeRelationType NodeDbEntry::relationType() const { return _relationType; }
@@ -184,8 +184,7 @@ vector<NodeDbEntry> QueryEntries(sqlite3 *dbHandle, const GpsLocation &fromLocat
         
         NodeContact contact( reinterpret_cast<const char*>(ipAddrPtr),
                              static_cast<TcpPort>(nodePort), static_cast<TcpPort>(clientPort) );
-        NodeInfo info( NodeProfile( reinterpret_cast<const char*>(idPtr), contact ),
-                       GpsLocation(latitude, longitude) );
+        NodeInfo info( reinterpret_cast<const char*>(idPtr), GpsLocation(latitude, longitude), contact );
         result.emplace_back( info,
             // TODO use some kind of checked conversion function from int to enums
             static_cast<NodeRelationType>(relationType),
@@ -238,7 +237,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
         "WHERE relationType = " + to_string( static_cast<uint32_t>(NodeRelationType::Self) ) );
     if ( selfEntries.size() > 1 )
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Multiple self instances found, database may have been tampered with."); }
-    if ( ! selfEntries.empty() && selfEntries.front().profile().id() != myNodeInfo.profile().id() )
+    if ( ! selfEntries.empty() && selfEntries.front().id() != myNodeInfo.id() )
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Node id changed, database is invalidated. Delete database file " +
             dbPath + " to force signing up to the network with the new node id."); }
     
@@ -355,10 +354,9 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
         
         NodeContact contact( reinterpret_cast<const char*>(ipAddrPtr),
                              static_cast<TcpPort>(nodePort), static_cast<TcpPort>(clientPort) );
-        GpsLocation location(latitude, longitude);
         // TODO create enums through checked "enum constructor" method
         result.reset( new NodeDbEntry(
-            NodeInfo( NodeProfile( reinterpret_cast<const char*>(idPtr), contact ), location ),
+            NodeInfo( reinterpret_cast<const char*>(idPtr), GpsLocation(latitude, longitude), contact ),
             static_cast<NodeRelationType>(relationType), static_cast<NodeContactRoleType>(roleType) ) );
     }
     return result;
@@ -386,15 +384,15 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
     time_t expiresAt = expires ?
         chrono::system_clock::to_time_t( chrono::system_clock::now() + _entryExpirationPeriod ) :
         numeric_limits<time_t>::max();
-    const NodeContact &contact = node.profile().contact();
+    const NodeContact &contact = node.contact();
     // TODO abstract bind checks away, probably with functions, or maybe macros
-    if ( sqlite3_bind_text( statement, 1, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
-         sqlite3_bind_text( statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 3, contact.nodePort() )                             != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 4, contact.clientPort() )                           != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 5, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 6, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 7, expiresAt )                                      != SQLITE_OK )
+    if ( sqlite3_bind_text( statement, 1, node.id().c_str(), -1, SQLITE_STATIC )        != SQLITE_OK ||
+         sqlite3_bind_text( statement, 2, contact.address().c_str(), -1, SQLITE_STATIC )!= SQLITE_OK ||
+         sqlite3_bind_int(  statement, 3, contact.nodePort() )                          != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 4, contact.clientPort() )                        != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 5, static_cast<int>( node.relationType() ) )     != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 6, static_cast<int>( node.roleType() ) )         != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 7, expiresAt )                                   != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind node store statement params";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node store statement params");
@@ -437,14 +435,14 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
     time_t expiresAt = expires ?
         chrono::system_clock::to_time_t( chrono::system_clock::now() + _entryExpirationPeriod ) :
         numeric_limits<time_t>::max();
-    const NodeContact &contact = node.profile().contact();
-    if ( sqlite3_bind_text( statement, 1, contact.address().c_str(), -1, SQLITE_STATIC )   != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 2, contact.nodePort() )                             != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 3, contact.clientPort() )                           != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 4, static_cast<int>( node.relationType() ) )        != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 5, static_cast<int>( node.roleType() ) )            != SQLITE_OK ||
-         sqlite3_bind_int(  statement, 6, expiresAt )                                      != SQLITE_OK ||
-         sqlite3_bind_text( statement, 7, node.profile().id().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
+    const NodeContact &contact = node.contact();
+    if ( sqlite3_bind_text( statement, 1, contact.address().c_str(), -1, SQLITE_STATIC )!= SQLITE_OK ||
+         sqlite3_bind_int(  statement, 2, contact.nodePort() )                          != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 3, contact.clientPort() )                        != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 4, static_cast<int>( node.relationType() ) )     != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 5, static_cast<int>( node.roleType() ) )         != SQLITE_OK ||
+         sqlite3_bind_int(  statement, 6, expiresAt )                                   != SQLITE_OK ||
+         sqlite3_bind_text( statement, 7, node.id().c_str(), -1, SQLITE_STATIC )        != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind node store statement params";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node store statement params");

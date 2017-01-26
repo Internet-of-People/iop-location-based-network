@@ -13,18 +13,18 @@ GpsLocation TestData::NewYork(40.741895,-73.989308);
 GpsLocation TestData::CapeTown(-33.9248685,18.4240553);
 
 
-NodeInfo TestData::NodeBudapest( NodeProfile("BudapestId",
-    NodeContact( "127.0.0.1", 6371, 16371) ), Budapest );
-NodeInfo TestData::NodeKecskemet( NodeProfile("KecskemetId",
-    NodeContact( "127.0.0.1", 6372, 16372) ), Kecskemet );
-NodeInfo TestData::NodeWien( NodeProfile("WienId",
-    NodeContact( "127.0.0.1", 6373, 16373) ), Wien );
-NodeInfo TestData::NodeLondon( NodeProfile("LondonId",
-    NodeContact( "127.0.0.1", 6374, 16374) ), London );
-NodeInfo TestData::NodeNewYork( NodeProfile("NewYorkId",
-    NodeContact( "127.0.0.1", 6375, 16375) ), NewYork );
-NodeInfo TestData::NodeCapeTown( NodeProfile("CapeTownId",
-    NodeContact( "127.0.0.1", 6376, 16376) ), CapeTown );
+NodeInfo TestData::NodeBudapest( "BudapestId", Budapest,
+    NodeContact( "127.0.0.1", 6371, 16371) );
+NodeInfo TestData::NodeKecskemet( "KecskemetId", Kecskemet,
+    NodeContact( "127.0.0.1", 6372, 16372) );
+NodeInfo TestData::NodeWien( "WienId", Wien,
+    NodeContact( "127.0.0.1", 6373, 16373) );
+NodeInfo TestData::NodeLondon( "LondonId", London,
+    NodeContact( "127.0.0.1", 6374, 16374) );
+NodeInfo TestData::NodeNewYork( "NewYorkId", NewYork,
+    NodeContact( "127.0.0.1", 6375, 16375) );
+NodeInfo TestData::NodeCapeTown( "CapeTownId", CapeTown,
+    NodeContact( "127.0.0.1", 6376, 16376) );
 
 NodeDbEntry TestData::EntryBudapest( NodeBudapest,
     NodeRelationType::Self, NodeContactRoleType::Acceptor );

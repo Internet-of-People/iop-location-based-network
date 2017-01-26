@@ -23,8 +23,9 @@ ErrorCode LocationNetworkError::code() const
 
 
 
-NetworkEndpoint::NetworkEndpoint() :
-    _address(), _port() {}
+
+// NetworkEndpoint::NetworkEndpoint() :
+//     _address(), _port() {}
 
 NetworkEndpoint::NetworkEndpoint(const NetworkEndpoint& other) :
     _address(other._address), _port(other._port) {}
@@ -35,12 +36,23 @@ NetworkEndpoint::NetworkEndpoint(const Address& address, TcpPort port) :
 Address NetworkEndpoint::address() const { return _address; }
 TcpPort NetworkEndpoint::port() const { return _port; }
 
+bool NetworkEndpoint::operator==(const NetworkEndpoint& other) const
+{
+    return _address == other._address &&
+           _port    == other._port;
+}
+
+bool NetworkEndpoint::operator!=(const NetworkEndpoint& other) const
+    { return ! operator==(other); }
+
+
 ostream& operator<<(ostream &out, const NetworkEndpoint &value)
     { return out << value.address() << ":" << value.port(); }
 
 
 
-NodeContact::NodeContact() {}
+
+// NodeContact::NodeContact() {}
     
 NodeContact::NodeContact(const NodeContact& other) :
     _address(other._address), _nodePort(other._nodePort), _clientPort(other._clientPort) {}
@@ -59,17 +71,9 @@ NetworkEndpoint NodeContact::nodeEndpoint() const
 NetworkEndpoint NodeContact::clientEndpoint() const
     { return NetworkEndpoint(_address, _clientPort); }
 
-bool NetworkEndpoint::operator==(const NetworkEndpoint& other) const
-{
-    return _address == other._address &&
-           _port    == other._port;
-}
-
-
 
 void NodeContact::address(const Address& address)
     { _address = address; }
-
 
 bool NodeContact::operator==(const NodeContact& other) const
 {
@@ -78,39 +82,12 @@ bool NodeContact::operator==(const NodeContact& other) const
             _clientPort == other._clientPort;
 }
 
-
-ostream& operator<<(ostream &out, const NodeContact &value)
-    { return out << value.address() << ":" << value.nodePort() << "|" << value.clientPort(); }
-
-
-
-NodeProfile::NodeProfile() :
-    _id(), _contact() {}
-
-NodeProfile::NodeProfile(const NodeProfile& other) :
-    _id(other._id), _contact(other._contact) {}
-
-NodeProfile::NodeProfile(const NodeId& id, const NodeContact &contact) :
-    _id(id), _contact(contact) {}
-
-const NodeId& NodeProfile::id() const { return _id; }
-NodeContact& NodeProfile::contact() { return _contact; }
-const NodeContact& NodeProfile::contact() const { return _contact; }
-
-bool NodeProfile::operator==(const NodeProfile& other) const
-{
-    return  _id == other._id &&
-            _contact == other._contact;
-}
-
-bool NodeProfile::operator!=(const NodeProfile& other) const
+bool NodeContact::operator!=(const NodeContact& other) const
     { return ! operator==(other); }
 
 
-std::ostream& operator<<(std::ostream& out, const NodeProfile &value)
-{
-    return out << value.id() << " (" << value.contact() << ")";
-}
+ostream& operator<<(ostream &out, const NodeContact &value)
+    { return out << value.address() << ":" << value.nodePort() << "|" << value.clientPort(); }
 
 
 
@@ -150,24 +127,52 @@ std::ostream& operator<<(std::ostream& out, const GpsLocation &value)
 
 
 
+ServiceInfo::ServiceInfo() : _type(), _port(0) {} // , _instanceId() {}
+
+ServiceInfo::ServiceInfo(const ServiceInfo& other) :
+    _type(other._type), _port(other._port) {} // , _instanceId(other._instanceId) {}
+
+ServiceInfo::ServiceInfo(ServiceType type, TcpPort port) : // , const NodeId& instanceId) :
+    _type(type), _port(port) {} // , _instanceId(instanceId) {}
+
+ServiceType ServiceInfo::type() const { return _type; }
+TcpPort ServiceInfo::port() const { return _port; }
+//const NodeId& ServiceInfo::instanceId() const { return _instanceId; }
+
+bool ServiceInfo::operator==(const ServiceInfo& other) const
+{
+    return _type == other._type &&
+           _port == other._port;
+           // && _instanceId == other._instanceId;
+}
+
+bool ServiceInfo::operator!=(const ServiceInfo& other) const
+    { return ! operator==(other); }
+
+
+
 
 NodeInfo::NodeInfo(const NodeInfo& other) :
-    _profile(other._profile), _location(other._location) {}
+    _id(other._id), _location(other._location), _contact(other._contact) {} // , _services(other._services) {}
 
-NodeInfo::NodeInfo(const NodeProfile &profile, const GpsLocation &location) :
-    _profile(profile), _location(location) {}
+NodeInfo::NodeInfo( const NodeId &id, const GpsLocation &location, const NodeContact &contact ) :
+//        const std::unordered_map<ServiceType, ServiceInfo, EnumHasher> &services) :
+    _id(id), _location(location), _contact(contact) {} // , _services(services) {}
 
-NodeInfo::NodeInfo(const NodeProfile &profile, GpsCoordinate latitude, GpsCoordinate longitude) :
-    _profile(profile), _location(latitude, longitude) {}
 
-NodeProfile& NodeInfo::profile() { return _profile; }
-const NodeProfile& NodeInfo::profile() const { return _profile; }
-const GpsLocation& NodeInfo::location() const { return _location; }
+const NodeId&       NodeInfo::id()       const { return _id; }
+const GpsLocation&  NodeInfo::location() const { return _location; }
+const NodeContact&  NodeInfo::contact()  const { return _contact; }
+// const NodeInfo::Services& NodeInfo::services() const { return _services; }
+
+NodeContact& NodeInfo::contact() { return _contact; }
 
 bool NodeInfo::operator==(const NodeInfo& other) const
 {
-    return _profile  == other._profile &&
-           _location == other._location;
+    return _id == other._id &&
+           _location == other._location &&
+           _contact == other._contact;
+           // && _services == other._services;
 }
 
 bool NodeInfo::operator!=(const NodeInfo& other) const
@@ -176,7 +181,8 @@ bool NodeInfo::operator!=(const NodeInfo& other) const
 
 std::ostream& operator<<(std::ostream& out, const NodeInfo &value)
 {
-    return out << "Node " << value.profile() << "; Location " << value.location();
+    return out << "Node " << value.id() << " (" << value.contact() << "), Location "
+               << value.location(); // << ", services: " << value.services().size();
 }
 
 

@@ -57,7 +57,7 @@ class EzParserConfig : public Config
     static const std::chrono::duration<uint32_t>    _discoveryPeriod;
     
     bool            _versionRequested;
-    NodeId          _id;
+    NodeId          _nodeId;
     Address         _ipAddr;
     TcpPort         _nodePort;
     TcpPort         _clientPort;

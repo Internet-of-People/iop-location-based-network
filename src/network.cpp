@@ -184,19 +184,19 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     if ( request->has_remotenode() )
                     {
                         if ( request->remotenode().has_acceptcolleague() ) {
-                            request->mutable_remotenode()->mutable_acceptcolleague()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
+                            request->mutable_remotenode()->mutable_acceptcolleague()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
                                 NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                         else if ( request->remotenode().has_renewcolleague() ) {
-                            request->mutable_remotenode()->mutable_renewcolleague()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
+                            request->mutable_remotenode()->mutable_renewcolleague()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
                                 NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                         else if ( request->remotenode().has_acceptneighbour() ) {
-                            request->mutable_remotenode()->mutable_acceptneighbour()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
+                            request->mutable_remotenode()->mutable_acceptneighbour()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
                                 NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                         else if ( request->remotenode().has_renewneighbour() ) {
-                            request->mutable_remotenode()->mutable_renewneighbour()->mutable_requestornodeinfo()->mutable_profile()->mutable_contact()->set_ipaddress(
+                            request->mutable_remotenode()->mutable_renewneighbour()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
                                 NodeContact::AddressToBytes( session->remoteAddress() ) );
                         }
                     }
@@ -586,7 +586,7 @@ void ProtoBufTcpStreamChangeListener::RemovedNode(const NodeDbEntry& node)
             iop::locnet::Request req;
             iop::locnet::NeighbourhoodChange *change =
                 req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
-            change->set_removednodeid( node.profile().id() );
+            change->set_removednodeid( node.id() );
             
             unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
             // TODO what to do with response status codes here?

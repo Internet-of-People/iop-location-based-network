@@ -18,8 +18,7 @@ SCENARIO("TCP networking", "[network]")
 {
     GIVEN("A configured Node and Tcp networking")
     {
-        const NodeContact &BudapestNodeContact(
-            TestData::NodeBudapest.profile().contact() );
+        const NodeContact &BudapestNodeContact( TestData::NodeBudapest.contact() );
         
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
@@ -38,8 +37,7 @@ SCENARIO("TCP networking", "[network]")
         
         THEN("It serves clients via sync TCP")
         {
-            const NodeContact &BudapestNodeContact(
-                TestData::NodeBudapest.profile().contact() );
+            const NodeContact &BudapestNodeContact( TestData::NodeBudapest.contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
                 new ProtoBufTcpStreamSession( BudapestNodeContact.nodeEndpoint() ) );
             
@@ -73,8 +71,7 @@ SCENARIO("TCP networking", "[network]")
         
         THEN("It serves transparent clients using ProtoBuf/TCP protocol")
         {
-            const NodeContact &BudapestNodeContact(
-                TestData::NodeBudapest.profile().contact() );
+            const NodeContact &BudapestNodeContact( TestData::NodeBudapest.contact() );
             shared_ptr<IProtoBufNetworkSession> clientSession(
                 new ProtoBufTcpStreamSession( BudapestNodeContact.nodeEndpoint() ) );
             
