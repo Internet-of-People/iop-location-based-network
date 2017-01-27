@@ -9,7 +9,7 @@ using namespace LocNet;
 
 
 
-SCENARIO("Construction and behaviour of data holder types", "[types]")
+SCENARIO("Construction and behaviour of data holder types", "[basic][logic]")
 {
     GIVEN("A successful code block") {
         bool onExit     = false;
@@ -80,7 +80,7 @@ SCENARIO("Construction and behaviour of data holder types", "[types]")
 
 
 
-SCENARIO("Spatial database", "")
+SCENARIO("Spatial database", "[spatialdb][logic]")
 {
     GIVEN("A spatial database implementation") {
         SpatiaLiteDatabase geodb(TestData::NodeBudapest,
@@ -249,7 +249,7 @@ SCENARIO("Spatial database", "")
 
 
 
-SCENARIO("Server registration", "")
+SCENARIO("Server registration", "[localservice][logic]")
 {
     GIVEN("The location based network") {
         GpsLocation loc(1.0, 2.0);

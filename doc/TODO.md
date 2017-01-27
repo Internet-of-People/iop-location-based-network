@@ -51,16 +51,14 @@ but dependency might be better in the opposite direction: messaging may be seen
 as the highest layer connecting business logic (locnet.cpp) with networking (network.cpp).
 
 A reconsideration of the current layering implementation (application: Node, messaging: Dispatcher, session: Session)
-is also necessary because features "connection keepalive" and "Ip autodetection"
+also might be necessary because features "connection keepalive" and "Ip autodetection"
 do not naturally fit into the picture, see the message loop implementation currently in
 `ProtoBufDispatchingTcpServer::AsyncAcceptHandler()`.
 
-We could improve both code structure and compile times. One direction could be restructuring
-sources and using a specific framework header (e.g. asio, ezOptionParser, etc)
-only in a single h/cpp pair so every huge framework header is compiled only once.
-Another approach could be using precompiled headers to speed up compilation.
-We already tried the [cotire CMake plugin](https://github.com/sakra/cotire),
-but it didn't seem to make a difference.
+Currently components are configurable through their API, e.g. `Node` expects a seed nodes parameter.
+The global `Config` is only known by `main()` and it delegates config values to the components.
+It might be better if each component can access a global configuration singleton instance and
+fetch required configuration information directly from it without intermediaries.
 
 
 ## Convenience
@@ -98,7 +96,7 @@ If we find no conceptual problems we should identify attack vectors and protect 
 - Ban misbehaving nodes.
 
 
-## Performance
+## Optimization and Performance
 
 Socket connections are accepted asynchronously using asio using only a single thread.
 However, it is much harder to use async operations to implement interfaces
@@ -123,3 +121,10 @@ Using asynch mode one can differentiate the "timer expired" event from the "time
 event by checking an error code, but with the blocking streaming implementation
 we found that the stream is closed even when you disable the timer,
 probably this error code is not checked in the implementation as we'd expect.
+
+We could improve both code structure and compile times. One direction could be restructuring
+sources and using a specific framework header (e.g. asio, ezOptionParser, etc)
+only in a single h/cpp pair so every huge framework header is compiled only once.
+Another approach could be using precompiled headers to speed up compilation.
+We already tried the [cotire CMake plugin](https://github.com/sakra/cotire),
+but it didn't seem to make a difference.

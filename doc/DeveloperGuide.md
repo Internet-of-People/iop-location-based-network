@@ -20,18 +20,19 @@ Consequently we made these decisions:
 
 Consequently, nodes implement an algorithm that helps them pick which nodes they
 need to know about and which nodes they don’t.
-The Network Map of each node consists of two parts with different goals and properties.
+Each node keeps its own Network Map that consists of two parts with different goals and properties.
 The Neighborhood Map aims to maintain a comprehensive list of the closest nodes.
 The World Map aims to provide a rough coverage of the rest of the world
 outside the neighborhood. To prevent too much data and limit node density,
-the World Map picks only a single node from each area.
+the World Map picks only a single node from each area, expecting that the picked node knows
+its neighbourhood well thus we can ask it for further area details whenever necessary.
 Covered areas are defined with circular “bubbles” drawn around single nodes that must not overlap.
 The World Map uses a changing bubble size to have a denser local and sparser remote node density.
 So the greater the area, the bigger bubbles are, i.e. less nodes are included.
 Area bubbles are defined autonomously and are specific to the Network Map of each node.
 There is no node count limit for the World Map, the increasing size of bubbles
-serves as a limit for node counts. For the Neighborhood Map the bubbles may overlap,
-so nodes have a maximal count of neighboring nodes.
+serves as a limit for node counts. On the Neighborhood Map the bubbles may overlap,
+so it has a maximal count of neighboring nodes.
 
 
 # Project architecture
@@ -67,7 +68,8 @@ Directories, files and sources are organized as follows:
   - `network` implements communication on top of TCP. Defines interfaces
     for client session and a generic Tcp server. Implements a session on
     top of blocking TCP streams and gives a server implementation
-    that runs a request dispatch loop for its sessions.
+    that runs a request dispatch loop for its sessions. It also implements a message
+    dispatcher that sends requests to a remote peer using a network session.
   - `main` instantiates, links and runs all these building blocks that make up the software.
 - `test` contains sources to test our software
 
@@ -80,4 +82,20 @@ allows extending the sources with additional messaging frameworks if necessary.
 
 # Components and workflow
 
-TODO
+To see how these building block fit together, let's check the workflow how clients are served.
+
+Function `main()` creates `TcpServer` instances that bind to a TCP socket and
+start an asynchronous acceptor. Note that it is internally translated to an asynchronous task
+and added to the task queue of `asio::io_service`. Function `io_service::run()`
+(currently started as a separate thread from the Tcp server) consumes and executes tasks
+from this queue, thus our registered task accepts client connections and
+invokes our callback `TcpServer::AsyncAcceptHandler()` registered for this event.
+
+Our implementation of this callback in `ProtoBufDispatchingTcpServer` instantiates a session
+and reads requests in a loop. When a request is read, a request dispatcher is invoked to deliver
+the message and return a response. Our configured request dispatcher translates the request
+from the format of our ProtoBuf protocol definition into our internal representation and
+invokes the appropriate method of our application logic implemented in `Node`.
+The node usually consults its `SpatialDatabase` to fetch or modify its map and
+returns the result to the dispatcher. The dispatcher then translates it back to ProtoBuf format and
+send it back to the client.
