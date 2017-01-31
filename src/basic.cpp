@@ -127,7 +127,7 @@ std::ostream& operator<<(std::ostream& out, const GpsLocation &value)
 
 
 
-ServiceInfo::ServiceInfo() : _type(), _port(0) {} // , _instanceId() {}
+ServiceInfo::ServiceInfo() : _type(), _port(0), _customData() {}
 
 ServiceInfo::ServiceInfo(const ServiceInfo& other) :
     _type(other._type), _port(other._port), _customData(other._customData) {}
@@ -153,10 +153,11 @@ bool ServiceInfo::operator!=(const ServiceInfo& other) const
 
 
 NodeInfo::NodeInfo(const NodeInfo& other) :
-    _id(other._id), _location(other._location), _contact(other._contact), _services(other._services) {}
+    _id(other._id), _location(other._location), _contact(other._contact),
+    _services(other._services) {}
 
-NodeInfo::NodeInfo( const NodeId &id, const GpsLocation &location, const NodeContact &contact,
-        const Services &services ) :
+NodeInfo::NodeInfo( const NodeId &id, const GpsLocation &location,
+                    const NodeContact &contact, const Services &services ) :
     _id(id), _location(location), _contact(contact), _services(services) {}
 
 
@@ -170,9 +171,9 @@ NodeInfo::Services& NodeInfo::services() { return _services; }
 
 bool NodeInfo::operator==(const NodeInfo& other) const
 {
-    return _id == other._id &&
+    return _id       == other._id &&
            _location == other._location &&
-           _contact == other._contact &&
+           _contact  == other._contact &&
            _services == other._services;
 }
 

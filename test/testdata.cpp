@@ -14,17 +14,17 @@ GpsLocation TestData::CapeTown(-33.9248685,18.4240553);
 
 
 NodeInfo TestData::NodeBudapest( "BudapestId", Budapest,
-    NodeContact( "127.0.0.1", 6371, 16371) );
+    NodeContact( "127.0.0.1", 6371, 16371), {} );
 NodeInfo TestData::NodeKecskemet( "KecskemetId", Kecskemet,
-    NodeContact( "127.0.0.1", 6372, 16372) );
+    NodeContact( "127.0.0.1", 6372, 16372), {} );
 NodeInfo TestData::NodeWien( "WienId", Wien,
-    NodeContact( "127.0.0.1", 6373, 16373) );
+    NodeContact( "127.0.0.1", 6373, 16373), {} );
 NodeInfo TestData::NodeLondon( "LondonId", London,
-    NodeContact( "127.0.0.1", 6374, 16374) );
+    NodeContact( "127.0.0.1", 6374, 16374), {} );
 NodeInfo TestData::NodeNewYork( "NewYorkId", NewYork,
-    NodeContact( "127.0.0.1", 6375, 16375) );
+    NodeContact( "127.0.0.1", 6375, 16375), {} );
 NodeInfo TestData::NodeCapeTown( "CapeTownId", CapeTown,
-    NodeContact( "127.0.0.1", 6376, 16376) );
+    NodeContact( "127.0.0.1", 6376, 16376), {} );
 
 NodeDbEntry TestData::EntryBudapest( NodeBudapest,
     NodeRelationType::Self, NodeContactRoleType::Acceptor );

@@ -48,7 +48,7 @@ int main(int argc, const char *argv[])
 
         TcpStreamConnectionFactory *connFactPtr = new TcpStreamConnectionFactory();
         shared_ptr<INodeConnectionFactory> connectionFactory(connFactPtr);
-        shared_ptr<Node> node( new Node( myNodeInfo, geodb, connectionFactory, config.seedNodes() ) );
+        shared_ptr<Node> node( new Node( geodb, connectionFactory, config.seedNodes() ) );
         
         connFactPtr->detectedIpCallback( [node](const Address &addr) { node->DetectedExternalAddress(addr); } );
         node->EnsureMapFilled();

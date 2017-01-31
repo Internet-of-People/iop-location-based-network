@@ -37,7 +37,7 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
         
         shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
         shared_ptr<IChangeListenerFactory> listenerFactory( new DummyChangeListenerFactory() );
-        shared_ptr<Node> node( new Node( TestData::NodeBudapest, geodb, connectionFactory, {} ) );
+        shared_ptr<Node> node( new Node( geodb, connectionFactory, {} ) );
         IncomingRequestDispatcher dispatcher(node, listenerFactory);
         
         THEN("Local service GetNeighbours requests are properly served") {
