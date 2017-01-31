@@ -174,17 +174,17 @@ class ServiceInfo
 {
     ServiceType _type;
     TcpPort     _port;
-    //NodeId  _instanceId;
+    std::string _customData;
     
 public:
     
     ServiceInfo(); // Required to be a value in a map
     ServiceInfo(const ServiceInfo &other);
-    ServiceInfo(ServiceType type, TcpPort port); //, const NodeId &instanceId);
+    ServiceInfo( ServiceType type, TcpPort port, const std::string &customData = std::string() );
     
     ServiceType type() const;
     TcpPort port() const;
-    // const NodeId& instanceId() const;
+    const std::string& customData() const;
     
     bool operator==(const ServiceInfo &other) const;
     bool operator!=(const ServiceInfo &other) const;
@@ -197,24 +197,29 @@ public:
 // TODO will we also need a public key here later as part of the identity?
 class NodeInfo
 {
+public:
+
     typedef std::unordered_map<ServiceType, ServiceInfo, EnumHasher> Services;
+
+private:
     
     NodeId      _id;
     GpsLocation _location;
     NodeContact _contact;
-    // Services    _services;
+    Services    _services;
     
 public:
     
     NodeInfo(const NodeInfo &other);
-    NodeInfo( const NodeId &id, const GpsLocation &location, const NodeContact &contact );
-        // const std::unordered_map<ServiceType, ServiceInfo, EnumHasher> &services );
+    NodeInfo( const NodeId &id, const GpsLocation &location, const NodeContact &contact,
+              const Services &services );
     
     const NodeId& id() const;
     const GpsLocation& location() const;
     const NodeContact& contact() const;
-    //const Services& services() const;
+    const Services& services() const;
     
+    Services& services();
     NodeContact& contact();
     
     bool operator==(const NodeInfo &other) const;
@@ -222,22 +227,6 @@ public:
 };
 
 std::ostream& operator<<(std::ostream& out, const NodeInfo &value);
-
-
-
-enum class NodeRelationType : uint8_t
-{
-    Colleague   = 1,
-    Neighbour   = 2,
-    Self        = 3,
-};
-
-
-enum class NodeContactRoleType : uint8_t
-{
-    Initiator   = 1,
-    Acceptor    = 2,
-};
 
 
 

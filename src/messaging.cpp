@@ -99,7 +99,7 @@ iop::locnet::ServiceType Converter::ToProtoBuf(ServiceType value)
 
 ServiceInfo Converter::FromProtoBuf(const iop::locnet::ServiceInfo& value)
 {
-    return ServiceInfo( FromProtoBuf( value.type() ), value.port() );
+    return ServiceInfo( FromProtoBuf( value.type() ), value.port(), value.servicedata() );
 }
 
 
@@ -108,9 +108,18 @@ NodeInfo Converter::FromProtoBuf(const iop::locnet::NodeInfo& value)
     if ( ! value.has_contact() )
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No contact information for node"); }
     
+    NodeInfo::Services services;
+    for (int idx = 0; idx < value.services_size(); ++idx)
+    {
+        const iop::locnet::ServiceInfo &sourceService = value.services(idx);
+        ServiceInfo service = FromProtoBuf(sourceService);
+        services[ service.type() ] = service;
+    }
+    
     const iop::locnet::NodeContact &contact = value.contact();
     return NodeInfo( value.nodeid(), FromProtoBuf( value.location() ), NodeContact(
-        NodeContact::AddressFromBytes( contact.ipaddress() ), contact.nodeport(), contact.clientport() ) );
+        NodeContact::AddressFromBytes( contact.ipaddress() ), contact.nodeport(), contact.clientport() ),
+        services );
 }
 
 
@@ -119,6 +128,8 @@ void Converter::FillProtoBuf(iop::locnet::ServiceInfo *target, const ServiceInfo
 {
     target->set_type( ToProtoBuf( source.type() ) );
     target->set_port( source.port() );
+    if ( ! source.customData().empty() )
+        { target->set_servicedata( source.customData() ); }
 }
 
 iop::locnet::ServiceInfo* Converter::ToProtoBuf(const ServiceInfo &info)
@@ -142,6 +153,12 @@ void Converter::FillProtoBuf(
     targetContact->set_nodeport( sourceContact.nodePort() );
     targetContact->set_clientport( sourceContact.clientPort() );
     targetContact->set_ipaddress( sourceContact.AddressBytes() );
+    
+    for ( const auto &serviceEntry : source.services() )
+    {
+        iop::locnet::ServiceInfo *targetService = target->add_services();
+        FillProtoBuf(targetService, serviceEntry.second);
+    }
 }
 
 iop::locnet::NodeInfo* Converter::ToProtoBuf(const NodeInfo &info)
@@ -188,7 +205,6 @@ unique_ptr<iop::locnet::Response> IncomingLocalServiceRequestDispatcher::Dispatc
         {
             auto const &registerRequest = localServiceRequest.registerservice();
             ServiceInfo service = Converter::FromProtoBuf( registerRequest.service() );
-            
             _iLocalService->RegisterService(service);
             LOG(DEBUG) << "Served RegisterService()";
             
@@ -420,7 +436,7 @@ unique_ptr<iop::locnet::Response> IncomingClientRequestDispatcher::Dispatch(cons
     {
         case iop::locnet::ClientRequest::kGetServices:
         {
-            auto const &services = _iClient->GetServices();
+            auto const &services = _iClient->GetNodeInfo().services();
             LOG(DEBUG) << "Served GetServices(), service count: " << services.size();
             
             auto responseContent = clientResponse->mutable_getservices();

@@ -30,12 +30,10 @@ const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT     = 5;
 random_device Node::_randomDevice;
 
 
-Node::Node( const NodeInfo &myNodeInfo,
-            shared_ptr<ISpatialDatabase> spatialDb,
+Node::Node( shared_ptr<ISpatialDatabase> spatialDb,
             std::shared_ptr<INodeConnectionFactory> connectionFactory,
             const vector<NetworkEndpoint> &seedNodes ) :
-    _myNodeInfo(myNodeInfo), _spatialDb(spatialDb), _connectionFactory(connectionFactory),
-    _seedNodes(seedNodes)
+    _spatialDb(spatialDb), _connectionFactory(connectionFactory), _seedNodes(seedNodes)
 {
     if (_spatialDb == nullptr) {
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No spatial database instantiated");
@@ -58,9 +56,10 @@ void Node::EnsureMapFilled()
         if ( GetNodeCount() <= 1 )
         {
             // This still might be normal if we're the very first seed node of the whole network
+            NodeInfo myInfo = _spatialDb->ThisNode();
             auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
-                [this] (const NetworkEndpoint &contact)
-                    { return _myNodeInfo.contact().nodeEndpoint() == contact; } );
+                [&myInfo] (const NetworkEndpoint &contact)
+                    { return myInfo.contact().nodeEndpoint() == contact; } );
             if ( seedIt == _seedNodes.end() )
                  { throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Failed to discover any node of the network"); }
             else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
@@ -70,17 +69,21 @@ void Node::EnsureMapFilled()
 
 
 
-const unordered_map<ServiceType,ServiceInfo,EnumHasher>& Node::GetServices() const
-    { return _services; }
+NodeInfo Node::GetNodeInfo() const
+    { return _spatialDb->ThisNode(); }
     
 void Node::RegisterService(const ServiceInfo& serviceInfo)
 {
-// NOTE this forbids registering again for connecting services after a restart
+// NOTE stricter check forbids registering again for connecting services after a restart
 //     auto it = _services.find(serviceType);
 //     if ( it != _services.end() ) {
 //         throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Service type is already registered");
 //     }
-    _services[ serviceInfo.type() ] = serviceInfo;
+    
+    NodeDbEntry entry = _spatialDb->ThisNode();
+    entry.services()[ serviceInfo.type() ] = serviceInfo;
+    _spatialDb->Update(entry);
+    // TODO should we immediately start distributing this change or is it enough to wait for the usual renewal?
 }
 
 void Node::DeregisterService(ServiceType serviceType)
@@ -90,7 +93,11 @@ void Node::DeregisterService(ServiceType serviceType)
 //     if ( it == _services.end() ) {
 //         throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Service type was not registered");
 //     }
-    _services.erase(serviceType);
+    
+    NodeDbEntry entry = _spatialDb->ThisNode();
+    entry.services().erase(serviceType);
+    _spatialDb->Update(entry);
+    // TODO should we immediately start distributing this change or is it enough to wait for the usual renewal?
 }
 
 
@@ -102,13 +109,14 @@ void Node::RemoveListener(const SessionId &sessionId)
 
 
 
-// TODO consider if there are potential thread safety problems here, potentially may be called from any thread
 void Node::DetectedExternalAddress(const Address& address)
 {
-    if (! address.empty() )
+    NodeDbEntry myEntry = _spatialDb->ThisNode();
+    if ( myEntry.contact().address() != address && ! address.empty() )
     {
         LOG(INFO) << "Detected external IP address " << address;
-        _myNodeInfo.contact().address(address);
+        myEntry.contact().address(address);
+        _spatialDb->Update(myEntry);
     }
 }
 
@@ -124,7 +132,8 @@ shared_ptr<NodeInfo> Node::AcceptColleague(const NodeInfo &node)
     
     bool success = SafeStoreNode( NodeDbEntry(
         node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
-    return success ? shared_ptr<NodeInfo>( new NodeInfo(_myNodeInfo) ) : shared_ptr<NodeInfo>();
+    return success ? shared_ptr<NodeInfo>( new NodeInfo( _spatialDb->ThisNode() ) ) :
+                     shared_ptr<NodeInfo>();
 }
 
 
@@ -137,7 +146,8 @@ shared_ptr<NodeInfo> Node::RenewColleague(const NodeInfo& node)
 
     bool success = SafeStoreNode( NodeDbEntry(
         node, NodeRelationType::Colleague, NodeContactRoleType::Acceptor) );
-    return success ? shared_ptr<NodeInfo>( new NodeInfo(_myNodeInfo) ) : shared_ptr<NodeInfo>();
+    return success ? shared_ptr<NodeInfo>( new NodeInfo( _spatialDb->ThisNode() ) ) :
+                     shared_ptr<NodeInfo>();
 }
 
 
@@ -151,7 +161,8 @@ shared_ptr<NodeInfo> Node::AcceptNeighbour(const NodeInfo &node)
     
     bool success = SafeStoreNode( NodeDbEntry(
         node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
-    return success ? shared_ptr<NodeInfo>( new NodeInfo(_myNodeInfo) ) : shared_ptr<NodeInfo>();
+    return success ? shared_ptr<NodeInfo>( new NodeInfo( _spatialDb->ThisNode() ) ) :
+                     shared_ptr<NodeInfo>();
 }
 
 
@@ -164,7 +175,8 @@ shared_ptr<NodeInfo> Node::RenewNeighbour(const NodeInfo& node)
         
     bool success = SafeStoreNode( NodeDbEntry(
         node, NodeRelationType::Neighbour, NodeContactRoleType::Acceptor) );
-    return success ? shared_ptr<NodeInfo>( new NodeInfo(_myNodeInfo) ) : shared_ptr<NodeInfo>();
+    return success ? shared_ptr<NodeInfo>( new NodeInfo( _spatialDb->ThisNode() ) ) :
+                     shared_ptr<NodeInfo>();
 }
 
 
@@ -197,7 +209,7 @@ vector<NodeInfo> Node::GetClosestNodesByDistance(const GpsLocation& location,
 
 Distance Node::GetBubbleSize(const GpsLocation& location) const
 {
-    Distance distance = _spatialDb->GetDistanceKm( _myNodeInfo.location(), location );
+    Distance distance = _spatialDb->GetDistanceKm( _spatialDb->ThisNode().location(), location );
     Distance bubbleSize = log10(distance + 2500.) * 501. - 1700.;
     return bubbleSize;
 }
@@ -232,7 +244,7 @@ bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &node
 shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint)
 {
     // There is no point in connecting to ourselves
-    if ( endpoint == _myNodeInfo.contact().nodeEndpoint() || endpoint.isLoopback() )
+    if ( endpoint == _spatialDb->ThisNode().contact().nodeEndpoint() || endpoint.isLoopback() )
         { return shared_ptr<INodeMethods>(); }
     
     try { return _connectionFactory->ConnectTo(endpoint); }
@@ -248,9 +260,11 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
 {
     try
     {
+        NodeDbEntry myNode = _spatialDb->ThisNode();
+        
         // We must not explicitly add or overwrite our own node info here.
         // Whether or not our own nodeinfo is stored in the db is an implementation detail of the SpatialDatabase.
-        if ( plannedEntry.id() == _myNodeInfo.id() ||
+        if ( plannedEntry.id() == myNode.id() ||
              plannedEntry.relationType() == NodeRelationType::Self )
             { return false; }
      
@@ -290,8 +304,8 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                 {
                     // If we have too many closer neighbours already, deny request
                     const NodeInfo &limitNeighbour = neighboursByDistance[NEIGHBOURHOOD_MAX_NODE_COUNT - 1];
-                    if ( _spatialDb->GetDistanceKm( limitNeighbour.location(), _myNodeInfo.location() ) <=
-                         _spatialDb->GetDistanceKm( _myNodeInfo.location(), plannedEntry.location() ) )
+                    if ( _spatialDb->GetDistanceKm( limitNeighbour.location(), myNode.location() ) <=
+                         _spatialDb->GetDistanceKm( myNode.location(), plannedEntry.location() ) )
                     { return false; }
                 }
                 break;
@@ -319,14 +333,14 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             {
                 case NodeRelationType::Colleague:
                     freshInfo = storedInfo && storedInfo->relationType() == plannedEntry.relationType() ?
-                        nodeConnection->RenewColleague(_myNodeInfo) :
-                        nodeConnection->AcceptColleague(_myNodeInfo);
+                        nodeConnection->RenewColleague(myNode) :
+                        nodeConnection->AcceptColleague(myNode);
                     break;
                 
                 case NodeRelationType::Neighbour:
                     freshInfo = storedInfo && storedInfo->relationType() == plannedEntry.relationType() ?
-                        nodeConnection->RenewNeighbour(_myNodeInfo) :
-                        nodeConnection->AcceptNeighbour(_myNodeInfo);
+                        nodeConnection->RenewNeighbour(myNode) :
+                        nodeConnection->AcceptNeighbour(myNode);
                     break;
                 
                 case NodeRelationType::Self:
@@ -396,9 +410,10 @@ bool Node::InitializeWorld()
                 { continue; }
             
             // Try to add seed node to our network (no matter if fails)
-            // TODO a cleaner would be nice, but nodeInfo will be queried in SafeStoreNode anyway
+            // TODO a cleaner implementation would be nice, but nodeInfo will be queried in SafeStoreNode anyway
+            //      E.g. could transform GetServices() into GetNodeInfo() and use that directly here
             SafeStoreNode( NodeDbEntry( NodeInfo( "ThisNodeIdWillBeOverWritten", 
-                GpsLocation(0,0), NodeContact( selectedSeedContact.address(), selectedSeedContact.port(), 0 ) ), 
+                GpsLocation(0,0), NodeContact( selectedSeedContact.address(), selectedSeedContact.port(), 0 ), {} ), 
                 NodeRelationType::Colleague, NodeContactRoleType::Initiator ), seedNodeConnection, true );
             
             // Query both total node count and an initial list of random nodes to start with
@@ -423,7 +438,6 @@ bool Node::InitializeWorld()
     if ( nodeCountAtSeed == 0 && randomColleagueCandidates.empty() &&
          triedNodes.size() == _seedNodes.size() )
     {
-        // TODO reconsider error handling here, should we completely give up and maybe exit()?
         LOG(ERROR) << "All seed nodes have been tried and failed";
         return false;
     }
@@ -488,8 +502,9 @@ bool Node::InitializeNeighbourhood()
 {
     LOG(DEBUG) << "Discovering neighbourhood";
     
+    NodeDbEntry myNode = _spatialDb->ThisNode();
     vector<NodeInfo> newClosestNodes = GetClosestNodesByDistance(
-        _myNodeInfo.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
+        myNode.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
     if ( newClosestNodes.size() < 2 ) // First node is self
     {
         LOG(DEBUG) << "No other nodes are available beyond self, cannot get neighbour candidates";
@@ -511,11 +526,11 @@ bool Node::InitializeNeighbourhood()
             }
             
             newClosestNodes = closestNodeConnection->GetClosestNodesByDistance(
-                _myNodeInfo.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
+                myNode.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
             if ( newClosestNodes.empty() )
                 { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Node returned empty node list result"); }
                 
-            if ( newClosestNodes.front().id() != _myNodeInfo.id() )
+            if ( newClosestNodes.front().id() != myNode.id() )
                 { newClosestNode = newClosestNodes[0]; }
             else if ( newClosestNodes.size() > 1 )
                 { newClosestNode = newClosestNodes[1]; }
@@ -557,7 +572,7 @@ bool Node::InitializeNeighbourhood()
             
             // Get its neighbours closest to us
             vector<NodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodesByDistance(
-                _myNodeInfo.location(), numeric_limits<Distance>::max(),
+                myNode.location(), numeric_limits<Distance>::max(),
                 INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT, Neighbours::Included );
             
             // Mark current node as processed and append its new neighbours to our todo list
@@ -621,13 +636,15 @@ void Node::DiscoverUnknownAreas()
             // if ( BubbleOverlaps(randomLocation) )
             //    { continue; }
             
+            NodeInfo myNodeInfo = _spatialDb->ThisNode();
+            
             // Get node closest to this position that is already present in our database
             vector<NodeInfo> myClosestNodes = GetClosestNodesByDistance(
                 randomLocation, numeric_limits<Distance>::max(), 2, Neighbours::Excluded );
             if ( myClosestNodes.empty() ||
-                 ( myClosestNodes.size() == 1 && _myNodeInfo == myClosestNodes[0] ) )
+                 ( myClosestNodes.size() == 1 && myNodeInfo == myClosestNodes[0] ) )
                 { continue; }
-            const auto &myClosestNode = myClosestNodes[0] != _myNodeInfo ?
+            const auto &myClosestNode = myClosestNodes[0] != myNodeInfo ?
                 myClosestNodes[0] : myClosestNodes[1];
             
             // Connect to closest node
@@ -641,7 +658,7 @@ void Node::DiscoverUnknownAreas()
             // Ask closest node about its nodes closest to the random position
             vector<NodeInfo> gotClosestNodes = connection->GetClosestNodesByDistance(
                 randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Included );
-            if ( gotClosestNodes.empty() || gotClosestNodes[0] == _myNodeInfo )
+            if ( gotClosestNodes.empty() || gotClosestNodes[0] == myNodeInfo )
                 { continue; }
             const auto &gotClosestNode = gotClosestNodes[0];
             

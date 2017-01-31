@@ -252,7 +252,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     _localPort = localPort;
     
     _myNodeInfo.reset( new NodeInfo( _nodeId, GpsLocation(_latitude, _longitude),
-        NodeContact(_ipAddr, _nodePort, _clientPort) ) );
+        NodeContact(_ipAddr, _nodePort, _clientPort), {} ) );
     
     vector<vector<string>> seedOptionVectors;
     _optParser.get(OPTNAME_SEEDNODE)->getMultiStrings(seedOptionVectors);

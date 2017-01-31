@@ -38,6 +38,9 @@ public:
     
     virtual ~INodeMethods() {}
     
+    // TODO we should probably add this here
+    //virtual NodeInfo GetNodeInfo() const = 0;
+    
     virtual size_t GetNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const = 0;
@@ -59,7 +62,7 @@ public:
     
     virtual ~IClientMethods() {}
 
-    virtual const std::unordered_map<ServiceType,ServiceInfo,EnumHasher>& GetServices() const = 0;
+    virtual NodeInfo GetNodeInfo() const = 0;
     
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     virtual std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
@@ -100,16 +103,8 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
 {
     static std::random_device _randomDevice;
     
-    NodeInfo _myNodeInfo;
     std::shared_ptr<ISpatialDatabase>       _spatialDb;
     std::shared_ptr<INodeConnectionFactory> _connectionFactory;
-    
-    // TODO consider if this should be also persistant, thus included in SpatialDatabase.
-    //      Pro: service list survives restart/crash, services don't have to detect restart and register again.
-    //      Con: if services are also restarted, will give false results.
-    // TODO If no need to be persistent, this is still not threadsafe, though problems are highly unlikely.
-    //      Should also use something like spatialdb.hpp:ThreadSafeChangeListenerRegistry here.
-    std::unordered_map<ServiceType, ServiceInfo, EnumHasher> _services;
     
     std::vector<NetworkEndpoint> _seedNodes;
     
@@ -128,8 +123,7 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     
 public:
     
-    Node( const NodeInfo &myNodeInfo,
-          std::shared_ptr<ISpatialDatabase> spatialDb,
+    Node( std::shared_ptr<ISpatialDatabase> spatialDb,
           std::shared_ptr<INodeConnectionFactory> connectionFactory,
           const std::vector<NetworkEndpoint> &seedNodes);
 
@@ -141,9 +135,10 @@ public:
     void RenewNodeRelations();
     void DiscoverUnknownAreas();
     
+    
     // Interface provided to serve higher level services and clients
-    const std::unordered_map<ServiceType,ServiceInfo,EnumHasher>& GetServices() const override;
-    // + GetClosestNodes() which is the same as for network instances on remote machines
+    //   + GetClosestNodes() + GetNeighbourNodes() which are the same as on other interfaces
+    NodeInfo GetNodeInfo() const override;
     
     // Local interface for services running on the same hardware
     void RegisterService(const ServiceInfo &serviceInfo) override;

@@ -130,20 +130,20 @@ std::ostream& operator<<(std::ostream& out, const GpsLocation &value)
 ServiceInfo::ServiceInfo() : _type(), _port(0) {} // , _instanceId() {}
 
 ServiceInfo::ServiceInfo(const ServiceInfo& other) :
-    _type(other._type), _port(other._port) {} // , _instanceId(other._instanceId) {}
+    _type(other._type), _port(other._port), _customData(other._customData) {}
 
-ServiceInfo::ServiceInfo(ServiceType type, TcpPort port) : // , const NodeId& instanceId) :
-    _type(type), _port(port) {} // , _instanceId(instanceId) {}
+ServiceInfo::ServiceInfo(ServiceType type, TcpPort port, const string& customData) :
+    _type(type), _port(port), _customData(customData) {}
 
 ServiceType ServiceInfo::type() const { return _type; }
 TcpPort ServiceInfo::port() const { return _port; }
-//const NodeId& ServiceInfo::instanceId() const { return _instanceId; }
+const string& ServiceInfo::customData() const { return _customData; }
 
 bool ServiceInfo::operator==(const ServiceInfo& other) const
 {
-    return _type == other._type &&
-           _port == other._port;
-           // && _instanceId == other._instanceId;
+    return _type       == other._type &&
+           _port       == other._port &&
+           _customData == other._customData;
 }
 
 bool ServiceInfo::operator!=(const ServiceInfo& other) const
@@ -153,26 +153,27 @@ bool ServiceInfo::operator!=(const ServiceInfo& other) const
 
 
 NodeInfo::NodeInfo(const NodeInfo& other) :
-    _id(other._id), _location(other._location), _contact(other._contact) {} // , _services(other._services) {}
+    _id(other._id), _location(other._location), _contact(other._contact), _services(other._services) {}
 
-NodeInfo::NodeInfo( const NodeId &id, const GpsLocation &location, const NodeContact &contact ) :
-//        const std::unordered_map<ServiceType, ServiceInfo, EnumHasher> &services) :
-    _id(id), _location(location), _contact(contact) {} // , _services(services) {}
+NodeInfo::NodeInfo( const NodeId &id, const GpsLocation &location, const NodeContact &contact,
+        const Services &services ) :
+    _id(id), _location(location), _contact(contact), _services(services) {}
 
 
 const NodeId&       NodeInfo::id()       const { return _id; }
 const GpsLocation&  NodeInfo::location() const { return _location; }
 const NodeContact&  NodeInfo::contact()  const { return _contact; }
-// const NodeInfo::Services& NodeInfo::services() const { return _services; }
+const NodeInfo::Services& NodeInfo::services() const { return _services; }
 
 NodeContact& NodeInfo::contact() { return _contact; }
+NodeInfo::Services& NodeInfo::services() { return _services; }
 
 bool NodeInfo::operator==(const NodeInfo& other) const
 {
     return _id == other._id &&
            _location == other._location &&
-           _contact == other._contact;
-           // && _services == other._services;
+           _contact == other._contact &&
+           _services == other._services;
 }
 
 bool NodeInfo::operator!=(const NodeInfo& other) const
@@ -182,7 +183,7 @@ bool NodeInfo::operator!=(const NodeInfo& other) const
 std::ostream& operator<<(std::ostream& out, const NodeInfo &value)
 {
     return out << "Node " << value.id() << " (" << value.contact() << "), Location "
-               << value.location(); // << ", services: " << value.services().size();
+               << value.location() << ", services: " << value.services().size();
 }
 
 

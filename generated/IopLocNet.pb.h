@@ -128,6 +128,107 @@ inline bool ServiceType_Parse(
 }
 // ===================================================================
 
+class ServiceInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.ServiceInfo) */ {
+ public:
+  ServiceInfo();
+  virtual ~ServiceInfo();
+
+  ServiceInfo(const ServiceInfo& from);
+
+  inline ServiceInfo& operator=(const ServiceInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ServiceInfo& default_instance();
+
+  void Swap(ServiceInfo* other);
+
+  // implements Message ----------------------------------------------
+
+  inline ServiceInfo* New() const { return New(NULL); }
+
+  ServiceInfo* New(::google::protobuf::Arena* arena) const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ServiceInfo& from);
+  void MergeFrom(const ServiceInfo& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const {
+    return InternalSerializeWithCachedSizesToArray(false, output);
+  }
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(ServiceInfo* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return _internal_metadata_.arena();
+  }
+  inline void* MaybeArenaPtr() const {
+    return _internal_metadata_.raw_arena_ptr();
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional .iop.locnet.ServiceType type = 1;
+  void clear_type();
+  static const int kTypeFieldNumber = 1;
+  ::iop::locnet::ServiceType type() const;
+  void set_type(::iop::locnet::ServiceType value);
+
+  // optional uint32 port = 2;
+  void clear_port();
+  static const int kPortFieldNumber = 2;
+  ::google::protobuf::uint32 port() const;
+  void set_port(::google::protobuf::uint32 value);
+
+  // optional bytes serviceData = 3;
+  void clear_servicedata();
+  static const int kServiceDataFieldNumber = 3;
+  const ::std::string& servicedata() const;
+  void set_servicedata(const ::std::string& value);
+  void set_servicedata(const char* value);
+  void set_servicedata(const void* value, size_t size);
+  ::std::string* mutable_servicedata();
+  ::std::string* release_servicedata();
+  void set_allocated_servicedata(::std::string* servicedata);
+
+  // @@protoc_insertion_point(class_scope:iop.locnet.ServiceInfo)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  bool _is_default_instance_;
+  int type_;
+  ::google::protobuf::uint32 port_;
+  ::google::protobuf::internal::ArenaStringPtr servicedata_;
+  mutable int _cached_size_;
+  friend void  protobuf_AddDesc_IopLocNet_2eproto();
+  friend void protobuf_AssignDesc_IopLocNet_2eproto();
+  friend void protobuf_ShutdownFile_IopLocNet_2eproto();
+
+  void InitAsDefaultInstance();
+  static ServiceInfo* default_instance_;
+};
+// -------------------------------------------------------------------
+
 class GpsLocation : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.GpsLocation) */ {
  public:
   GpsLocation();
@@ -407,6 +508,18 @@ class NodeInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::iop::locnet::GpsLocation* release_location();
   void set_allocated_location(::iop::locnet::GpsLocation* location);
 
+  // repeated .iop.locnet.ServiceInfo services = 32;
+  int services_size() const;
+  void clear_services();
+  static const int kServicesFieldNumber = 32;
+  const ::iop::locnet::ServiceInfo& services(int index) const;
+  ::iop::locnet::ServiceInfo* mutable_services(int index);
+  ::iop::locnet::ServiceInfo* add_services();
+  ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo >*
+      mutable_services();
+  const ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo >&
+      services() const;
+
   // @@protoc_insertion_point(class_scope:iop.locnet.NodeInfo)
  private:
 
@@ -415,6 +528,7 @@ class NodeInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::internal::ArenaStringPtr nodeid_;
   ::iop::locnet::NodeContact* contact_;
   ::iop::locnet::GpsLocation* location_;
+  ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo > services_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_IopLocNet_2eproto();
   friend void protobuf_AssignDesc_IopLocNet_2eproto();
@@ -422,95 +536,6 @@ class NodeInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   void InitAsDefaultInstance();
   static NodeInfo* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class ServiceInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.ServiceInfo) */ {
- public:
-  ServiceInfo();
-  virtual ~ServiceInfo();
-
-  ServiceInfo(const ServiceInfo& from);
-
-  inline ServiceInfo& operator=(const ServiceInfo& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const ServiceInfo& default_instance();
-
-  void Swap(ServiceInfo* other);
-
-  // implements Message ----------------------------------------------
-
-  inline ServiceInfo* New() const { return New(NULL); }
-
-  ServiceInfo* New(::google::protobuf::Arena* arena) const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const ServiceInfo& from);
-  void MergeFrom(const ServiceInfo& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const {
-    return InternalSerializeWithCachedSizesToArray(false, output);
-  }
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  void InternalSwap(ServiceInfo* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return _internal_metadata_.arena();
-  }
-  inline void* MaybeArenaPtr() const {
-    return _internal_metadata_.raw_arena_ptr();
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional .iop.locnet.ServiceType type = 1;
-  void clear_type();
-  static const int kTypeFieldNumber = 1;
-  ::iop::locnet::ServiceType type() const;
-  void set_type(::iop::locnet::ServiceType value);
-
-  // optional uint32 port = 2;
-  void clear_port();
-  static const int kPortFieldNumber = 2;
-  ::google::protobuf::uint32 port() const;
-  void set_port(::google::protobuf::uint32 value);
-
-  // @@protoc_insertion_point(class_scope:iop.locnet.ServiceInfo)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  bool _is_default_instance_;
-  int type_;
-  ::google::protobuf::uint32 port_;
-  mutable int _cached_size_;
-  friend void  protobuf_AddDesc_IopLocNet_2eproto();
-  friend void protobuf_AssignDesc_IopLocNet_2eproto();
-  friend void protobuf_ShutdownFile_IopLocNet_2eproto();
-
-  void InitAsDefaultInstance();
-  static ServiceInfo* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -3623,6 +3648,82 @@ class GetNeighbourNodesByDistanceClientRequest : public ::google::protobuf::Mess
 // ===================================================================
 
 #if !PROTOBUF_INLINE_NOT_IN_HEADERS
+// ServiceInfo
+
+// optional .iop.locnet.ServiceType type = 1;
+inline void ServiceInfo::clear_type() {
+  type_ = 0;
+}
+inline ::iop::locnet::ServiceType ServiceInfo::type() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ServiceInfo.type)
+  return static_cast< ::iop::locnet::ServiceType >(type_);
+}
+inline void ServiceInfo::set_type(::iop::locnet::ServiceType value) {
+  
+  type_ = value;
+  // @@protoc_insertion_point(field_set:iop.locnet.ServiceInfo.type)
+}
+
+// optional uint32 port = 2;
+inline void ServiceInfo::clear_port() {
+  port_ = 0u;
+}
+inline ::google::protobuf::uint32 ServiceInfo::port() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ServiceInfo.port)
+  return port_;
+}
+inline void ServiceInfo::set_port(::google::protobuf::uint32 value) {
+  
+  port_ = value;
+  // @@protoc_insertion_point(field_set:iop.locnet.ServiceInfo.port)
+}
+
+// optional bytes serviceData = 3;
+inline void ServiceInfo::clear_servicedata() {
+  servicedata_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ServiceInfo::servicedata() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ServiceInfo.serviceData)
+  return servicedata_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ServiceInfo::set_servicedata(const ::std::string& value) {
+  
+  servicedata_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:iop.locnet.ServiceInfo.serviceData)
+}
+inline void ServiceInfo::set_servicedata(const char* value) {
+  
+  servicedata_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:iop.locnet.ServiceInfo.serviceData)
+}
+inline void ServiceInfo::set_servicedata(const void* value, size_t size) {
+  
+  servicedata_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:iop.locnet.ServiceInfo.serviceData)
+}
+inline ::std::string* ServiceInfo::mutable_servicedata() {
+  
+  // @@protoc_insertion_point(field_mutable:iop.locnet.ServiceInfo.serviceData)
+  return servicedata_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ServiceInfo::release_servicedata() {
+  // @@protoc_insertion_point(field_release:iop.locnet.ServiceInfo.serviceData)
+  
+  return servicedata_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ServiceInfo::set_allocated_servicedata(::std::string* servicedata) {
+  if (servicedata != NULL) {
+    
+  } else {
+    
+  }
+  servicedata_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), servicedata);
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.ServiceInfo.serviceData)
+}
+
+// -------------------------------------------------------------------
+
 // GpsLocation
 
 // optional sfixed32 latitude = 1;
@@ -3853,36 +3954,34 @@ inline void NodeInfo::set_allocated_location(::iop::locnet::GpsLocation* locatio
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.NodeInfo.location)
 }
 
-// -------------------------------------------------------------------
-
-// ServiceInfo
-
-// optional .iop.locnet.ServiceType type = 1;
-inline void ServiceInfo::clear_type() {
-  type_ = 0;
+// repeated .iop.locnet.ServiceInfo services = 32;
+inline int NodeInfo::services_size() const {
+  return services_.size();
 }
-inline ::iop::locnet::ServiceType ServiceInfo::type() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.ServiceInfo.type)
-  return static_cast< ::iop::locnet::ServiceType >(type_);
+inline void NodeInfo::clear_services() {
+  services_.Clear();
 }
-inline void ServiceInfo::set_type(::iop::locnet::ServiceType value) {
-  
-  type_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.ServiceInfo.type)
+inline const ::iop::locnet::ServiceInfo& NodeInfo::services(int index) const {
+  // @@protoc_insertion_point(field_get:iop.locnet.NodeInfo.services)
+  return services_.Get(index);
 }
-
-// optional uint32 port = 2;
-inline void ServiceInfo::clear_port() {
-  port_ = 0u;
+inline ::iop::locnet::ServiceInfo* NodeInfo::mutable_services(int index) {
+  // @@protoc_insertion_point(field_mutable:iop.locnet.NodeInfo.services)
+  return services_.Mutable(index);
 }
-inline ::google::protobuf::uint32 ServiceInfo::port() const {
-  // @@protoc_insertion_point(field_get:iop.locnet.ServiceInfo.port)
-  return port_;
+inline ::iop::locnet::ServiceInfo* NodeInfo::add_services() {
+  // @@protoc_insertion_point(field_add:iop.locnet.NodeInfo.services)
+  return services_.Add();
 }
-inline void ServiceInfo::set_port(::google::protobuf::uint32 value) {
-  
-  port_ = value;
-  // @@protoc_insertion_point(field_set:iop.locnet.ServiceInfo.port)
+inline ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo >*
+NodeInfo::mutable_services() {
+  // @@protoc_insertion_point(field_mutable_list:iop.locnet.NodeInfo.services)
+  return &services_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::iop::locnet::ServiceInfo >&
+NodeInfo::services() const {
+  // @@protoc_insertion_point(field_list:iop.locnet.NodeInfo.services)
+  return services_;
 }
 
 // -------------------------------------------------------------------

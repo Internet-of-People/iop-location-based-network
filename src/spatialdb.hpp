@@ -15,6 +15,22 @@ namespace LocNet
 {
 
 
+
+enum class NodeRelationType : uint8_t
+{
+    Colleague   = 1,
+    Neighbour   = 2,
+    Self        = 3,
+};
+
+
+enum class NodeContactRoleType : uint8_t
+{
+    Initiator   = 1,
+    Acceptor    = 2,
+};
+
+
 // Filter flag for node queries
 enum class Neighbours : uint8_t
 {
@@ -41,6 +57,7 @@ public:
     
     bool operator==(const NodeDbEntry &other) const;
 };
+
 
 
 // Interface to listen for any changes in the node map.
@@ -70,6 +87,7 @@ public:
 };
 
 
+
 // A node database without any business logic that serves usual CRUD operations
 // plus some additional utility queries mostly based on ordering by node distance.
 class ISpatialDatabase
@@ -87,7 +105,8 @@ public:
     virtual void ExpireOldNodes() = 0;
     
     virtual IChangeListenerRegistry& changeListenerRegistry() = 0;
-    
+
+    virtual NodeDbEntry ThisNode() const = 0;
     virtual std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) = 0;
 
     virtual size_t GetNodeCount() const = 0;
@@ -122,13 +141,21 @@ public:
 // A spatial database implementation that uses the SpatiaLite embedded SQL engine.
 class SpatiaLiteDatabase : public ISpatialDatabase
 {
-    GpsLocation  _myLocation;
+    NodeInfo     _myNodeInfo;
     sqlite3     *_dbHandle;
     void        *_spatialiteConnection;
     
     std::chrono::duration<uint32_t> _entryExpirationPeriod;
     
     ThreadSafeChangeListenerRegistry _listenerRegistry;
+    
+    std::vector<NodeDbEntry> QueryEntries(const GpsLocation &fromLocation,
+        const std::string &whereCondition = "", const std::string orderBy = "",
+        const std::string &limit = "") const;
+    
+    NodeInfo::Services LoadServices(const NodeId &nodeId) const;
+    void StoreServices(const NodeId &nodeId, const NodeInfo::Services &services);
+    void RemoveServices(const NodeId &nodeId);
     
 public:
     
@@ -148,7 +175,8 @@ public:
     void ExpireOldNodes() override;
     
     IChangeListenerRegistry& changeListenerRegistry() override;
-    
+
+    NodeDbEntry ThisNode() const override;
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
@@ -159,6 +187,7 @@ public:
     std::vector<NodeDbEntry> GetClosestNodesByDistance(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
+
 
 
 } // namespace LocNet
