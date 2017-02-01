@@ -178,8 +178,8 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     messageId = requestMsg->body().id();
                     auto request = requestMsg->mutable_body()->mutable_request();
                     
-                    // TODO the ip detection and keepalive features are violating the current
-                    //      business logic: Node / messaging: Dispatcher / network abstraction: Session layers.
+                    // TODO the ip detection and keepalive features are violating the current layers of
+                    //      business logic: Node / messaging: Dispatcher / network abstraction: Session.
                     //      This is not a nice implementation, abstractions should be better prepared for these features
                     if ( request->has_remotenode() )
                     {
@@ -204,15 +204,15 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     response = dispatcher->Dispatch(*request);
                     response->set_status(iop::locnet::Status::STATUS_OK);
                     
-                    if ( requestMsg->has_body() && requestMsg->body().has_request() &&
-                         requestMsg->body().request().has_localservice() &&
-                         requestMsg->body().request().localservice().has_getneighbournodes() &&
-                         requestMsg->body().request().localservice().getneighbournodes().keepaliveandsendupdates() )
-                    {
-                        LOG(DEBUG) << "GetNeighbourhood with keepalive is requested, ending dispatch loop and serve only notifications through ChangeListener";
-                        // NOTE Session will be still kept alive because its ahared_ptr is copied by the ChangeListener that sends notifications
-                        endMessageLoop = true;
-                    }
+//                     if ( requestMsg->has_body() && requestMsg->body().has_request() &&
+//                          requestMsg->body().request().has_localservice() &&
+//                          requestMsg->body().request().localservice().has_getneighbournodes() &&
+//                          requestMsg->body().request().localservice().getneighbournodes().keepaliveandsendupdates() )
+//                     {
+//                         LOG(DEBUG) << "GetNeighbourhood with keepalive is requested, ending dispatch loop and serve only notifications through ChangeListener";
+//                         // NOTE Session will be still kept alive because its ahared_ptr is copied by the ChangeListener that sends notifications
+//                         endMessageLoop = true;
+//                     }
 
                     if ( response->has_remotenode() )
                     {

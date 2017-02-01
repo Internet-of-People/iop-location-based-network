@@ -104,14 +104,12 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     std::shared_ptr<ISpatialDatabase>       _spatialDb;
     std::shared_ptr<INodeConnectionFactory> _connectionFactory;
     
-    std::vector<NetworkEndpoint> _seedNodes;
-    
     
     std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkEndpoint &endpoint);
     bool SafeStoreNode( const NodeDbEntry &entry,
         std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
     
-    bool InitializeWorld();
+    bool InitializeWorld(const std::vector<NetworkEndpoint> &seedNodes);
     bool InitializeNeighbourhood();
     
     Distance GetBubbleSize(const GpsLocation &location) const;
@@ -121,8 +119,7 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
 public:
     
     Node( std::shared_ptr<ISpatialDatabase> spatialDb,
-          std::shared_ptr<INodeConnectionFactory> connectionFactory,
-          const std::vector<NetworkEndpoint> &seedNodes);
+          std::shared_ptr<INodeConnectionFactory> connectionFactory );
 
     void EnsureMapFilled();
     

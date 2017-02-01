@@ -29,10 +29,14 @@ public:
     
     // Used to access the singleton object after it's properly initialized
     static const Config& Instance();
+    
 
     virtual ~Config() {}
     
+    virtual bool isTestMode() const;
     virtual const std::string& version() const;
+    virtual size_t neighbourhoodTargetSize() const;
+    
     virtual bool versionRequested() const = 0;
     
     virtual const NodeInfo& myNodeInfo() const = 0;

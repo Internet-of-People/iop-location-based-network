@@ -29,7 +29,7 @@ SCENARIO("TCP networking", "[network]")
         geodb->Store(TestData::EntryCapeTown);
 
         shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
-        shared_ptr<Node> node( new Node( geodb, connectionFactory, {} ) );
+        shared_ptr<Node> node( new Node(geodb, connectionFactory) );
         
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
             new CombinedRequestDispatcherFactory(node) );

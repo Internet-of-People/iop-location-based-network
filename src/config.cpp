@@ -13,13 +13,16 @@ namespace LocNet
 {
 
 
-
+static const bool TEST_MODE = false;
+    
 static const uint16_t VERSION_MAJOR = 0;
 static const uint16_t VERSION_MINOR = 0;
 static const uint16_t VERSION_PATCH = 1;
 
 static const string LOCNET_VERSION = to_string(VERSION_MAJOR) + "." +
     to_string(VERSION_MINOR) + "." + to_string(VERSION_PATCH);
+
+static const size_t NEIGHBOURHOOD_TARGET_SIZE = TEST_MODE ? 2 : 50;
 
 
 unique_ptr<Config> Config::_instance(nullptr);
@@ -44,6 +47,12 @@ bool Config::Init(int argc, const char* argv[])
 
 const string& Config::version() const
     { return LOCNET_VERSION; }
+
+bool Config::isTestMode() const
+    { return TEST_MODE; }
+
+size_t Config::neighbourhoodTargetSize() const
+    { return NEIGHBOURHOOD_TARGET_SIZE; }
 
 
 
@@ -137,9 +146,12 @@ static const char *OPTNAME_DBPATH       = "--dbpath";
 static const char *OPTNAME_LOGPATH      = "--logpath";
 
 
-const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::hours(7);
-const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod = chrono::hours(24);
-const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod = chrono::minutes(5);
+const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod =
+    TEST_MODE ? chrono::minutes(1) : chrono::hours(7);
+const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod =
+    TEST_MODE ? chrono::minutes(3) : chrono::hours(24);
+const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod =
+    TEST_MODE ? chrono::seconds(10) : chrono::minutes(5);
 
 static const vector<NetworkEndpoint> DefaultSeedNodes {
     NetworkEndpoint("ham4.fermat.cloud", DefaultNodePort),

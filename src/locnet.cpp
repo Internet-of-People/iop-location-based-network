@@ -7,6 +7,7 @@
 
 #include <easylogging++.h>
 
+#include "config.hpp"
 #include "locnet.hpp"
 
 using namespace std;
@@ -17,9 +18,6 @@ namespace LocNet
 {
 
 
-const size_t   NEIGHBOURHOOD_MAX_NODE_COUNT         = 50;   // Count limit for accepted neighbours.
-
-const size_t   INIT_WORLD_RANDOM_NODE_COUNT         = 2 * NEIGHBOURHOOD_MAX_NODE_COUNT;
 const float    INIT_WORLD_NODE_FILL_TARGET_RATE     = 0.75;
 const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT  = 10;
 
@@ -31,9 +29,8 @@ random_device Node::_randomDevice;
 
 
 Node::Node( shared_ptr<ISpatialDatabase> spatialDb,
-            std::shared_ptr<INodeConnectionFactory> connectionFactory,
-            const vector<NetworkEndpoint> &seedNodes ) :
-    _spatialDb(spatialDb), _connectionFactory(connectionFactory), _seedNodes(seedNodes)
+            std::shared_ptr<INodeConnectionFactory> connectionFactory) :
+    _spatialDb(spatialDb), _connectionFactory(connectionFactory)
 {
     if (_spatialDb == nullptr) {
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No spatial database instantiated");
@@ -46,21 +43,22 @@ Node::Node( shared_ptr<ISpatialDatabase> spatialDb,
 
 void Node::EnsureMapFilled()
 {
-    if ( GetNodeCount() <= 1 && ! _seedNodes.empty() )
+    const vector<NetworkEndpoint> &seedNodes = Config::Instance().seedNodes();
+    if ( GetNodeCount() <= 1 && ! seedNodes.empty() )
     {
         LOG(INFO) << "Map is empty, discovering the network";
         
-        bool discoverySucceeded = InitializeWorld() && InitializeNeighbourhood();
+        bool discoverySucceeded = InitializeWorld(seedNodes) && InitializeNeighbourhood();
         if (! discoverySucceeded)
             { LOG(WARNING) << "Failed to properly discover the full network, current node count is " << GetNodeCount(); }
         if ( GetNodeCount() <= 1 )
         {
             // This still might be normal if we're the very first seed node of the whole network
             NodeInfo myInfo = _spatialDb->ThisNode();
-            auto seedIt = find_if( _seedNodes.begin(), _seedNodes.end(),
+            auto seedIt = find_if( seedNodes.begin(), seedNodes.end(),
                 [&myInfo] (const NetworkEndpoint &contact)
                     { return myInfo.contact().nodeEndpoint() == contact; } );
-            if ( seedIt == _seedNodes.end() )
+            if ( seedIt == seedNodes.end() )
                  { throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Failed to discover any node of the network"); }
             else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
         }
@@ -244,7 +242,8 @@ bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &node
 shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint)
 {
     // There is no point in connecting to ourselves
-    if ( endpoint == _spatialDb->ThisNode().contact().nodeEndpoint() || endpoint.isLoopback() )
+    if ( endpoint == _spatialDb->ThisNode().contact().nodeEndpoint() ||
+         ( endpoint.isLoopback() && ! Config::Instance().isTestMode() ) )
         { return shared_ptr<INodeMethods>(); }
     
     try { return _connectionFactory->ConnectTo(endpoint); }
@@ -299,10 +298,10 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             {
                 // Neighbour limit will be exceeded, check if new entry deserves to temporarilty go over limit
                 vector<NodeInfo> neighboursByDistance( GetNeighbourNodesByDistance() );
-                if ( neighboursByDistance.size() >= NEIGHBOURHOOD_MAX_NODE_COUNT )
+                if ( neighboursByDistance.size() >= Config::Instance().neighbourhoodTargetSize() )
                 {
                     // If we have too many closer neighbours already, deny request
-                    const NodeInfo &limitNeighbour = neighboursByDistance[NEIGHBOURHOOD_MAX_NODE_COUNT - 1];
+                    const NodeInfo &limitNeighbour = neighboursByDistance[Config::Instance().neighbourhoodTargetSize() - 1];
                     if ( _spatialDb->GetDistanceKm( limitNeighbour.location(), myNode.location() ) <=
                          _spatialDb->GetDistanceKm( myNode.location(), plannedEntry.location() ) )
                     { return false; }
@@ -378,21 +377,22 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
 
 
 
-bool Node::InitializeWorld()
+bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
 {
     LOG(DEBUG) << "Discovering world map for colleagues";
+    const size_t INIT_WORLD_RANDOM_NODE_COUNT = Config::Instance().neighbourhoodTargetSize();
     
     // Initialize random generator and utility variables
-    uniform_int_distribution<int> fromRange( 0, _seedNodes.size() - 1 );
+    uniform_int_distribution<int> fromRange( 0, seedNodes.size() - 1 );
     vector<NetworkEndpoint> triedNodes;
     
     size_t nodeCountAtSeed = 0;
     vector<NodeInfo> randomColleagueCandidates;
-    while ( triedNodes.size() < _seedNodes.size() )
+    while ( triedNodes.size() < seedNodes.size() )
     {
         // Select random node from hardwired seed node list
         size_t selectedSeedNodeIdx = fromRange(_randomDevice);
-        const NetworkEndpoint& selectedSeedContact = _seedNodes[selectedSeedNodeIdx];
+        const NetworkEndpoint& selectedSeedContact = seedNodes[selectedSeedNodeIdx];
                 
         // If node has been already tried and failed, choose another one
         auto it = find( triedNodes.begin(), triedNodes.end(), selectedSeedContact );
@@ -433,7 +433,7 @@ bool Node::InitializeWorld()
     
     // Check if all seed nodes tried and failed
     if ( nodeCountAtSeed == 0 && randomColleagueCandidates.empty() &&
-         triedNodes.size() == _seedNodes.size() )
+         triedNodes.size() == seedNodes.size() )
     {
         LOG(ERROR) << "All seed nodes have been tried and failed";
         return false;
@@ -544,7 +544,7 @@ bool Node::InitializeNeighbourhood()
     
     // Try to fill neighbourhood map until limit reached or no new nodes left to ask
     vector<NodeInfo> neighbourCandidates;
-    while ( neighbourCandidates.size() < NEIGHBOURHOOD_MAX_NODE_COUNT &&
+    while ( neighbourCandidates.size() < Config::Instance().neighbourhoodTargetSize() &&
             ! nodesToAskQueue.empty() )
     {
         // Get next candidate

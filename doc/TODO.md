@@ -55,11 +55,6 @@ also might be necessary because features "connection keepalive" and "Ip autodete
 do not naturally fit into the picture, see the message loop implementation currently in
 `ProtoBufDispatchingTcpServer::AsyncAcceptHandler()`.
 
-Currently components are configurable through their API, e.g. `Node` expects a seed nodes parameter.
-The global `Config` is only known by `main()` and it delegates config values to the components.
-It might be better if each component can access a global configuration singleton instance and
-fetch required configuration information directly from it without intermediaries.
-
 
 ## Convenience
 
