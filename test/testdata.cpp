@@ -27,7 +27,7 @@ NodeInfo TestData::NodeCapeTown( "CapeTownId", CapeTown,
     NodeContact( "127.0.0.1", 6376, 16376), {} );
 
 NodeDbEntry TestData::EntryBudapest( NodeBudapest,
-    NodeRelationType::Self, NodeContactRoleType::Acceptor );
+    NodeRelationType::Self, NodeContactRoleType::Self );
 NodeDbEntry TestData::EntryKecskemet( NodeKecskemet,
     NodeRelationType::Neighbour, NodeContactRoleType::Initiator );
 NodeDbEntry TestData::EntryWien( NodeWien,

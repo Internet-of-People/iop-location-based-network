@@ -223,7 +223,7 @@ vector<NodeDbEntry> SpatiaLiteDatabase::QueryEntries(const GpsLocation &fromLoca
 
 
 NodeDbEntry ThisNodeToDbEntry(const NodeInfo &thisNodeInfo)
-    { return NodeDbEntry(thisNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor); }
+    { return NodeDbEntry(thisNodeInfo, NodeRelationType::Self, NodeContactRoleType::Self); }
 
 
 // SpatiaLite initialization/shutdown sequence is documented here:

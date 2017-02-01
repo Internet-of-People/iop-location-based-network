@@ -28,6 +28,7 @@ enum class NodeContactRoleType : uint8_t
 {
     Initiator   = 1,
     Acceptor    = 2,
+    Self        = 3,
 };
 
 
