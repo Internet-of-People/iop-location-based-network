@@ -255,8 +255,7 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint)
 
 
 
-bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethods> nodeConnection,
-                         bool isSeedNode)
+bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethods> nodeConnection)
 {
     try
     {
@@ -354,7 +353,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                 { return false; }
             
             // Node identity is questionable
-            if ( ! isSeedNode && freshInfo->id() != plannedEntry.id() )
+            if ( freshInfo->id() != plannedEntry.id() )
             {
                 LOG(WARNING) << "Asked permission from node with id " << plannedEntry.id()
                              << " but returned node info has node id " << freshInfo->id();
@@ -410,11 +409,9 @@ bool Node::InitializeWorld()
                 { continue; }
             
             // Try to add seed node to our network (no matter if fails)
-            // TODO a cleaner implementation would be nice, but nodeInfo will be queried in SafeStoreNode anyway
-            //      E.g. could transform GetServices() into GetNodeInfo() and use that directly here
-            SafeStoreNode( NodeDbEntry( NodeInfo( "ThisNodeIdWillBeOverWritten", 
-                GpsLocation(0,0), NodeContact( selectedSeedContact.address(), selectedSeedContact.port(), 0 ), {} ), 
-                NodeRelationType::Colleague, NodeContactRoleType::Initiator ), seedNodeConnection, true );
+            NodeInfo seedInfo = seedNodeConnection->GetNodeInfo();
+            SafeStoreNode( NodeDbEntry(seedInfo, NodeRelationType::Colleague, NodeContactRoleType::Initiator),
+                           seedNodeConnection );
             
             // Query both total node count and an initial list of random nodes to start with
             LOG(DEBUG) << "Getting node count from initial seed";

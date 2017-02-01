@@ -131,6 +131,7 @@ public:
     NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher,
                               std::function<void(const Address&)> detectedIpCallback);
     
+    NodeInfo GetNodeInfo() const override;
     size_t GetNodeCount() const override;
     std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const override;

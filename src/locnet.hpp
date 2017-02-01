@@ -38,9 +38,7 @@ public:
     
     virtual ~INodeMethods() {}
     
-    // TODO we should probably add this here
-    //virtual NodeInfo GetNodeInfo() const = 0;
-    
+    virtual NodeInfo GetNodeInfo() const = 0;
     virtual size_t GetNodeCount() const = 0;
     virtual std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const = 0;
@@ -110,9 +108,8 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     
     
     std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkEndpoint &endpoint);
-    bool SafeStoreNode(const NodeDbEntry &entry,
-        std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>(),
-        bool isSeedNode = false);
+    bool SafeStoreNode( const NodeDbEntry &entry,
+        std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
     
     bool InitializeWorld();
     bool InitializeNeighbourhood();

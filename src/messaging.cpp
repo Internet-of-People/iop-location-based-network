@@ -286,6 +286,16 @@ unique_ptr<iop::locnet::Response> IncomingNodeRequestDispatcher::Dispatch(const 
     
     switch ( nodeRequest.RemoteNodeRequestType_case() )
     {
+        case iop::locnet::RemoteNodeRequest::kGetNodeInfo:
+        {
+            NodeInfo node = _iNode->GetNodeInfo();
+            LOG(DEBUG) << "Served GetNodeInfo(): " << node;
+            
+            auto responseContent = nodeResponse->mutable_getnodeinfo();
+            responseContent->set_allocated_nodeinfo( Converter::ToProtoBuf(node) );
+            break;
+        }
+        
         case iop::locnet::RemoteNodeRequest::kAcceptColleague:
         {
             auto acceptColleagueReq = nodeRequest.acceptcolleague();
@@ -434,17 +444,13 @@ unique_ptr<iop::locnet::Response> IncomingClientRequestDispatcher::Dispatch(cons
     
     switch ( clientRequest.ClientRequestType_case() )
     {
-        case iop::locnet::ClientRequest::kGetServices:
+        case iop::locnet::ClientRequest::kGetNodeInfo:
         {
-            auto const &services = _iClient->GetNodeInfo().services();
-            LOG(DEBUG) << "Served GetServices(), service count: " << services.size();
+            NodeInfo node = _iClient->GetNodeInfo();
+            LOG(DEBUG) << "Served GetNodeInfo(): " << node;
             
-            auto responseContent = clientResponse->mutable_getservices();
-            for (auto const &service : services)
-            {
-                iop::locnet::ServiceInfo *serviceInfo = responseContent->add_services();
-                Converter::FillProtoBuf(serviceInfo, service.second);
-            }
+            auto responseContent = clientResponse->mutable_getnodeinfo();
+            responseContent->set_allocated_nodeinfo( Converter::ToProtoBuf(node) );
             break;
         }
         
@@ -550,6 +556,22 @@ NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(
 
 
 // TODO All methods simply translate between different data formats, ideally this should be generated.
+NodeInfo NodeMethodsProtoBufClient::GetNodeInfo() const
+{
+    iop::locnet::Request request;
+    request.mutable_remotenode()->mutable_getnodeinfo();
+    
+    unique_ptr<iop::locnet::Response> response = _dispatcher->Dispatch(request);
+    if (! response || ! response->has_remotenode() || ! response->remotenode().has_getnodeinfo() )
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Failed to get expected response"); }
+    
+    auto result = Converter::FromProtoBuf( response->remotenode().getnodeinfo().nodeinfo() );
+    LOG(DEBUG) << "Request GetNodeInfo() returned " << result;
+    return result;
+}
+
+
+
 size_t NodeMethodsProtoBufClient::GetNodeCount() const
 {
     iop::locnet::Request request;
