@@ -289,14 +289,14 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                     // Existing colleague info may be upgraded to neighbour but not vica versa
                     if ( storedInfo->relationType() == NodeRelationType::Neighbour )
                     {
-                        LOG(TRACE) << "Attempt to downgrade neighbour as colleague, refusing";
+                        LOG(TRACE) << "Attempt to downgrade neighbour as colleague, refusing colleague";
                         return false;
                     }
                     if ( storedInfo->location() != plannedEntry.location() ) {
                         // Node must not be moved away to a position that overlaps with anything other than itself
                         if ( BubbleOverlaps( plannedEntry.location(), plannedEntry.id() ) )
                         {
-                            LOG(TRACE) << "Bubble of changed node location would overlap, refusing";
+                            LOG(TRACE) << "Bubble of changed node location would overlap, refusing colleague";
                             return false;
                         }
                     }
@@ -305,7 +305,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                     // New node must not overlap with other colleagues
                     if ( BubbleOverlaps( plannedEntry.location() ) )
                     {
-                        LOG(TRACE) << "Node bubble would overlap, refusing";
+                        LOG(TRACE) << "Node bubble would overlap, refusing colleague";
                         return false;
                     }
                 }
@@ -720,21 +720,25 @@ void Node::DiscoverUnknownAreas()
             shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.contact().nodeEndpoint() );
             if (connection == nullptr)
             {
-                LOG(DEBUG) << "Failed to contact node " << myClosestNode.id();
+                LOG(DEBUG) << "Failed to contact node " << myClosestNode;
                 continue;
             }
             
             // Ask closest node about its nodes closest to the random position
             vector<NodeInfo> gotClosestNodes = connection->GetClosestNodesByDistance(
                 randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Included );
-            if ( gotClosestNodes.empty() || gotClosestNodes[0] == myNodeInfo )
+            if ( gotClosestNodes.empty() || gotClosestNodes[0].id() == myNodeInfo.id() )
                 { continue; }
             const auto &gotClosestNode = gotClosestNodes[0];
+            LOG(DEBUG) << "Closest node to random position is " << gotClosestNode;
             
             // If we already know this node, nothing to do here, renewals will keep it alive
             shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( gotClosestNode.id() );
             if (storedInfo != nullptr)
-                { continue; }
+            {
+                LOG(DEBUG) << "Closest node is already present: " << *storedInfo;
+                continue;
+            }
             
             // Try to add node to our database
             bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( gotClosestNode,

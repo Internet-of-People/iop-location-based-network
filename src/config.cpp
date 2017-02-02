@@ -320,13 +320,13 @@ TcpPort EzParserConfig::localServicePort() const
     { return _localPort; }
     
 chrono::duration<uint32_t> EzParserConfig::dbMaintenancePeriod() const
-    { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(10)) : _dbMaintenancePeriod; }
+    { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(30)) : _dbMaintenancePeriod; }
 
 chrono::duration<uint32_t> EzParserConfig::dbExpirationPeriod() const
-    { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(30)) : _dbExpirationPeriod; }
+    { return isTestMode() ? chrono::duration<uint32_t>(chrono::minutes(2)) : _dbExpirationPeriod; }
 
 chrono::duration<uint32_t> EzParserConfig::discoveryPeriod() const
-    { return isTestMode() ? chrono::minutes(10) : _discoveryPeriod; }
+    { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(10)) : _discoveryPeriod; }
 
 
 }
