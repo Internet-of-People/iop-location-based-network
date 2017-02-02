@@ -3,6 +3,8 @@
 #include <catch.hpp>
 #include <easylogging++.h>
 
+#include "config.hpp"
+
 using namespace std;
 
 
@@ -16,6 +18,8 @@ int main( int argc, const char* const argv[] )
     //el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Filename, "test.log");
     el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToFile, "false");
     el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToStandardOutput, "false");
+    
+    LocNet::Config::InitForTest();
     
     Catch::Session session;
     try { return session.run( argc, argv ); }

@@ -244,7 +244,10 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint)
     // There is no point in connecting to ourselves
     if ( endpoint == _spatialDb->ThisNode().contact().nodeEndpoint() ||
          ( endpoint.isLoopback() && ! Config::Instance().isTestMode() ) )
-        { return shared_ptr<INodeMethods>(); }
+    {
+        LOG(TRACE) << "Address " << endpoint << " is self or local, refusing";
+        return shared_ptr<INodeMethods>();
+    }
     
     try { return _connectionFactory->ConnectTo(endpoint); }
     catch (exception &e)
@@ -264,12 +267,18 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
         // Whether or not our own nodeinfo is stored in the db is an implementation detail of the SpatialDatabase.
         if ( plannedEntry.id() == myNode.id() ||
              plannedEntry.relationType() == NodeRelationType::Self )
-            { return false; }
+        {
+            LOG(TRACE) << "Attempt to store self, refusing";
+            return false;
+        }
      
         // Validate if node is acceptable
         shared_ptr<NodeDbEntry> storedInfo = _spatialDb->Load( plannedEntry.id() );
         if ( storedInfo && storedInfo->relationType() == NodeRelationType::Self )
-            { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Forbidden operation: must not overwrite self here"); }
+        {
+            LOG(TRACE) << "Attempt to overwrite self, refusing";
+            throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Forbidden operation: must not overwrite self here");
+        }
         
         switch ( plannedEntry.relationType() )
         {
@@ -279,32 +288,70 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                 {
                     // Existing colleague info may be upgraded to neighbour but not vica versa
                     if ( storedInfo->relationType() == NodeRelationType::Neighbour )
-                        { return false; }
+                    {
+                        LOG(TRACE) << "Attempt to downgrade neighbour as colleague, refusing";
+                        return false;
+                    }
                     if ( storedInfo->location() != plannedEntry.location() ) {
                         // Node must not be moved away to a position that overlaps with anything other than itself
                         if ( BubbleOverlaps( plannedEntry.location(), plannedEntry.id() ) )
-                            { return false; }
+                        {
+                            LOG(TRACE) << "Bubble of changed node location would overlap, refusing";
+                            return false;
+                        }
                     }
                 }
                 else {
-                    // Node must not overlap with other colleagues
+                    // New node must not overlap with other colleagues
                     if ( BubbleOverlaps( plannedEntry.location() ) )
-                        { return false; }
+                    {
+                        LOG(TRACE) << "Node bubble would overlap, refusing";
+                        return false;
+                    }
                 }
                 break;
             }
             
             case NodeRelationType::Neighbour:
             {
-                // Neighbour limit will be exceeded, check if new entry deserves to temporarilty go over limit
+                size_t neighbourhoodTargetSize = Config::Instance().neighbourhoodTargetSize();
                 vector<NodeInfo> neighboursByDistance( GetNeighbourNodesByDistance() );
-                if ( neighboursByDistance.size() >= Config::Instance().neighbourhoodTargetSize() )
+                if (storedInfo == nullptr || storedInfo->relationType() == NodeRelationType::Colleague)
                 {
-                    // If we have too many closer neighbours already, deny request
-                    const NodeInfo &limitNeighbour = neighboursByDistance[Config::Instance().neighbourhoodTargetSize() - 1];
-                    if ( _spatialDb->GetDistanceKm( limitNeighbour.location(), myNode.location() ) <=
-                         _spatialDb->GetDistanceKm( myNode.location(), plannedEntry.location() ) )
-                    { return false; }
+                    // Received a new neighbour request
+                    if ( neighboursByDistance.size() >= neighbourhoodTargetSize )
+                    {
+                        // Neighbour limit is exceeded by adding a new neighbour, but if it is closer
+                        // than an old neighbour within the limit then we can temporarily break the limit
+                        // and will later refuse renewal of the faraway old neighbour to let it expire
+                        const NodeInfo &limitNeighbour = neighboursByDistance[neighbourhoodTargetSize - 1];
+                        LOG(TRACE) << "We have reached the neighbour limit, farthest neighbour within limit is " << limitNeighbour;
+                        if ( _spatialDb->GetDistanceKm( myNode.location(), limitNeighbour.location() ) <=
+                             _spatialDb->GetDistanceKm( myNode.location(), plannedEntry.location() ) )
+                        {
+                            LOG(TRACE) << "We have too many closer neighbours already, refusing";
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    // Renewal of an old neighbour
+                    auto neighbourIter = find_if( neighboursByDistance.begin(), neighboursByDistance.end(),
+                        [plannedEntry] (const NodeInfo &neighbour) { return neighbour.id() == plannedEntry.id(); } );
+                    if ( neighbourIter == neighboursByDistance.end() )
+                    {
+                        LOG(ERROR) << "Implementation problem: stored neighbour is not found in neighbour list";
+                        throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Please report this to the developers");
+                    }
+                    // Don't care about location change here. IF moved too far away we will expire it
+                    // at the next renewal request when it's at its new place in the neighbour list.
+                    size_t neighbourIndex = distance( neighboursByDistance.begin(), neighbourIter );
+                    if (neighbourIndex >= neighbourhoodTargetSize)
+                    {
+                         LOG(TRACE) << "We have found too many closer neighbours meanwhile, refusing";
+                         return false;
+                    }
                 }
                 break;
             }
@@ -323,7 +370,10 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             if (nodeConnection == nullptr)
                 { nodeConnection = SafeConnectTo( plannedEntry.contact().nodeEndpoint() ); }
             if (nodeConnection == nullptr)
-                { return false; }
+            {
+                LOG(TRACE) << "Failed to connect to remote node to ask for permission, refusing";
+                return false;
+            }
             
             // Ask for its permission for mutual acceptance
             shared_ptr<NodeInfo> freshInfo;
@@ -349,7 +399,10 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             
             // Request was denied
             if (freshInfo == nullptr)
-                { return false; }
+            {
+                LOG(TRACE) << "Accept/renew request was denied";
+                return false;
+            }
             
             // Node identity is questionable
             if ( freshInfo->id() != plannedEntry.id() )
@@ -363,8 +416,16 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
         }
         
         // TODO consider if all further possible sanity checks are done already
-        if (storedInfo == nullptr) { _spatialDb->Store(entryToWrite); }
-        else                       { _spatialDb->Update(entryToWrite); }
+        if (storedInfo == nullptr)
+        {
+            LOG(DEBUG) << "Storing node info " << entryToWrite;
+            _spatialDb->Store(entryToWrite);
+        }
+        else
+        {
+            LOG(DEBUG) << "Updating node info " << entryToWrite;
+            _spatialDb->Update(entryToWrite);
+        }
         return true;
     }
     catch (exception &e)
@@ -380,7 +441,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
 bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
 {
     LOG(DEBUG) << "Discovering world map for colleagues";
-    const size_t INIT_WORLD_RANDOM_NODE_COUNT = Config::Instance().neighbourhoodTargetSize();
+    const size_t INIT_WORLD_RANDOM_NODE_COUNT = 2 * Config::Instance().neighbourhoodTargetSize();
     
     // Initialize random generator and utility variables
     uniform_int_distribution<int> fromRange( 0, seedNodes.size() - 1 );
@@ -489,7 +550,7 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
         }
     }
     
-    LOG(DEBUG) << "World discovery finished with node count " << GetNodeCount();
+    LOG(DEBUG) << "World discovery finished with total node count " << GetNodeCount();
     return true;
 }
 
@@ -502,6 +563,11 @@ bool Node::InitializeNeighbourhood()
     NodeDbEntry myNode = _spatialDb->ThisNode();
     vector<NodeInfo> newClosestNodes = GetClosestNodesByDistance(
         myNode.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
+    if ( newClosestNodes.size() >= 1 && newClosestNodes[0] != GetNodeInfo() )
+    {
+        LOG(ERROR) << "Implementation problem: assumption failed";
+        throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Please report this to the developers");
+    }
     if ( newClosestNodes.size() < 2 ) // First node is self
     {
         LOG(DEBUG) << "No other nodes are available beyond self, cannot get neighbour candidates";
@@ -583,7 +649,8 @@ bool Node::InitializeNeighbourhood()
         }
     }
     
-    LOG(DEBUG) << "Neighbourhood discovery finished with node count " << GetNodeCount();
+    LOG(DEBUG) << "Neighbourhood discovery finished with total node count " << GetNodeCount()
+               << ", neighbourhood size is " << _spatialDb->GetNeighbourNodesByDistance().size();
     return true;
 }
 
@@ -591,6 +658,7 @@ bool Node::InitializeNeighbourhood()
 
 void Node::ExpireOldNodes()
 {
+    LOG(TRACE) << "Deleting old nodes";
     _spatialDb->ExpireOldNodes();
     EnsureMapFilled();
 }
@@ -599,8 +667,9 @@ void Node::ExpireOldNodes()
 
 void Node::RenewNodeRelations()
 {
-    vector<NodeDbEntry> contactedNodes = _spatialDb->GetNodes(NodeContactRoleType::Initiator);
-    for (auto const &node : contactedNodes)
+    vector<NodeDbEntry> nodesToContact = _spatialDb->GetNodes(NodeContactRoleType::Initiator);
+    LOG(DEBUG) << "We have " << nodesToContact.size() << " relations to renew";
+    for (auto const &node : nodesToContact)
     {
         try
         {

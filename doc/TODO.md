@@ -21,12 +21,12 @@ to come up with an initial version as soon as possible.
 Accordingly, you can find a lot of `// TODO` comments in the source
 calling to (re)consider algorithms, error handling and other implementations.
 
-Though using the easylogging++ library is very convenient, we recently experienced some strange bugs with it.
+Though using the easylogging++ library is very convenient, we recently experienced some strange behaviour with it.
 To be thread-safe it needs to have `#define ELPP_THREAD_SAFE` in all files where it's used,
 currently this is set as compiler option with cmake. However, we experienced very rare and undeterministic
 errors (e.g. "pure virtual method called", probably it calls a method of an uninitialized derived class
 during construction) with a stacktrace pointing to construction of logger objects.
-If these continue to occur and cannot be easily fixed by upgrading to later bugfix releases,
+If these occur in the future and cannot be easily fixed by upgrading to later bugfix releases,
 we may have to use a different logging library.
 
 
@@ -54,6 +54,12 @@ A reconsideration of the current layering implementation (application: Node, mes
 also might be necessary because features "connection keepalive" and "Ip autodetection"
 do not naturally fit into the picture, see the message loop implementation currently in
 `ProtoBufDispatchingTcpServer::AsyncAcceptHandler()`.
+
+All of our algorithm implementations (like discovery, relation renewal, etc) are translated
+from an algorithmic description in the specification thus currently they are all sequential.
+Though some algorithms like discovery naturally have sequential parts,
+sequential execution might not scale well for huge networks and we may have to
+parallelize or use asynchronous execution where possible.
 
 
 ## Convenience

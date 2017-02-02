@@ -19,6 +19,8 @@ class Config
     static std::unique_ptr<Config> _instance;
     
 protected:
+
+    bool _testMode = false;
     
     virtual bool Initialize(int argc, const char *argv[]) = 0;
     
@@ -26,6 +28,7 @@ public:
 
     // Used to initialize a config instance with command line parameters, call only once
     static bool Init(int argc, const char *argv[]);
+    static void InitForTest();
     
     // Used to access the singleton object after it's properly initialized
     static const Config& Instance();
@@ -56,9 +59,9 @@ public:
 // to parse options from the command line and/or config files.
 class EzParserConfig : public Config
 {
-    static const std::chrono::duration<uint32_t>    _dbMaintenancePeriod;
-    static const std::chrono::duration<uint32_t>    _dbExpirationPeriod;
-    static const std::chrono::duration<uint32_t>    _discoveryPeriod;
+    static const std::chrono::duration<uint32_t> _dbMaintenancePeriod;
+    static const std::chrono::duration<uint32_t> _dbExpirationPeriod;
+    static const std::chrono::duration<uint32_t> _discoveryPeriod;
     
     bool            _versionRequested;
     NodeId          _nodeId;

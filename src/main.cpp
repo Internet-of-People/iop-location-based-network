@@ -93,9 +93,9 @@ int main(int argc, const char *argv[])
                 try
                 {
                     this_thread::sleep_for( config.dbMaintenancePeriod() );
-                    LOG(DEBUG) << "Maintaining database: expiring old nodes and renewing node relations";
-                    node->ExpireOldNodes();
+                    LOG(DEBUG) << "Maintaining database: renewing node relations and expiring old nodes";
                     node->RenewNodeRelations();
+                    node->ExpireOldNodes();
                     LOG(DEBUG) << "Database maintainance finished";
                 }
                 catch (exception &ex)

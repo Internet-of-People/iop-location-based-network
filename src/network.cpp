@@ -3,6 +3,7 @@
 
 #include <easylogging++.h>
 
+#include "config.hpp"
 #include "network.hpp"
 
 using namespace std;
@@ -16,12 +17,14 @@ namespace LocNet
 
 static const size_t ThreadPoolSize = 1;
 static const size_t MaxMessageSize = 1024 * 1024;
-static const chrono::duration<uint32_t> NormalStreamExpirationPeriod    = chrono::seconds(10);
-//static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
-
 static const size_t MessageHeaderSize = 5;
 static const size_t MessageSizeOffset = 1;
 
+
+static chrono::duration<uint32_t> GetNormalStreamExpirationPeriod()
+    { return Config::Instance().isTestMode() ? chrono::seconds(2) : chrono::seconds(15); }
+
+//static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
 
 
 bool NetworkEndpoint::isLoopback() const
@@ -297,7 +300,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkEndpoint &endpoi
     _id( endpoint.address() + ":" + to_string( endpoint.port() ) ),
     _remoteAddress( endpoint.address() ), _stream(), _socket()
 {
-    _stream.expires_after(NormalStreamExpirationPeriod);
+    _stream.expires_after( GetNormalStreamExpirationPeriod() );
     _stream.connect( endpoint.address(), to_string( endpoint.port() ) );
     if (! _stream)
         { throw LocationNetworkError(ErrorCode::ERROR_CONNECTION, "Session failed to connect: " + _stream.error().message() ); }
