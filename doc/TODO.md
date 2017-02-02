@@ -90,10 +90,10 @@ If we find no conceptual problems we should identify attack vectors and protect 
 - Protect network interfaces, e.g. LocalService interface should be exposed only to localhost
   and other nodes of the network should be authenticated to be accepted as colleague or neighbour.
 - Use and check SHA256 hashes as node identifiers.
-- Check integirty of advertised information. E.g. validte host is really accessible
-  on the reported external address.
+- Check integrity of advertised information. E.g. validate if host is really accessible
+  on the reported external address and address matches to its reported location.
 - Ensure that uniqueness of sensitive data (e.g. node ids and probably external addresses)
-  is strictly enforced everywhere.
+  is strictly enforced everywhere and cannot be impersonated.
 - Ban misbehaving nodes.
 
 
