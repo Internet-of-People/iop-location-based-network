@@ -453,6 +453,7 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
     while ( triedNodes.size() < seedNodes.size() )
     {
         // Select random node from hardwired seed node list
+        // TODO it would be better to create a permutation of the seedNodes vector and just iterate on it
         size_t selectedSeedNodeIdx = fromRange(_randomDevice);
         const NetworkEndpoint& selectedSeedContact = seedNodes[selectedSeedNodeIdx];
                 
@@ -505,8 +506,9 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
     size_t targetNodeCount = static_cast<size_t>( ceil(INIT_WORLD_NODE_FILL_TARGET_RATE * nodeCountAtSeed) );
     LOG(DEBUG) << "Targeted node count is " << targetNodeCount;
     
-    // Keep trying until we either reached targeted node count or queried colleagues from all available nodes
-    while ( GetNodeCount() < targetNodeCount && triedNodes.size() < GetNodeCount() )
+    // Keep trying until we either reached targeted node count or run out of all candidates
+    while ( GetNodeCount() < targetNodeCount &&
+            ( ! randomColleagueCandidates.empty() || triedNodes.size() < GetNodeCount() ) )
     {
         if ( ! randomColleagueCandidates.empty() )
         {
