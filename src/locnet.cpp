@@ -325,11 +325,12 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                         // than an old neighbour within the limit then we can temporarily break the limit
                         // and will later refuse renewal of the faraway old neighbour to let it expire
                         const NodeInfo &limitNeighbour = neighboursByDistance[neighbourhoodTargetSize - 1];
-                        LOG(TRACE) << "We have reached the neighbour limit, farthest neighbour within limit is " << limitNeighbour;
+                        LOG(TRACE) << "We have reached the neighbour limit " << neighbourhoodTargetSize
+                                   << ", farthest neighbour within limit is " << limitNeighbour;
                         if ( _spatialDb->GetDistanceKm( myNode.location(), limitNeighbour.location() ) <=
                              _spatialDb->GetDistanceKm( myNode.location(), plannedEntry.location() ) )
                         {
-                            LOG(TRACE) << "We have too many closer neighbours already, refusing";
+                            LOG(TRACE) << neighbourhoodTargetSize << " closer neighbours found, refusing to add new";
                             return false;
                         }
                     }
@@ -349,7 +350,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                     size_t neighbourIndex = distance( neighboursByDistance.begin(), neighbourIter );
                     if (neighbourIndex >= neighbourhoodTargetSize)
                     {
-                         LOG(TRACE) << "We have found too many closer neighbours meanwhile, refusing";
+                         LOG(TRACE) << neighbourhoodTargetSize << " neighbours limit reached, refusing to renew neighbour nr. " << neighbourIndex;
                          return false;
                     }
                 }
@@ -727,6 +728,11 @@ void Node::DiscoverUnknownAreas()
             if ( gotClosestNodes.empty() || gotClosestNodes[0] == myNodeInfo )
                 { continue; }
             const auto &gotClosestNode = gotClosestNodes[0];
+            
+            // If we already know this node, nothing to do here, renewals will keep it alive
+            shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( gotClosestNode.id() );
+            if (storedInfo != nullptr)
+                { continue; }
             
             // Try to add node to our database
             bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( gotClosestNode,
