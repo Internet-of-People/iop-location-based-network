@@ -13,27 +13,68 @@ More details are described in
 # How to start the application
 
 After you successfully installed or unpacked the binary distribution,
-you should start binary `iop-locnetd`. Please check available options running
+you should start binary `iop-locnetd`. There are a lot of optional arguments,
+but also some mandatory options that you must specify.
+You can use the command line directly to do so, e.g. assuming GPS location of Budapest,
+application can be run with a minimal configuration of
 
-    iop-locnetd --help
+    iop-locnetd --nodeid YourNodeIdHere --latitude 48.2081743 --longitude 16.3738189
 
-There are a lot of optional arguments, but also some mandatory arguments that you must specify.
-For configuration options you can use the command line directly, e.g. assuming GPS location of Budapest
+To persist configuration, you may save the same options into config file
+`~/.iop-locnet/locnet.conf` with content
 
-    iop-locnetd --nodeid YourNodeIdHere \
-                --latitude 48.2081743 \
-                --longitude 16.3738189
+    --nodeid YourNodeIdHere
+    --latitude 48.2081743
+    --longitude 16.3738189
 
-You may choose to save these options in exactly the same format into config file
-`/home/myuser/.iop-locnet/locnet.conf`
-and run the executable without any command line option.
+and run the executable without any command line options.
 You can also have your config file at a custom path and use option
-`--configfile` to specify its location.
+`--configfile` to specify its location on the command line.
 
-Note that the application will create a database file and a log file under `~/.iop-locnet` by default.
+Note that the application will create its database and log files under `~/.iop-locnet` by default.
 If application startup is successful, it will open three sockets and serve requests on them.
 By default port 16980 is used for node to node communication to build and maintain the network,
 16981 for clients to discover the network and 16982 for local services to register or get the neighbourhood.
+
+Please check available options using
+
+    iop-locnetd --help
+    
+Currently the following options are useful for configuring your instance:
+
+    --clientport ARG   TCP port to serve client (i.e. end user) queries. Optional,
+                       default value: 16981
+
+    --configfile ARG   Path to config file to load options from. Optional, default
+                       value: ~/.iop-locnet/iop-locnet.cfg
+
+    --dbpath ARG       Path to db file. Optional, default value:
+                       ~/.iop-locnet/locnet.sqlite
+
+    --host ARG         Externally accessible IP address (ipv4 or v6) to be
+                       advertised for other nodes or clients. Required for seeds
+                       only, autodetected otherwise.
+
+    --latitude ARG     GPS latitude of this server as real number from range
+                       (-90,90)
+
+    --localport ARG    TCP port to serve other IoP services running on this node.
+                       Optional, default value: 16982
+
+    --logpath ARG      Path to log file. Optional, default value:
+                       ~/.iop-locnet/debug.log
+
+    --longitude ARG    GPS longitude of this server as real number from range
+                       (-180,180)
+
+    --nodeid ARG       Public node id, should be an SHA256 hash of the public key of
+                       this node
+
+    --nodeport ARG     TCP port to serve node to node communication. Optional,
+                       default value: 16980
+
+    --seednode ARG     Host name of seed node to be used instead of default seeds.
+                       You can repeat this option to define multiple custom seed nodes.
 
 
 # Using the sources
