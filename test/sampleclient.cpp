@@ -5,6 +5,7 @@
 #include <asio.hpp>
 #include <easylogging++.h>
 
+#include "config.hpp"
 #include "IopLocNet.pb.h"
 #include "network.hpp"
 #include "testdata.hpp"
@@ -34,6 +35,8 @@ int main(int argc, const char* const argv[])
         
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
+        
+        Config::InitForTest();
         
         const NetworkEndpoint nodeContact(host, port);
         LOG(INFO) << "Connecting to server " << nodeContact;
