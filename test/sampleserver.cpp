@@ -3,6 +3,7 @@
 
 #include <easylogging++.h>
 
+#include "config.hpp"
 #include "network.hpp"
 #include "testimpls.hpp"
 #include "testdata.hpp"
@@ -24,6 +25,8 @@ int main()
 {
     try
     {
+        Config::InitForTest();
+        
         LOG(INFO) << "Initializing server";
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
