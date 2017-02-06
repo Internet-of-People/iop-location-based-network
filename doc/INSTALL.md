@@ -10,12 +10,14 @@ e.g. on Ubuntu add something like below into your `/etc/apt/sources.list.d`
 More details are described in
 [this document](https://github.com/Fermat-ORG/iop-token/blob/beta/INSTALL.md).
 
+# How to start the application
+
 After you successfully installed or unpacked the binary distribution,
 you should start binary `iop-locnetd`. Please check available options running
 
     iop-locnetd --help
 
-There are a lot of optional arguments but also some mandatory arguments that you must specify.
+There are a lot of optional arguments, but also some mandatory arguments that you must specify.
 For configuration options you can use the command line directly, e.g. assuming GPS location of Budapest
 
     iop-locnetd --nodeid YourNodeIdHere \
@@ -25,8 +27,13 @@ For configuration options you can use the command line directly, e.g. assuming G
 You may choose to save these options in exactly the same format into config file
 `/home/myuser/.iop-locnet/locnet.conf`
 and run the executable without any command line option.
-You can also locate your config file at a custom place and use option
+You can also have your config file at a custom path and use option
 `--configfile` to specify its location.
+
+Note that the application will create a database file and a log file under `~/.iop-locnet` by default.
+If application startup is successful, it will open three sockets and serve requests on them.
+By default port 16980 is used for node to node communication to build and maintain the network,
+16981 for clients to discover the network and 16982 for local services to register or get the neighbourhood.
 
 
 # Using the sources

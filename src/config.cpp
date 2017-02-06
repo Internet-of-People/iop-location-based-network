@@ -181,7 +181,7 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     _optParser.overview = "Internet of People : Location Based Network";
     _optParser.syntax   = "iop-locnetd [--option value]";
 //     _optParser.example  = "iop-locnetd -h\n\n";
-//     _optParser.footer   = "iop-locnetd v0.0.1\n";
+//     _optParser.footer   = "iop-locnetd version info"\n";
     
     // Set up all option details
     _optParser.add(
@@ -194,7 +194,8 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     );
     
     _optParser.add("", false, 0, 0, "Print version information.", OPTNAME_VERSION, "-v");
-    _optParser.add("", false, 0, 0, "Turn on test mode for debugging.", OPTNAME_TESTMODE);
+    // TODO consider to remove --test from releases
+    _optParser.add("", false, 0, 0, "This is not the option you're looking for, unless debugging a development version.", OPTNAME_TESTMODE);
     
     _optParser.add(DEFAULT_CONFIG_FILE.c_str(), false, 1, 0, ( "Path to config file to load options from. " +
         DESC_OPTIONAL_DEFAULT + DEFAULT_CONFIG_FILE ).c_str(), OPTNAME_CONFIGFILE);
