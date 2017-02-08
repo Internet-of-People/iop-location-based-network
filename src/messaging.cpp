@@ -1,5 +1,3 @@
-#include <stdexcept>
-
 #include <easylogging++.h>
 
 #include "messaging.hpp"
@@ -105,9 +103,13 @@ ServiceInfo Converter::FromProtoBuf(const iop::locnet::ServiceInfo& value)
 
 NodeInfo Converter::FromProtoBuf(const iop::locnet::NodeInfo& value)
 {
+    if ( value.nodeid().empty() )
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No id present for node"); }
     if ( ! value.has_contact() )
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No contact information for node"); }
-    
+
+    const iop::locnet::NodeContact &contact = value.contact();
+        
     NodeInfo::Services services;
     for (int idx = 0; idx < value.services_size(); ++idx)
     {
@@ -116,7 +118,6 @@ NodeInfo Converter::FromProtoBuf(const iop::locnet::NodeInfo& value)
         services[ service.type() ] = service;
     }
     
-    const iop::locnet::NodeContact &contact = value.contact();
     return NodeInfo( value.nodeid(), FromProtoBuf( value.location() ), NodeContact(
         NodeContact::AddressFromBytes( contact.ipaddress() ), contact.nodeport(), contact.clientport() ),
         services );
@@ -299,7 +300,7 @@ unique_ptr<iop::locnet::Response> IncomingNodeRequestDispatcher::Dispatch(const 
         case iop::locnet::RemoteNodeRequest::kAcceptColleague:
         {
             auto acceptColleagueReq = nodeRequest.acceptcolleague();
-            auto nodeInfo( Converter::FromProtoBuf( acceptColleagueReq.requestornodeinfo() ) );
+            auto nodeInfo = Converter::FromProtoBuf( acceptColleagueReq.requestornodeinfo() );
             
             shared_ptr<NodeInfo> result = _iNode->AcceptColleague(nodeInfo);
             LOG(DEBUG) << "Served AcceptColleague(" << nodeInfo
@@ -316,7 +317,7 @@ unique_ptr<iop::locnet::Response> IncomingNodeRequestDispatcher::Dispatch(const 
         case iop::locnet::RemoteNodeRequest::kRenewColleague:
         {
             auto renewColleagueReq = nodeRequest.renewcolleague();
-            auto nodeInfo( Converter::FromProtoBuf( renewColleagueReq.requestornodeinfo() ) );
+            auto nodeInfo = Converter::FromProtoBuf( renewColleagueReq.requestornodeinfo() );
             
             shared_ptr<NodeInfo> result = _iNode->RenewColleague(nodeInfo);
             LOG(DEBUG) << "Served RenewColleague(" << nodeInfo
@@ -333,7 +334,7 @@ unique_ptr<iop::locnet::Response> IncomingNodeRequestDispatcher::Dispatch(const 
         case iop::locnet::RemoteNodeRequest::kAcceptNeighbour:
         {
             auto acceptNeighbourReq = nodeRequest.acceptneighbour();
-            auto nodeInfo( Converter::FromProtoBuf( acceptNeighbourReq.requestornodeinfo() ) );
+            auto nodeInfo = Converter::FromProtoBuf( acceptNeighbourReq.requestornodeinfo() );
             
             shared_ptr<NodeInfo> result = _iNode->AcceptNeighbour(nodeInfo);
             LOG(DEBUG) << "Served AcceptNeighbour(" << nodeInfo
@@ -350,7 +351,7 @@ unique_ptr<iop::locnet::Response> IncomingNodeRequestDispatcher::Dispatch(const 
         case iop::locnet::RemoteNodeRequest::kRenewNeighbour:
         {
             auto renewNeighbourReq = nodeRequest.renewneighbour();
-            auto nodeInfo( Converter::FromProtoBuf( renewNeighbourReq.requestornodeinfo() ) );
+            auto nodeInfo = Converter::FromProtoBuf( renewNeighbourReq.requestornodeinfo() );
             
             shared_ptr<NodeInfo> result = _iNode->RenewNeighbour(nodeInfo);
             LOG(DEBUG) << "Served RenewNeighbour(" << nodeInfo

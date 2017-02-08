@@ -408,8 +408,10 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             // Node identity is questionable
             if ( freshInfo->id() != plannedEntry.id() )
             {
-                LOG(WARNING) << "Asked permission from node with id " << plannedEntry.id()
-                             << " but returned node info has node id " << freshInfo->id();
+                LOG(WARNING) << endl
+                    << "Contacted node has different identity than expected." << endl
+                    << "  Expected: " << plannedEntry << endl
+                    << "  Reported: " << *freshInfo << endl;
                 return false;
             }
             
@@ -742,10 +744,10 @@ void Node::DiscoverUnknownAreas()
             
             // Try to add node to our database
             bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( gotClosestNode,
-                NodeRelationType::Neighbour, NodeContactRoleType::Initiator), connection );
+                NodeRelationType::Neighbour, NodeContactRoleType::Initiator) );
             if (! storedAsNeighbour) {
                 SafeStoreNode( NodeDbEntry( gotClosestNode,
-                    NodeRelationType::Colleague, NodeContactRoleType::Initiator), connection );
+                    NodeRelationType::Colleague, NodeContactRoleType::Initiator) );
             }
         }
         catch (exception &ex)
