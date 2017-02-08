@@ -88,7 +88,7 @@ TcpServer::TcpServer(TcpPort portNumber) :
     _acceptor( _ioService, tcp::endpoint( tcp::v4(), portNumber ) )
 {
     // Switch the acceptor to listening state
-    LOG(DEBUG) << "Start accepting connections at port " << portNumber;
+    LOG(DEBUG) << "Accepting connections on port " << portNumber;
     _acceptor.listen();
     
     shared_ptr<tcp::socket> socket( new tcp::socket(_ioService) );

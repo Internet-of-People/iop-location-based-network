@@ -49,25 +49,27 @@ int main(int argc, const char *argv[])
         TcpStreamConnectionFactory *connFactPtr = new TcpStreamConnectionFactory();
         shared_ptr<INodeConnectionFactory> connectionFactory(connFactPtr);
         shared_ptr<Node> node( new Node(geodb, connectionFactory) );
+
+        LOG(INFO) << "Connecting node to the network";
+        shared_ptr<IProtoBufRequestDispatcherFactory> nodeDispatcherFactory(
+            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
+                new IncomingNodeRequestDispatcher(node) ) ) );
+        ProtoBufDispatchingTcpServer nodeTcpServer(
+            myNodeInfo.contact().nodePort(), nodeDispatcherFactory );
         
         connFactPtr->detectedIpCallback( [node](const Address &addr)
             { node->DetectedExternalAddress(addr); } );
         node->EnsureMapFilled();
 
+        LOG(INFO) << "Serving local and client interfaces";
         shared_ptr<IProtoBufRequestDispatcherFactory> localDispatcherFactory(
             new LocalServiceRequestDispatcherFactory(node) );
-        shared_ptr<IProtoBufRequestDispatcherFactory> nodeDispatcherFactory(
-            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
-                new IncomingNodeRequestDispatcher(node) ) ) );
         shared_ptr<IProtoBufRequestDispatcherFactory> clientDispatcherFactory(
             new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
                 new IncomingClientRequestDispatcher(node) ) ) );
-        LOG(INFO) << "Preparing TCP server";
         
         ProtoBufDispatchingTcpServer localTcpServer(
             config.localServicePort(), localDispatcherFactory );
-        ProtoBufDispatchingTcpServer nodeTcpServer(
-            myNodeInfo.contact().nodePort(), nodeDispatcherFactory );
         ProtoBufDispatchingTcpServer clientTcpServer(
             myNodeInfo.contact().clientPort(), clientDispatcherFactory );
 
