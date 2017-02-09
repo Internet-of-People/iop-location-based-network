@@ -207,15 +207,15 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                     response = dispatcher->Dispatch(*request);
                     response->set_status(iop::locnet::Status::STATUS_OK);
                     
-//                     if ( requestMsg->has_body() && requestMsg->body().has_request() &&
-//                          requestMsg->body().request().has_localservice() &&
-//                          requestMsg->body().request().localservice().has_getneighbournodes() &&
-//                          requestMsg->body().request().localservice().getneighbournodes().keepaliveandsendupdates() )
-//                     {
-//                         LOG(DEBUG) << "GetNeighbourhood with keepalive is requested, ending dispatch loop and serve only notifications through ChangeListener";
-//                         // NOTE Session will be still kept alive because its ahared_ptr is copied by the ChangeListener that sends notifications
-//                         endMessageLoop = true;
-//                     }
+                    if ( requestMsg->has_body() && requestMsg->body().has_request() &&
+                         requestMsg->body().request().has_localservice() &&
+                         requestMsg->body().request().localservice().has_getneighbournodes() &&
+                         requestMsg->body().request().localservice().getneighbournodes().keepaliveandsendupdates() )
+                    {
+                        LOG(DEBUG) << "GetNeighbourhood with keepalive is requested, ending dispatch loop and serve only notifications through ChangeListener";
+                        // NOTE Session will be still kept alive because its ahared_ptr is copied by the ChangeListener that sends notifications
+                        endMessageLoop = true;
+                    }
 
                     if ( response->has_remotenode() )
                     {
@@ -565,7 +565,7 @@ void ProtoBufTcpStreamChangeListener::UpdatedNode(const NodeDbEntry& node)
             iop::locnet::Request req;
             iop::locnet::NeighbourhoodChange *change =
                 req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
-            iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
+            iop::locnet::NodeInfo *info = change->mutable_updatednodeinfo();
             Converter::FillProtoBuf(info, node);
             
             unique_ptr<iop::locnet::Response> response( _dispatcher->Dispatch(req) );
