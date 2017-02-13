@@ -22,7 +22,7 @@ static const size_t MessageSizeOffset = 1;
 
 
 static chrono::duration<uint32_t> GetNormalStreamExpirationPeriod()
-    { return Config::Instance().isTestMode() ? chrono::seconds(2) : chrono::seconds(15); }
+    { return Config::Instance().isTestMode() ? chrono::seconds(60) : chrono::seconds(15); }
 
 //static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
 

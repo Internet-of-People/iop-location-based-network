@@ -8,7 +8,6 @@
 #include "config.hpp"
 #include "IopLocNet.pb.h"
 #include "network.hpp"
-#include "testdata.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -31,7 +30,7 @@ int main(int argc, const char* const argv[])
         cout << "Usage: sampleclient [host] [port]" << endl;
         
         string   host = argc >= 2 ? argv[1] : "localhost";
-        uint16_t port = argc >= 3 ? stoul( argv[2] ) : 16980;
+        uint16_t port = argc >= 3 ? stoul( argv[2] ) : 16982;
         
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
@@ -44,15 +43,6 @@ int main(int argc, const char* const argv[])
         LOG(INFO) << "Connecting to server " << nodeContact;
         shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(nodeContact) );
         shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
-
-//         LOG(INFO) << "Sending getnodecount request";
-//         NodeMethodsProtoBufClient client(dispatcher, nullptr);
-//         size_t colleagueCount = client.GetNodeCount();
-//         LOG(INFO) << "Get node count " << colleagueCount;
-//         vector<NodeInfo> randomNodes = client.GetRandomNodes(10, Neighbours::Included);
-//         LOG(INFO) << "Got " << randomNodes.size() << " random nodes";
-//         for (const auto &node : randomNodes)
-//             { LOG(INFO) << "  " << node; }
  
         // Test listening for neighbourhood notifications
         thread msgThread( [session, dispatcher]
@@ -82,11 +72,8 @@ int main(int argc, const char* const argv[])
 //                 }
                 
                 uint32_t notificationsReceived = 0;
-                while (! ShutdownRequested)
+                while (! ShutdownRequested && notificationsReceived < 2)
                 {
-                    if (notificationsReceived >= 1)
-                        { ShutdownRequested = true; }
-                    
                     LOG(INFO) << "Reading change notification";
                     unique_ptr<iop::locnet::MessageWithHeader> changeNote( session->ReceiveMessage() );
                     if (! changeNote)
@@ -119,17 +106,18 @@ int main(int argc, const char* const argv[])
                     session->SendMessage(changeAckn);
                 }
                 
-                LOG(INFO) << "Sending deregisterservice request";
-                shared_ptr<iop::locnet::Request> deregisterRequest( new iop::locnet::Request() );
-                deregisterRequest->mutable_localservice()->mutable_deregisterservice()->set_servicetype(
-                    Converter::ToProtoBuf(ServiceType::Profile) );
-                unique_ptr<iop::locnet::Response> deregisterResponse = dispatcher->Dispatch(*deregisterRequest);
+//                 LOG(INFO) << "Sending deregisterservice request";
+//                 shared_ptr<iop::locnet::Request> deregisterRequest( new iop::locnet::Request() );
+//                 deregisterRequest->mutable_localservice()->mutable_deregisterservice()->set_servicetype(
+//                     Converter::ToProtoBuf(ServiceType::Profile) );
+//                 unique_ptr<iop::locnet::Response> deregisterResponse = dispatcher->Dispatch(*deregisterRequest);
             }
             catch (exception &ex)
             {
                 LOG(ERROR) << "Error: " << ex.what();
             }
             LOG(INFO) << "Stopped reading notifications";
+            ShutdownRequested = true;
         } );
         msgThread.detach();
         
