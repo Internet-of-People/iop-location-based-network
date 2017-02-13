@@ -663,7 +663,7 @@ bool Node::InitializeNeighbourhood()
 
 void Node::ExpireOldNodes()
 {
-    LOG(TRACE) << "Deleting old nodes";
+    LOG(DEBUG) << "Deleting expired node connections";
     _spatialDb->ExpireOldNodes();
     EnsureMapFilled();
 }
@@ -692,6 +692,8 @@ void Node::RenewNodeRelations()
 
 void Node::DiscoverUnknownAreas()
 {
+    LOG(DEBUG) << "Exploring white spots of the map";
+    
     for (size_t i = 0; i < PERIODIC_DISCOVERY_ATTEMPT_COUNT; ++i)
     {
         // Generate a random GPS location
@@ -763,6 +765,8 @@ void Node::DiscoverUnknownAreas()
             LOG(INFO) << "Failed to discover location " << randomLocation << ": " << ex.what();
         }
     }
+    
+    LOG(DEBUG) << "Exploration finished";
 }
 
 
