@@ -719,35 +719,43 @@ void Node::DiscoverUnknownAreas()
                 myClosestNodes[0] : myClosestNodes[1];
             
             // Connect to closest node
-            shared_ptr<INodeMethods> connection = SafeConnectTo( myClosestNode.contact().nodeEndpoint() );
-            if (connection == nullptr)
+            shared_ptr<INodeMethods> knownNodeConnection = SafeConnectTo( myClosestNode.contact().nodeEndpoint() );
+            if (knownNodeConnection == nullptr)
             {
-                LOG(DEBUG) << "Failed to contact node " << myClosestNode;
+                LOG(DEBUG) << "Failed to contact known node " << myClosestNode;
                 continue;
             }
             
             // Ask closest node about its nodes closest to the random position
-            vector<NodeInfo> gotClosestNodes = connection->GetClosestNodesByDistance(
+            vector<NodeInfo> newClosestNodes = knownNodeConnection->GetClosestNodesByDistance(
                 randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Included );
-            if ( gotClosestNodes.empty() || gotClosestNodes[0].id() == myNodeInfo.id() )
+            if ( newClosestNodes.empty() || newClosestNodes[0].id() == myNodeInfo.id() )
                 { continue; }
-            const auto &gotClosestNode = gotClosestNodes[0];
-            LOG(DEBUG) << "Closest node to random position is " << gotClosestNode;
+            const auto &newClosestNode = newClosestNodes[0];
+            LOG(DEBUG) << "Closest node to random position is " << newClosestNode;
             
             // If we already know this node, nothing to do here, renewals will keep it alive
-            shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( gotClosestNode.id() );
+            shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( newClosestNode.id() );
             if (storedInfo != nullptr)
             {
                 LOG(DEBUG) << "Closest node is already present: " << *storedInfo;
                 continue;
             }
             
+            // Connect to closest node
+            shared_ptr<INodeMethods> discoveredNodeConnection = SafeConnectTo( newClosestNode.contact().nodeEndpoint() );
+            if (discoveredNodeConnection == nullptr)
+            {
+                LOG(DEBUG) << "Failed to contact discovered node " << newClosestNode;
+                continue;
+            }
+            
             // Try to add node to our database
-            bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( gotClosestNode,
-                NodeRelationType::Neighbour, NodeContactRoleType::Initiator) );
+            bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( newClosestNode,
+                NodeRelationType::Neighbour, NodeContactRoleType::Initiator), discoveredNodeConnection );
             if (! storedAsNeighbour) {
-                SafeStoreNode( NodeDbEntry( gotClosestNode,
-                    NodeRelationType::Colleague, NodeContactRoleType::Initiator) );
+                SafeStoreNode( NodeDbEntry( newClosestNode,
+                    NodeRelationType::Colleague, NodeContactRoleType::Initiator), discoveredNodeConnection );
             }
         }
         catch (exception &ex)
