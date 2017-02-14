@@ -32,6 +32,19 @@ we may have to use a different logging library.
 
 ## Architecture
 
+During integration tests with the profile server we found that we might have to change
+messaging implementation to be more generic. So far we used synchronous messaging, i.e.
+it was always clear when our server expects a request and when to send a response.
+The profile server uses asynchronous messaging, messages have no specific ordering.
+This implies that currently a proper integration needs two separate connections,
+one to send notifications and another to receive requests. Instead this we should also change
+to use asynchronous messaging to be more conformant.
+
+Currently changes (e.g. changed host IP or new registered profile server on this node)
+are spread within the network only during node relation renewals. It may worth considering
+to broadcast changed IPs or services immediately if during tests we find that
+slow refreshes cause an unsatisfying network behaviour.
+
 Our current implementation uses a local database to store just a sparse subset of all the nodes
 of the network, but this is not necessarily the only direction.
 We could also experiment with using a distributed hash table (DHT).
@@ -64,6 +77,10 @@ parallelize or use asynchronous execution where possible.
 
 ## Convenience
 
+To make testing network behaviour easier, we should have better diagnostic tools.
+One possibility would be to implement sending server statistics or log files either on request
+or periodically to the developers.
+
 To make administration of the Linux version easier, we could separate project files
 into separate directories according to conventions of the distribution.
 E.g. we could use `~/.config/iop-locnet` and `~/.local/iop-locnet` instead of current `~/.iop-locnet`.
@@ -71,6 +88,13 @@ E.g. we could use `~/.config/iop-locnet` and `~/.local/iop-locnet` instead of cu
 When using config file, options could use format `option=value` instead/besides
 the current `--option value` format. If this is needed, we might have to use
 a different command line parser library, it might not be supported by ezOptionParser.
+
+When starting the very first seed node, there are no other nodes yet,
+so it has to identify itself as a seed node. As seed nodes are currently
+defined as a list of domain names and host resolution is done automatically
+by the network library, we have to manually set option `--seednode myip`
+to help it identifying itself, especially as the host cannot easily identify its own
+external IP address. This should be somehow automated.
 
 
 ## Security

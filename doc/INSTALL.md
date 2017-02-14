@@ -1,16 +1,22 @@
 # Installing the packaged version
 
-Packages can be downloaded from the Fermat package repositories.
-You can either download manually from http://repo.fermat.community/
-or use the very same URL as a repository for your package manager,
-e.g. on Ubuntu add something like below into your `/etc/apt/sources.list.d`
+Packages can be downloaded as `iop-locnet` from the Fermat package repositories.
+The Fermat repository is located at `repo.fermat.community` which you can configure
+to your package manager. E.g. on Ubuntu add something like below into your
+`/etc/apt/sources.list.d`
 
     deb [arch=amd64] http://repo.fermat.community/ 16.04 main
 
-More details are described in
+and accept the repository keys with the following commands
+
+    gpg --keyserver keys.gnupg.net --recv-keys 0CC9EB6DA69C84F4
+    gpg -a --export A69C84F4 | sudo apt-key add -
+
+You can find more details about how to configure the repository at
 [this document](https://github.com/Fermat-ORG/iop-token/blob/beta/INSTALL.md).
 
-# How to start the application
+
+# Starting the application
 
 After you successfully installed or unpacked the binary distribution,
 you should start binary `iop-locnetd`. There are a lot of optional arguments,
@@ -138,7 +144,9 @@ For Linux, a `Makefile` is generated, so you can just execute
 
     make
 
-If you also want to install compiled binaries, you have to run
+Assuming you followed the suggested directory structure, you should find executable
+file `src/iop-locnetd` created under your `build` directory, it is all you need.
+If you also want to install the software to your system directories, you have to run
 
     sudo make install
 

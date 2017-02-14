@@ -239,6 +239,8 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                 }
                 catch (LocationNetworkError &lnex)
                 {
+                    // TODO This warning is also given when the connection was simply closed by the remote peer
+                    // thus no request can be read. This case should be distinguished and logged with a lower level.
                     LOG(WARNING) << "Failed to serve request with code "
                         << static_cast<uint32_t>( lnex.code() ) << ": " << lnex.what();
                     response.reset( new iop::locnet::Response() );
