@@ -153,6 +153,8 @@ class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
     Address                                 _remoteAddress;
     asio::ip::tcp::iostream                 _stream;
     std::shared_ptr<asio::ip::tcp::socket>  _socket;
+    std::mutex                              _socketReadMutex;
+    std::mutex                              _socketWriteMutex;
     
 public:
     
@@ -225,16 +227,17 @@ class ProtoBufTcpStreamChangeListener : public IChangeListener
 {
     SessionId                                   _sessionId;
     std::shared_ptr<ILocalServiceMethods>       _localService;
-    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
+    // std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
+    std::shared_ptr<IProtoBufNetworkSession>    _session;
     
 public:
     
     ProtoBufTcpStreamChangeListener(
         std::shared_ptr<IProtoBufNetworkSession> session,
-        std::shared_ptr<ILocalServiceMethods> localService,
-        std::shared_ptr<IProtoBufRequestDispatcher> dispatcher );
-    
+        std::shared_ptr<ILocalServiceMethods> localService );
+        // std::shared_ptr<IProtoBufRequestDispatcher> dispatcher );
     ~ProtoBufTcpStreamChangeListener();
+    
     void Deregister();
     
     const SessionId& sessionId() const override;

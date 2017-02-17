@@ -32,14 +32,6 @@ we may have to use a different logging library.
 
 ## Architecture
 
-During integration tests with the profile server we found that we might have to change
-messaging implementation to be more generic. So far we used synchronous messaging, i.e.
-it was always clear when our server expects a request and when to send a response.
-The profile server uses asynchronous messaging, messages have no specific ordering.
-This implies that currently a proper integration needs two separate connections,
-one to send notifications and another to receive requests. Instead this we should also change
-to use asynchronous messaging to be more conformant.
-
 Currently changes (e.g. changed host IP or new registered profile server on this node)
 are spread within the network only during node relation renewals. It may worth considering
 to broadcast changed IPs or services immediately if during tests we find that

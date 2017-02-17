@@ -106,11 +106,11 @@ int main(int argc, const char* const argv[])
                     session->SendMessage(changeAckn);
                 }
                 
-//                 LOG(INFO) << "Sending deregisterservice request";
-//                 shared_ptr<iop::locnet::Request> deregisterRequest( new iop::locnet::Request() );
-//                 deregisterRequest->mutable_localservice()->mutable_deregisterservice()->set_servicetype(
-//                     Converter::ToProtoBuf(ServiceType::Profile) );
-//                 unique_ptr<iop::locnet::Response> deregisterResponse = dispatcher->Dispatch(*deregisterRequest);
+                LOG(INFO) << "Sending deregisterservice request";
+                shared_ptr<iop::locnet::Request> deregisterRequest( new iop::locnet::Request() );
+                deregisterRequest->mutable_localservice()->mutable_deregisterservice()->set_servicetype(
+                    Converter::ToProtoBuf(ServiceType::Profile) );
+                unique_ptr<iop::locnet::Response> deregisterResponse = dispatcher->Dispatch(*deregisterRequest);
             }
             catch (exception &ex)
             {
