@@ -153,8 +153,12 @@ class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
     Address                                 _remoteAddress;
     asio::ip::tcp::iostream                 _stream;
     std::shared_ptr<asio::ip::tcp::socket>  _socket;
-    std::mutex                              _socketReadMutex;
     std::mutex                              _socketWriteMutex;
+    uint32_t                                _nextRequestId;
+    
+    // NOTE notification messages may be sent from different threads, but only the message loop reads them
+    //      still may be useful for debugging if we have any doubts about this statement being true.
+    //std::mutex                              _socketReadMutex;
     
 public:
     

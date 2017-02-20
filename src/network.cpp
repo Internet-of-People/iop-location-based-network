@@ -284,7 +284,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socket) :
-    _id(), _remoteAddress(), _stream(), _socket(socket), _socketReadMutex(), _socketWriteMutex()
+    _id(), _remoteAddress(), _stream(), _socket(socket), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
 {
     if (! _socket)
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No socket instantiated"); }
@@ -303,7 +303,7 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkEndpoint &endpoint) :
     _id( endpoint.address() + ":" + to_string( endpoint.port() ) ),
-    _remoteAddress( endpoint.address() ), _stream(), _socket(), _socketReadMutex(), _socketWriteMutex()
+    _remoteAddress( endpoint.address() ), _stream(), _socket(), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
 {
     _stream.expires_after( GetNormalStreamExpirationPeriod() );
     _stream.connect( endpoint.address(), to_string( endpoint.port() ) );
@@ -336,7 +336,7 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 
 iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
 {
-    lock_guard<mutex> readGuard(_socketReadMutex);
+    //lock_guard<mutex> readGuard(_socketReadMutex);
     
     if ( _stream.eof() )
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE,
@@ -379,6 +379,12 @@ iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
 void ProtoBufTcpStreamSession::SendMessage(iop::locnet::MessageWithHeader& message)
 {
     lock_guard<mutex> writeGuard(_socketWriteMutex);
+    
+    if ( message.has_body() && message.body().has_request() )
+    {
+        message.mutable_body()->set_id(_nextRequestId);
+        ++_nextRequestId;
+    }
     
     message.set_header(1);
     message.set_header( message.ByteSize() - MessageHeaderSize );
