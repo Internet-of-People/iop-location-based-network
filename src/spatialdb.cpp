@@ -46,7 +46,8 @@ const vector<string> DatabaseInitCommands = {
     "  serviceType  INT NOT NULL, "
     "  port         INT NOT NULL, "
     "  data         BLOB, "
-    "  PRIMARY KEY(nodeId, serviceType)"
+    "  PRIMARY KEY(nodeId, serviceType), "
+    "  FOREIGN KEY(nodeId) REFERENCES nodes(id) "
     ");"
     
 "END TRANSACTION;" };
@@ -636,6 +637,8 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
     if ( storedNode->relationType() == NodeRelationType::Self )
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Attempt to delete self entry"); }
     
+    RemoveServices(nodeId);
+    
     sqlite3_stmt *statement;
     string insertStr(
         "DELETE FROM nodes "
@@ -668,8 +671,6 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
         LOG(ERROR) << "Affected row count for delete should be 1, got : " << affectedRows;
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Wrong affected row count for delete");
     }
-    
-    RemoveServices(nodeId);
     
     for ( auto listenerEntry : _listenerRegistry.listeners() )
     {
