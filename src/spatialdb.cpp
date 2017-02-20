@@ -80,7 +80,13 @@ void ThreadSafeChangeListenerRegistry::AddListener(shared_ptr<IChangeListener> l
     lock_guard<mutex> lock(_mutex);
     if (listener == nullptr)
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Attempt to register listener instance null"); }
-        
+    
+    if ( _listeners.find( listener->sessionId() ) != _listeners.end() )
+    {
+        LOG(DEBUG) << "Session already have a registered listener, ignore request to add new one";
+        return;
+    }
+    
     _listeners[ listener->sessionId() ] = listener;
     LOG(DEBUG) << "Registered ChangeListener for session " << listener->sessionId();
 }
