@@ -1,10 +1,11 @@
 #include <chrono>
 #include <functional>
 
-#include <easylogging++.h>
-
 #include "config.hpp"
 #include "network.hpp"
+
+// NOTE on Windows this includes <winsock(2).h> so must be after asio includes in "network.hpp"
+#include <easylogging++.h>
 
 using namespace std;
 using namespace asio::ip;
