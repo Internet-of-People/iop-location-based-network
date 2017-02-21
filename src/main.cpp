@@ -1,10 +1,10 @@
 #include <iostream>
 #include <csignal>
 
-#include <easylogging++.h>
-
 #include "config.hpp"
 #include "network.hpp"
+
+#include <easylogging++.h>
 
 INITIALIZE_EASYLOGGINGPP
 

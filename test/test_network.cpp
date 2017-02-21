@@ -2,11 +2,12 @@
 
 #include <asio.hpp>
 #include <catch.hpp>
-#include <easylogging++.h>
 
 #include "network.hpp"
 #include "testimpls.hpp"
 #include "testdata.hpp"
+
+#include <easylogging++.h>
 
 using namespace std;
 using namespace LocNet;
