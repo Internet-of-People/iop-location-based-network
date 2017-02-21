@@ -117,21 +117,29 @@ Generated sources already included in directory `generated`:
 
 External dependencies to be manually installed on your system:
 - A C++11 compiler. Developed with `g++-5` and `g++-6`, but sources are platform independent,
-  should work with clang or Visual Studio (maybe minimal changes to CMake project files are needed).
-- `cmake` package used to generated Makefiles. 3.x preferred, but 2.8 still should be enough.
-- `make` package used to build the project, any version should work.
-- `libprotobuf-dev` package, used for messaging between nodes and clients.
+  should work with any standard compiler (maybe minimal changes to CMake project files are needed).
+- `cmake` used to generated Makefiles. 3.x preferred, but 2.8 still should be enough.
+- `protobuf3` used for messaging between nodes and clients.
   Included sources are generated with 3.x, but using 2.x should not be hard after minimal changes
-  (e.g. marking fields optional in the protocol definition). Available as an Ubuntu package or
+  (e.g. marking fields optional in the protocol definition). Unless present in your package manager, you have to
   [download and compile cpp version manually](https://github.com/google/protobuf)
-- `libspatialite-dev` package, any recent version is expected to work. Available as an Ubuntu package or
+- `spatialite` used to persist node data with locations, any recent version is expected to work.
+  Available as an Ubuntu package or
   [download and compile manually](https://www.gaia-gis.it/fossil/libspatialite/index)
 
 
-## Building the sources
+## Compile on Ubuntu
 
-After installing external dependencies, you can just run `build.sh` or perform the same steps
-as the script. First you have to generate build files with CMake, specifying the directory
+First you have to install all external dependencies by
+
+    sudo apt-get install git g++ cmake make libprotobuf-dev libspatialite-dev
+
+and then clone the sources using git
+
+    git clone https://github.com/Fermat-ORG/iop-location-based-network.git
+
+After installing successfully, you can just run `build.sh` or perform the same steps
+as the script as follows. First you have to generate build files with CMake, specifying the directory
 containing our main `CMakeLists.txt` file. We suggest running the build in a dedicated directory,
 the provided script uses directory `build`. Thus from the project root you can run
 
@@ -139,9 +147,7 @@ the provided script uses directory `build`. Thus from the project root you can r
     cd build
     cmake ..
 
-The steps afterwards are more platform-dependent. E.g. CMake probably generates
-Visual Studio project files on Windows, so you have to run the Visual Studio C++ compiler.
-For Linux, a `Makefile` is generated, so you can just execute
+CMake should have successfully generated a `Makefile`, so you can just execute
 
     make
 
@@ -150,6 +156,39 @@ file `src/iop-locnetd` created under your `build` directory, it is all you need.
 If you also want to install the software to your system directories, you have to run
 
     sudo make install
+
+
+## Compile on Windows
+
+We assume that you already have installed a version of the Visual Studio C++ compiler.
+You will also need CMake, at the time we're writing this, the latest stable installer
+[can be downloaded here](https://cmake.org/files/v3.7/cmake-3.7.2-win64-x64.msi).
+
+You also have to fetch all external dependent libraries, i.e. ProtoBuf and SpatiaLite.
+Unfortunately ProtoBuf does not have native windows binaries for C++, you have to compile them for yourself.
+We tried to use ProtoBuf 3.0 first, but it did not compile out of the box with Visual Studio.
+Consequently we suggest using the latest 3.x release,
+[it can be downloaded here](https://github.com/google/protobuf/releases/download/v3.2.0/protobuf-cpp-3.2.0.zip).
+After unpacking the sources, you have to run CMake to generate a VS solution file,
+then open the solution in VS and compile it.
+
+Though SQLite/SpatiaLite has windows binaries, we did not find a nice development package
+having libs and header files included. TODO.
+
+You will also have to make all included ProtoBuf and SpatiaLite headers and libs available for the compiler.
+You can either change the project files to add header paths as an include directory or
+link/copy all the required headers under `extlib`.
+
+You will also need git to fetch our latest sources. VS 2015 already has git bundled so you can
+either use its GUI or open its git command line to clone the repository.
+
+    git clone https://github.com/Fermat-ORG/iop-location-based-network.git
+
+You have to then run CMake to generate a solution for Visual Studio,
+then open the solution in VS. Before compiling, you have to set the `NOMINMAX`
+preprocessor macro for the project, otherwise windows system headers will
+define macros `min` and `max` and brake standard expressions like `std::numeric_limits<int>::max`.
+After configuring defines of the preprocessor, the sources should compile.
 
 
 ## Creating an install package for Linux
