@@ -1,5 +1,14 @@
 #include <cstdlib>
 
+#ifdef WIN32
+  #include <windows.h>
+  #include <shlobj.h>
+#else
+  #include <unistd.h>
+  #include <sys/types.h>
+  #include <pwd.h>
+#endif
+
 #include <easylogging++.h>
 #include <ezOptionParser.hpp>
 
@@ -78,10 +87,6 @@ size_t Config::neighbourhoodTargetSize() const
 
 #ifdef WIN32
 
-#include <windows.h>
-#include <shlobj.h>
-#define MAX_PATH 1024
-
 string GetWindowsDirectory(int folderId = CSIDL_APPDATA, bool createDir = true)
 {
     char path[MAX_PATH] = "";
@@ -92,10 +97,6 @@ string GetWindowsDirectory(int folderId = CSIDL_APPDATA, bool createDir = true)
 }
 
 #else
-
-#include <unistd.h>
-#include <sys/types.h>
-#include <pwd.h>
 
 string GetPosixHomeDirectory()
 {
