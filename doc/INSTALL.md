@@ -104,7 +104,8 @@ Header-only dependencies already included in directory `extlib`:
   Note that this library is to be included in the C++ standard soon.
 - `easylogging++` 9.89, used for logging in the whole source,
   [download here](https://github.com/easylogging/easyloggingpp)
-- `ezOptionParser` 0.2.2, used for handling options from command line and config files,
+- `ezOptionParser` 0.2.2 (with minimal changes to compile on Windows, see file history),
+  used for handling options from command line and config files,
   [download here](http://ezoptionparser.sourceforge.net/)
 - `catch` 1.5.9, used only for testing,
   [download here](https://github.com/philsquared/Catch)

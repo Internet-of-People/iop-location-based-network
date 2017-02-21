@@ -108,7 +108,7 @@ void GpsLocation::Validate()
     // Ensure latitude is from range (-90,90] and longitude is from (-180,180], note that range is exclusive at the bottom and inclusive at the top
     if ( _latitude <= -90. || 90. < _latitude ||
          _longitude <= -180. || 180. < _longitude )
-        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Invalid GPS location"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Invalid GPS location"); }
 }
 
 bool GpsLocation::operator==(const GpsLocation& other) const

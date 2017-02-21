@@ -274,7 +274,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     if ( selfEntries.size() > 1 )
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Multiple self instances found, database may have been tampered with."); }
     if ( ! selfEntries.empty() && selfEntries.front().id() != _myNodeInfo.id() )
-        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE, "Node id changed, database is invalidated. Delete database file " +
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_STATE, "Node id changed, database is invalidated. Delete database file " +
             dbPath + " to force signing up to the network with the new node id."); }
     
     if ( selfEntries.empty() )  { Store ( ThisNodeToDbEntry(_myNodeInfo), false ); }
@@ -633,9 +633,9 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
 {
     shared_ptr<NodeDbEntry> storedNode = Load(nodeId);
     if (storedNode == nullptr)
-        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Node to be removed is not present: " + nodeId); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Node to be removed is not present: " + nodeId); }
     if ( storedNode->relationType() == NodeRelationType::Self )
-        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Attempt to delete self entry"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Attempt to delete self entry"); }
     
     RemoveServices(nodeId);
     

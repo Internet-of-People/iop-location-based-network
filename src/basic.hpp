@@ -30,8 +30,8 @@ enum class ErrorCode : uint16_t
     ERROR_UNSUPPORTED = 1,          // Unknown request version or protocol
     ERROR_PROTOCOL_VIOLATION = 2,   // Requests are not sent or responses not received as expected
     ERROR_BAD_REQUEST = 3,          // Request is in invalid format or cannot be properly interpreted
-    ERROR_INVALID_DATA = 4,         // Invalid data provided as an rgument of an operation
-    ERROR_INVALID_STATE = 5,        // Operation is requested too early (e.g. without initialization) or too late (e.g. after resources are releasedd)
+    ERROR_INVALID_VALUE = 4,        // Invalid data provided as an rgument of an operation
+    ERROR_BAD_STATE = 5,            // Operation is requested too early (e.g. without initialization) or too late (e.g. after resources are releasedd)
     
     // Problems with outgoing messages
     ERROR_CONNECTION = 96,          // Failed to connect to another peer

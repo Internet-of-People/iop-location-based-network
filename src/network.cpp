@@ -51,7 +51,7 @@ Address NodeContact::AddressFromBytes(const std::string &bytes)
         address_v6 ipv6(v6AddrBytes);
         return ipv6.to_string();
     }
-    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Invalid ip address bytearray size: " + bytes.size()); }
+    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Invalid ip address bytearray size: " + bytes.size()); }
 }
 
 
@@ -74,7 +74,7 @@ string NodeContact::AddressToBytes(const Address &addr)
         for (uint8_t byte : bytes)
             { result.push_back(byte); }
     }
-    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Unknown type of address: " + addr); }
+    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Unknown type of address: " + addr); }
     return result;
 }
 
@@ -339,7 +339,7 @@ iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
     //lock_guard<mutex> readGuard(_socketReadMutex);
     
     if ( _stream.eof() )
-        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_STATE,
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_STATE,
             "Session " + id() + " connection is already closed, cannot read message"); }
         
     // Allocate a buffer for the message header and read it

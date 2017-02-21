@@ -39,8 +39,8 @@ iop::locnet::Status Converter::ToProtoBuf(ErrorCode value)
         case ErrorCode::ERROR_CONCEPTUAL:           return iop::locnet::Status::ERROR_INTERNAL;
         case ErrorCode::ERROR_CONNECTION:           return iop::locnet::Status::ERROR_INTERNAL;
         case ErrorCode::ERROR_INTERNAL:             return iop::locnet::Status::ERROR_INTERNAL;
-        case ErrorCode::ERROR_INVALID_DATA:         return iop::locnet::Status::ERROR_INVALID_VALUE;
-        case ErrorCode::ERROR_INVALID_STATE:        return iop::locnet::Status::ERROR_INTERNAL;
+        case ErrorCode::ERROR_INVALID_VALUE:        return iop::locnet::Status::ERROR_INVALID_VALUE;
+        case ErrorCode::ERROR_BAD_STATE:            return iop::locnet::Status::ERROR_INTERNAL;
         case ErrorCode::ERROR_PROTOCOL_VIOLATION:   return iop::locnet::Status::ERROR_PROTOCOL_VIOLATION;
         case ErrorCode::ERROR_UNSUPPORTED:          return iop::locnet::Status::ERROR_UNSUPPORTED;
         default: throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Conversion for error code not implemented");
@@ -71,7 +71,7 @@ ServiceType Converter::FromProtoBuf(iop::locnet::ServiceType value)
         case iop::locnet::ServiceType::Relay:       return ServiceType::Relay;
         case iop::locnet::ServiceType::Reputation:  return ServiceType::Reputation;
         case iop::locnet::ServiceType::Minting:     return ServiceType::Minting;
-        default: throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "Missing or unknown service type");
+        default: throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Missing or unknown service type");
     }
 }
 
@@ -104,9 +104,9 @@ ServiceInfo Converter::FromProtoBuf(const iop::locnet::ServiceInfo& value)
 NodeInfo Converter::FromProtoBuf(const iop::locnet::NodeInfo& value)
 {
     if ( value.nodeid().empty() )
-        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No id present for node"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "No id present for node"); }
     if ( ! value.has_contact() )
-        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_DATA, "No contact information for node"); }
+        { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "No contact information for node"); }
 
     const iop::locnet::NodeContact &contact = value.contact();
         
