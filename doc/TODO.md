@@ -21,16 +21,6 @@ to come up with an initial version as soon as possible.
 Accordingly, you can find a lot of `// TODO` comments in the source
 calling to (re)consider algorithms, error handling and other implementations.
 
-Though using the easylogging++ library is very convenient, we rarely experienced a strange behaviour.
-To be thread-safe it needs to have `#define ELPP_THREAD_SAFE` in all files where it's used,
-currently this is set as compiler option with cmake. However, we experienced very rare and undeterministic
-errors (e.g. "pure virtual method called", probably it calls a method of an uninitialized derived class
-during construction) with a stacktrace pointing to construction of logger objects.
-Releases later than the currently used 9.89 may have already fixed this,
-but they also changed to from the header-only model to splitted h/cpp compilation,
-thus upgrading would also need changes in our project structure.
-Currently we didn't cause problems, so upgrade was delayed.
-
 
 ## Architecture
 

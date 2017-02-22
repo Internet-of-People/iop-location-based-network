@@ -1,4 +1,4 @@
-add_library(iop-locnet ../generated/IopLocNet.pb.cc
+add_library(iop-locnet ../generated/IopLocNet.pb.cc ../extlib/easylogging++.cc
     basic.cpp config.cpp spatialdb.cpp locnet.cpp messaging.cpp network.cpp)
 target_include_directories (iop-locnet PUBLIC
     "${CMAKE_SOURCE_DIR}/extlib" "${CMAKE_SOURCE_DIR}/generated")

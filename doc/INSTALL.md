@@ -98,11 +98,11 @@ Consequently, our sources should compile and work also on Windows or Mac OS with
 The project has multiple dependencies. Some of them are shipped with the sources,
 others has to be installed independently.
 
-Header-only dependencies already included in directory `extlib`:
+Some (mostly header-only) dependencies already included in directory `extlib`:
 - `asio` 1.11.0 standalone mode without Boost. Used for networking,
   [download here](http://think-async.com/Asio/Download).
   Note that this library is to be included in the C++ standard soon.
-- `easylogging++` 9.89, used for logging in the whole source,
+- `easylogging++` 9.94, used for logging in the whole source,
   [download here](https://github.com/easylogging/easyloggingpp)
 - `ezOptionParser` 0.2.2 (with minimal changes to compile on Windows, see file history),
   used for handling options from command line and config files,
@@ -211,6 +211,7 @@ Then open the solution in VS. Before compiling, you have to set the `NOMINMAX`
 preprocessor macro for the project, see Project/Properties/C++/Preprocessor/Preprocessor Definitions.
 Otherwise windows system headers will define macros `min` and `max`
 and brake standard expressions like `std::numeric_limits<int>::max()`.
+Also define `ELPP_THREAD_SAFE` to activate thread-safe mode for logging.
 Before building the project, you also have to change the executable format
 for the project under Project/Properties/C++/Code Generation/Runtime Library
 from the selected "Multithreaded Debug DLL" to "Multithreaded Debug",
