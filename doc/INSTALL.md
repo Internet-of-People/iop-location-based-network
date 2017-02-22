@@ -200,8 +200,9 @@ You can either change the project files to add header paths as an include direct
 link/copy all the required headers under `extlib`. You should also copy LIB files to
 where VS can find them, e.g. to the build directory.
 
-You have to then run CMake to generate a solution for Visual Studio, we suggest doing it in
-a separete `build` directory as
+You also have to slightly modify the CMakeLists.txt by removing `pthread` from linked libraries
+as it's not available on Windows and Visual Studio has its own threading implementation.
+Run CMake to generate a Visual Studio solution, we suggest doing it in a separete `build` directory as
 
     mkdir build
     cd build
