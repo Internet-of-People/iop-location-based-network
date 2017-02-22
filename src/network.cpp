@@ -575,7 +575,7 @@ void ProtoBufTcpStreamChangeListener::AddedNode(const NodeDbEntry& node)
         }
         catch (exception &ex)
         {
-            LOG(ERROR) << "Failed to send change notification";
+            LOG(ERROR) << "Failed to send change notification: " << ex.what();
             Deregister();
         }
     }
@@ -599,7 +599,7 @@ void ProtoBufTcpStreamChangeListener::UpdatedNode(const NodeDbEntry& node)
         }
         catch (exception &ex)
         {
-            LOG(ERROR) << "Failed to send change notification";
+            LOG(ERROR) << "Failed to send change notification: " << ex.what();
             Deregister();
         }
     }
@@ -622,7 +622,7 @@ void ProtoBufTcpStreamChangeListener::RemovedNode(const NodeDbEntry& node)
         }
         catch (exception &ex)
         {
-            LOG(ERROR) << "Failed to send change notification";
+            LOG(ERROR) << "Failed to send change notification: " << ex.what();
             Deregister();
         }
     }
