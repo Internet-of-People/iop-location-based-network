@@ -1,6 +1,6 @@
 #include <cstdlib>
 
-#ifdef WIN32
+#ifdef _WIN32
   #include <windows.h>
   #include <shlobj.h>
 #else
@@ -85,7 +85,7 @@ size_t Config::neighbourhoodTargetSize() const
 
 
 
-#ifdef WIN32
+#ifdef _WIN32
 
 string GetWindowsDirectory(int folderId = CSIDL_APPDATA, bool createDir = true)
 {
@@ -117,7 +117,7 @@ static const string APPLICATION_DIRECTORY_RELATIVE_NAME = "iop-locnet";
 // Unix: ~/.iop-locnet
 string GetApplicationDataDirectory()
 {
-#ifdef WIN32
+#ifdef _WIN32
     string result = GetWindowsDirectory() + "\\" + APPLICATION_DIRECTORY_RELATIVE_NAME + "\\";
     if ( ! CreateDirectory( result.c_str(), nullptr ) && ERROR_ALREADY_EXISTS != GetLastError() )
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to create directory " + result); }
