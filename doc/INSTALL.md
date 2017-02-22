@@ -167,28 +167,56 @@ You will also need CMake, at the time we're writing this, the latest stable inst
 You also have to fetch all external dependent libraries, i.e. ProtoBuf and SpatiaLite.
 Unfortunately ProtoBuf does not have native windows binaries for C++, you have to compile them for yourself.
 We tried to use ProtoBuf 3.0 first, but it did not compile out of the box with Visual Studio.
-Consequently we suggest using the latest 3.x release,
-[it can be downloaded here](https://github.com/google/protobuf/releases/download/v3.2.0/protobuf-cpp-3.2.0.zip).
-After unpacking the sources, you have to run CMake to generate a VS solution file,
-then open the solution in VS and compile it.
+Consequently we suggest using the latest release,
+[3.2 can be downloaded here](https://github.com/google/protobuf/releases/download/v3.2.0/protobuf-cpp-3.2.0.zip).
+After unpacking the sources, you have to run CMake to generate a VS solution file
+in its `cmake` directory, then open the solution in VS and compile it.
+Having the binaries you may have to run `protoc` to overwrite classes in `generated`
+that might have been created with a different version.
 
-Though SQLite/SpatiaLite has windows binaries, we did not find a nice development package
-having libs and header files included. TODO.
+Though SQLite has windows binaries, we did not find a nice development package
+having libs and header files both included. You can download a single
+[sqlite3.h header file from here](https://sqlite.org/2017/sqlite-amalgamation-3170000.zip)
+and separately a
+[compiled DLL from here](https://sqlite.org/2017/sqlite-dll-win64-x64-3170000.zip).
+To be able to link in Visual Studio you have to create a LIB file for the DLL
+using the LIB tool from the Visual Studio binaries as
 
-You will also have to make all included ProtoBuf and SpatiaLite headers and libs available for the compiler.
-You can either change the project files to add header paths as an include directory or
-link/copy all the required headers under `extlib`.
+    lib /def:sqlite3.dll
+
+TODO how to properly do Spatialite binaries? The DLLs
+[found here](http://www.gaia-gis.it/gaia-sins/windows-bin-x86/mod_spatialite-4.3.0a-win-x86.7z)
+do not contain appropriate `init_ex/cleanup_ex` calls, sources compile only if those are removed
+or replaced with deprecated init/cleanup calls. Probably that's why the resulted binaries
+currently crash on startup.
 
 You will also need git to fetch our latest sources. VS 2015 already has git bundled so you can
 either use its GUI or open its git command line to clone the repository.
 
     git clone https://github.com/Fermat-ORG/iop-location-based-network.git
 
-You have to then run CMake to generate a solution for Visual Studio,
-then open the solution in VS. Before compiling, you have to set the `NOMINMAX`
-preprocessor macro for the project, otherwise windows system headers will
-define macros `min` and `max` and brake standard expressions like `std::numeric_limits<int>::max`.
-After configuring defines of the preprocessor, the sources should compile.
+Then you have to make all ProtoBuf, SQLite and SpatiaLite headers and libs available for the compiler.
+You can either change the project files to add header paths as an include directory or
+link/copy all the required headers under `extlib`. You should also copy LIB files to
+where VS can find them, e.g. to the build directory.
+
+You have to then run CMake to generate a solution for Visual Studio, we suggest doing it in
+a separete `build` directory as
+
+    mkdir build
+    cd build
+    cmake ..
+
+Then open the solution in VS. Before compiling, you have to set the `NOMINMAX`
+preprocessor macro for the project, see Project/Properties/C++/Preprocessor/Preprocessor Definitions.
+Otherwise windows system headers will define macros `min` and `max`
+and brake standard expressions like `std::numeric_limits<int>::max()`.
+Before building the project, you also have to change the executable format
+for the project under Project/Properties/C++/Code Generation/Runtime Library
+from the selected "Multithreaded Debug DLL" to "Multithreaded Debug",
+otherwise you will have linker errors like
+`1>protobuf.lib(int128.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in main.obj.`
+After configuring project settings as above, the sources should compile and link fine.
 
 
 ## Creating an install package for Linux
