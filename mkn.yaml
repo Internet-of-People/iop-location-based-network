@@ -2,18 +2,9 @@
 
 # Possibly require the MinGW version of libstdc++ https://github.com/lydonchandra/TestSpatialite/tree/master/windows%20server%202012%20issue
 
-#! clean build -dtSa -O2
-
-
 name: iop-locnet
 
-src: generated extlib/easylogging++.cc 
-  ./src/basic.cpp
-  ./src/config.cpp
-  ./src/locnet.cpp
-  ./src/network.cpp
-  ./src/messaging.cpp
-  ./src/spatialdb.cpp
+src: generated extlib/easylogging++.cc ./src
 parent: base
 main: ./src/main.cpp
 
@@ -34,9 +25,3 @@ profile:
           ./test/testdata.cpp
           ./test/testimpls.cpp
     main: test/test_main.cpp
-
-# test/samplelocalclient.cpp:int main(int argc, const char* const argv[])
-# test/samplenodeclient.cpp:int main(int argc, const char* const argv[])
-# test/sampleserver.cpp:int main()
-# test/test_main.cpp:int main( int argc, const char* const argv[] )
-
