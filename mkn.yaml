@@ -1,0 +1,42 @@
+#! clean build -tSa "-EHsc -O2 -Zc:inline -DNOMINMAX" -d
+
+# Possibly require the MinGW version of libstdc++ https://github.com/lydonchandra/TestSpatialite/tree/master/windows%20server%202012%20issue
+
+#! clean build -dtSa -O2
+
+
+name: iop-locnet
+
+src: generated extlib/easylogging++.cc 
+  ./src/basic.cpp
+  ./src/config.cpp
+  ./src/locnet.cpp
+  ./src/network.cpp
+  ./src/messaging.cpp
+  ./src/spatialdb.cpp
+parent: base
+main: ./src/main.cpp
+
+profile:
+  - name: base
+    inc: ./src generated extlib
+    lib: shell32 mod_spatialite libsqlite3-0 # zlib1 #protobuf spatialite sqlite3
+    dep:
+      - local: win
+    arg: -DPROTOBUF_USE_DLLS
+
+  - name: tests
+    parent: base
+    src: ./src generated
+          ./test/test_locnet.cpp
+          ./test/test_messaging.cpp
+          ./test/test_network.cpp
+          ./test/testdata.cpp
+          ./test/testimpls.cpp
+    main: test/test_main.cpp
+
+# test/samplelocalclient.cpp:int main(int argc, const char* const argv[])
+# test/samplenodeclient.cpp:int main(int argc, const char* const argv[])
+# test/sampleserver.cpp:int main()
+# test/test_main.cpp:int main( int argc, const char* const argv[] )
+
