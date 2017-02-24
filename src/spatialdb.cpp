@@ -258,6 +258,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     spatialite_init_ex(_dbHandle, _spatialiteConnection, 0);
     scope_error cleanupOnError( [this] { spatialite_cleanup_ex(_spatialiteConnection); } );
 #else
+    sqlite3_enable_load_extension(_dbHandle, 1);
     sqlite3_load_extension(_dbHandle, "mod_spatialite", nullptr, nullptr);
 #endif
 
