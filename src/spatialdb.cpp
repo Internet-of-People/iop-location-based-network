@@ -254,8 +254,12 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     }
     scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
     
+#ifndef _WIN32
     spatialite_init_ex(_dbHandle, _spatialiteConnection, 0);
     scope_error cleanupOnError( [this] { spatialite_cleanup_ex(_spatialiteConnection); } );
+#else
+    sqlite3_load_extension(_dbHandle, "mod_spatialite", nullptr, nullptr);
+#endif
 
     LOG(TRACE) << "SQLite version: " << sqlite3_libversion();
     LOG(TRACE) << "SpatiaLite version: " << spatialite_version();
@@ -286,7 +290,9 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
 SpatiaLiteDatabase::~SpatiaLiteDatabase()
 {
     sqlite3_close (_dbHandle);
+#ifndef _WIN32
     spatialite_cleanup_ex(_spatialiteConnection);
+#endif
     // TODO there is no free cache function in current version despite description
     // spatialite_free_internal_cache();
     // TODO is this needed?
