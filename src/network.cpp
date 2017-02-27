@@ -22,8 +22,9 @@ static const size_t MessageHeaderSize = 5;
 static const size_t MessageSizeOffset = 1;
 
 
-static chrono::duration<uint32_t> GetNormalStreamExpirationPeriod()
-    { return Config::Instance().isTestMode() ? chrono::seconds(60) : chrono::seconds(15); }
+// TODO handle session expiration at least for clients
+// static chrono::duration<uint32_t> GetNormalStreamExpirationPeriod()
+//     { return Config::Instance().isTestMode() ? chrono::seconds(60) : chrono::seconds(15); }
 
 //static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
 
@@ -123,6 +124,9 @@ void TcpServer::Shutdown()
 {
     _shutdownRequested = true;
 }
+
+asio::io_service& TcpServer::ioService()
+    { return _ioService; }
 
 
 
@@ -284,19 +288,17 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 
 
 
+asio::io_service ProtoBufTcpStreamSession::_ioService;
+
+
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socket) :
-    _id(), _remoteAddress(), _stream(), _socket(socket), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
+    _id(), _remoteAddress(), _socket(socket), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
 {
     if (! _socket)
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No socket instantiated"); }
     
     _remoteAddress = socket->remote_endpoint().address().to_string();
     _id = _remoteAddress + ":" + to_string( socket->remote_endpoint().port() );
-    // TODO this is a hack to transform a socket object into a blocking TCP stream,
-    //      we should consider possible ownership and other problems of this construct.
-    //      We have experienced very rare and undeterministic "Socket operation via non-socket"
-    //      system errors, probably this might cause it.
-    _stream.rdbuf()->assign( socket->local_endpoint().protocol(), socket->native_handle() );
     // TODO handle session expiration for clients with no keepalive
     //_stream.expires_after(NormalStreamExpirationPeriod);
 }
@@ -304,13 +306,17 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkEndpoint &endpoint) :
     _id( endpoint.address() + ":" + to_string( endpoint.port() ) ),
-    _remoteAddress( endpoint.address() ), _stream(), _socket(), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
+    _remoteAddress( endpoint.address() ), _socket( new tcp::socket(_ioService) ), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
 {
-    _stream.expires_after( GetNormalStreamExpirationPeriod() );
-    _stream.connect( endpoint.address(), to_string( endpoint.port() ) );
-    if (! _stream)
-        { throw LocationNetworkError(ErrorCode::ERROR_CONNECTION, "Session failed to connect: " + _stream.error().message() ); }
+    tcp::resolver resolver(_ioService);
+    tcp::resolver::query query( endpoint.address(), to_string( endpoint.port() ) );
+    tcp::resolver::iterator addressIter = resolver.resolve(query);
+    try { asio::connect(*_socket, addressIter); }
+    catch (exception &ex) { throw LocationNetworkError(ErrorCode::ERROR_CONNECTION, "Failed connecting to " +
+        endpoint.address() + ":" + to_string( endpoint.port() ) + " with error: " + ex.what() ); }
     LOG(DEBUG) << "Connected to " << endpoint;
+    // TODO handle session expiration
+    //_stream.expires_after( GetNormalStreamExpirationPeriod() );
 }
 
 ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()
@@ -339,38 +345,31 @@ iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
 {
     //lock_guard<mutex> readGuard(_socketReadMutex);
     
-    if ( _stream.eof() )
+    if ( ! _socket->is_open() )
         { throw LocationNetworkError(ErrorCode::ERROR_BAD_STATE,
             "Session " + id() + " connection is already closed, cannot read message"); }
         
     // Allocate a buffer for the message header and read it
     string messageBytes(MessageHeaderSize, 0);
-    _stream.read( &messageBytes[0], MessageHeaderSize );
-    if ( _stream.fail() )
-        { throw LocationNetworkError(ErrorCode::ERROR_PROTOCOL_VIOLATION,
-            "Session " + id() + " failed to read message header, connection may have been closed by remote peer"); }
-    
+    asio::read( *_socket, asio::buffer(messageBytes) );
+
     // Extract message size from the header to know how many bytes to read
     uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
-    
     if (bodySize > MaxMessageSize)
         { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST,
             "Session " + id() + " message size is over limit: " + to_string(bodySize) ); }
     
     // Extend buffer to fit remaining message size and read it
     messageBytes.resize(MessageHeaderSize + bodySize, 0);
-    _stream.read( &messageBytes[0] + MessageHeaderSize, bodySize );
-    if ( _stream.fail() )
-        { throw LocationNetworkError(ErrorCode::ERROR_PROTOCOL_VIOLATION,
-            "Session " + id() + " failed to read full message body"); }
+    asio::read( *_socket, asio::buffer(&messageBytes[0] + MessageHeaderSize, bodySize) );
 
     // Deserialize message from receive buffer, avoid leaks for failing cases with RAII-based unique_ptr
     unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );
     message->ParseFromString(messageBytes);
     
-    string buffer;
-    google::protobuf::TextFormat::PrintToString(*message, &buffer);
-    LOG(TRACE) << "Session " << id() << " received message " << buffer;
+    string msgDebugStr;
+    google::protobuf::TextFormat::PrintToString(*message, &msgDebugStr);
+    LOG(TRACE) << "Session " << id() << " received message " << msgDebugStr;
     
     return message.release();
 }
@@ -390,11 +389,11 @@ void ProtoBufTcpStreamSession::SendMessage(iop::locnet::MessageWithHeader& messa
     message.set_header(1);
     message.set_header( message.ByteSize() - MessageHeaderSize );
     
-    _stream << message.SerializeAsString();
+    asio::write( *_socket, asio::buffer( message.SerializeAsString() ) );
     
-    string buffer;
-    google::protobuf::TextFormat::PrintToString(message, &buffer);
-    LOG(TRACE) << "Session " << id() << " sent message " << buffer;
+    string msgDebugStr;
+    google::protobuf::TextFormat::PrintToString(message, &msgDebugStr);
+    LOG(TRACE) << "Session " << id() << " sent message " << msgDebugStr;
 }
 
 

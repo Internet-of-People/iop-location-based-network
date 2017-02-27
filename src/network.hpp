@@ -36,8 +36,10 @@ public:
     TcpServer(TcpPort portNumber);
     virtual ~TcpServer();
     
-    void Start();
+//    void Start();
     void Shutdown();
+    
+    asio::io_service &ioService();
 };
 
 
@@ -149,20 +151,24 @@ public:
 //      Maybe boost stackful coroutines could be useful here, but we shouldn't depend on boost.
 class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
 {
+    // Used by client connections to work without a TCP server and avoid having an io_service object in main()
+    static asio::io_service                 _ioService;
+    
     SessionId                               _id;
     Address                                 _remoteAddress;
-    asio::ip::tcp::iostream                 _stream;
     std::shared_ptr<asio::ip::tcp::socket>  _socket;
     std::mutex                              _socketWriteMutex;
     uint32_t                                _nextRequestId;
     
-    // NOTE notification messages may be sent from different threads, but only the message loop reads them
-    //      still may be useful for debugging if we have any doubts about this statement being true.
+    // NOTE notification messages may be sent from different threads, but only the message loop reads them.
+    //      This still may be useful for debugging if we have any doubts about this statement being true.
     //std::mutex                              _socketReadMutex;
     
 public:
-    
+
+    // Server connection to client with accepted socket
     ProtoBufTcpStreamSession(std::shared_ptr<asio::ip::tcp::socket> socket);
+    // Client connection to server, endpoint resolution to be done
     ProtoBufTcpStreamSession(const NetworkEndpoint &endpoint);
     ~ProtoBufTcpStreamSession();
     
