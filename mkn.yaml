@@ -1,8 +1,13 @@
 #! clean build -tSa "-EHsc -O2 -Zc:inline -DNOMINMAX -DELPP_THREAD_SAFE" -d
 
+######
+# Change shebang to the following line if you need debug binaries
+#! clean build -tSa "-EHsc -Od -Z7 -FS -Yi -Fdiop-locnetd.pdb -DDEBUG -DNOMINMAX -DELPP_THREAD_SAFE" -l "-DEBUG"
+######
+
 # Possibly require the MinGW version of libstdc++ https://github.com/lydonchandra/TestSpatialite/tree/master/windows%20server%202012%20issue
 
-name: iop-locnet
+name: iop-locnetd
 
 src: generated extlib/easylogging++.cc ./src
 parent: base
