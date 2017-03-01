@@ -703,12 +703,6 @@ void Node::DiscoverUnknownAreas()
             
         try
         {
-            // TODO consider: the resulted node might be very far away from the generated random node,
-            //      so prefiltering might cause bad results, but it also spares network costs. Test and decide!
-            //      If this is not commented, we should separately take care about discovering new neighbours.
-            // if ( BubbleOverlaps(randomLocation) )
-            //    { continue; }
-            
             NodeInfo myNodeInfo = _spatialDb->ThisNode();
             
             // Get node closest to this position that is already present in our database
@@ -735,6 +729,9 @@ void Node::DiscoverUnknownAreas()
                 { continue; }
             const auto &newClosestNode = newClosestNodes[0];
             LOG(DEBUG) << "Closest node to random position is " << newClosestNode;
+            
+// TODO probably we should also ask a random seed node here and get the closest of the two results
+//      if both available. This might help rejoining a splitted network.
             
             // If we already know this node, nothing to do here, renewals will keep it alive
             shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( newClosestNode.id() );

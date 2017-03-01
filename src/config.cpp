@@ -81,7 +81,7 @@ bool Config::isTestMode() const
     { return _testMode; }
 
 size_t Config::neighbourhoodTargetSize() const
-    { return isTestMode() ? 2 : NEIGHBOURHOOD_TARGET_SIZE; }
+    { return isTestMode() ? 3 : NEIGHBOURHOOD_TARGET_SIZE; }
 
 
 
@@ -322,13 +322,13 @@ TcpPort EzParserConfig::localServicePort() const
     { return _localPort; }
     
 chrono::duration<uint32_t> EzParserConfig::dbMaintenancePeriod() const
-    { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(30)) : _dbMaintenancePeriod; }
+    { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(35)) : _dbMaintenancePeriod; }
 
 chrono::duration<uint32_t> EzParserConfig::dbExpirationPeriod() const
     { return isTestMode() ? chrono::duration<uint32_t>(chrono::minutes(2)) : _dbExpirationPeriod; }
 
 chrono::duration<uint32_t> EzParserConfig::discoveryPeriod() const
-    { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(10)) : _discoveryPeriod; }
+    { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(15)) : _discoveryPeriod; }
 
 
 }
