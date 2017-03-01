@@ -70,6 +70,7 @@ public:
     
     virtual const SessionId& sessionId() const = 0;
     
+    virtual void OnRegistered() = 0;
     virtual void AddedNode  (const NodeDbEntry &node) = 0;
     virtual void UpdatedNode(const NodeDbEntry &node) = 0;
     virtual void RemovedNode(const NodeDbEntry &node) = 0;

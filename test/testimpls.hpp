@@ -23,6 +23,7 @@ public:
     
     const SessionId& sessionId() const override;
     
+    void OnRegistered() override;
     void AddedNode  (const NodeDbEntry &node) override;
     void UpdatedNode(const NodeDbEntry &node) override;
     void RemovedNode(const NodeDbEntry &node) override;

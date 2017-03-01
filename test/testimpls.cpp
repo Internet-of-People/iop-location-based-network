@@ -14,6 +14,7 @@ ChangeCounter::ChangeCounter(const SessionId& sessionId) : _sessionId(sessionId)
 
 const SessionId& ChangeCounter::sessionId() const { return _sessionId; }
 
+void ChangeCounter::OnRegistered() {}
 void ChangeCounter::AddedNode(const NodeDbEntry&)   { ++addedCount; }
 void ChangeCounter::UpdatedNode(const NodeDbEntry&) { ++updatedCount; }
 void ChangeCounter::RemovedNode(const NodeDbEntry&) { ++removedCount; }

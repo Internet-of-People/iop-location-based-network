@@ -528,7 +528,7 @@ ProtoBufTcpStreamChangeListener::ProtoBufTcpStreamChangeListener(
         shared_ptr<IProtoBufNetworkSession> session,
         shared_ptr<ILocalServiceMethods> localService ) :
         // shared_ptr<IProtoBufRequestDispatcher> dispatcher ) :
-    _sessionId( session->id() ), _localService(localService), _session(session) //, _dispatcher(dispatcher)
+    _sessionId(), _localService(localService), _session(session) //, _dispatcher(dispatcher)
 {
     //session->KeepAlive();
 }
@@ -537,11 +537,17 @@ ProtoBufTcpStreamChangeListener::ProtoBufTcpStreamChangeListener(
 ProtoBufTcpStreamChangeListener::~ProtoBufTcpStreamChangeListener()
 {
     Deregister();
-    LOG(DEBUG) << "ChangeListener destroyed";
+    LOG(DEBUG) << "ChangeListener for session " << _sessionId << " destroyed";
 }
+
+void ProtoBufTcpStreamChangeListener::OnRegistered()
+    { _sessionId = _session->id(); }
+
 
 void ProtoBufTcpStreamChangeListener::Deregister()
 {
+    // Remove only after successful registration of this instance, needed to protect
+    // from deregistering another instance after failed (e.g. repeated) addlistener request for same session
     if ( ! _sessionId.empty() )
     {
         LOG(DEBUG) << "ChangeListener deregistering for session " << _sessionId;

@@ -89,6 +89,7 @@ void ThreadSafeChangeListenerRegistry::AddListener(shared_ptr<IChangeListener> l
     }
     
     _listeners[ listener->sessionId() ] = listener;
+    listener->OnRegistered();
     LOG(DEBUG) << "Registered ChangeListener for session " << listener->sessionId();
 }
 
