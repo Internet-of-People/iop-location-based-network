@@ -1,9 +1,10 @@
 
 
 name: protobuf
+super: ../..
 inc: ./src ../inc
 src: ./src
 path: ../lib
 lib: shell32
 
-arg: -DPROTOBUF_USE_DLLS -DLIBPROTOBUF_EXPORTS -DLIBPROTOC_EXPORTS
+arg: -DPROTOBUF_USE_DLLS -DLIBPROTOBUF_EXPORTS -DLIBPROTOC_EXPORTS ${win.args}
