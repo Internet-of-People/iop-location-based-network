@@ -73,6 +73,7 @@ void Config::InitForTest()
 }
 
 
+Config::Config() {}
 
 const string& Config::version() const
     { return LOCNET_VERSION; }

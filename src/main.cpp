@@ -79,9 +79,7 @@ int main(int argc, const char *argv[])
         mySignalHandlerFunc = [&ShutdownRequested, &localTcpServer, &nodeTcpServer, &clientTcpServer] (int)
         {
             ShutdownRequested = true;
-            localTcpServer.Shutdown();
-            nodeTcpServer.Shutdown();
-            clientTcpServer.Shutdown();
+            Network::Instance().Shutdown();
         };
         
         signal(SIGINT,  signalHandler);
@@ -118,12 +116,11 @@ int main(int argc, const char *argv[])
             }
         } );
         discoveryThread.detach();
+
+// TODO start async network client thread to send notificaitons and updates
         
-        // TODO we should do something more useful here instead of polling,
-        //      maybe run io_service::run, does it block CTRL-C and other signals?
-        // Avoid exiting from this thread
         while (! ShutdownRequested)
-            { this_thread::sleep_for( chrono::milliseconds(50) ); }
+            { Network::Instance().ServerReactor().run_one(); }
         
         LOG(INFO) << "Shutting down location-based network";
         return 0;

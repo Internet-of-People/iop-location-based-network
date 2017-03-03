@@ -97,15 +97,14 @@ int main()
         mySignalHandlerFunc = [&ShutdownRequested, &nodeTcpServer, &clientTcpServer] (int)
         {
             ShutdownRequested = true;
-            nodeTcpServer.Shutdown();
-            clientTcpServer.Shutdown();
+            Network::Instance().Shutdown();
         };
         
         std::signal(SIGINT,  signalHandler);
         std::signal(SIGTERM, signalHandler);
         
         while (! ShutdownRequested)
-            { this_thread::sleep_for( chrono::milliseconds(10) ); }
+            { Network::Instance().ServerReactor().run_one(); }
         
         LOG(INFO) << "Finished successfully";
         return 0;

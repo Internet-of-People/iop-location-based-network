@@ -85,48 +85,42 @@ string  NodeContact::AddressBytes() const
 
 
 
+Network Network::_instance;
+
+Network::Network(): _serverIoService(), _clientIoService() {}
+
+Network& Network::Instance() { return _instance; }
+
+void Network::Shutdown()
+{
+    _serverIoService.stop();
+    _clientIoService.stop();
+}
+
+asio::io_service& Network::ServerReactor() { return _serverIoService; }
+asio::io_service& Network::ClientReactor() { return _clientIoService; }
+
+
+
 TcpServer::TcpServer(TcpPort portNumber) :
-    _ioService(), _threadPool(), _shutdownRequested(false),
-    _acceptor( _ioService, tcp::endpoint( tcp::v4(), portNumber ) )
+    _acceptor( Network::Instance().ServerReactor(), tcp::endpoint( tcp::v4(), portNumber ) )
 {
     // Switch the acceptor to listening state
     LOG(DEBUG) << "Accepting connections on port " << portNumber;
     _acceptor.listen();
     
-    shared_ptr<tcp::socket> socket( new tcp::socket(_ioService) );
+    shared_ptr<tcp::socket> socket( new tcp::socket( Network::Instance().ServerReactor() ) );
     _acceptor.async_accept( *socket,
         [this, socket] (const asio::error_code &ec) { AsyncAcceptHandler(socket, ec); } );
-    
-    // Start the specified number of job processor threads
-    for (size_t idx = 0; idx < ThreadPoolSize; ++idx)
-    {
-        _threadPool.push_back( thread( [this]
-        {
-            while (! _shutdownRequested)
-                { _ioService.run(); }
-        } ) );
-    }
 }
 
 
-TcpServer::~TcpServer()
-{
-    Shutdown();
-    
-    _ioService.stop();
-    for (auto &thr : _threadPool)
-        { thr.join(); }
-    _threadPool.clear();
-}
+TcpServer::~TcpServer() {}
 
 
-void TcpServer::Shutdown()
-{
-    _shutdownRequested = true;
-}
 
-asio::io_service& TcpServer::ioService()
-    { return _ioService; }
+// asio::io_service& TcpServer::ioService()
+//     { return _ioService; }
 
 
 
@@ -154,7 +148,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
         << socket->local_endpoint().address().to_string()  << ":" << socket->local_endpoint().port();
     
     // Keep accepting connections on the socket
-    shared_ptr<tcp::socket> nextSocket( new tcp::socket(_ioService) );
+    shared_ptr<tcp::socket> nextSocket( new tcp::socket( Network::Instance().ServerReactor() ) );
     _acceptor.async_accept( *nextSocket,
         [this, nextSocket] (const asio::error_code &ec) { AsyncAcceptHandler(nextSocket, ec); } );
     
@@ -168,7 +162,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                 _dispatcherFactory->Create(session) );
 
             bool endMessageLoop = false;
-            while (! endMessageLoop && ! _shutdownRequested)
+            while ( ! endMessageLoop && ! Network::Instance().ServerReactor().stopped() )
             {
                 uint32_t messageId = 0;
                 shared_ptr<iop::locnet::MessageWithHeader> incomingMessage;

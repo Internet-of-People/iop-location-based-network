@@ -17,15 +17,36 @@ namespace LocNet
 
 
 
+class Network
+{
+    static Network           _instance;
+    
+    asio::io_service         _serverIoService;
+    asio::io_service         _clientIoService;
+    
+protected:
+    
+    Network();
+    Network(const Network &other) = delete;
+    Network& operator=(const Network &other) = delete;
+    
+public:
+    
+    static Network& Instance();
+
+    void Shutdown();
+    
+    asio::io_service& ServerReactor();
+    asio::io_service& ClientReactor();
+};
+
+
+
 // Abstract TCP server that accepts clients asynchronously on a specific port number
 // and has a customizable client accept callback to customize concrete provided service.
 class TcpServer
 {
 protected:
-    
-    asio::io_service         _ioService;
-    std::vector<std::thread> _threadPool;
-    bool                     _shutdownRequested;
     
     asio::ip::tcp::acceptor _acceptor;
     
@@ -36,10 +57,7 @@ public:
     TcpServer(TcpPort portNumber);
     virtual ~TcpServer();
     
-//    void Start();
-    void Shutdown();
-    
-    asio::io_service &ioService();
+//    asio::io_service &ioService();
 };
 
 
