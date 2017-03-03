@@ -16,28 +16,44 @@ namespace LocNet
 {
 
 
+// class ProActor
+// {
+//     static std::shared_ptr<ProActor> _instance;
+//     
+// protected:
+//     
+//     ProActor();
+//     ProActor(const IoService &other) = delete;
+//     ProActor& operator=(const IoService &other) = delete;
+//     
+// public:
+//     
+//     static ProActor& Instance();
+//     
+//     virtual void Shutdown() = 0;
+// };
 
-class Network
+
+
+class IoService
 {
-    static Network           _instance;
+    static IoService _instance;
     
-    asio::io_service         _serverIoService;
-    asio::io_service         _clientIoService;
+    asio::io_service _serverIoService;
     
 protected:
     
-    Network();
-    Network(const Network &other) = delete;
-    Network& operator=(const Network &other) = delete;
+    IoService();
+    IoService(const IoService &other) = delete;
+    IoService& operator=(const IoService &other) = delete;
     
 public:
     
-    static Network& Instance();
+    static IoService& Instance();
 
     void Shutdown();
     
-    asio::io_service& ServerReactor();
-    asio::io_service& ClientReactor();
+    asio::io_service& Server();
 };
 
 
@@ -56,8 +72,6 @@ public:
 
     TcpServer(TcpPort portNumber);
     virtual ~TcpServer();
-    
-//    asio::io_service &ioService();
 };
 
 
@@ -169,12 +183,9 @@ public:
 //      Maybe boost stackful coroutines could be useful here, but we shouldn't depend on boost.
 class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
 {
-    // Used by client connections to work without a TCP server and avoid having an io_service object in main()
-    static asio::io_service                 _ioService;
-    
+    std::shared_ptr<asio::ip::tcp::socket>  _socket;
     SessionId                               _id;
     Address                                 _remoteAddress;
-    std::shared_ptr<asio::ip::tcp::socket>  _socket;
     std::mutex                              _socketWriteMutex;
     uint32_t                                _nextRequestId;
     

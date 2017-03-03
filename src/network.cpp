@@ -85,42 +85,37 @@ string  NodeContact::AddressBytes() const
 
 
 
-Network Network::_instance;
+IoService IoService::_instance;
 
-Network::Network(): _serverIoService(), _clientIoService() {}
+IoService::IoService(): _serverIoService() {} // , _clientIoService() {}
 
-Network& Network::Instance() { return _instance; }
+IoService& IoService::Instance() { return _instance; }
 
-void Network::Shutdown()
+void IoService::Shutdown()
 {
     _serverIoService.stop();
-    _clientIoService.stop();
+//    _clientIoService.stop();
 }
 
-asio::io_service& Network::ServerReactor() { return _serverIoService; }
-asio::io_service& Network::ClientReactor() { return _clientIoService; }
+asio::io_service& IoService::Server() { return _serverIoService; }
+//asio::io_service& IoService::Client() { return _clientIoService; }
 
 
 
 TcpServer::TcpServer(TcpPort portNumber) :
-    _acceptor( Network::Instance().ServerReactor(), tcp::endpoint( tcp::v4(), portNumber ) )
+    _acceptor( IoService::Instance().Server(), tcp::endpoint( tcp::v4(), portNumber ) )
 {
     // Switch the acceptor to listening state
     LOG(DEBUG) << "Accepting connections on port " << portNumber;
     _acceptor.listen();
     
-    shared_ptr<tcp::socket> socket( new tcp::socket( Network::Instance().ServerReactor() ) );
+    shared_ptr<tcp::socket> socket( new tcp::socket( IoService::Instance().Server() ) );
     _acceptor.async_accept( *socket,
         [this, socket] (const asio::error_code &ec) { AsyncAcceptHandler(socket, ec); } );
 }
 
 
 TcpServer::~TcpServer() {}
-
-
-
-// asio::io_service& TcpServer::ioService()
-//     { return _ioService; }
 
 
 
@@ -148,7 +143,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
         << socket->local_endpoint().address().to_string()  << ":" << socket->local_endpoint().port();
     
     // Keep accepting connections on the socket
-    shared_ptr<tcp::socket> nextSocket( new tcp::socket( Network::Instance().ServerReactor() ) );
+    shared_ptr<tcp::socket> nextSocket( new tcp::socket( IoService::Instance().Server() ) );
     _acceptor.async_accept( *nextSocket,
         [this, nextSocket] (const asio::error_code &ec) { AsyncAcceptHandler(nextSocket, ec); } );
     
@@ -162,7 +157,7 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
                 _dispatcherFactory->Create(session) );
 
             bool endMessageLoop = false;
-            while ( ! endMessageLoop && ! Network::Instance().ServerReactor().stopped() )
+            while ( ! endMessageLoop && ! IoService::Instance().Server().stopped() )
             {
                 uint32_t messageId = 0;
                 shared_ptr<iop::locnet::MessageWithHeader> incomingMessage;
@@ -282,11 +277,8 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
 
 
 
-asio::io_service ProtoBufTcpStreamSession::_ioService;
-
-
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socket) :
-    _id(), _remoteAddress(), _socket(socket), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
+    _socket(socket), _id(), _remoteAddress(), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
 {
     if (! _socket)
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No socket instantiated"); }
@@ -299,10 +291,11 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
 
 
 ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkEndpoint &endpoint) :
+    _socket( new tcp::socket( IoService::Instance().Server() ) ),
     _id( endpoint.address() + ":" + to_string( endpoint.port() ) ),
-    _remoteAddress( endpoint.address() ), _socket( new tcp::socket(_ioService) ), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
+    _remoteAddress( endpoint.address() ), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
 {
-    tcp::resolver resolver(_ioService);
+    tcp::resolver resolver( IoService::Instance().Server() );
     tcp::resolver::query query( endpoint.address(), to_string( endpoint.port() ) );
     tcp::resolver::iterator addressIter = resolver.resolve(query);
     try { asio::connect(*_socket, addressIter); }
@@ -410,22 +403,21 @@ ProtoBufRequestNetworkDispatcher::ProtoBufRequestNetworkDispatcher(shared_ptr<IP
 
     
 
-iop::locnet::MessageWithHeader RequestToMessage(const iop::locnet::Request &request)
+shared_ptr<iop::locnet::MessageWithHeader> RequestToMessage(const iop::locnet::Request &request)
 {
     iop::locnet::Request *clonedReq = new iop::locnet::Request(request);
     clonedReq->set_version({1,0,0});
     
-    iop::locnet::MessageWithHeader reqMsg;
-    reqMsg.mutable_body()->set_allocated_request(clonedReq);
-    
+    shared_ptr<iop::locnet::MessageWithHeader> reqMsg( new iop::locnet::MessageWithHeader() );
+    reqMsg->mutable_body()->set_allocated_request(clonedReq);
     return reqMsg;
 }
 
 
 unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(const iop::locnet::Request& request)
 {
-    iop::locnet::MessageWithHeader msgToSend( RequestToMessage(request) );
-    _session->SendMessage(msgToSend);
+    shared_ptr<iop::locnet::MessageWithHeader> msgToSend( RequestToMessage(request) );
+    _session->SendMessage(*msgToSend);
     unique_ptr<iop::locnet::MessageWithHeader> respMsg( _session->ReceiveMessage() );
     if ( ! respMsg || ! respMsg->has_body() || ! respMsg->body().has_response() )
         { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Got invalid response from remote node"); }
@@ -569,8 +561,13 @@ void ProtoBufTcpStreamChangeListener::AddedNode(const NodeDbEntry& node)
             iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
             Converter::FillProtoBuf(info, node);
             
-            iop::locnet::MessageWithHeader msgToSend( RequestToMessage(req) );
-            _session->SendMessage(msgToSend);
+            shared_ptr<IProtoBufNetworkSession> session(_session);
+            shared_ptr<iop::locnet::MessageWithHeader> msgToSend( RequestToMessage(req) );
+            // TODO this is a potentially long lasting operation that should not block the same queue
+            //      as socket accepts and other fast operations. Thus notifications should be done in
+            //      the ClientReactor but it's somehow blocked for some strange reason.
+            IoService::Instance().Server().post(
+                [session, msgToSend] { session->SendMessage(*msgToSend); } );
         }
         catch (exception &ex)
         {
@@ -593,8 +590,10 @@ void ProtoBufTcpStreamChangeListener::UpdatedNode(const NodeDbEntry& node)
             iop::locnet::NodeInfo *info = change->mutable_updatednodeinfo();
             Converter::FillProtoBuf(info, node);
             
-            iop::locnet::MessageWithHeader msgToSend( RequestToMessage(req) );
-            _session->SendMessage(msgToSend);
+            shared_ptr<IProtoBufNetworkSession> session(_session);
+            shared_ptr<iop::locnet::MessageWithHeader> msgToSend( RequestToMessage(req) );
+            IoService::Instance().Server().post(
+                [session, msgToSend] { session->SendMessage(*msgToSend); } );
         }
         catch (exception &ex)
         {
@@ -616,8 +615,10 @@ void ProtoBufTcpStreamChangeListener::RemovedNode(const NodeDbEntry& node)
                 req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
             change->set_removednodeid( node.id() );
          
-            iop::locnet::MessageWithHeader msgToSend( RequestToMessage(req) );
-            _session->SendMessage(msgToSend);
+            shared_ptr<IProtoBufNetworkSession> session(_session);
+            shared_ptr<iop::locnet::MessageWithHeader> msgToSend( RequestToMessage(req) );
+            IoService::Instance().Server().post(
+                [session, msgToSend] { session->SendMessage(*msgToSend); } );
         }
         catch (exception &ex)
         {

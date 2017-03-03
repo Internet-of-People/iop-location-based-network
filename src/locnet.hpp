@@ -127,6 +127,7 @@ public:
     
     void ExpireOldNodes();
     void RenewNodeRelations();
+    void RenewNeighbours();
     void DiscoverUnknownAreas();
     
     

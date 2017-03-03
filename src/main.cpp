@@ -79,7 +79,7 @@ int main(int argc, const char *argv[])
         mySignalHandlerFunc = [&ShutdownRequested, &localTcpServer, &nodeTcpServer, &clientTcpServer] (int)
         {
             ShutdownRequested = true;
-            Network::Instance().Shutdown();
+            IoService::Instance().Shutdown();
         };
         
         signal(SIGINT,  signalHandler);
@@ -97,7 +97,7 @@ int main(int argc, const char *argv[])
                     node->ExpireOldNodes();
                 }
                 catch (exception &ex)
-                    { LOG(ERROR) << "Maintenance thread failed: " << ex.what(); }
+                    { LOG(ERROR) << "Maintenance failed: " << ex.what(); }
             }
         } );
         dbMaintenanceThread.detach();
@@ -112,15 +112,28 @@ int main(int argc, const char *argv[])
                     node->DiscoverUnknownAreas();
                 }
                 catch (exception &ex)
-                    { LOG(ERROR) << "Periodic discovery thread failed: " << ex.what(); }
+                    { LOG(ERROR) << "Periodic discovery failed: " << ex.what(); }
             }
         } );
         discoveryThread.detach();
 
-// TODO start async network client thread to send notificaitons and updates
+//         thread longBlockingOperationsThread( [&ShutdownRequested]
+//         {
+//             while (! ShutdownRequested)
+//             {
+//                 try { Network::Instance().ClientReactor().run(); }
+//                 catch (exception &ex)
+//                     { LOG(ERROR) << "Async notification operation failed: " << ex.what(); }
+//             }
+//         } );
+//         longBlockingOperationsThread.detach();
         
         while (! ShutdownRequested)
-            { Network::Instance().ServerReactor().run_one(); }
+        {
+            try { IoService::Instance().Server().run_one(); }
+            catch (exception &ex)
+                    { LOG(ERROR) << "Async operation failed: " << ex.what(); }
+        }
         
         LOG(INFO) << "Shutting down location-based network";
         return 0;
