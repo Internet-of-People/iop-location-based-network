@@ -160,7 +160,53 @@ If you also want to install the software to your system directories, you have to
 
 ## Compile on Windows
 
-We assume that you already have installed a version of the Visual Studio C++ compiler.
+
+You should already have a version of the Visual Studio C++ compiler installed, we do not detail this here.
+Please make sure that you have the directory of the 64bit binaries set on your PATH
+(usually `<VisualStudioDirectory>\VC\bin\amd64`), not the 32bit version of the compiler or the linker.
+You also have to install the Windows SDK,
+[find binaries and instructions here](https://developer.microsoft.com/windows/downloads/windows-10-sdk).
+
+Recent Visual Studio versions have a bundled Git, so you can easily clone the repository either from the IDE
+or from the command line as
+
+    git clone https://github.com/Fermat-ORG/iop-location-based-network.git
+    
+We couldn't easily achieve Windows compilation with CMake, so we're using a custom build system called Maiken.
+Sources or some binaries [are available here](https://github.com/Dekken/maiken/).
+After compiling or downloading binaries, you have to set up its configuration.
+You have to create file `settings.yaml` in directory `<UserDir>/maiken` set up with the proper
+directory paths to the Visual Studio and Windows SDK binaries.
+E.g. my host has the following directory paths and settings:
+
+    inc:
+        C:/Program\ Files\ (x86)/Windows\ Kits/10/Include/10.0.14393.0/ucrt/
+        C:/Program\ Files\ (x86)/Windows\ Kits/10/Include/10.0.14393.0/um
+        C:/Program\ Files\ (x86)/Windows\ Kits/10/Include/10.0.14393.0/shared
+        C:/Program\ Files\ (x86)/Microsoft\ Visual\ Studio\ 14.0/VC/include
+    path:
+        C:/Program\ Files\ (x86)/Windows\ Kits/10/Lib/10.0.14393.0/um/x64
+        C:/Program\ Files\ (x86)/Windows\ Kits/10/Lib/10.0.14393.0/ucrt/x64
+        C:/Program\ Files\ (x86)/Microsoft\ Visual\ Studio\ 14.0/VC/lib/amd64
+    env:
+    - name: PATH
+        mode: prepend
+        value: C:/Program\ Files\ (x86)/Microsoft\ Visual\ Studio\ 14.0/VC/bin/amd64
+    file:
+    - type: cpp:cxx:cc:c
+        compiler: cl
+        archiver: lib
+        linker: link
+
+Having the settings set up, all you have to do is to open a console in the
+directory of our cloned sources and start the build
+
+    mkn.exe
+
+Binaries will be created in directory `bin\build`. Note that DLLs still have to be copied
+from directory `win\lib` to near the generated executable.
+
+<!--
 You will also need CMake, at the time we're writing this, the latest stable installer
 [can be downloaded here](https://cmake.org/files/v3.7/cmake-3.7.2-win64-x64.msi).
 
@@ -219,6 +265,7 @@ from the selected "Multithreaded Debug DLL" to "Multithreaded Debug",
 otherwise you will have linker errors like
 `1>protobuf.lib(int128.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in main.obj.`
 After configuring project settings as above, the sources should compile and link fine.
+-->
 
 
 ## Creating an install package for Linux
