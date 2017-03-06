@@ -1,7 +1,7 @@
-#! clean build -tSa "-EHsc -O2 -Zc:inline -DNOMINMAX -DELPP_THREAD_SAFE" -d
+#! clean build -tSd
 
 ######
-# Change shebang to the following line if you need debug binaries
+# Change shebang to the following line if you need debug binaries on windows with MSVC
 #! clean build -tSa "-EHsc -Od -Z7 -FS -Yi -Fdiop-locnetd.pdb -DDEBUG -DNOMINMAX -DELPP_THREAD_SAFE" -l "-DEBUG"
 ######
 
@@ -9,20 +9,35 @@
 
 name: iop-locnetd
 
-src: generated extlib/easylogging++.cc ./src
-parent: base
+property:
+  win32.winnt: 0x0601 # 0x0601 = win7 https://msdn.microsoft.com/en-us/library/windows/desktop/aa383745(v=vs.85).aspx
+  win.args: -EHsc -O2 -Zc:inline -DNOMINMAX -DELPP_THREAD_SAFE -D_WIN32_WINNT=${win32.winnt}
+
+parent: ${OS}
 main: ./src/main.cpp
 
 profile:
-  - name: base
-    inc: ./src generated extlib
-    lib: shell32 mod_spatialite libsqlite3-0 # zlib1 #protobuf spatialite sqlite3
+  - name: win
+    parent: base
+    lib: shell32 mod_spatialite libsqlite3-0
     dep:
       - local: win
-    arg: -DPROTOBUF_USE_DLLS
+    arg: -DPROTOBUF_USE_DLLS ${win.args}
+
+  - name: nix
+    parent: base
+    lib: protobuf spatialite sqlite3
+    arg: -O2 -fPIC -std=c++11
+
+  - name: bsd
+    parent: nix
+
+  - name: base
+    inc: ./src ./generated ./extlib
+    src: ./src ./generated ./extlib/easylogging++.cc
 
   - name: tests
-    parent: base
+    parent: ${OS}
     src: ./src generated
           ./test/test_locnet.cpp
           ./test/test_messaging.cpp
