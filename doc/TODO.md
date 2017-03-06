@@ -24,10 +24,15 @@ calling to (re)consider algorithms, error handling and other implementations.
 
 ## Architecture
 
-Currently changes (e.g. changed host IP or new registered profile server on this node)
-are spread within the network only during node relation renewals. It may worth considering
-to broadcast changed IPs or services immediately if during tests we find that
-slow refreshes cause an unsatisfying network behaviour.
+Currently all network communication uses blocking implementations.
+Each client has its own thread, so it does not cause problems most of the time.
+However, when a service (e.g. a profile server) registers, notifications are sent
+to neighbour nodes before a response is returned to the service.
+If some neighbours are unreachable, it may block the for a very long time,
+making the server unresponsive.
+We should send notifications asynchronously after the response is returned.
+The best way may be to use asio::strand to separate queues of different
+(e.g. fast and potientially slow) tasks.
 
 Our current implementation uses a local database to store just a sparse subset of all the nodes
 of the network, but this is not necessarily the only direction.
@@ -107,7 +112,7 @@ If we find no conceptual problems we should identify attack vectors and protect 
 
 ## Optimization and Performance
 
-Socket connections are accepted asynchronously using asio using only a single thread.
+Socket connections are accepted asynchronously with asio using only a single thread.
 However, it is much harder to use async operations to implement interfaces
 not designed directly for an async workflow (e.g. NetworkSession).
 Consequently, each session currently uses its own separate thread.
@@ -116,20 +121,17 @@ it might worth to implement sessions asynchronously.
 We might either redesign interfaces like session to directly support async operations or
 try to implement the same interface with async operations using something like
 [Boost stackful courutines](http://www.boost.org/doc/libs/1_62_0/doc/html/boost_asio/overview/core/spawn.html)
-but then we would depend also on Boost.
+but then we would depend also on Boost. Probably the best direction is to use
+std::future to make interfaces async and trigger their notification with std::promise.
+This work was started in branch `feature/async-messaging` but was abandoned
+to finish more urgent tasks. It still needs work and adapting to recent changes.
 
 If connections take up too much resources, we could also improve code by expiring accepted
-inactive connections. Currently this is done only on the client side (connecting to other nodes) yet.
-Implementing this on the accepting side is harder because of the blocking implementation.
-Asio uses expiration timers to handle this which work fine most of the time,
-so you can just set up a timeout after a minute and the connection will be automatically closed.
-However, when the localservice interface receives a GetNeighbourhood request,
-it must keep the connection alive and send notifications when neighbourhood changes.
-Unfortunately we found no working way to disable the timer if it's already set up.
-Using asynch mode one can differentiate the "timer expired" event from the "timer disabled"
-event by checking an error code, but with the blocking streaming implementation
-we found that the stream is closed even when you disable the timer,
-probably this error code is not checked in the implementation as we'd expect.
+inactive connections. Implementing this would need to use async timers.
+However, we have to keep in mind that when the localservice interface receives
+a GetNeighbourhood request, it must keep the connection alive and send notifications
+when neighbourhood changes. It can be done by differentiating the
+"timer expired" event from the "timer disabled" event by checking an error code.
 
 We could improve both code structure and compile times. One direction could be restructuring
 sources and using a specific framework header (e.g. asio, ezOptionParser, etc)

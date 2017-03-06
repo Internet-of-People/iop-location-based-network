@@ -13,3 +13,4 @@ target_include_directories (iop-locnetd PUBLIC
 target_link_libraries (iop-locnetd LINK_PUBLIC iop-locnet)
 
 install (TARGETS iop-locnetd DESTINATION bin)
+install (FILES generate-iop-locnet-config.py DESTINATION bin)

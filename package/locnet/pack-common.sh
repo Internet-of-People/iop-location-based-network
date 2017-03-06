@@ -9,6 +9,6 @@ sudo checkinstall \
     --pkglicense=MIT \
     --pkggroup=net \
     --pkgname=iop-locnet \
-    --pkgversion=0.2.0 \
+    --pkgversion=1.0.0-a1 \
     --pkgarch=$(dpkg --print-architecture) \
     $@
