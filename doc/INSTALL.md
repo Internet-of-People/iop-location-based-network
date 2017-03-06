@@ -37,6 +37,14 @@ and run the executable without any command line options.
 You can also have your config file at a custom path and use option
 `--configfile` to specify its location on the command line.
 
+To help filling in these details automatically, we provide a small python script
+`generate-iop-locnet-config.py` with the binaries. It will generate a unique node id
+and query a rough approximation of your GPS location based on your IP address.
+It will print generated options to the console, so you can copy-paste them
+to your command line or redirect them to your config file as
+
+    generate-iop-locnet-config.py > ~/.iop-locnet/locnet.conf
+
 Note that the application will create its database and log files under `~/.iop-locnet` by default.
 If application startup is successful, it will open three sockets and serve requests on them.
 By default port 16980 is used for node to node communication to build and maintain the network,
