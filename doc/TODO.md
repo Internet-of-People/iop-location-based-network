@@ -26,12 +26,13 @@ calling to (re)consider algorithms, error handling and other implementations.
 
 Currently all network communication uses blocking implementations.
 Each client has its own thread, so it does not cause problems most of the time.
-However, when a service (e.g. a profile server) registers, notifications are sent
-to neighbour nodes before a response is returned to the service.
-If some neighbours are unreachable, it may block the for a very long time,
-making the server unresponsive.
-We should send notifications asynchronously after the response is returned.
-The best way may be to use asio::strand to separate queues of different
+However, some operations are already done asynchronously.
+When a service (e.g. a profile server) registers, notifications to neighbour nodes
+are queued as async tasks after a response is returned to the service.
+Currently all async tasks use the same queue, but this causes problems.
+If some neighbours are unreachable, a single notification may block for a very long time,
+making the server unresponsive because socket accepts are also served asynchronously
+from the same task queue. The best way to fix this may be to use asio::strand to separate queues of different
 (e.g. fast and potientially slow) tasks.
 
 Our current implementation uses a local database to store just a sparse subset of all the nodes
@@ -124,7 +125,8 @@ try to implement the same interface with async operations using something like
 but then we would depend also on Boost. Probably the best direction is to use
 std::future to make interfaces async and trigger their notification with std::promise.
 This work was started in branch `feature/async-messaging` but was abandoned
-to finish more urgent tasks. It still needs work and adapting to recent changes.
+to progress with integration tasks. It's half baked now, finishing it needs more
+work and merging recent changes from master.
 
 If connections take up too much resources, we could also improve code by expiring accepted
 inactive connections. Implementing this would need to use async timers.
