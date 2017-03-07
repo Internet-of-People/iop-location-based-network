@@ -1,6 +1,6 @@
 # Future work and improvements
 
-The project is currently a proof-of-concept prototype state.
+The project is currently in a proof-of-concept prototype state.
 Though the source code is supposed to be functional, there is a lot of room for improvements.
 
 
@@ -40,7 +40,7 @@ of the network, but this is not necessarily the only direction.
 We could also experiment with using a distributed hash table (DHT).
 The advantage would be having a single, full node list of the whole network,
 readable by every node. Each node could write only its own details
-(e.g. when joining the network or changing its IP addresS).
+(e.g. when joining the network or changing its IP address).
 Note that this direction has shortcomings to solve: as far as we know
 it would not work locally if a country blocks external internet access,
 see e.g. Great Firewall of China. However, it might be possible to create
