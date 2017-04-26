@@ -405,6 +405,7 @@ void protobuf_AssignDesc_IopLocNet_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RegisterServiceRequest, _is_default_instance_));
   RegisterServiceResponse_descriptor_ = file->message_type(11);
   static const int RegisterServiceResponse_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RegisterServiceResponse, location_),
   };
   RegisterServiceResponse_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -1004,86 +1005,87 @@ void protobuf_AddDesc_IopLocNet_2eproto() {
     "hbourhoodChangedNotificationResponseH\000B\032"
     "\n\030LocalServiceResponseType\"B\n\026RegisterSe"
     "rviceRequest\022(\n\007service\030\001 \001(\0132\027.iop.locn"
-    "et.ServiceInfo\"\031\n\027RegisterServiceRespons"
-    "e\"H\n\030DeregisterServiceRequest\022,\n\013service"
-    "Type\030\001 \001(\0162\027.iop.locnet.ServiceType\"\033\n\031D"
-    "eregisterServiceResponse\"J\n\'GetNeighbour"
-    "NodesByDistanceLocalRequest\022\037\n\027keepAlive"
-    "AndSendUpdates\030\001 \001(\010\"J\n#GetNeighbourNode"
-    "sByDistanceResponse\022#\n\005nodes\030\001 \003(\0132\024.iop"
-    ".locnet.NodeInfo\"\234\001\n\023NeighbourhoodChange"
-    "\022-\n\raddedNodeInfo\030\001 \001(\0132\024.iop.locnet.Nod"
-    "eInfoH\000\022/\n\017updatedNodeInfo\030\002 \001(\0132\024.iop.l"
-    "ocnet.NodeInfoH\000\022\027\n\rremovedNodeId\030\003 \001(\014H"
-    "\000B\014\n\nChangeType\"[\n\'NeighbourhoodChangedN"
-    "otificationRequest\0220\n\007changes\030\001 \003(\0132\037.io"
-    "p.locnet.NeighbourhoodChange\"*\n(Neighbou"
-    "rhoodChangedNotificationResponse\"\220\004\n\021Rem"
-    "oteNodeRequest\022:\n\017acceptColleague\030\001 \001(\0132"
-    "\037.iop.locnet.BuildNetworkRequestH\000\0229\n\016re"
-    "newColleague\030\002 \001(\0132\037.iop.locnet.BuildNet"
-    "workRequestH\000\022:\n\017acceptNeighbour\030\003 \001(\0132\037"
-    ".iop.locnet.BuildNetworkRequestH\000\0229\n\016ren"
-    "ewNeighbour\030\004 \001(\0132\037.iop.locnet.BuildNetw"
-    "orkRequestH\000\0227\n\014getNodeCount\030\005 \001(\0132\037.iop"
-    ".locnet.GetNodeCountRequestH\000\022;\n\016getRand"
-    "omNodes\030\006 \001(\0132!.iop.locnet.GetRandomNode"
-    "sRequestH\000\022G\n\017getClosestNodes\030\007 \001(\0132,.io"
-    "p.locnet.GetClosestNodesByDistanceReques"
-    "tH\000\0225\n\013getNodeInfo\030\010 \001(\0132\036.iop.locnet.Ge"
-    "tNodeInfoRequestH\000B\027\n\025RemoteNodeRequestT"
-    "ype\"\232\004\n\022RemoteNodeResponse\022;\n\017acceptColl"
-    "eague\030\001 \001(\0132 .iop.locnet.BuildNetworkRes"
-    "ponseH\000\022:\n\016renewColleague\030\002 \001(\0132 .iop.lo"
-    "cnet.BuildNetworkResponseH\000\022;\n\017acceptNei"
-    "ghbour\030\003 \001(\0132 .iop.locnet.BuildNetworkRe"
-    "sponseH\000\022:\n\016renewNeighbour\030\004 \001(\0132 .iop.l"
-    "ocnet.BuildNetworkResponseH\000\0228\n\014getNodeC"
-    "ount\030\005 \001(\0132 .iop.locnet.GetNodeCountResp"
-    "onseH\000\022<\n\016getRandomNodes\030\006 \001(\0132\".iop.loc"
-    "net.GetRandomNodesResponseH\000\022H\n\017getClose"
-    "stNodes\030\007 \001(\0132-.iop.locnet.GetClosestNod"
-    "esByDistanceResponseH\000\0226\n\013getNodeInfo\030\010 "
-    "\001(\0132\037.iop.locnet.GetNodeInfoResponseH\000B\030"
-    "\n\026RemoteNodeResponseType\"F\n\023BuildNetwork"
-    "Request\022/\n\021requestorNodeInfo\030\001 \001(\0132\024.iop"
-    ".locnet.NodeInfo\"q\n\024BuildNetworkResponse"
-    "\022\020\n\010accepted\030\001 \001(\010\022.\n\020acceptorNodeInfo\030\002"
-    " \001(\0132\024.iop.locnet.NodeInfo\022\027\n\017remoteIpAd"
-    "dress\030\003 \001(\014\"\025\n\023GetNodeCountRequest\")\n\024Ge"
-    "tNodeCountResponse\022\021\n\tnodeCount\030\001 \001(\r\"H\n"
-    "\025GetRandomNodesRequest\022\024\n\014maxNodeCount\030\001"
-    " \001(\r\022\031\n\021includeNeighbours\030\002 \001(\010\"=\n\026GetRa"
-    "ndomNodesResponse\022#\n\005nodes\030\001 \003(\0132\024.iop.l"
-    "ocnet.NodeInfo\"\223\001\n GetClosestNodesByDist"
-    "anceRequest\022)\n\010location\030\001 \001(\0132\027.iop.locn"
-    "et.GpsLocation\022\023\n\013maxRadiusKm\030\002 \001(\002\022\024\n\014m"
-    "axNodeCount\030\003 \001(\r\022\031\n\021includeNeighbours\030\004"
-    " \001(\010\"H\n!GetClosestNodesByDistanceRespons"
-    "e\022#\n\005nodes\030\001 \003(\0132\024.iop.locnet.NodeInfo\"\367"
-    "\001\n\rClientRequest\0225\n\013getNodeInfo\030\001 \001(\0132\036."
-    "iop.locnet.GetNodeInfoRequestH\000\022Q\n\021getNe"
-    "ighbourNodes\030\002 \001(\01324.iop.locnet.GetNeigh"
-    "bourNodesByDistanceClientRequestH\000\022G\n\017ge"
-    "tClosestNodes\030\003 \001(\0132,.iop.locnet.GetClos"
-    "estNodesByDistanceRequestH\000B\023\n\021ClientReq"
-    "uestType\"\366\001\n\016ClientResponse\0226\n\013getNodeIn"
-    "fo\030\001 \001(\0132\037.iop.locnet.GetNodeInfoRespons"
-    "eH\000\022L\n\021getNeighbourNodes\030\002 \001(\0132/.iop.loc"
-    "net.GetNeighbourNodesByDistanceResponseH"
-    "\000\022H\n\017getClosestNodes\030\003 \001(\0132-.iop.locnet."
-    "GetClosestNodesByDistanceResponseH\000B\024\n\022C"
-    "lientResponseType\"\024\n\022GetNodeInfoRequest\""
-    "=\n\023GetNodeInfoResponse\022&\n\010nodeInfo\030\001 \001(\013"
-    "2\024.iop.locnet.NodeInfo\"*\n(GetNeighbourNo"
-    "desByDistanceClientRequest*y\n\006Status\022\r\n\t"
-    "STATUS_OK\020\000\022\034\n\030ERROR_PROTOCOL_VIOLATION\020"
-    "\001\022\025\n\021ERROR_UNSUPPORTED\020\002\022\022\n\016ERROR_INTERN"
-    "AL\020\010\022\027\n\023ERROR_INVALID_VALUE\0206*\226\001\n\013Servic"
-    "eType\022\020\n\014Unstructured\020\000\022\013\n\007Content\020\001\022\013\n\007"
-    "Latency\020\002\022\014\n\010Location\020\003\022\t\n\005Token\020\n\022\013\n\007Pr"
-    "ofile\020\013\022\r\n\tProximity\020\014\022\t\n\005Relay\020\r\022\016\n\nRep"
-    "utation\020\016\022\013\n\007Minting\020\017b\006proto3", 4990);
+    "et.ServiceInfo\"D\n\027RegisterServiceRespons"
+    "e\022)\n\010location\030\001 \001(\0132\027.iop.locnet.GpsLoca"
+    "tion\"H\n\030DeregisterServiceRequest\022,\n\013serv"
+    "iceType\030\001 \001(\0162\027.iop.locnet.ServiceType\"\033"
+    "\n\031DeregisterServiceResponse\"J\n\'GetNeighb"
+    "ourNodesByDistanceLocalRequest\022\037\n\027keepAl"
+    "iveAndSendUpdates\030\001 \001(\010\"J\n#GetNeighbourN"
+    "odesByDistanceResponse\022#\n\005nodes\030\001 \003(\0132\024."
+    "iop.locnet.NodeInfo\"\234\001\n\023NeighbourhoodCha"
+    "nge\022-\n\raddedNodeInfo\030\001 \001(\0132\024.iop.locnet."
+    "NodeInfoH\000\022/\n\017updatedNodeInfo\030\002 \001(\0132\024.io"
+    "p.locnet.NodeInfoH\000\022\027\n\rremovedNodeId\030\003 \001"
+    "(\014H\000B\014\n\nChangeType\"[\n\'NeighbourhoodChang"
+    "edNotificationRequest\0220\n\007changes\030\001 \003(\0132\037"
+    ".iop.locnet.NeighbourhoodChange\"*\n(Neigh"
+    "bourhoodChangedNotificationResponse\"\220\004\n\021"
+    "RemoteNodeRequest\022:\n\017acceptColleague\030\001 \001"
+    "(\0132\037.iop.locnet.BuildNetworkRequestH\000\0229\n"
+    "\016renewColleague\030\002 \001(\0132\037.iop.locnet.Build"
+    "NetworkRequestH\000\022:\n\017acceptNeighbour\030\003 \001("
+    "\0132\037.iop.locnet.BuildNetworkRequestH\000\0229\n\016"
+    "renewNeighbour\030\004 \001(\0132\037.iop.locnet.BuildN"
+    "etworkRequestH\000\0227\n\014getNodeCount\030\005 \001(\0132\037."
+    "iop.locnet.GetNodeCountRequestH\000\022;\n\016getR"
+    "andomNodes\030\006 \001(\0132!.iop.locnet.GetRandomN"
+    "odesRequestH\000\022G\n\017getClosestNodes\030\007 \001(\0132,"
+    ".iop.locnet.GetClosestNodesByDistanceReq"
+    "uestH\000\0225\n\013getNodeInfo\030\010 \001(\0132\036.iop.locnet"
+    ".GetNodeInfoRequestH\000B\027\n\025RemoteNodeReque"
+    "stType\"\232\004\n\022RemoteNodeResponse\022;\n\017acceptC"
+    "olleague\030\001 \001(\0132 .iop.locnet.BuildNetwork"
+    "ResponseH\000\022:\n\016renewColleague\030\002 \001(\0132 .iop"
+    ".locnet.BuildNetworkResponseH\000\022;\n\017accept"
+    "Neighbour\030\003 \001(\0132 .iop.locnet.BuildNetwor"
+    "kResponseH\000\022:\n\016renewNeighbour\030\004 \001(\0132 .io"
+    "p.locnet.BuildNetworkResponseH\000\0228\n\014getNo"
+    "deCount\030\005 \001(\0132 .iop.locnet.GetNodeCountR"
+    "esponseH\000\022<\n\016getRandomNodes\030\006 \001(\0132\".iop."
+    "locnet.GetRandomNodesResponseH\000\022H\n\017getCl"
+    "osestNodes\030\007 \001(\0132-.iop.locnet.GetClosest"
+    "NodesByDistanceResponseH\000\0226\n\013getNodeInfo"
+    "\030\010 \001(\0132\037.iop.locnet.GetNodeInfoResponseH"
+    "\000B\030\n\026RemoteNodeResponseType\"F\n\023BuildNetw"
+    "orkRequest\022/\n\021requestorNodeInfo\030\001 \001(\0132\024."
+    "iop.locnet.NodeInfo\"q\n\024BuildNetworkRespo"
+    "nse\022\020\n\010accepted\030\001 \001(\010\022.\n\020acceptorNodeInf"
+    "o\030\002 \001(\0132\024.iop.locnet.NodeInfo\022\027\n\017remoteI"
+    "pAddress\030\003 \001(\014\"\025\n\023GetNodeCountRequest\")\n"
+    "\024GetNodeCountResponse\022\021\n\tnodeCount\030\001 \001(\r"
+    "\"H\n\025GetRandomNodesRequest\022\024\n\014maxNodeCoun"
+    "t\030\001 \001(\r\022\031\n\021includeNeighbours\030\002 \001(\010\"=\n\026Ge"
+    "tRandomNodesResponse\022#\n\005nodes\030\001 \003(\0132\024.io"
+    "p.locnet.NodeInfo\"\223\001\n GetClosestNodesByD"
+    "istanceRequest\022)\n\010location\030\001 \001(\0132\027.iop.l"
+    "ocnet.GpsLocation\022\023\n\013maxRadiusKm\030\002 \001(\002\022\024"
+    "\n\014maxNodeCount\030\003 \001(\r\022\031\n\021includeNeighbour"
+    "s\030\004 \001(\010\"H\n!GetClosestNodesByDistanceResp"
+    "onse\022#\n\005nodes\030\001 \003(\0132\024.iop.locnet.NodeInf"
+    "o\"\367\001\n\rClientRequest\0225\n\013getNodeInfo\030\001 \001(\013"
+    "2\036.iop.locnet.GetNodeInfoRequestH\000\022Q\n\021ge"
+    "tNeighbourNodes\030\002 \001(\01324.iop.locnet.GetNe"
+    "ighbourNodesByDistanceClientRequestH\000\022G\n"
+    "\017getClosestNodes\030\003 \001(\0132,.iop.locnet.GetC"
+    "losestNodesByDistanceRequestH\000B\023\n\021Client"
+    "RequestType\"\366\001\n\016ClientResponse\0226\n\013getNod"
+    "eInfo\030\001 \001(\0132\037.iop.locnet.GetNodeInfoResp"
+    "onseH\000\022L\n\021getNeighbourNodes\030\002 \001(\0132/.iop."
+    "locnet.GetNeighbourNodesByDistanceRespon"
+    "seH\000\022H\n\017getClosestNodes\030\003 \001(\0132-.iop.locn"
+    "et.GetClosestNodesByDistanceResponseH\000B\024"
+    "\n\022ClientResponseType\"\024\n\022GetNodeInfoReque"
+    "st\"=\n\023GetNodeInfoResponse\022&\n\010nodeInfo\030\001 "
+    "\001(\0132\024.iop.locnet.NodeInfo\"*\n(GetNeighbou"
+    "rNodesByDistanceClientRequest*y\n\006Status\022"
+    "\r\n\tSTATUS_OK\020\000\022\034\n\030ERROR_PROTOCOL_VIOLATI"
+    "ON\020\001\022\025\n\021ERROR_UNSUPPORTED\020\002\022\022\n\016ERROR_INT"
+    "ERNAL\020\010\022\027\n\023ERROR_INVALID_VALUE\0206*\226\001\n\013Ser"
+    "viceType\022\020\n\014Unstructured\020\000\022\013\n\007Content\020\001\022"
+    "\013\n\007Latency\020\002\022\014\n\010Location\020\003\022\t\n\005Token\020\n\022\013\n"
+    "\007Profile\020\013\022\r\n\tProximity\020\014\022\t\n\005Relay\020\r\022\016\n\n"
+    "Reputation\020\016\022\013\n\007Minting\020\017b\006proto3", 5033);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IopLocNet.proto", &protobuf_RegisterTypes);
   ServiceInfo::default_instance_ = new ServiceInfo();
@@ -6320,6 +6322,7 @@ void RegisterServiceRequest::set_allocated_service(::iop::locnet::ServiceInfo* s
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int RegisterServiceResponse::kLocationFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 RegisterServiceResponse::RegisterServiceResponse()
@@ -6330,6 +6333,7 @@ RegisterServiceResponse::RegisterServiceResponse()
 
 void RegisterServiceResponse::InitAsDefaultInstance() {
   _is_default_instance_ = true;
+  location_ = const_cast< ::iop::locnet::GpsLocation*>(&::iop::locnet::GpsLocation::default_instance());
 }
 
 RegisterServiceResponse::RegisterServiceResponse(const RegisterServiceResponse& from)
@@ -6343,6 +6347,7 @@ RegisterServiceResponse::RegisterServiceResponse(const RegisterServiceResponse& 
 void RegisterServiceResponse::SharedCtor() {
     _is_default_instance_ = false;
   _cached_size_ = 0;
+  location_ = NULL;
 }
 
 RegisterServiceResponse::~RegisterServiceResponse() {
@@ -6352,6 +6357,7 @@ RegisterServiceResponse::~RegisterServiceResponse() {
 
 void RegisterServiceResponse::SharedDtor() {
   if (this != default_instance_) {
+    delete location_;
   }
 }
 
@@ -6382,6 +6388,8 @@ RegisterServiceResponse* RegisterServiceResponse::New(::google::protobuf::Arena*
 
 void RegisterServiceResponse::Clear() {
 // @@protoc_insertion_point(message_clear_start:iop.locnet.RegisterServiceResponse)
+  if (GetArenaNoVirtual() == NULL && location_ != NULL) delete location_;
+  location_ = NULL;
 }
 
 bool RegisterServiceResponse::MergePartialFromCodedStream(
@@ -6393,13 +6401,30 @@ bool RegisterServiceResponse::MergePartialFromCodedStream(
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
     if (!p.second) goto handle_unusual;
-  handle_unusual:
-    if (tag == 0 ||
-        ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-        ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-      goto success;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional .iop.locnet.GpsLocation location = 1;
+      case 1: {
+        if (tag == 10) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_location()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectAtEnd()) goto success;
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(input, tag));
+        break;
+      }
     }
-    DO_(::google::protobuf::internal::WireFormatLite::SkipField(input, tag));
   }
 success:
   // @@protoc_insertion_point(parse_success:iop.locnet.RegisterServiceResponse)
@@ -6413,12 +6438,25 @@ failure:
 void RegisterServiceResponse::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:iop.locnet.RegisterServiceResponse)
+  // optional .iop.locnet.GpsLocation location = 1;
+  if (this->has_location()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, *this->location_, output);
+  }
+
   // @@protoc_insertion_point(serialize_end:iop.locnet.RegisterServiceResponse)
 }
 
 ::google::protobuf::uint8* RegisterServiceResponse::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   // @@protoc_insertion_point(serialize_to_array_start:iop.locnet.RegisterServiceResponse)
+  // optional .iop.locnet.GpsLocation location = 1;
+  if (this->has_location()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        1, *this->location_, false, target);
+  }
+
   // @@protoc_insertion_point(serialize_to_array_end:iop.locnet.RegisterServiceResponse)
   return target;
 }
@@ -6426,6 +6464,13 @@ void RegisterServiceResponse::SerializeWithCachedSizes(
 int RegisterServiceResponse::ByteSize() const {
 // @@protoc_insertion_point(message_byte_size_start:iop.locnet.RegisterServiceResponse)
   int total_size = 0;
+
+  // optional .iop.locnet.GpsLocation location = 1;
+  if (this->has_location()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->location_);
+  }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = total_size;
@@ -6455,6 +6500,9 @@ void RegisterServiceResponse::MergeFrom(const RegisterServiceResponse& from) {
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
+  if (from.has_location()) {
+    mutable_location()->::iop::locnet::GpsLocation::MergeFrom(from.location());
+  }
 }
 
 void RegisterServiceResponse::CopyFrom(const ::google::protobuf::Message& from) {
@@ -6481,6 +6529,7 @@ void RegisterServiceResponse::Swap(RegisterServiceResponse* other) {
   InternalSwap(other);
 }
 void RegisterServiceResponse::InternalSwap(RegisterServiceResponse* other) {
+  std::swap(location_, other->location_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -6495,6 +6544,44 @@ void RegisterServiceResponse::InternalSwap(RegisterServiceResponse* other) {
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // RegisterServiceResponse
+
+// optional .iop.locnet.GpsLocation location = 1;
+bool RegisterServiceResponse::has_location() const {
+  return !_is_default_instance_ && location_ != NULL;
+}
+void RegisterServiceResponse::clear_location() {
+  if (GetArenaNoVirtual() == NULL && location_ != NULL) delete location_;
+  location_ = NULL;
+}
+const ::iop::locnet::GpsLocation& RegisterServiceResponse::location() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.RegisterServiceResponse.location)
+  return location_ != NULL ? *location_ : *default_instance_->location_;
+}
+::iop::locnet::GpsLocation* RegisterServiceResponse::mutable_location() {
+  
+  if (location_ == NULL) {
+    location_ = new ::iop::locnet::GpsLocation;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.RegisterServiceResponse.location)
+  return location_;
+}
+::iop::locnet::GpsLocation* RegisterServiceResponse::release_location() {
+  // @@protoc_insertion_point(field_release:iop.locnet.RegisterServiceResponse.location)
+  
+  ::iop::locnet::GpsLocation* temp = location_;
+  location_ = NULL;
+  return temp;
+}
+void RegisterServiceResponse::set_allocated_location(::iop::locnet::GpsLocation* location) {
+  delete location_;
+  location_ = location;
+  if (location) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RegisterServiceResponse.location)
+}
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
 

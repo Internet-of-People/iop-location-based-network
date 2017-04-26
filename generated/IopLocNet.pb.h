@@ -1458,11 +1458,21 @@ class RegisterServiceResponse : public ::google::protobuf::Message /* @@protoc_i
 
   // accessors -------------------------------------------------------
 
+  // optional .iop.locnet.GpsLocation location = 1;
+  bool has_location() const;
+  void clear_location();
+  static const int kLocationFieldNumber = 1;
+  const ::iop::locnet::GpsLocation& location() const;
+  ::iop::locnet::GpsLocation* mutable_location();
+  ::iop::locnet::GpsLocation* release_location();
+  void set_allocated_location(::iop::locnet::GpsLocation* location);
+
   // @@protoc_insertion_point(class_scope:iop.locnet.RegisterServiceResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
+  ::iop::locnet::GpsLocation* location_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_IopLocNet_2eproto();
   friend void protobuf_AssignDesc_IopLocNet_2eproto();
@@ -5069,6 +5079,44 @@ inline void RegisterServiceRequest::set_allocated_service(::iop::locnet::Service
 // -------------------------------------------------------------------
 
 // RegisterServiceResponse
+
+// optional .iop.locnet.GpsLocation location = 1;
+inline bool RegisterServiceResponse::has_location() const {
+  return !_is_default_instance_ && location_ != NULL;
+}
+inline void RegisterServiceResponse::clear_location() {
+  if (GetArenaNoVirtual() == NULL && location_ != NULL) delete location_;
+  location_ = NULL;
+}
+inline const ::iop::locnet::GpsLocation& RegisterServiceResponse::location() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.RegisterServiceResponse.location)
+  return location_ != NULL ? *location_ : *default_instance_->location_;
+}
+inline ::iop::locnet::GpsLocation* RegisterServiceResponse::mutable_location() {
+  
+  if (location_ == NULL) {
+    location_ = new ::iop::locnet::GpsLocation;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.RegisterServiceResponse.location)
+  return location_;
+}
+inline ::iop::locnet::GpsLocation* RegisterServiceResponse::release_location() {
+  // @@protoc_insertion_point(field_release:iop.locnet.RegisterServiceResponse.location)
+  
+  ::iop::locnet::GpsLocation* temp = location_;
+  location_ = NULL;
+  return temp;
+}
+inline void RegisterServiceResponse::set_allocated_location(::iop::locnet::GpsLocation* location) {
+  delete location_;
+  location_ = location;
+  if (location) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.RegisterServiceResponse.location)
+}
 
 // -------------------------------------------------------------------
 

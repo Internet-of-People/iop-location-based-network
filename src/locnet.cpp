@@ -70,7 +70,7 @@ void Node::EnsureMapFilled()
 NodeInfo Node::GetNodeInfo() const
     { return _spatialDb->ThisNode(); }
     
-void Node::RegisterService(const ServiceInfo& serviceInfo)
+GpsLocation Node::RegisterService(const ServiceInfo& serviceInfo)
 {
 // NOTE stricter check forbids registering again for connecting services after a restart
 //     auto it = _services.find(serviceType);
@@ -83,6 +83,7 @@ void Node::RegisterService(const ServiceInfo& serviceInfo)
     _spatialDb->Update(entry);
     
     RenewNeighbours();
+    return GetNodeInfo().location();
 }
 
 void Node::DeregisterService(ServiceType serviceType)

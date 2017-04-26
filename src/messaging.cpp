@@ -206,10 +206,11 @@ unique_ptr<iop::locnet::Response> IncomingLocalServiceRequestDispatcher::Dispatc
         {
             auto const &registerRequest = localServiceRequest.registerservice();
             ServiceInfo service = Converter::FromProtoBuf( registerRequest.service() );
-            _iLocalService->RegisterService(service);
+            GpsLocation location = _iLocalService->RegisterService(service);
             LOG(DEBUG) << "Served RegisterService()";
             
-            localServiceResponse->mutable_registerservice();
+            localServiceResponse->mutable_registerservice()->set_allocated_location(
+                Converter::ToProtoBuf(location) );
             break;
         }
             

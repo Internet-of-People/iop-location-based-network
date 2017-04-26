@@ -20,7 +20,7 @@ public:
     
     virtual ~ILocalServiceMethods() {}
     
-    virtual void RegisterService(const ServiceInfo &serviceInfo) = 0;
+    virtual GpsLocation RegisterService(const ServiceInfo &serviceInfo) = 0;
     virtual void DeregisterService(ServiceType serviceType) = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     
@@ -136,7 +136,7 @@ public:
     NodeInfo GetNodeInfo() const override;
     
     // Local interface for services running on the same hardware
-    void RegisterService(const ServiceInfo &serviceInfo) override;
+    GpsLocation RegisterService(const ServiceInfo &serviceInfo) override;
     void DeregisterService(ServiceType serviceType) override;
     
     void AddListener(std::shared_ptr<IChangeListener> listener) override;
