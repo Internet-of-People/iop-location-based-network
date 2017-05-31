@@ -174,6 +174,8 @@ static const vector<NetworkEndpoint> DefaultSeedNodes {
     NetworkEndpoint("ham5.fermat.cloud", DefaultNodePort),
     NetworkEndpoint("ham6.fermat.cloud", DefaultNodePort),
     NetworkEndpoint("ham7.fermat.cloud", DefaultNodePort),
+//    NetworkEndpoint("iop-loc-m1.amberloom.com", DefaultNodePort),
+//    NetworkEndpoint("iop-loc-m2.amberloom.com", DefaultNodePort),
 };
 
 
@@ -334,3 +336,4 @@ chrono::duration<uint32_t> EzParserConfig::discoveryPeriod() const
 
 
 }
+
