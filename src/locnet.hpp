@@ -110,7 +110,7 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
         std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
     
     bool InitializeWorld(const std::vector<NetworkEndpoint> &seedNodes);
-    bool InitializeNeighbourhood();
+    bool InitializeNeighbourhood(const std::vector<NetworkEndpoint> &seedNodes);
     
     Distance GetBubbleSize(const GpsLocation &location) const;
     bool BubbleOverlaps(const GpsLocation &newNodeLocation,

@@ -43,12 +43,16 @@ Node::Node( shared_ptr<ISpatialDatabase> spatialDb,
 
 void Node::EnsureMapFilled()
 {
-    const vector<NetworkEndpoint> &seedNodes = Config::Instance().seedNodes();
+    vector<NetworkEndpoint> seedNodes = Config::Instance().seedNodes();
     if ( GetNodeCount() <= 1 && ! seedNodes.empty() )
     {
         LOG(INFO) << "Map is empty, discovering the network";
         
-        bool discoverySucceeded = InitializeWorld(seedNodes) && InitializeNeighbourhood();
+        // Initialize random generator and shuffle seeds
+        mt19937 generator( _randomDevice() );
+        shuffle( seedNodes.begin(), seedNodes.end(), generator );
+        
+        bool discoverySucceeded = InitializeWorld(seedNodes) && InitializeNeighbourhood(seedNodes);
         if (! discoverySucceeded)
             { LOG(WARNING) << "Failed to properly discover the full network, current node count is " << GetNodeCount(); }
         if ( GetNodeCount() <= 1 )
@@ -453,30 +457,18 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
     LOG(DEBUG) << "Discovering world map for colleagues";
     const size_t INIT_WORLD_RANDOM_NODE_COUNT = 2 * Config::Instance().neighbourhoodTargetSize();
     
-    // Initialize random generator and utility variables
-    uniform_int_distribution<int> fromRange( 0, seedNodes.size() - 1 );
     vector<NetworkEndpoint> triedNodes;
     
     size_t nodeCountAtSeed = 0;
     vector<NodeInfo> randomColleagueCandidates;
-    while ( triedNodes.size() < seedNodes.size() )
+    for (const NetworkEndpoint &seedContact : seedNodes)
     {
-        // Select random node from hardwired seed node list
-        // TODO it would be better to create a permutation of the seedNodes vector and just iterate on it
-        size_t selectedSeedNodeIdx = fromRange(_randomDevice);
-        const NetworkEndpoint& selectedSeedContact = seedNodes[selectedSeedNodeIdx];
-                
-        // If node has been already tried and failed, choose another one
-        auto it = find( triedNodes.begin(), triedNodes.end(), selectedSeedContact );
-        if ( it != triedNodes.end() )
-            { continue; }
-        
         try
         {
-            triedNodes.push_back(selectedSeedContact);
+            triedNodes.push_back(seedContact);
             
             // Try connecting to selected seed node
-            shared_ptr<INodeMethods> seedNodeConnection = SafeConnectTo(selectedSeedContact);
+            shared_ptr<INodeMethods> seedNodeConnection = SafeConnectTo(seedContact);
             if (seedNodeConnection == nullptr)
                 { continue; }
             
@@ -498,7 +490,7 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
         }
         catch (exception &e)
         {
-            LOG(WARNING) << "Failed to bootstrap from seed node " << selectedSeedContact
+            LOG(WARNING) << "Failed to bootstrap from seed node " << seedContact
                          << ": " << e.what() << ", trying other seeds";
         }
     }
@@ -568,26 +560,59 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
 
 
 
-bool Node::InitializeNeighbourhood()
+bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
 {
     LOG(DEBUG) << "Discovering neighbourhood";
     
     NodeDbEntry myNode = _spatialDb->ThisNode();
-    vector<NodeInfo> newClosestNodes = GetClosestNodesByDistance(
+    vector<NodeInfo> closestNodesByDistance = GetClosestNodesByDistance(
         myNode.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
-    if ( newClosestNodes.size() >= 1 && newClosestNodes[0] != GetNodeInfo() )
+    if ( closestNodesByDistance.size() >= 1 && closestNodesByDistance[0].location() != GetNodeInfo().location() )
     {
-        LOG(ERROR) << "Implementation problem: assumption failed";
+        LOG(ERROR) << "Assert: there cannot be a node that is closer to you than yourself";
         throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Please report this to the developers");
     }
-    if ( newClosestNodes.size() < 2 ) // First node is self
+    
+    NodeInfo newClosestNode = GetNodeInfo();
+    if ( closestNodesByDistance.size() >= 2 )
     {
-        LOG(DEBUG) << "No other nodes are available beyond self, cannot get neighbour candidates";
+        LOG(DEBUG) << "Already know other nodes, start from the closest one";
+        for (const NodeInfo &node : closestNodesByDistance)
+        {
+            // make sure that we don't choose ourselves
+            if ( node != GetNodeInfo() )
+            {
+                newClosestNode = node;
+                break;
+            }
+        }
+    }
+    else {
+        LOG(DEBUG) << "No other nodes are available beyond self. Trying to contact a seed to detect neighbours.";
+        for (const NetworkEndpoint &seedContact : seedNodes)
+        {
+            try
+            {
+                // Try connecting to selected seed node
+                shared_ptr<INodeMethods> seedNodeConnection = SafeConnectTo(seedContact);
+                if (seedNodeConnection == nullptr)
+                    { continue; }
+                newClosestNode = seedNodeConnection->GetNodeInfo();
+            }
+            catch (exception &e)
+            {
+                LOG(WARNING) << "Failed to bootstrap from seed node " << seedContact
+                            << ": " << e.what() << ", trying other seeds";
+            }
+        }
+    }
+    if ( newClosestNode == GetNodeInfo() )
+    {
+        LOG(DEBUG) << "Could not contact any other node, failed to discover neighbourhood";
         return false;
     }
     
     // Repeat asking the currently closest node for an even closer node until no new node discovered
-    NodeInfo newClosestNode = newClosestNodes[1];
     NodeInfo oldClosestNode = newClosestNode;
     do {
         LOG(TRACE) << "Closest node known so far: " << newClosestNode;
@@ -600,15 +625,15 @@ bool Node::InitializeNeighbourhood()
                 continue;
             }
             
-            newClosestNodes = closestNodeConnection->GetClosestNodesByDistance(
+            closestNodesByDistance = closestNodeConnection->GetClosestNodesByDistance(
                 myNode.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
-            if ( newClosestNodes.empty() )
+            if ( closestNodesByDistance.empty() )
                 { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Node returned empty node list result"); }
                 
-            if ( newClosestNodes.front().id() != myNode.id() )
-                { newClosestNode = newClosestNodes[0]; }
-            else if ( newClosestNodes.size() > 1 )
-                { newClosestNode = newClosestNodes[1]; }
+            if ( closestNodesByDistance.front().id() != myNode.id() )
+                { newClosestNode = closestNodesByDistance[0]; }
+            else if ( closestNodesByDistance.size() > 1 )
+                { newClosestNode = closestNodesByDistance[1]; }
         }
         catch (exception &e) {
             LOG(WARNING) << "Failed to fetch neighbours: " << e.what();
