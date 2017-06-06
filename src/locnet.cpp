@@ -205,8 +205,8 @@ vector<NodeInfo> Node::GetNeighbourNodesByDistance() const
     vector<NodeDbEntry> entries( _spatialDb->GetNeighbourNodesByDistance() );
     return vector<NodeInfo>( entries.begin(), entries.end() );
 }
-    
-    
+
+
 
 vector<NodeInfo> Node::GetClosestNodesByDistance(const GpsLocation& location,
     Distance radiusKm, size_t maxNodeCount, Neighbours filter) const

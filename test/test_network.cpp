@@ -15,6 +15,7 @@ using namespace asio::ip;
 
 
 
+
 SCENARIO("TCP networking", "[network]")
 {
     GIVEN("A configured Node and Tcp networking")
@@ -35,6 +36,17 @@ SCENARIO("TCP networking", "[network]")
         shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory(
             new CombinedRequestDispatcherFactory(node) );
         ProtoBufDispatchingTcpServer tcpServer( BudapestNodeContact.nodePort(), dispatcherFactory );
+
+        bool ShutdownRequested = false;
+        thread asioThread( [&ShutdownRequested]
+        {
+            while (! ShutdownRequested)
+            {
+                try { IoService::Instance().Server().run_one(); }
+                catch (exception &ex)
+                    { LOG(ERROR) << "Async operation failed: " << ex.what(); }
+            }
+        } );
         
         THEN("It serves clients via sync TCP")
         {
@@ -69,7 +81,7 @@ SCENARIO("TCP networking", "[network]")
                 REQUIRE( response.nodecount() == 6 );
             }
         }
-        
+
         THEN("It serves transparent clients using ProtoBuf/TCP protocol")
         {
             const NodeContact &BudapestNodeContact( TestData::NodeBudapest.contact() );
@@ -83,5 +95,8 @@ SCENARIO("TCP networking", "[network]")
             size_t nodeCount = client.GetNodeCount();
             REQUIRE( nodeCount == 6 );
         }
+        
+        ShutdownRequested = true;
+        asioThread.join();
     }
 }
