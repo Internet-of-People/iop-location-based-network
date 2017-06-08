@@ -4,7 +4,7 @@ mkdir build
 cd build
 cmake ..
 echo Compiling all sources
-make
+make -j4
 echo Running tests
 test/tests
 cd ..
