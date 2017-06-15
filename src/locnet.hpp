@@ -65,6 +65,8 @@ public:
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
     virtual std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
+    virtual std::vector<NodeInfo> ExploreNetworkNodesByDistance(const GpsLocation &location,
+        size_t targetNodeCount, size_t maxNodeHops) const = 0;
 };
 
 
@@ -134,6 +136,8 @@ public:
     // Interface provided to serve higher level services and clients
     //   + GetClosestNodes() + GetNeighbourNodes() which are the same as on other interfaces
     NodeInfo GetNodeInfo() const override;
+    std::vector<NodeInfo> ExploreNetworkNodesByDistance(const GpsLocation &location,
+        size_t targetNodeCount, size_t maxNodeHops) const override;
     
     // Local interface for services running on the same hardware
     GpsLocation RegisterService(const ServiceInfo &serviceInfo) override;

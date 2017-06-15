@@ -44,6 +44,8 @@ class ClientRequest;
 class ClientResponse;
 class DeregisterServiceRequest;
 class DeregisterServiceResponse;
+class ExploreNetworkNodesByDistanceRequest;
+class ExploreNetworkNodesByDistanceResponse;
 class GetClosestNodesByDistanceRequest;
 class GetClosestNodesByDistanceResponse;
 class GetNeighbourNodesByDistanceClientRequest;
@@ -3209,6 +3211,7 @@ class ClientRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
     kGetNodeInfo = 1,
     kGetNeighbourNodes = 2,
     kGetClosestNodes = 3,
+    kExploreNodes = 4,
     CLIENTREQUESTTYPE_NOT_SET = 0,
   };
 
@@ -3284,12 +3287,22 @@ class ClientRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::iop::locnet::GetClosestNodesByDistanceRequest* release_getclosestnodes();
   void set_allocated_getclosestnodes(::iop::locnet::GetClosestNodesByDistanceRequest* getclosestnodes);
 
+  // optional .iop.locnet.ExploreNetworkNodesByDistanceRequest exploreNodes = 4;
+  bool has_explorenodes() const;
+  void clear_explorenodes();
+  static const int kExploreNodesFieldNumber = 4;
+  const ::iop::locnet::ExploreNetworkNodesByDistanceRequest& explorenodes() const;
+  ::iop::locnet::ExploreNetworkNodesByDistanceRequest* mutable_explorenodes();
+  ::iop::locnet::ExploreNetworkNodesByDistanceRequest* release_explorenodes();
+  void set_allocated_explorenodes(::iop::locnet::ExploreNetworkNodesByDistanceRequest* explorenodes);
+
   ClientRequestTypeCase ClientRequestType_case() const;
   // @@protoc_insertion_point(class_scope:iop.locnet.ClientRequest)
  private:
   inline void set_has_getnodeinfo();
   inline void set_has_getneighbournodes();
   inline void set_has_getclosestnodes();
+  inline void set_has_explorenodes();
 
   inline bool has_ClientRequestType() const;
   void clear_ClientRequestType();
@@ -3302,6 +3315,7 @@ class ClientRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
     ::iop::locnet::GetNodeInfoRequest* getnodeinfo_;
     ::iop::locnet::GetNeighbourNodesByDistanceClientRequest* getneighbournodes_;
     ::iop::locnet::GetClosestNodesByDistanceRequest* getclosestnodes_;
+    ::iop::locnet::ExploreNetworkNodesByDistanceRequest* explorenodes_;
   } ClientRequestType_;
   mutable int _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -3334,6 +3348,7 @@ class ClientResponse : public ::google::protobuf::Message /* @@protoc_insertion_
     kGetNodeInfo = 1,
     kGetNeighbourNodes = 2,
     kGetClosestNodes = 3,
+    kExploreNodes = 4,
     CLIENTRESPONSETYPE_NOT_SET = 0,
   };
 
@@ -3409,12 +3424,22 @@ class ClientResponse : public ::google::protobuf::Message /* @@protoc_insertion_
   ::iop::locnet::GetClosestNodesByDistanceResponse* release_getclosestnodes();
   void set_allocated_getclosestnodes(::iop::locnet::GetClosestNodesByDistanceResponse* getclosestnodes);
 
+  // optional .iop.locnet.ExploreNetworkNodesByDistanceResponse exploreNodes = 4;
+  bool has_explorenodes() const;
+  void clear_explorenodes();
+  static const int kExploreNodesFieldNumber = 4;
+  const ::iop::locnet::ExploreNetworkNodesByDistanceResponse& explorenodes() const;
+  ::iop::locnet::ExploreNetworkNodesByDistanceResponse* mutable_explorenodes();
+  ::iop::locnet::ExploreNetworkNodesByDistanceResponse* release_explorenodes();
+  void set_allocated_explorenodes(::iop::locnet::ExploreNetworkNodesByDistanceResponse* explorenodes);
+
   ClientResponseTypeCase ClientResponseType_case() const;
   // @@protoc_insertion_point(class_scope:iop.locnet.ClientResponse)
  private:
   inline void set_has_getnodeinfo();
   inline void set_has_getneighbournodes();
   inline void set_has_getclosestnodes();
+  inline void set_has_explorenodes();
 
   inline bool has_ClientResponseType() const;
   void clear_ClientResponseType();
@@ -3427,6 +3452,7 @@ class ClientResponse : public ::google::protobuf::Message /* @@protoc_insertion_
     ::iop::locnet::GetNodeInfoResponse* getnodeinfo_;
     ::iop::locnet::GetNeighbourNodesByDistanceResponse* getneighbournodes_;
     ::iop::locnet::GetClosestNodesByDistanceResponse* getclosestnodes_;
+    ::iop::locnet::ExploreNetworkNodesByDistanceResponse* explorenodes_;
   } ClientResponseType_;
   mutable int _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -3672,6 +3698,193 @@ class GetNeighbourNodesByDistanceClientRequest : public ::google::protobuf::Mess
 
   void InitAsDefaultInstance();
   static GetNeighbourNodesByDistanceClientRequest* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ExploreNetworkNodesByDistanceRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.ExploreNetworkNodesByDistanceRequest) */ {
+ public:
+  ExploreNetworkNodesByDistanceRequest();
+  virtual ~ExploreNetworkNodesByDistanceRequest();
+
+  ExploreNetworkNodesByDistanceRequest(const ExploreNetworkNodesByDistanceRequest& from);
+
+  inline ExploreNetworkNodesByDistanceRequest& operator=(const ExploreNetworkNodesByDistanceRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ExploreNetworkNodesByDistanceRequest& default_instance();
+
+  void Swap(ExploreNetworkNodesByDistanceRequest* other);
+
+  // implements Message ----------------------------------------------
+
+  inline ExploreNetworkNodesByDistanceRequest* New() const { return New(NULL); }
+
+  ExploreNetworkNodesByDistanceRequest* New(::google::protobuf::Arena* arena) const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ExploreNetworkNodesByDistanceRequest& from);
+  void MergeFrom(const ExploreNetworkNodesByDistanceRequest& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const {
+    return InternalSerializeWithCachedSizesToArray(false, output);
+  }
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(ExploreNetworkNodesByDistanceRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return _internal_metadata_.arena();
+  }
+  inline void* MaybeArenaPtr() const {
+    return _internal_metadata_.raw_arena_ptr();
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional .iop.locnet.GpsLocation location = 1;
+  bool has_location() const;
+  void clear_location();
+  static const int kLocationFieldNumber = 1;
+  const ::iop::locnet::GpsLocation& location() const;
+  ::iop::locnet::GpsLocation* mutable_location();
+  ::iop::locnet::GpsLocation* release_location();
+  void set_allocated_location(::iop::locnet::GpsLocation* location);
+
+  // optional uint32 targetNodeCount = 2;
+  void clear_targetnodecount();
+  static const int kTargetNodeCountFieldNumber = 2;
+  ::google::protobuf::uint32 targetnodecount() const;
+  void set_targetnodecount(::google::protobuf::uint32 value);
+
+  // optional uint32 maxNodeHops = 3;
+  void clear_maxnodehops();
+  static const int kMaxNodeHopsFieldNumber = 3;
+  ::google::protobuf::uint32 maxnodehops() const;
+  void set_maxnodehops(::google::protobuf::uint32 value);
+
+  // @@protoc_insertion_point(class_scope:iop.locnet.ExploreNetworkNodesByDistanceRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  bool _is_default_instance_;
+  ::iop::locnet::GpsLocation* location_;
+  ::google::protobuf::uint32 targetnodecount_;
+  ::google::protobuf::uint32 maxnodehops_;
+  mutable int _cached_size_;
+  friend void  protobuf_AddDesc_IopLocNet_2eproto();
+  friend void protobuf_AssignDesc_IopLocNet_2eproto();
+  friend void protobuf_ShutdownFile_IopLocNet_2eproto();
+
+  void InitAsDefaultInstance();
+  static ExploreNetworkNodesByDistanceRequest* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ExploreNetworkNodesByDistanceResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:iop.locnet.ExploreNetworkNodesByDistanceResponse) */ {
+ public:
+  ExploreNetworkNodesByDistanceResponse();
+  virtual ~ExploreNetworkNodesByDistanceResponse();
+
+  ExploreNetworkNodesByDistanceResponse(const ExploreNetworkNodesByDistanceResponse& from);
+
+  inline ExploreNetworkNodesByDistanceResponse& operator=(const ExploreNetworkNodesByDistanceResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ExploreNetworkNodesByDistanceResponse& default_instance();
+
+  void Swap(ExploreNetworkNodesByDistanceResponse* other);
+
+  // implements Message ----------------------------------------------
+
+  inline ExploreNetworkNodesByDistanceResponse* New() const { return New(NULL); }
+
+  ExploreNetworkNodesByDistanceResponse* New(::google::protobuf::Arena* arena) const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ExploreNetworkNodesByDistanceResponse& from);
+  void MergeFrom(const ExploreNetworkNodesByDistanceResponse& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const {
+    return InternalSerializeWithCachedSizesToArray(false, output);
+  }
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(ExploreNetworkNodesByDistanceResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return _internal_metadata_.arena();
+  }
+  inline void* MaybeArenaPtr() const {
+    return _internal_metadata_.raw_arena_ptr();
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .iop.locnet.NodeInfo closestNodes = 1;
+  int closestnodes_size() const;
+  void clear_closestnodes();
+  static const int kClosestNodesFieldNumber = 1;
+  const ::iop::locnet::NodeInfo& closestnodes(int index) const;
+  ::iop::locnet::NodeInfo* mutable_closestnodes(int index);
+  ::iop::locnet::NodeInfo* add_closestnodes();
+  ::google::protobuf::RepeatedPtrField< ::iop::locnet::NodeInfo >*
+      mutable_closestnodes();
+  const ::google::protobuf::RepeatedPtrField< ::iop::locnet::NodeInfo >&
+      closestnodes() const;
+
+  // @@protoc_insertion_point(class_scope:iop.locnet.ExploreNetworkNodesByDistanceResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  bool _is_default_instance_;
+  ::google::protobuf::RepeatedPtrField< ::iop::locnet::NodeInfo > closestnodes_;
+  mutable int _cached_size_;
+  friend void  protobuf_AddDesc_IopLocNet_2eproto();
+  friend void protobuf_AssignDesc_IopLocNet_2eproto();
+  friend void protobuf_ShutdownFile_IopLocNet_2eproto();
+
+  void InitAsDefaultInstance();
+  static ExploreNetworkNodesByDistanceResponse* default_instance_;
 };
 // ===================================================================
 
@@ -6710,6 +6923,54 @@ inline void ClientRequest::set_allocated_getclosestnodes(::iop::locnet::GetClose
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.ClientRequest.getClosestNodes)
 }
 
+// optional .iop.locnet.ExploreNetworkNodesByDistanceRequest exploreNodes = 4;
+inline bool ClientRequest::has_explorenodes() const {
+  return ClientRequestType_case() == kExploreNodes;
+}
+inline void ClientRequest::set_has_explorenodes() {
+  _oneof_case_[0] = kExploreNodes;
+}
+inline void ClientRequest::clear_explorenodes() {
+  if (has_explorenodes()) {
+    delete ClientRequestType_.explorenodes_;
+    clear_has_ClientRequestType();
+  }
+}
+inline  const ::iop::locnet::ExploreNetworkNodesByDistanceRequest& ClientRequest::explorenodes() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ClientRequest.exploreNodes)
+  return has_explorenodes()
+      ? *ClientRequestType_.explorenodes_
+      : ::iop::locnet::ExploreNetworkNodesByDistanceRequest::default_instance();
+}
+inline ::iop::locnet::ExploreNetworkNodesByDistanceRequest* ClientRequest::mutable_explorenodes() {
+  if (!has_explorenodes()) {
+    clear_ClientRequestType();
+    set_has_explorenodes();
+    ClientRequestType_.explorenodes_ = new ::iop::locnet::ExploreNetworkNodesByDistanceRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.ClientRequest.exploreNodes)
+  return ClientRequestType_.explorenodes_;
+}
+inline ::iop::locnet::ExploreNetworkNodesByDistanceRequest* ClientRequest::release_explorenodes() {
+  // @@protoc_insertion_point(field_release:iop.locnet.ClientRequest.exploreNodes)
+  if (has_explorenodes()) {
+    clear_has_ClientRequestType();
+    ::iop::locnet::ExploreNetworkNodesByDistanceRequest* temp = ClientRequestType_.explorenodes_;
+    ClientRequestType_.explorenodes_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline void ClientRequest::set_allocated_explorenodes(::iop::locnet::ExploreNetworkNodesByDistanceRequest* explorenodes) {
+  clear_ClientRequestType();
+  if (explorenodes) {
+    set_has_explorenodes();
+    ClientRequestType_.explorenodes_ = explorenodes;
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.ClientRequest.exploreNodes)
+}
+
 inline bool ClientRequest::has_ClientRequestType() const {
   return ClientRequestType_case() != CLIENTREQUESTTYPE_NOT_SET;
 }
@@ -6867,6 +7128,54 @@ inline void ClientResponse::set_allocated_getclosestnodes(::iop::locnet::GetClos
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.ClientResponse.getClosestNodes)
 }
 
+// optional .iop.locnet.ExploreNetworkNodesByDistanceResponse exploreNodes = 4;
+inline bool ClientResponse::has_explorenodes() const {
+  return ClientResponseType_case() == kExploreNodes;
+}
+inline void ClientResponse::set_has_explorenodes() {
+  _oneof_case_[0] = kExploreNodes;
+}
+inline void ClientResponse::clear_explorenodes() {
+  if (has_explorenodes()) {
+    delete ClientResponseType_.explorenodes_;
+    clear_has_ClientResponseType();
+  }
+}
+inline  const ::iop::locnet::ExploreNetworkNodesByDistanceResponse& ClientResponse::explorenodes() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ClientResponse.exploreNodes)
+  return has_explorenodes()
+      ? *ClientResponseType_.explorenodes_
+      : ::iop::locnet::ExploreNetworkNodesByDistanceResponse::default_instance();
+}
+inline ::iop::locnet::ExploreNetworkNodesByDistanceResponse* ClientResponse::mutable_explorenodes() {
+  if (!has_explorenodes()) {
+    clear_ClientResponseType();
+    set_has_explorenodes();
+    ClientResponseType_.explorenodes_ = new ::iop::locnet::ExploreNetworkNodesByDistanceResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.ClientResponse.exploreNodes)
+  return ClientResponseType_.explorenodes_;
+}
+inline ::iop::locnet::ExploreNetworkNodesByDistanceResponse* ClientResponse::release_explorenodes() {
+  // @@protoc_insertion_point(field_release:iop.locnet.ClientResponse.exploreNodes)
+  if (has_explorenodes()) {
+    clear_has_ClientResponseType();
+    ::iop::locnet::ExploreNetworkNodesByDistanceResponse* temp = ClientResponseType_.explorenodes_;
+    ClientResponseType_.explorenodes_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline void ClientResponse::set_allocated_explorenodes(::iop::locnet::ExploreNetworkNodesByDistanceResponse* explorenodes) {
+  clear_ClientResponseType();
+  if (explorenodes) {
+    set_has_explorenodes();
+    ClientResponseType_.explorenodes_ = explorenodes;
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.ClientResponse.exploreNodes)
+}
+
 inline bool ClientResponse::has_ClientResponseType() const {
   return ClientResponseType_case() != CLIENTRESPONSETYPE_NOT_SET;
 }
@@ -6926,7 +7235,115 @@ inline void GetNodeInfoResponse::set_allocated_nodeinfo(::iop::locnet::NodeInfo*
 
 // GetNeighbourNodesByDistanceClientRequest
 
+// -------------------------------------------------------------------
+
+// ExploreNetworkNodesByDistanceRequest
+
+// optional .iop.locnet.GpsLocation location = 1;
+inline bool ExploreNetworkNodesByDistanceRequest::has_location() const {
+  return !_is_default_instance_ && location_ != NULL;
+}
+inline void ExploreNetworkNodesByDistanceRequest::clear_location() {
+  if (GetArenaNoVirtual() == NULL && location_ != NULL) delete location_;
+  location_ = NULL;
+}
+inline const ::iop::locnet::GpsLocation& ExploreNetworkNodesByDistanceRequest::location() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ExploreNetworkNodesByDistanceRequest.location)
+  return location_ != NULL ? *location_ : *default_instance_->location_;
+}
+inline ::iop::locnet::GpsLocation* ExploreNetworkNodesByDistanceRequest::mutable_location() {
+  
+  if (location_ == NULL) {
+    location_ = new ::iop::locnet::GpsLocation;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.ExploreNetworkNodesByDistanceRequest.location)
+  return location_;
+}
+inline ::iop::locnet::GpsLocation* ExploreNetworkNodesByDistanceRequest::release_location() {
+  // @@protoc_insertion_point(field_release:iop.locnet.ExploreNetworkNodesByDistanceRequest.location)
+  
+  ::iop::locnet::GpsLocation* temp = location_;
+  location_ = NULL;
+  return temp;
+}
+inline void ExploreNetworkNodesByDistanceRequest::set_allocated_location(::iop::locnet::GpsLocation* location) {
+  delete location_;
+  location_ = location;
+  if (location) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.ExploreNetworkNodesByDistanceRequest.location)
+}
+
+// optional uint32 targetNodeCount = 2;
+inline void ExploreNetworkNodesByDistanceRequest::clear_targetnodecount() {
+  targetnodecount_ = 0u;
+}
+inline ::google::protobuf::uint32 ExploreNetworkNodesByDistanceRequest::targetnodecount() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ExploreNetworkNodesByDistanceRequest.targetNodeCount)
+  return targetnodecount_;
+}
+inline void ExploreNetworkNodesByDistanceRequest::set_targetnodecount(::google::protobuf::uint32 value) {
+  
+  targetnodecount_ = value;
+  // @@protoc_insertion_point(field_set:iop.locnet.ExploreNetworkNodesByDistanceRequest.targetNodeCount)
+}
+
+// optional uint32 maxNodeHops = 3;
+inline void ExploreNetworkNodesByDistanceRequest::clear_maxnodehops() {
+  maxnodehops_ = 0u;
+}
+inline ::google::protobuf::uint32 ExploreNetworkNodesByDistanceRequest::maxnodehops() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ExploreNetworkNodesByDistanceRequest.maxNodeHops)
+  return maxnodehops_;
+}
+inline void ExploreNetworkNodesByDistanceRequest::set_maxnodehops(::google::protobuf::uint32 value) {
+  
+  maxnodehops_ = value;
+  // @@protoc_insertion_point(field_set:iop.locnet.ExploreNetworkNodesByDistanceRequest.maxNodeHops)
+}
+
+// -------------------------------------------------------------------
+
+// ExploreNetworkNodesByDistanceResponse
+
+// repeated .iop.locnet.NodeInfo closestNodes = 1;
+inline int ExploreNetworkNodesByDistanceResponse::closestnodes_size() const {
+  return closestnodes_.size();
+}
+inline void ExploreNetworkNodesByDistanceResponse::clear_closestnodes() {
+  closestnodes_.Clear();
+}
+inline const ::iop::locnet::NodeInfo& ExploreNetworkNodesByDistanceResponse::closestnodes(int index) const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ExploreNetworkNodesByDistanceResponse.closestNodes)
+  return closestnodes_.Get(index);
+}
+inline ::iop::locnet::NodeInfo* ExploreNetworkNodesByDistanceResponse::mutable_closestnodes(int index) {
+  // @@protoc_insertion_point(field_mutable:iop.locnet.ExploreNetworkNodesByDistanceResponse.closestNodes)
+  return closestnodes_.Mutable(index);
+}
+inline ::iop::locnet::NodeInfo* ExploreNetworkNodesByDistanceResponse::add_closestnodes() {
+  // @@protoc_insertion_point(field_add:iop.locnet.ExploreNetworkNodesByDistanceResponse.closestNodes)
+  return closestnodes_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::iop::locnet::NodeInfo >*
+ExploreNetworkNodesByDistanceResponse::mutable_closestnodes() {
+  // @@protoc_insertion_point(field_mutable_list:iop.locnet.ExploreNetworkNodesByDistanceResponse.closestNodes)
+  return &closestnodes_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::iop::locnet::NodeInfo >&
+ExploreNetworkNodesByDistanceResponse::closestnodes() const {
+  // @@protoc_insertion_point(field_list:iop.locnet.ExploreNetworkNodesByDistanceResponse.closestNodes)
+  return closestnodes_;
+}
+
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

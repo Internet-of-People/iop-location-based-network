@@ -490,6 +490,24 @@ unique_ptr<iop::locnet::Response> IncomingClientRequestDispatcher::Dispatch(cons
             break;
         }
         
+        case iop::locnet::ClientRequest::kExploreNodes:
+        {
+            auto const &exploreRequest = clientRequest.explorenodes();
+            GpsLocation location = Converter::FromProtoBuf( exploreRequest.location() );
+            
+            vector<NodeInfo> exploredNodes( _iClient->ExploreNetworkNodesByDistance( location,
+                exploreRequest.targetnodecount(), exploreRequest.maxnodehops() ) );
+            LOG(DEBUG) << "Served GetClosestNodes(), node count: " << exploredNodes.size();
+            
+            auto responseContent = clientResponse->mutable_explorenodes();
+            for (auto const &node : exploredNodes)
+            {
+                iop::locnet::NodeInfo *info = responseContent->add_closestnodes();
+                Converter::FillProtoBuf(info, node);
+            }
+            break;
+        }
+        
         default: throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing or unknown client operation");
     }
     

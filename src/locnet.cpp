@@ -216,6 +216,19 @@ vector<NodeInfo> Node::GetClosestNodesByDistance(const GpsLocation& location,
 }
 
 
+vector<NodeInfo> Node::ExploreNetworkNodesByDistance(const GpsLocation &location,
+    size_t targetNodeCount, size_t maxNodeHops) const
+{
+    vector<NodeInfo> result;
+    
+    // TODO implement this
+    throw runtime_error("Not implemented yet");
+    
+    return result;
+}
+
+
+
 Distance Node::GetBubbleSize(const GpsLocation& location) const
 {
     Distance distance = _spatialDb->GetDistanceKm( _spatialDb->ThisNode().location(), location );
