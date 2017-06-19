@@ -104,10 +104,10 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     static std::random_device _randomDevice;
     
     std::shared_ptr<ISpatialDatabase>       _spatialDb;
-    std::shared_ptr<INodeConnectionFactory> _connectionFactory;
+    mutable std::shared_ptr<INodeConnectionFactory> _connectionFactory;
     
     
-    std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkEndpoint &endpoint);
+    std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkEndpoint &endpoint) const;
     bool SafeStoreNode( const NodeDbEntry &entry,
         std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
     

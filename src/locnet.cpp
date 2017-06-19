@@ -219,12 +219,38 @@ vector<NodeInfo> Node::GetClosestNodesByDistance(const GpsLocation& location,
 vector<NodeInfo> Node::ExploreNetworkNodesByDistance(const GpsLocation &location,
     size_t targetNodeCount, size_t maxNodeHops) const
 {
-    vector<NodeInfo> result;
+    vector<NodeInfo> closestNodesByDistance = GetClosestNodesByDistance(location,
+        numeric_limits<Distance>::max(), targetNodeCount, Neighbours::Included );
+    if ( closestNodesByDistance.empty() )
+        { throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "The node always must know at least itself"); }
+    NodeInfo newClosestNode = closestNodesByDistance.front();
     
-    // TODO implement this
-    throw runtime_error("Not implemented yet");
+    NodeInfo oldClosestNode = GetNodeInfo();
+    for (size_t hops = 0; hops < maxNodeHops; ++hops)
+    {
+        if (newClosestNode == oldClosestNode)
+            { break; }
+        
+        shared_ptr<INodeMethods> closestNodeConnection = SafeConnectTo( newClosestNode.contact().nodeEndpoint() );
+        if (closestNodeConnection == nullptr) {
+            // TODO consider what better to do if closest node is not reachable?
+            break;
+        }
+        
+        closestNodesByDistance = closestNodeConnection->GetClosestNodesByDistance(
+            location, numeric_limits<Distance>::max(), targetNodeCount, Neighbours::Included);
+        if ( closestNodesByDistance.empty() )
+            { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Node returned empty node list result"); }
+            
+        oldClosestNode = newClosestNode;
+        newClosestNode = closestNodesByDistance.front();
+    }
     
-    return result;
+    // NOTE The result is the knowledge of the closest node only. If the client asks for a huge number of nodes
+    //      (more than the neighbourhood limit) then there might be faraway nodes missing from the list
+    //      that were excluded by the "bubbles must not overlap rule".
+    //      Let's find a use case where this is not enough before a better implementation.
+    return closestNodesByDistance;
 }
 
 
@@ -263,7 +289,7 @@ bool Node::BubbleOverlaps(const GpsLocation& newNodeLocation, const string &node
 
 
 
-shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint)
+shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint) const
 {
     // There is no point in connecting to ourselves
     if ( endpoint == _spatialDb->ThisNode().contact().nodeEndpoint() ||
@@ -593,7 +619,7 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
         for (const NodeInfo &node : closestNodesByDistance)
         {
             // make sure that we don't choose ourselves
-            if ( node != GetNodeInfo() )
+            if ( node.id() != GetNodeInfo().id() )
             {
                 newClosestNode = node;
                 break;
