@@ -66,6 +66,7 @@ void Config::InitForTest()
     int argc = 7;
     const char *argv[] = {
         "test",
+        "--test",
         "--nodeid", "TestNodeId",
         "--latitude", "0.0",
         "--longitude", "0.0",
@@ -232,10 +233,12 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     // ... then from config file if present (will not overwrite existing values)
     string filename;
     _optParser.get(OPTNAME_CONFIGFILE)->getString(filename);
-    if ( _optParser.importFile( filename.c_str() ) )
-        { cout << "Processed config file " << filename << endl; }
-    else { if (! isTestMode() )
-        { cout << "Config file '" << filename << "' not found, using command line values only" << endl; } }
+    if ( ! isTestMode() ) // NOTE members are not filled in yet, but InitForTest() has already set testmode
+    {
+        if ( _optParser.importFile( filename.c_str() ) )
+             { cout << "Processed config file " << filename << endl; }
+        else { cout << "Config file '" << filename << "' not found, using command line values only" << endl; }
+    }
     
     // Check for missing mandatory options
     vector<string> badOptions;
