@@ -3,6 +3,7 @@
 #include <chrono>
 #include <deque>
 #include <limits>
+#include <thread>
 #include <unordered_set>
 
 #include <easylogging++.h>
@@ -28,15 +29,20 @@ const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT     = 5;
 random_device Node::_randomDevice;
 
 
+shared_ptr<Node> Node::Create( shared_ptr<ISpatialDatabase> spatialDb,
+                               shared_ptr<INodeProxyFactory> proxyFactory )
+{ return shared_ptr<Node>( new Node(spatialDb, proxyFactory) ); }
+
+
 Node::Node( shared_ptr<ISpatialDatabase> spatialDb,
-            std::shared_ptr<INodeConnectionFactory> connectionFactory) :
-    _spatialDb(spatialDb), _connectionFactory(connectionFactory)
+            shared_ptr<INodeProxyFactory> proxyFactory ) :
+    _spatialDb(spatialDb), _proxyFactory(proxyFactory)
 {
     if (_spatialDb == nullptr) {
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No spatial database instantiated");
     }
-    if (_connectionFactory == nullptr) {
-        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No connection factory instantiated");
+    if (_proxyFactory == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No proxy factory instantiated");
     }
 }
 
@@ -86,7 +92,11 @@ GpsLocation Node::RegisterService(const ServiceInfo& serviceInfo)
     entry.services()[ serviceInfo.type() ] = serviceInfo;
     _spatialDb->Update(entry);
     
-    RenewNeighbours();
+    // NOTE running RenewNeighbours could block the reactor while connect(endpoint) has blocking implementation
+    shared_ptr<Node> self = shared_from_this();
+    thread updateNodeInfoAtNeighboursThread( [self] { self->RenewNeighbours(); } );
+    updateNodeInfoAtNeighboursThread.detach();
+    
     return GetNodeInfo().location();
 }
 
@@ -102,7 +112,10 @@ void Node::DeregisterService(ServiceType serviceType)
     entry.services().erase(serviceType);
     _spatialDb->Update(entry);
     
-    RenewNeighbours();
+    // NOTE running RenewNeighbours could block the reactor while connect(endpoint) has blocking implementation
+    shared_ptr<Node> self = shared_from_this();
+    thread updateNodeInfoAtNeighboursThread( [self] { self->RenewNeighbours(); } );
+    updateNodeInfoAtNeighboursThread.detach();
 }
 
 
@@ -219,6 +232,12 @@ vector<NodeInfo> Node::GetClosestNodesByDistance(const GpsLocation& location,
 vector<NodeInfo> Node::ExploreNetworkNodesByDistance(const GpsLocation &location,
     size_t targetNodeCount, size_t maxNodeHops) const
 {
+    // TODO This might last for a very long time. The current implementation
+    //      still uses a blocking network connect and a synchronous return value here.
+    //      With a single reactor thread this might block all other clients
+    //      until the result is done. Transforming this to an asynchronous
+    //      operation is not trivial, but should be done in the future.
+    
     vector<NodeInfo> closestNodesByDistance = GetClosestNodesByDistance(location,
         numeric_limits<Distance>::max(), targetNodeCount, Neighbours::Included );
     if ( closestNodesByDistance.empty() )
@@ -231,13 +250,13 @@ vector<NodeInfo> Node::ExploreNetworkNodesByDistance(const GpsLocation &location
         if (newClosestNode == oldClosestNode)
             { break; }
         
-        shared_ptr<INodeMethods> closestNodeConnection = SafeConnectTo( newClosestNode.contact().nodeEndpoint() );
-        if (closestNodeConnection == nullptr) {
+        shared_ptr<INodeMethods> closestNodeProxy = SafeConnectTo( newClosestNode.contact().nodeEndpoint() );
+        if (closestNodeProxy == nullptr) {
             // TODO consider what better to do if closest node is not reachable?
             break;
         }
         
-        closestNodesByDistance = closestNodeConnection->GetClosestNodesByDistance(
+        closestNodesByDistance = closestNodeProxy->GetClosestNodesByDistance(
             location, numeric_limits<Distance>::max(), targetNodeCount, Neighbours::Included);
         if ( closestNodesByDistance.empty() )
             { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Node returned empty node list result"); }
@@ -299,7 +318,7 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint) co
         return shared_ptr<INodeMethods>();
     }
     
-    try { return _connectionFactory->ConnectTo(endpoint); }
+    try { return _proxyFactory->ConnectTo(endpoint); }
     catch (exception &e)
         { LOG(INFO) << "Failed to connect to " << endpoint << ": " << e.what(); }
     return shared_ptr<INodeMethods>();
@@ -307,7 +326,7 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint) co
 
 
 
-bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethods> nodeConnection)
+bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethods> nodeProxy)
 {
     try
     {
@@ -418,9 +437,10 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
         if ( plannedEntry.roleType() == NodeContactRoleType::Initiator )
         {
             // If no connection argument is specified, try connecting to candidate node
-            if (nodeConnection == nullptr)
-                { nodeConnection = SafeConnectTo( plannedEntry.contact().nodeEndpoint() ); }
-            if (nodeConnection == nullptr)
+            if (nodeProxy == nullptr)
+                { 
+                nodeProxy = SafeConnectTo( plannedEntry.contact().nodeEndpoint() ); }
+            if (nodeProxy == nullptr)
             {
                 LOG(TRACE) << "Failed to connect to remote node to ask for permission, refusing";
                 return false;
@@ -432,14 +452,14 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             {
                 case NodeRelationType::Colleague:
                     freshInfo = storedInfo && storedInfo->relationType() == plannedEntry.relationType() ?
-                        nodeConnection->RenewColleague(myNode) :
-                        nodeConnection->AcceptColleague(myNode);
+                            nodeProxy->RenewColleague(myNode) :
+                            nodeProxy->AcceptColleague(myNode);
                     break;
                 
                 case NodeRelationType::Neighbour:
                     freshInfo = storedInfo && storedInfo->relationType() == plannedEntry.relationType() ?
-                        nodeConnection->RenewNeighbour(myNode) :
-                        nodeConnection->AcceptNeighbour(myNode);
+                            nodeProxy->RenewNeighbour(myNode) :
+                            nodeProxy->AcceptNeighbour(myNode);
                     break;
                 
                 case NodeRelationType::Self:
@@ -507,20 +527,20 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
             triedNodes.push_back(seedContact);
             
             // Try connecting to selected seed node
-            shared_ptr<INodeMethods> seedNodeConnection = SafeConnectTo(seedContact);
-            if (seedNodeConnection == nullptr)
+            shared_ptr<INodeMethods> seedNodeProxy = SafeConnectTo(seedContact);
+            if (seedNodeProxy == nullptr)
                 { continue; }
             
             // Try to add seed node to our network (no matter if fails)
-            NodeInfo seedInfo = seedNodeConnection->GetNodeInfo();
+            NodeInfo seedInfo = seedNodeProxy->GetNodeInfo();
             SafeStoreNode( NodeDbEntry(seedInfo, NodeRelationType::Colleague, NodeContactRoleType::Initiator),
-                           seedNodeConnection );
+                           seedNodeProxy );
             
             // Query both total node count and an initial list of random nodes to start with
             LOG(DEBUG) << "Getting node count from initial seed";
-            nodeCountAtSeed = seedNodeConnection->GetNodeCount();
+            nodeCountAtSeed = seedNodeProxy->GetNodeCount();
             LOG(DEBUG) << "Node count on seed is " << nodeCountAtSeed;
-            randomColleagueCandidates = seedNodeConnection->GetRandomNodes(
+            randomColleagueCandidates = seedNodeProxy->GetRandomNodes(
                 min(INIT_WORLD_RANDOM_NODE_COUNT, nodeCountAtSeed), Neighbours::Included );
             
             // If got a reasonable response from a seed server, stop contacting other seeds
@@ -576,12 +596,12 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
                 try
                 {
                     // Connect to selected random node
-                    shared_ptr<INodeMethods> randomConnection = SafeConnectTo( nodeInfo.contact().nodeEndpoint() );
-                    if (randomConnection == nullptr)
+                    shared_ptr<INodeMethods> randomNodeProxy = SafeConnectTo( nodeInfo.contact().nodeEndpoint() );
+                    if (randomNodeProxy == nullptr)
                         { continue; }
                     
                     // Ask it for random colleague candidates
-                    randomColleagueCandidates = randomConnection->GetRandomNodes(
+                    randomColleagueCandidates = randomNodeProxy->GetRandomNodes(
                         INIT_WORLD_RANDOM_NODE_COUNT, Neighbours::Excluded);
                     break;
                 }
@@ -633,10 +653,10 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
             try
             {
                 // Try connecting to selected seed node
-                shared_ptr<INodeMethods> seedNodeConnection = SafeConnectTo(seedContact);
-                if (seedNodeConnection == nullptr)
+                shared_ptr<INodeMethods> seedNodeProxy = SafeConnectTo(seedContact);
+                if (seedNodeProxy == nullptr)
                     { continue; }
-                newClosestNode = seedNodeConnection->GetNodeInfo();
+                newClosestNode = seedNodeProxy->GetNodeInfo();
             }
             catch (exception &e)
             {
@@ -658,13 +678,13 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
         oldClosestNode = newClosestNode;
         try
         {
-            shared_ptr<INodeMethods> closestNodeConnection = SafeConnectTo( newClosestNode.contact().nodeEndpoint() );
-            if (closestNodeConnection == nullptr) {
+            shared_ptr<INodeMethods> closestNodeProxy = SafeConnectTo( newClosestNode.contact().nodeEndpoint() );
+            if (closestNodeProxy == nullptr) {
                 // TODO consider what better to do if closest node is not reachable?
                 continue;
             }
             
-            closestNodesByDistance = closestNodeConnection->GetClosestNodesByDistance(
+            closestNodesByDistance = closestNodeProxy->GetClosestNodesByDistance(
                 myNode.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
             if ( closestNodesByDistance.empty() )
                 { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Node returned empty node list result"); }
@@ -701,16 +721,16 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
         try
         {
             // Try connecting to the node
-            shared_ptr<INodeMethods> candidateConnection = SafeConnectTo( neighbourCandidate.contact().nodeEndpoint() );
-            if (candidateConnection == nullptr)
+            shared_ptr<INodeMethods> candidateProxy = SafeConnectTo( neighbourCandidate.contact().nodeEndpoint() );
+            if (candidateProxy == nullptr)
                 { continue; }
                 
             // Try to add node as neighbour, reusing connection
             SafeStoreNode( NodeDbEntry(neighbourCandidate, NodeRelationType::Neighbour, NodeContactRoleType::Initiator),
-                           candidateConnection );
+                           candidateProxy );
             
             // Get its neighbours closest to us
-            vector<NodeInfo> newNeighbourCandidates = candidateConnection->GetClosestNodesByDistance(
+            vector<NodeInfo> newNeighbourCandidates = candidateProxy->GetClosestNodesByDistance(
                 myNode.location(), numeric_limits<Distance>::max(),
                 INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT, Neighbours::Included );
             
@@ -769,7 +789,6 @@ void Node::RenewNeighbours()
     {
         try
         {
-            // TODO this should not block the response message, should just post tasks to the io_service to be executed later.
             bool updated = SafeStoreNode( NodeDbEntry(neighbour,
                 NodeRelationType::Neighbour, NodeContactRoleType::Initiator) );
             LOG(DEBUG) << "Attempted updating changed self info on neighbour " << neighbour.id() << ", result: " << updated;
@@ -809,15 +828,15 @@ void Node::DiscoverUnknownAreas()
                 myClosestNodes[0] : myClosestNodes[1];
             
             // Connect to closest node
-            shared_ptr<INodeMethods> knownNodeConnection = SafeConnectTo( myClosestNode.contact().nodeEndpoint() );
-            if (knownNodeConnection == nullptr)
+            shared_ptr<INodeMethods> knownNodeProxy = SafeConnectTo( myClosestNode.contact().nodeEndpoint() );
+            if (knownNodeProxy == nullptr)
             {
                 LOG(DEBUG) << "Failed to contact known node " << myClosestNode;
                 continue;
             }
             
             // Ask closest node about its nodes closest to the random position
-            vector<NodeInfo> newClosestNodes = knownNodeConnection->GetClosestNodesByDistance(
+            vector<NodeInfo> newClosestNodes = knownNodeProxy->GetClosestNodesByDistance(
                 randomLocation, numeric_limits<Distance>::max(), 1, Neighbours::Included );
             if ( newClosestNodes.empty() || newClosestNodes[0].id() == myNodeInfo.id() )
                 { continue; }
@@ -836,8 +855,8 @@ void Node::DiscoverUnknownAreas()
             }
             
             // Connect to closest node
-            shared_ptr<INodeMethods> discoveredNodeConnection = SafeConnectTo( newClosestNode.contact().nodeEndpoint() );
-            if (discoveredNodeConnection == nullptr)
+            shared_ptr<INodeMethods> discoveredNodeProxy = SafeConnectTo( newClosestNode.contact().nodeEndpoint() );
+            if (discoveredNodeProxy == nullptr)
             {
                 LOG(DEBUG) << "Failed to contact discovered node " << newClosestNode;
                 continue;
@@ -845,10 +864,10 @@ void Node::DiscoverUnknownAreas()
             
             // Try to add node to our database
             bool storedAsNeighbour = SafeStoreNode( NodeDbEntry( newClosestNode,
-                NodeRelationType::Neighbour, NodeContactRoleType::Initiator), discoveredNodeConnection );
+                NodeRelationType::Neighbour, NodeContactRoleType::Initiator), discoveredNodeProxy );
             if (! storedAsNeighbour) {
                 SafeStoreNode( NodeDbEntry( newClosestNode,
-                    NodeRelationType::Colleague, NodeContactRoleType::Initiator), discoveredNodeConnection );
+                    NodeRelationType::Colleague, NodeContactRoleType::Initiator), discoveredNodeProxy );
             }
         }
         catch (exception &ex)

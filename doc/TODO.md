@@ -16,24 +16,17 @@ should automatically reunite when network blocking is lifted, etc.
 
 ## Technical debt
 
-While prototyping we delayed a lot of minor technical decisions
-to come up with an initial version as soon as possible.
-Accordingly, you can find a lot of `// TODO` comments in the source
-calling to (re)consider algorithms, error handling and other implementations.
+While prototyping we delayed solving some minor technical issues.
+Accordingly, you can find some `// TODO` comments in the source
+reminding to (re)consider algorithms, error handling and other details.
 
 
 ## Architecture
 
-Currently all network communication uses blocking implementations.
-Each client has its own thread, so it does not cause problems most of the time.
-However, some operations are already done asynchronously.
-When a service (e.g. a profile server) registers, notifications to neighbour nodes
-are queued as async tasks after a response is returned to the service.
-Currently all async tasks use the same queue, but this causes problems.
-If some neighbours are unreachable, a single notification may block for a very long time,
-making the server unresponsive because socket accepts are also served asynchronously
-from the same task queue. The best way to fix this may be to use asio::strand to separate queues of different
-(e.g. fast and potientially slow) tasks.
+Most of the network communication uses asynchronous calls already.
+Connecting to a host is still blocking though, this should be transformed as well.
+Another potential blocking problem can be the routing implementation for clients
+(Node::ExploreNetworkNodesByDistance, see the TODO).
 
 Our current implementation uses a local database to store just a sparse subset of all the nodes
 of the network, but this is not necessarily the only direction.
@@ -49,9 +42,10 @@ We just didn't have enough time and expertise to fully discover this direction.
 
 During prototyping, features were added layer by layer,
 starting from the application layer through messaging down to networking.
-Consequently, network.h/cpp currently depends on messaging.h/cpp,
-but dependency might be better in the opposite direction: messaging may be seen
-as the highest layer connecting business logic (locnet.cpp) with networking (network.cpp).
+Previously networking used some ProtoBuf messages in its interfaces,
+but it's fixed since. Currently network.h/cpp depends on messaging.h/cpp,
+but it should be in the opposite direction, but it needs relocation of some classes
+between these files.
 
 A reconsideration of the current layering implementation (application: Node, messaging: Dispatcher, session: Session)
 also might be necessary because features "connection keepalive" and "Ip autodetection"
@@ -113,31 +107,8 @@ If we find no conceptual problems we should identify attack vectors and protect 
 
 ## Optimization and Performance
 
-Socket connections are accepted asynchronously with asio using only a single thread.
-However, it is much harder to use async operations to implement interfaces
-not designed directly for an async workflow (e.g. NetworkSession).
-Consequently, each session currently uses its own separate thread.
-If this consumes too much resources (memory and context switch costs),
-it might worth to implement sessions asynchronously.
-We might either redesign interfaces like session to directly support async operations or
-try to implement the same interface with async operations using something like
-[Boost stackful courutines](http://www.boost.org/doc/libs/1_62_0/doc/html/boost_asio/overview/core/spawn.html)
-but then we would depend also on Boost. Probably the best direction is to use
-std::future to make interfaces async and trigger their notification with std::promise.
-This work was started in branch `feature/async-messaging` but was abandoned
-to progress with integration tasks. It's half baked now, finishing it needs more
-work and merging recent changes from master.
-
-If connections take up too much resources, we could also improve code by expiring accepted
-inactive connections. Implementing this would need to use async timers.
+We should improve performance and safety by expiring accepted
+inactive connections. Implementing this will need async timers of Asio.
 However, we have to keep in mind that when the localservice interface receives
-a GetNeighbourhood request, it must keep the connection alive and send notifications
-when neighbourhood changes. It can be done by differentiating the
-"timer expired" event from the "timer disabled" event by checking an error code.
-
-We could improve both code structure and compile times. One direction could be restructuring
-sources and using a specific framework header (e.g. asio, ezOptionParser, etc)
-only in a single h/cpp pair so every huge framework header is compiled only once.
-Another approach could be using precompiled headers to speed up compilation.
-We already tried the [cotire CMake plugin](https://github.com/sakra/cotire),
-but it didn't seem to make a difference.
+a GetNeighbourhood request, it must not expire but keep the connection alive
+and send notifications when neighbourhood changes.

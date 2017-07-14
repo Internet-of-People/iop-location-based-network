@@ -57,6 +57,7 @@ public:
     NodeContactRoleType roleType() const;
     
     bool operator==(const NodeDbEntry &other) const;
+    bool operator!=(const NodeDbEntry &other) const;
 };
 
 

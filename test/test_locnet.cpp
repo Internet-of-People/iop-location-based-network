@@ -280,12 +280,12 @@ SCENARIO("Server registration", "[localservice][logic]")
         NodeInfo nodeInfo( NodeInfo("NodeId", loc, NodeContact("127.0.0.1", 6666, 7777), {} ) );
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(nodeInfo,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
-        shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
-        Node geonet(geodb, connectionFactory);
+        shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
+        shared_ptr<Node> geonet = Node::Create(geodb, connectionFactory);
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {
-                auto services = geonet.GetNodeInfo().services();
+                auto services = geonet->GetNodeInfo().services();
                 REQUIRE( services.empty() );
                 REQUIRE( services.find(ServiceType::Token) == services.end() );
                 REQUIRE( services.find(ServiceType::Minting) == services.end() );
@@ -305,11 +305,11 @@ SCENARIO("Server registration", "[localservice][logic]")
 //         REQUIRE(services == servicesCopy);
         
         WHEN("adding services") {
-            geonet.RegisterService(tokenService);
-            geonet.RegisterService(minterService);
-            geonet.RegisterService(profileService);
+            geonet->RegisterService(tokenService);
+            geonet->RegisterService(minterService);
+            geonet->RegisterService(profileService);
             THEN("added servers appear on queries") {
-                NodeInfo nodeInfo = geonet.GetNodeInfo();
+                NodeInfo nodeInfo = geonet->GetNodeInfo();
                 const auto &services = nodeInfo.services();
                 REQUIRE( services.size() == 3 );
                 REQUIRE( services.find(ServiceType::Relay) == services.end() );
@@ -323,11 +323,11 @@ SCENARIO("Server registration", "[localservice][logic]")
             }
         }
         WHEN("removing servers") {
-            geonet.RegisterService(tokenService);
-            geonet.RegisterService(minterService);
-            geonet.DeregisterService(ServiceType::Minting);
+            geonet->RegisterService(tokenService);
+            geonet->RegisterService(minterService);
+            geonet->DeregisterService(ServiceType::Minting);
             THEN("they disappear from the list") {
-                NodeInfo nodeInfo = geonet.GetNodeInfo();
+                NodeInfo nodeInfo = geonet->GetNodeInfo();
                 const auto &services = nodeInfo.services();
                 REQUIRE( services.find(ServiceType::Relay) == services.end() );
                 REQUIRE( services.find(ServiceType::Minting) == services.end() );

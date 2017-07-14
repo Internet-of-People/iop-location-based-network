@@ -44,8 +44,8 @@ const Config& Config::Instance()
 {
     if (! _instance)
     {
-        LOG(ERROR) << "Implementation error: config was not properly initialized. Call Config::Init()!";
-        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Config is uninitialized");
+        LOG(ERROR) << "Configuration is missing: either not properly initialized (call Config::Init or InitForTest) or destroyed already during shutdown.";
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Missing configuration");
     }
     return *_instance;
 }

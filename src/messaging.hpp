@@ -1,6 +1,7 @@
 #ifndef __LOCNET_PROTOBUF_MESSAGING_H__
 #define __LOCNET_PROTOBUF_MESSAGING_H__
 
+#include <future>
 #include <memory>
 
 #include <google/protobuf/text_format.h>
@@ -39,22 +40,22 @@ struct Converter
 
 
 
-// Interface to dispatch a request message to a specific recipient and return its response message
-class IProtoBufRequestDispatcher
+// Interface to dispatch messages to serve incoming requests directly in a blocking way.
+// Implementation should translate incoming protobuf requests to internal representation,
+// serve the request with our business logic and translate the result into a protobuf response.
+class IBlockingRequestDispatcher
 {
 public:
     
-    virtual ~IProtoBufRequestDispatcher() {}
+    virtual ~IBlockingRequestDispatcher() {}
     
-    virtual std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) = 0;
+    virtual std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) = 0;
 };
 
 
 
 // Dispatch messages to serve requests on the local service interface.
-// Translates incoming protobuf requests to internal representation, serves the request
-// with our business logic and translates the result into a protobuf response.
-class IncomingLocalServiceRequestDispatcher : public IProtoBufRequestDispatcher
+class IncomingLocalServiceRequestDispatcher : public IBlockingRequestDispatcher
 {
     std::shared_ptr<ILocalServiceMethods>   _iLocalService;
     std::shared_ptr<IChangeListenerFactory> _listenerFactory;
@@ -64,13 +65,13 @@ public:
     IncomingLocalServiceRequestDispatcher( std::shared_ptr<ILocalServiceMethods> iLocalService,
         std::shared_ptr<IChangeListenerFactory> listenerFactory );
     
-    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
+    std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
 
 
 
 // Dispatch messages to serve requests on the node interface.
-class IncomingNodeRequestDispatcher : public IProtoBufRequestDispatcher
+class IncomingNodeRequestDispatcher : public IBlockingRequestDispatcher
 {
     std::shared_ptr<INodeMethods> _iNode;
     
@@ -78,13 +79,13 @@ public:
     
     IncomingNodeRequestDispatcher(std::shared_ptr<INodeMethods> iNode);
     
-    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
+    std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
 
 
 
 // Dispatch messages to serve requests on the client interface.
-class IncomingClientRequestDispatcher : public IProtoBufRequestDispatcher
+class IncomingClientRequestDispatcher : public IBlockingRequestDispatcher
 {
     std::shared_ptr<IClientMethods> _iClient;
     
@@ -92,12 +93,12 @@ public:
     
     IncomingClientRequestDispatcher(std::shared_ptr<IClientMethods> iClient);
     
-    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
+    std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
 
 
 // Unified server functionality, useful to serve requests of all interfaces on a single port.
-class IncomingRequestDispatcher : public IProtoBufRequestDispatcher
+class IncomingRequestDispatcher : public IBlockingRequestDispatcher
 {
     std::shared_ptr<IncomingLocalServiceRequestDispatcher> _iLocalService;
     std::shared_ptr<IncomingNodeRequestDispatcher>         _iRemoteNode;
@@ -113,8 +114,21 @@ public:
         std::shared_ptr<IncomingNodeRequestDispatcher> iRemoteNode,
         std::shared_ptr<IncomingClientRequestDispatcher> iClient );
     
-    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
+    std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
+
+
+
+// // Serve requests that are probably slow, e.g. has to be sent over a network.
+// class IDelayedRequestDispatcher
+// {
+// public:
+//     
+//     virtual ~IDelayedRequestDispatcher() {}
+//     
+//     virtual std::future<std::unique_ptr<iop::locnet::Response>>
+//         Dispatch(std::unique_ptr<iop::locnet::Request> &&request) = 0;
+// };
 
 
 
@@ -123,13 +137,17 @@ public:
 // then translate its response into our internal representation.
 class NodeMethodsProtoBufClient : public INodeMethods
 {
-    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
+    // TODO use a IDelayedRequestDispatcher instance instead
+    std::shared_ptr<IBlockingRequestDispatcher> _dispatcher;
     std::function<void(const Address&)> _detectedIpCallback;
+    
+    std::unique_ptr<iop::locnet::Response> WaitForDispatch(
+        std::unique_ptr<iop::locnet::Request> request);
     
 public:
     
-    NodeMethodsProtoBufClient(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher,
-                              std::function<void(const Address&)> detectedIpCallback);
+    NodeMethodsProtoBufClient( std::shared_ptr<IBlockingRequestDispatcher> dispatcher,
+                               std::function<void(const Address&)> detectedIpCallback );
     
     NodeInfo GetNodeInfo() const override;
     size_t GetNodeCount() const override;
