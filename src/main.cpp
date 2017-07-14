@@ -19,6 +19,29 @@ void signalHandler(int signal)
     { mySignalHandlerFunc(signal); }
 
 
+void reactorLoop(const string &threadName)
+{
+    LOG(DEBUG) << "Thread " << threadName << " started";
+    while ( ! Reactor::Instance().IsShutdown() )
+    {
+        try
+        {
+            // NOTE Normally after run_one we should check if the io_service has run out of tasks and stopped,
+            //      have to reset it if so. But async_accept is always in the queue, this cannot happen.
+            Reactor::Instance().AsioService().run_one();
+            LOG(TRACE) << "Thread " << threadName << " succesfully executed a single task";
+        }
+        catch (exception &ex)
+        {
+            LOG(WARNING) << "Async operation failed: " << ex.what();
+            LOG(DEBUG) << "Thread " << threadName << " failed at a single task";
+        }
+    }
+    LOG(DEBUG) << "Thread " << threadName << " shut down";
+}
+
+
+
 int main(int argc, const char *argv[])
 {
     try
@@ -46,49 +69,48 @@ int main(int argc, const char *argv[])
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
             myNodeInfo, config.dbPath(), config.dbExpirationPeriod() ) );
 
-        TcpStreamConnectionFactory *connFactPtr = new TcpStreamConnectionFactory();
-        shared_ptr<INodeConnectionFactory> connectionFactory(connFactPtr);
-        shared_ptr<Node> node( new Node(geodb, connectionFactory) );
+        TcpNodeConnectionFactory *connFactPtr = new TcpNodeConnectionFactory();
+        shared_ptr<INodeProxyFactory> connectionFactory(connFactPtr);
+        shared_ptr<Node> node = Node::Create(geodb, connectionFactory);
 
         LOG(INFO) << "Connecting node to the network";
-        shared_ptr<IProtoBufRequestDispatcherFactory> nodeDispatcherFactory(
-            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
+        shared_ptr<IBlockingRequestDispatcherFactory> nodeDispatcherFactory(
+            new StaticBlockingDispatcherFactory( shared_ptr<IBlockingRequestDispatcher>(
                 new IncomingNodeRequestDispatcher(node) ) ) );
-        ProtoBufDispatchingTcpServer nodeTcpServer(
+        shared_ptr<DispatchingTcpServer> nodeTcpServer = DispatchingTcpServer::Create(
             myNodeInfo.contact().nodePort(), nodeDispatcherFactory );
+        nodeTcpServer->StartListening();
         
         connFactPtr->detectedIpCallback( [node](const Address &addr)
             { node->DetectedExternalAddress(addr); } );
+        
+        thread mainReactorThread( [] { reactorLoop("ReactorMain"); } );
         node->EnsureMapFilled();
 
         LOG(INFO) << "Serving local and client interfaces";
-        shared_ptr<IProtoBufRequestDispatcherFactory> localDispatcherFactory(
+        shared_ptr<IBlockingRequestDispatcherFactory> localDispatcherFactory(
             new LocalServiceRequestDispatcherFactory(node) );
-        shared_ptr<IProtoBufRequestDispatcherFactory> clientDispatcherFactory(
-            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
+        shared_ptr<IBlockingRequestDispatcherFactory> clientDispatcherFactory(
+            new StaticBlockingDispatcherFactory( shared_ptr<IBlockingRequestDispatcher>(
                 new IncomingClientRequestDispatcher(node) ) ) );
         
-        ProtoBufDispatchingTcpServer localTcpServer(
+        shared_ptr<DispatchingTcpServer> localTcpServer = DispatchingTcpServer::Create(
             config.localServicePort(), localDispatcherFactory );
-        ProtoBufDispatchingTcpServer clientTcpServer(
+        shared_ptr<DispatchingTcpServer> clientTcpServer = DispatchingTcpServer::Create(
             myNodeInfo.contact().clientPort(), clientDispatcherFactory );
 
-        // Set up signal handlers to stop on Ctrl-C and further events
-        bool ShutdownRequested = false;
-
-        mySignalHandlerFunc = [&ShutdownRequested, &localTcpServer, &nodeTcpServer, &clientTcpServer] (int)
-        {
-            ShutdownRequested = true;
-            IoService::Instance().Shutdown();
-        };
+        localTcpServer->StartListening();
+        clientTcpServer->StartListening();
         
+        // Set up signal handlers to stop on Ctrl-C and further events
+        mySignalHandlerFunc = [] (int) { Reactor::Instance().Shutdown(); };
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
         // start threads for periodic db maintenance (relation renewal and expiration) and discovery
-        thread dbMaintenanceThread( [&ShutdownRequested, &config, node]
+        thread dbMaintenanceThread( [&config, node]
         {
-            while (! ShutdownRequested)
+            while ( ! Reactor::Instance().IsShutdown() )
             {
                 try
                 {
@@ -102,9 +124,9 @@ int main(int argc, const char *argv[])
         } );
         dbMaintenanceThread.detach();
         
-        thread discoveryThread( [&ShutdownRequested, &config, node]
+        thread discoveryThread( [&config, node]
         {
-            while (! ShutdownRequested)
+            while ( ! Reactor::Instance().IsShutdown() )
             {
                 try
                 {
@@ -117,23 +139,7 @@ int main(int argc, const char *argv[])
         } );
         discoveryThread.detach();
 
-//         thread longBlockingOperationsThread( [&ShutdownRequested]
-//         {
-//             while (! ShutdownRequested)
-//             {
-//                 try { Network::Instance().ClientReactor().run(); }
-//                 catch (exception &ex)
-//                     { LOG(ERROR) << "Async notification operation failed: " << ex.what(); }
-//             }
-//         } );
-//         longBlockingOperationsThread.detach();
-        
-        while (! ShutdownRequested)
-        {
-            try { IoService::Instance().Server().run_one(); }
-            catch (exception &ex)
-                    { LOG(ERROR) << "Async operation failed: " << ex.what(); }
-        }
+        mainReactorThread.join();
         
         LOG(INFO) << "Shutting down location-based network";
         return 0;

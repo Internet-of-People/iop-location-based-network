@@ -16,15 +16,15 @@ namespace LocNet
 {
 
 
-static const size_t ThreadPoolSize = 1;
 static const size_t MaxMessageSize = 1024 * 1024;
 static const size_t MessageHeaderSize = 5;
 static const size_t MessageSizeOffset = 1;
 
 
-// TODO handle session expiration at least for clients
-// static chrono::duration<uint32_t> GetNormalStreamExpirationPeriod()
-//     { return Config::Instance().isTestMode() ? chrono::seconds(60) : chrono::seconds(15); }
+// static chrono::duration<uint32_t> GetNetworkExpirationPeriod()
+//     { return Config::Instance().isTestMode() ? chrono::seconds(1) : chrono::seconds(10); }
+static chrono::duration<uint32_t> GetRequestExpirationPeriod()
+    { return Config::Instance().isTestMode() ? chrono::seconds(60) : chrono::seconds(10); }
 
 //static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
 
@@ -53,7 +53,7 @@ Address NodeContact::AddressFromBytes(const std::string &bytes)
         address_v6 ipv6(v6AddrBytes);
         return ipv6.to_string();
     }
-    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Invalid ip address bytearray size: " + bytes.size()); }
+    else { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Invalid bytearray length of IP address: " + to_string( bytes.size() ) ); }
 }
 
 
@@ -85,42 +85,172 @@ string  NodeContact::AddressBytes() const
 
 
 
-IoService IoService::_instance;
+Reactor Reactor::_instance;
 
-IoService::IoService(): _serverIoService() {} // , _clientIoService() {}
+Reactor::Reactor(): _asioService() {}
 
-IoService& IoService::Instance() { return _instance; }
+void Reactor::Shutdown() { _asioService.stop(); }
+bool Reactor::IsShutdown() const { return _asioService.stopped(); }
 
-void IoService::Shutdown()
+Reactor& Reactor::Instance() { return _instance; }
+asio::io_service& Reactor::AsioService() { return _asioService; }
+
+
+
+shared_ptr<IAsyncNetwork> IAsyncNetwork::Create(
+    weak_ptr<asio::ip::tcp::socket> socket, unique_ptr<string> &&buffer, size_t offset )
 {
-    _serverIoService.stop();
-//    _clientIoService.stop();
+    return shared_ptr<IAsyncNetwork>( new IAsyncNetwork( socket, move(buffer), offset ) );
 }
 
-asio::io_service& IoService::Server() { return _serverIoService; }
-//asio::io_service& IoService::Client() { return _clientIoService; }
+IAsyncNetwork::IAsyncNetwork( weak_ptr<tcp::socket> socket,
+                              unique_ptr<string> &&buffer, size_t offset ) :
+    _socket(socket), _buffer( move(buffer) ), _offset(offset)
+{
+    if (_buffer == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No buffer instantiated");
+    }
+    if ( _offset >= _buffer->size() ) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Invalid buffer offset");
+    }
+}
+
+
+
+void IAsyncNetwork::ReadBuffer( function< void ( unique_ptr<string>&& ) > completionCallback )
+{
+    shared_ptr<IAsyncNetwork> self = shared_from_this();
+    shared_ptr<tcp::socket> socket = _socket.lock();
+    if (! socket) {
+        LOG(INFO) << "Socket was closed, stop reading";
+        completionCallback( unique_ptr<string>() );
+        return;
+    }
+    
+    asio::async_read( *socket, asio::buffer( &_buffer->operator[](_offset), _buffer->size() - _offset ),
+        [self, completionCallback] (const asio::error_code& error, std::size_t bytesRead)
+        { self->AsyncReadCallback(error, bytesRead, completionCallback); } );
+}
+
+
+// future< unique_ptr<string> > AsyncBufferIO::ReadBuffer(asio::use_future_t<>)
+// {
+//     shared_ptr< promise< unique_ptr<string> > > result( new promise< unique_ptr<string> >() );
+//     
+//     ReadBuffer( [result] ( unique_ptr<string> &&buffer )
+//         { result->set_value( move(buffer) ); } );
+//     
+//     return result->get_future();
+// }
+
+
+void IAsyncNetwork::AsyncReadCallback( const asio::error_code &error, size_t bytesRead,
+                                       function< void ( unique_ptr<string>&& ) > completionCallback )
+{
+    if (error)
+    {
+        LOG(WARNING) << "Failed to read from socket: " << error;
+        completionCallback( unique_ptr<string>() );
+        return;
+    }
+    
+    _offset += bytesRead;
+    if ( _offset < _buffer->size() )
+    {
+        shared_ptr<IAsyncNetwork> self = shared_from_this();
+        shared_ptr<tcp::socket> socket = _socket.lock();
+        if (! socket) {
+            LOG(INFO) << "Socket was closed, stop reading";
+            completionCallback( unique_ptr<string>() );
+            return;
+        }
+        
+        asio::async_read( *socket, asio::buffer( &_buffer->operator[](_offset), _buffer->size() - _offset ),
+            [self, completionCallback] (const asio::error_code& error, std::size_t bytesRead)
+            { self->AsyncReadCallback(error, bytesRead, completionCallback); } );
+    }
+    else { completionCallback( move(_buffer) ); }
+}
+
+
+
+void IAsyncNetwork::WriteBuffer( function< void ( unique_ptr<string>&& ) > completionCallback )
+{
+    shared_ptr<IAsyncNetwork> self = shared_from_this();
+    shared_ptr<tcp::socket> socket = _socket.lock();
+    if (! socket) {
+        LOG(INFO) << "Socket was closed, stop writing";
+        completionCallback( unique_ptr<string>() );
+        return;
+    }
+    asio::async_write( *socket, asio::buffer( &_buffer->operator[](_offset), _buffer->size() - _offset ),
+        [self, completionCallback] (const asio::error_code& error, std::size_t bytesWritten)
+    {
+        self->AsyncWriteCallback(error, bytesWritten, completionCallback);
+    } );
+}
+
+
+// future< unique_ptr<string> > AsyncBufferIO::WriteBuffer(asio::use_future_t<>)
+// {
+//     shared_ptr< promise< unique_ptr<string> > > result( new promise< unique_ptr<string> >() );
+//     
+//     WriteBuffer( [result] ( unique_ptr<string> &&buffer )
+//         { result->set_value( move(buffer) ); } );
+//     
+//     return result->get_future();
+// }
+
+
+void IAsyncNetwork::AsyncWriteCallback( const asio::error_code &error, size_t bytesWritten,
+                                        function< void ( unique_ptr<string>&& ) > completionCallback )
+{
+    if (error)
+    {
+        LOG(WARNING) << "Failed to write socket: " << error;
+        completionCallback( unique_ptr<string>() );
+        return;
+    }
+    
+    _offset += bytesWritten;
+    if ( _offset < _buffer->size() )
+    {
+        shared_ptr<IAsyncNetwork> self = shared_from_this();
+        shared_ptr<tcp::socket> socket = _socket.lock();
+        if (! socket) {
+            LOG(INFO) << "Socket was closed, stop writing";
+            completionCallback( unique_ptr<string>() );
+            return;
+        }
+        
+        asio::async_write( *socket, asio::buffer( &_buffer->operator[](_offset), _buffer->size() - _offset ),
+            [self, completionCallback] (const asio::error_code& error, std::size_t bytesWritten)
+            { self->AsyncWriteCallback(error, bytesWritten, completionCallback); } );
+    }
+    else
+    {
+        LOG(TRACE) << "Message was written, calling completion callback";
+        completionCallback( move(_buffer) );
+    }
+}
 
 
 
 TcpServer::TcpServer(TcpPort portNumber) :
-    _acceptor( IoService::Instance().Server(), tcp::endpoint( tcp::v4(), portNumber ) )
-{
-    // Switch the acceptor to listening state
-    LOG(DEBUG) << "Accepting connections on port " << portNumber;
-    _acceptor.listen();
-    
-    shared_ptr<tcp::socket> socket( new tcp::socket( IoService::Instance().Server() ) );
-    _acceptor.async_accept( *socket,
-        [this, socket] (const asio::error_code &ec) { AsyncAcceptHandler(socket, ec); } );
-}
+    _acceptor( Reactor::Instance().AsioService(), tcp::endpoint( tcp::v4(), portNumber ) ) {}
 
 
 TcpServer::~TcpServer() {}
 
 
 
-ProtoBufDispatchingTcpServer::ProtoBufDispatchingTcpServer( TcpPort portNumber,
-        shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory ) :
+shared_ptr<DispatchingTcpServer> DispatchingTcpServer::Create(
+        TcpPort portNumber, shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory )
+    { return shared_ptr<DispatchingTcpServer>( new DispatchingTcpServer(portNumber, dispatcherFactory) ); }
+
+
+DispatchingTcpServer::DispatchingTcpServer( TcpPort portNumber,
+        shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory ) :
     TcpServer(portNumber), _dispatcherFactory(dispatcherFactory)
 {
     if (_dispatcherFactory == nullptr) {
@@ -129,8 +259,24 @@ ProtoBufDispatchingTcpServer::ProtoBufDispatchingTcpServer( TcpPort portNumber,
 }
 
 
+void DispatchingTcpServer::StartListening()
+{
+    // Switch the acceptor to listening state
+    LOG(DEBUG) << "Accepting connections on port " << _acceptor.local_endpoint().port();
+    _acceptor.listen();
+    
+    shared_ptr<tcp::socket> socket( new tcp::socket( Reactor::Instance().AsioService() ) );
+    weak_ptr<TcpServer> self = shared_from_this();
+    _acceptor.async_accept( *socket,
+        [self, socket] (const asio::error_code &ec)
+    {
+        shared_ptr<TcpServer> server = self.lock();
+        if (server) { server->AsyncAcceptHandler(socket, ec); }
+    } );
+}
 
-void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
+
+void DispatchingTcpServer::AsyncAcceptHandler(
     std::shared_ptr<asio::ip::tcp::socket> socket, const asio::error_code &ec)
 {
     if (ec)
@@ -143,142 +289,147 @@ void ProtoBufDispatchingTcpServer::AsyncAcceptHandler(
         << socket->local_endpoint().address().to_string()  << ":" << socket->local_endpoint().port();
     
     // Keep accepting connections on the socket
-    shared_ptr<tcp::socket> nextSocket( new tcp::socket( IoService::Instance().Server() ) );
+    shared_ptr<tcp::socket> nextSocket( new tcp::socket( Reactor::Instance().AsioService() ) );
+    weak_ptr<DispatchingTcpServer> self = static_pointer_cast<DispatchingTcpServer>( shared_from_this() );
     _acceptor.async_accept( *nextSocket,
-        [this, nextSocket] (const asio::error_code &ec) { AsyncAcceptHandler(nextSocket, ec); } );
-    
-    // Serve connected client on separate thread
-    thread serveSessionThread( [this, socket] // copy by value to keep socket alive
+        [self, nextSocket] (const asio::error_code &ec)
     {
-        shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(socket) );
-        try
-        {
-            shared_ptr<IProtoBufRequestDispatcher> dispatcher(
-                _dispatcherFactory->Create(session) );
-
-            bool endMessageLoop = false;
-            while ( ! endMessageLoop && ! IoService::Instance().Server().stopped() )
-            {
-                uint32_t messageId = 0;
-                shared_ptr<iop::locnet::MessageWithHeader> incomingMessage;
-                unique_ptr<iop::locnet::Response> response;
-                
-                try
-                {
-                    LOG(TRACE) << "Reading incoming message";
-                    incomingMessage.reset( session->ReceiveMessage() );
-
-                    if ( ! incomingMessage || ! incomingMessage->has_body() )
-                        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing message body"); }
-                    
-                    if ( incomingMessage->body().has_response() )
-                    {
-                        // Continue if received acknowledgement for known notification
-                        if ( incomingMessage->body().response().has_localservice() &&
-                             incomingMessage->body().response().localservice().has_neighbourhoodupdated() )
-                            { continue; }
-                        throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST,
-                            "Incoming response must be an acknowledgement of a known notification message");
-                    }
-                    
-                    if ( ! incomingMessage->body().has_request() )
-                        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing request"); }
-                    
-                    LOG(TRACE) << "Serving request";
-                    messageId = incomingMessage->body().id();
-                    auto request = incomingMessage->mutable_body()->mutable_request();
-                    
-                    // TODO the ip detection and keepalive features are violating the current layers of
-                    //      business logic: Node / messaging: Dispatcher / network abstraction: Session.
-                    //      This is not a nice implementation, abstractions should be better prepared for these features
-                    if ( request->has_remotenode() )
-                    {
-                        if ( request->remotenode().has_acceptcolleague() ) {
-                            request->mutable_remotenode()->mutable_acceptcolleague()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
-                                NodeContact::AddressToBytes( session->remoteAddress() ) );
-                        }
-                        else if ( request->remotenode().has_renewcolleague() ) {
-                            request->mutable_remotenode()->mutable_renewcolleague()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
-                                NodeContact::AddressToBytes( session->remoteAddress() ) );
-                        }
-                        else if ( request->remotenode().has_acceptneighbour() ) {
-                            request->mutable_remotenode()->mutable_acceptneighbour()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
-                                NodeContact::AddressToBytes( session->remoteAddress() ) );
-                        }
-                        else if ( request->remotenode().has_renewneighbour() ) {
-                            request->mutable_remotenode()->mutable_renewneighbour()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
-                                NodeContact::AddressToBytes( session->remoteAddress() ) );
-                        }
-                    }
-                    
-                    response = dispatcher->Dispatch(*request);
-                    response->set_status(iop::locnet::Status::STATUS_OK);
-                    
-                    if ( response->has_remotenode() )
-                    {
-                        if ( response->remotenode().has_acceptcolleague() ) {
-                            response->mutable_remotenode()->mutable_acceptcolleague()->set_remoteipaddress(
-                                NodeContact::AddressToBytes( session->remoteAddress() ) );
-                        }
-                        else if ( response->remotenode().has_renewcolleague() ) {
-                            response->mutable_remotenode()->mutable_renewcolleague()->set_remoteipaddress(
-                                NodeContact::AddressToBytes( session->remoteAddress() ) );
-                        }
-                        else if ( response->remotenode().has_acceptneighbour() ) {
-                            response->mutable_remotenode()->mutable_acceptneighbour()->set_remoteipaddress(
-                                NodeContact::AddressToBytes( session->remoteAddress() ) );
-                        }
-                        else if ( response->remotenode().has_renewneighbour() ) {
-                            response->mutable_remotenode()->mutable_renewneighbour()->set_remoteipaddress(
-                                NodeContact::AddressToBytes( session->remoteAddress() ) );
-                        }
-                    }
-                }
-                catch (LocationNetworkError &lnex)
-                {
-                    // TODO This warning is also given when the connection was simply closed by the remote peer
-                    // thus no request can be read. This case should be distinguished and logged with a lower level.
-                    LOG(WARNING) << "Failed to serve request with code "
-                        << static_cast<uint32_t>( lnex.code() ) << ": " << lnex.what();
-                    response.reset( new iop::locnet::Response() );
-                    response->set_status( Converter::ToProtoBuf( lnex.code() ) );
-                    response->set_details( lnex.what() );
-                    endMessageLoop = true;
-                }
-                catch (exception &ex)
-                {
-                    LOG(WARNING) << "Failed to serve request: " << ex.what();
-                    response.reset( new iop::locnet::Response() );
-                    response->set_status(iop::locnet::Status::ERROR_INTERNAL);
-                    response->set_details( ex.what() );
-                    endMessageLoop = true;
-                }
-                
-                LOG(TRACE) << "Sending response";
-                iop::locnet::MessageWithHeader responseMsg;
-                responseMsg.mutable_body()->set_allocated_response( response.release() );
-                responseMsg.mutable_body()->set_id(messageId);
-                
-                session->SendMessage(responseMsg);
-            }
-        }
-        catch (exception &ex)
-        {
-            LOG(WARNING) << "Request dispatch loop failed: " << ex.what();
-        }
-        
-        LOG(INFO) << "Request dispatch loop for session " << session->id() << " finished";
+        shared_ptr<DispatchingTcpServer> server = self.lock();
+        if (server) { server->AsyncAcceptHandler(nextSocket, ec); }
     } );
     
-    // Keep thread running independently, don't block io_service here by joining it
-    serveSessionThread.detach();
+    shared_ptr<IProtoBufChannel> connection( new AsyncProtoBufTcpChannel(socket) );
+    shared_ptr<ProtoBufClientSession> session( ProtoBufClientSession::Create(connection) );
+    shared_ptr<IBlockingRequestDispatcher> dispatcher( _dispatcherFactory->Create(session) );
+
+    LOG(INFO) << "Starting server message loop for connection " << connection->id();
+    
+    connection->ReceiveMessage( [session, dispatcher] ( unique_ptr<iop::locnet::Message> &&incomingMessage )
+        { AsyncServeMessageHandler( move(incomingMessage), session, dispatcher); } );
+}
+
+
+void DispatchingTcpServer::AsyncServeMessageHandler( unique_ptr<iop::locnet::Message> &&receivedMessage,
+    shared_ptr<ProtoBufClientSession> session, shared_ptr<IBlockingRequestDispatcher> dispatcher )
+{
+    bool handlerSuccessful = false;
+    bool sendResponse = true;
+    
+    uint32_t messageId = 0;
+    unique_ptr<iop::locnet::Response> response;
+    try
+    {
+        if (! receivedMessage)
+            { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Failed to read message"); }
+            
+        // If incoming response, connect it with the sent out request and skip further processing
+        if ( receivedMessage->has_response() )
+        {
+            LOG(TRACE) << "Received response message, delivering it to requestor";
+            session->ResponseArrived( move(receivedMessage) );
+            sendResponse = false;
+        }
+        else
+        {
+            if ( ! receivedMessage->has_request() )
+                { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST, "Missing request"); }
+            
+            LOG(TRACE) << "Serving request";
+            
+            messageId = receivedMessage->id();
+            unique_ptr<iop::locnet::Request> request( receivedMessage->release_request() );
+            
+            // TODO the ip detection and keepalive features are violating the current layers of
+            //      business logic: Node / messaging: Dispatcher / network abstraction: Session.
+            //      This is not a nice implementation, abstractions should be better prepared for these features
+            if ( request->has_remotenode() )
+            {
+                if ( request->remotenode().has_acceptcolleague() ) {
+                    request->mutable_remotenode()->mutable_acceptcolleague()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
+                        NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
+                }
+                else if ( request->remotenode().has_renewcolleague() ) {
+                    request->mutable_remotenode()->mutable_renewcolleague()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
+                        NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
+                }
+                else if ( request->remotenode().has_acceptneighbour() ) {
+                    request->mutable_remotenode()->mutable_acceptneighbour()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
+                        NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
+                }
+                else if ( request->remotenode().has_renewneighbour() ) {
+                    request->mutable_remotenode()->mutable_renewneighbour()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
+                        NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
+                }
+            }
+                
+            response = dispatcher->Dispatch( move(request) );
+            response->set_status(iop::locnet::Status::STATUS_OK);
+            
+            if ( response->has_remotenode() )
+            {
+                if ( response->remotenode().has_acceptcolleague() ) {
+                    response->mutable_remotenode()->mutable_acceptcolleague()->set_remoteipaddress(
+                        NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
+                }
+                else if ( response->remotenode().has_renewcolleague() ) {
+                    response->mutable_remotenode()->mutable_renewcolleague()->set_remoteipaddress(
+                        NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
+                }
+                else if ( response->remotenode().has_acceptneighbour() ) {
+                    response->mutable_remotenode()->mutable_acceptneighbour()->set_remoteipaddress(
+                        NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
+                }
+                else if ( response->remotenode().has_renewneighbour() ) {
+                    response->mutable_remotenode()->mutable_renewneighbour()->set_remoteipaddress(
+                        NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
+                }
+            }
+        }
+        
+        handlerSuccessful = true;
+    }
+    catch (LocationNetworkError &lnex)
+    {
+        // TODO This warning is also given when the connection was simply closed by the remote peer
+        //      thus no request can be read. This case should be distinguished and logged with a lower level.
+        LOG(WARNING) << "Failed to serve request with code "
+            << static_cast<uint32_t>( lnex.code() ) << ": " << lnex.what();
+        response.reset( new iop::locnet::Response() );
+        response->set_status( Converter::ToProtoBuf( lnex.code() ) );
+        response->set_details( lnex.what() );
+    }
+    catch (exception &ex)
+    {
+        LOG(WARNING) << "Failed to serve request: " << ex.what();
+        response.reset( new iop::locnet::Response() );
+        response->set_status(iop::locnet::Status::ERROR_INTERNAL);
+        response->set_details( ex.what() );
+    }
+    
+    if (sendResponse)
+    {
+        LOG(TRACE) << "Sending response";
+        unique_ptr<iop::locnet::Message> responseMsg( new iop::locnet::Message() );
+        responseMsg->set_allocated_response( response.release() );
+        responseMsg->set_id(messageId);
+        
+        session->messageChannel()->SendMessage( move(responseMsg), [] {} );
+    }
+    
+    if (handlerSuccessful)
+    {
+        // Schedule next message loop iteration
+        session->messageChannel()->ReceiveMessage( [session, dispatcher]
+            ( unique_ptr<iop::locnet::Message> &&incomingMessage )
+            { AsyncServeMessageHandler( move(incomingMessage), session, dispatcher); } );
+    }
+    else { LOG(INFO) << "Server message loop ended for session " << session->id(); }
 }
 
 
 
-
-ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socket) :
-    _socket(socket), _id(), _remoteAddress(), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
+AsyncProtoBufTcpChannel::AsyncProtoBufTcpChannel(shared_ptr<tcp::socket> socket) :
+    _socket(socket), _id(), _remoteAddress(), _nextRequestId(1) // , _socketWriteMutex(), _socketReadMutex()
 {
     if (! _socket)
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No socket instantiated"); }
@@ -290,14 +441,15 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(shared_ptr<tcp::socket> socke
 }
 
 
-ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkEndpoint &endpoint) :
-    _socket( new tcp::socket( IoService::Instance().Server() ) ),
+AsyncProtoBufTcpChannel::AsyncProtoBufTcpChannel(const NetworkEndpoint &endpoint) :
+    _socket( new tcp::socket( Reactor::Instance().AsioService() ) ),
     _id( endpoint.address() + ":" + to_string( endpoint.port() ) ),
-    _remoteAddress( endpoint.address() ), _socketWriteMutex(), _nextRequestId(1) // , _socketReadMutex()
+    _remoteAddress( endpoint.address() ), _nextRequestId(1) // , _socketWriteMutex(), _socketReadMutex()
 {
-    tcp::resolver resolver( IoService::Instance().Server() );
+    tcp::resolver resolver( Reactor::Instance().AsioService() );
     tcp::resolver::query query( endpoint.address(), to_string( endpoint.port() ) );
     tcp::resolver::iterator addressIter = resolver.resolve(query);
+    // TODO transform this to async to make every I/O call async also for client connections
     try { asio::connect(*_socket, addressIter); }
     catch (exception &ex) { throw LocationNetworkError(ErrorCode::ERROR_CONNECTION, "Failed connecting to " +
         endpoint.address() + ":" + to_string( endpoint.port() ) + " with error: " + ex.what() ); }
@@ -306,16 +458,17 @@ ProtoBufTcpStreamSession::ProtoBufTcpStreamSession(const NetworkEndpoint &endpoi
     //_stream.expires_after( GetNormalStreamExpirationPeriod() );
 }
 
-ProtoBufTcpStreamSession::~ProtoBufTcpStreamSession()
+AsyncProtoBufTcpChannel::~AsyncProtoBufTcpChannel()
 {
-    LOG(DEBUG) << "Session " << id() << " closed";
+    _socket->close();
+    LOG(DEBUG) << "Connection closed to " << id();
 }
 
 
-const SessionId& ProtoBufTcpStreamSession::id() const
+const SessionId& AsyncProtoBufTcpChannel::id() const
     { return _id; }
 
-const Address& ProtoBufTcpStreamSession::remoteAddress() const
+const Address& AsyncProtoBufTcpChannel::remoteAddress() const
     { return _remoteAddress; }
 
 
@@ -327,103 +480,278 @@ uint32_t GetMessageSizeFromHeader(const char *bytes)
 }
 
 
-
-iop::locnet::MessageWithHeader* ProtoBufTcpStreamSession::ReceiveMessage()
+void AsyncProtoBufTcpChannel::ReceiveMessage( function<ReceivedMessageCallback> callback )
 {
     //lock_guard<mutex> readGuard(_socketReadMutex);
+    //LOG(TRACE) << "Receive message called for connection " << id();
     
     if ( ! _socket->is_open() )
-        { throw LocationNetworkError(ErrorCode::ERROR_BAD_STATE,
-            "Session " + id() + " connection is already closed, cannot read message"); }
-        
+    {
+        LOG(DEBUG) << "Connection to " << id() << " is already closed, cannot read message";
+        callback( unique_ptr<iop::locnet::Message>() );
+    }
+
     // Allocate a buffer for the message header and read it
-    string messageBytes(MessageHeaderSize, 0);
-    asio::read( *_socket, asio::buffer(messageBytes) );
+    unique_ptr<string> buffer( new string(MessageHeaderSize, 0) );
+    shared_ptr<IAsyncNetwork> bufferIO = IAsyncNetwork::Create( _socket, move(buffer) );
+    
+    string connectionId = id();
+    shared_ptr<tcp::socket> socket = _socket;
+    bufferIO->ReadBuffer( [socket, callback, connectionId] ( unique_ptr<string> &&transferredBuffer )
+    {
+        unique_ptr<string> buffer( move(transferredBuffer) );
+        if ( ! buffer || buffer->size() < MessageHeaderSize )
+        {
+            LOG(DEBUG) << "Failed to read message header";
+            callback( unique_ptr<iop::locnet::Message>() );
+            return;
+        }
 
-    // Extract message size from the header to know how many bytes to read
-    uint32_t bodySize = GetMessageSizeFromHeader( &messageBytes[MessageSizeOffset] );
-    if (bodySize > MaxMessageSize)
-        { throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST,
-            "Session " + id() + " message size is over limit: " + to_string(bodySize) ); }
-    
-    // Extend buffer to fit remaining message size and read it
-    messageBytes.resize(MessageHeaderSize + bodySize, 0);
-    asio::read( *_socket, asio::buffer(&messageBytes[0] + MessageHeaderSize, bodySize) );
+        // Extract message size from the header to know how many bytes to read
+        uint32_t bodySize = GetMessageSizeFromHeader( &buffer->operator[](MessageSizeOffset) );
+        if (bodySize > MaxMessageSize)
+        {
+            LOG(DEBUG) << "Message size is over limit: " << bodySize;
+            callback( unique_ptr<iop::locnet::Message>() );
+            return;
+        }
+        
+        // Extend buffer to fit remaining message size and read it
+        buffer->resize(MessageHeaderSize + bodySize, 0);
+        
+        shared_ptr<IAsyncNetwork> bufferIO = IAsyncNetwork::Create( socket, move(buffer), MessageHeaderSize );
+        bufferIO->ReadBuffer( [callback, connectionId] ( unique_ptr<string> &&buffer )
+        {
+            if (! buffer)
+            {
+                LOG(DEBUG) << "Received empty buffer due to an error, ignore it";
+                return;
+            }
+            
+            // Deserialize message from receive buffer, avoid leaks for failing cases with RAII-based unique_ptr
+            unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );
+            message->ParseFromString(*buffer);
+            
+            string msgDebugStr;
+            google::protobuf::TextFormat::PrintToString(*message, &msgDebugStr);
+            LOG(TRACE) << "Connection " << connectionId << " received message " << msgDebugStr;
+            
+            callback( unique_ptr<iop::locnet::Message>( message->release_body() ) );
+        } );
+    } );
+}
 
-    // Deserialize message from receive buffer, avoid leaks for failing cases with RAII-based unique_ptr
-    unique_ptr<iop::locnet::MessageWithHeader> message( new iop::locnet::MessageWithHeader() );
-    message->ParseFromString(messageBytes);
+
+future< unique_ptr<iop::locnet::Message> > AsyncProtoBufTcpChannel::ReceiveMessage(asio::use_future_t<>)
+{
+    //lock_guard<mutex> readGuard(_socketReadMutex);
+    //LOG(TRACE) << "Receive message called for connection " << id();
     
-    string msgDebugStr;
-    google::protobuf::TextFormat::PrintToString(*message, &msgDebugStr);
-    LOG(TRACE) << "Session " << id() << " received message " << msgDebugStr;
+    shared_ptr< promise< unique_ptr<iop::locnet::Message> > > result(
+        new promise< unique_ptr<iop::locnet::Message> >() );
+
+    ReceiveMessage( [result] ( unique_ptr<iop::locnet::Message> &&receivedMessage )
+        { result->set_value( move(receivedMessage) ); } );
     
-    return message.release();
+    return result->get_future();
 }
 
 
 
-void ProtoBufTcpStreamSession::SendMessage(iop::locnet::MessageWithHeader& message)
+void AsyncProtoBufTcpChannel::SendMessage( unique_ptr<iop::locnet::Message> &&messagePtr,
+                                           function<SentMessageCallback> callback )
 {
-    lock_guard<mutex> writeGuard(_socketWriteMutex);
+    if ( ! _socket->is_open() )
+        { throw LocationNetworkError(ErrorCode::ERROR_BAD_STATE,
+            "Session " + id() + " socket is already closed, cannot write message"); }
     
-    if ( message.has_body() && message.body().has_request() )
+    if (! messagePtr)
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Got empty message argument to send"); }
+    if ( messagePtr->has_request() )
     {
-        message.mutable_body()->set_id(_nextRequestId);
+        messagePtr->set_id(_nextRequestId);
         ++_nextRequestId;
     }
     
+    iop::locnet::MessageWithHeader message;
+    message.set_allocated_body( messagePtr.release() );
+    
     message.set_header(1);
     message.set_header( message.ByteSize() - MessageHeaderSize );
-    
-    asio::write( *_socket, asio::buffer( message.SerializeAsString() ) );
-    
+
     string msgDebugStr;
     google::protobuf::TextFormat::PrintToString(message, &msgDebugStr);
-    LOG(TRACE) << "Session " << id() << " sent message " << msgDebugStr;
+    LOG(TRACE) << "Connection " << id() << " sending message " << msgDebugStr;
+
+    unique_ptr<string> serializedMessage( new string( message.SerializeAsString() ) );
+    shared_ptr<IAsyncNetwork> bufferIO = IAsyncNetwork::Create( _socket, move(serializedMessage) );
+    bufferIO->WriteBuffer( [callback] ( unique_ptr<string> && ) { callback(); } );
 }
 
 
-// void ProtoBufTcpStreamSession::KeepAlive()
-// {
-//     _stream.expires_after(KeepAliveStreamExpirationPeriod);
-// }
-// // TODO CHECK This doesn't really seem to work as on "normal" std::streamss
-// bool ProtoBufTcpStreamSession::IsAlive() const
-//     { return _stream.good(); }
-// 
-// void ProtoBufTcpStreamSession::Close()
-//     { _stream.close(); }
 
-
-
-
-ProtoBufRequestNetworkDispatcher::ProtoBufRequestNetworkDispatcher(shared_ptr<IProtoBufNetworkSession> session) :
-    _session(session) {}
-
-    
-
-shared_ptr<iop::locnet::MessageWithHeader> RequestToMessage(const iop::locnet::Request &request)
+future<void> AsyncProtoBufTcpChannel::SendMessage(unique_ptr<iop::locnet::Message> &&messagePtr, asio::use_future_t<>)
 {
-    iop::locnet::Request *clonedReq = new iop::locnet::Request(request);
-    clonedReq->set_version({1,0,0});
-    
-    shared_ptr<iop::locnet::MessageWithHeader> reqMsg( new iop::locnet::MessageWithHeader() );
-    reqMsg->mutable_body()->set_allocated_request(clonedReq);
-    return reqMsg;
+    shared_ptr< promise<void> > result( new promise<void>() );
+    SendMessage( move(messagePtr), [result] { result->set_value(); } );
+    return result->get_future();
 }
 
 
-unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(const iop::locnet::Request& request)
+
+shared_ptr<ProtoBufClientSession> ProtoBufClientSession::Create(
+        std::shared_ptr<IProtoBufChannel> connection)
+    { return shared_ptr<ProtoBufClientSession>( new ProtoBufClientSession(connection) ); }
+
+ProtoBufClientSession::ProtoBufClientSession(shared_ptr<IProtoBufChannel> connection) :
+    _messageChannel(connection), _nextMessageId(1)
 {
-    shared_ptr<iop::locnet::MessageWithHeader> msgToSend( RequestToMessage(request) );
-    _session->SendMessage(*msgToSend);
-    unique_ptr<iop::locnet::MessageWithHeader> respMsg( _session->ReceiveMessage() );
-    if ( ! respMsg || ! respMsg->has_body() || ! respMsg->body().has_response() )
-        { throw LocationNetworkError(ErrorCode::ERROR_BAD_RESPONSE, "Got invalid response from remote node"); }
-        
-    unique_ptr<iop::locnet::Response> result(
-        new iop::locnet::Response( respMsg->body().response() ) );
+    if (_messageChannel == nullptr)
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No connection instantiated"); }
+}
+
+
+void ProtoBufClientSession::AsyncMessageLoopHandler(
+    weak_ptr<ProtoBufClientSession> sessionWeakRef, const string &sessionId,
+    std::function<IncomingRequestHandler> requestHandler )
+{
+    shared_ptr<ProtoBufClientSession> sessionPtr = sessionWeakRef.lock();
+    if (! sessionPtr) // Session has been closed and destroyed, stop
+    {
+        LOG(DEBUG) << "Session " << sessionId << " was closed, stopping message loop";
+        return;
+    }
+    
+    sessionPtr->_messageChannel->ReceiveMessage(
+        [sessionWeakRef, sessionId, requestHandler] ( unique_ptr<iop::locnet::Message> &&incomingMsg )
+    {
+        try
+        {
+            if (! incomingMsg)
+                { throw runtime_error("No message received"); }
+                
+            if ( incomingMsg->has_request() )
+            {
+                if (requestHandler)
+                    { requestHandler( move(incomingMsg) ); }
+            }
+            else
+            {
+                if ( ! incomingMsg->has_response() )
+                    { throw runtime_error("Response message is expected"); }
+                
+                shared_ptr<ProtoBufClientSession> sessionPtr = sessionWeakRef.lock();
+                if (! sessionPtr)
+                    { throw runtime_error("Session is closed for " + sessionId); }
+                
+                LOG(TRACE) << "Dispatching incoming response to request sender";
+                sessionPtr->ResponseArrived( move(incomingMsg) );
+            }
+            
+            Reactor::Instance().AsioService().post( [sessionWeakRef, sessionId, requestHandler]
+                { AsyncMessageLoopHandler(sessionWeakRef, sessionId, requestHandler); } );
+        }
+        catch (exception &ex)
+            { LOG(WARNING) << "Failed to dispatch response, stopping message loop: " << ex.what(); }
+    } );
+}
+
+
+void ProtoBufClientSession::StartMessageLoop( std::function<IncomingRequestHandler> requestHandler )
+{
+    shared_ptr<ProtoBufClientSession> session = shared_from_this();
+    string sessionId = session->id();
+    weak_ptr<ProtoBufClientSession> sessionWeakRef(session);
+    Reactor::Instance().AsioService().post( [sessionWeakRef, sessionId, requestHandler]
+        { AsyncMessageLoopHandler(sessionWeakRef, sessionId, requestHandler); } );
+}
+
+
+ProtoBufClientSession::~ProtoBufClientSession()
+{
+    // NOTE destruction of the promise<> values of the map will trigger sending a broken_promise exception to related future<> objects, no need to do this manually
+}
+
+
+const SessionId& ProtoBufClientSession::id() const
+    { return _messageChannel->id(); }
+
+shared_ptr<IProtoBufChannel> ProtoBufClientSession::messageChannel()
+    { return _messageChannel; }
+
+future< unique_ptr<iop::locnet::Response> > ProtoBufClientSession::SendRequest(
+    unique_ptr<iop::locnet::Message> &&requestMessage)
+{
+    if (! requestMessage->has_request() )
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Attempt to send non-request message"); }
+
+    unique_lock<mutex> pendingRequestGuard(_pendingRequestsMutex);
+    uint32_t messageId = _nextMessageId++;
+    auto emplaceResult = _pendingRequests.emplace(messageId, promise< unique_ptr<iop::locnet::Response> >());
+    if (! emplaceResult.second)
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to store pending request"); }
+    
+    auto result = emplaceResult.first->second.get_future();
+    pendingRequestGuard.unlock();
+    
+    requestMessage->set_id(messageId);
+    _messageChannel->SendMessage( move(requestMessage), [] {} );
+    
+    return result;
+}
+
+
+void ProtoBufClientSession::ResponseArrived(unique_ptr<iop::locnet::Message> &&responseMessage)
+{
+    if (! responseMessage)
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Implementation error: received null response"); }
+    if (! responseMessage->has_response() )
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Attempt to receive non-response message"); }
+    
+    LOG(TRACE) << "Looking up request for response message id " << responseMessage->id()
+               << " between " << _pendingRequests.size() << " pending requests";
+
+    lock_guard<mutex> pendingRequestGuard(_pendingRequestsMutex);
+    auto requestIter = _pendingRequests.find( responseMessage->id() );
+    if ( requestIter == _pendingRequests.end() )
+        { throw LocationNetworkError( ErrorCode::ERROR_PROTOCOL_VIOLATION, "No request found for message id " + to_string( responseMessage->id() ) ); }
+    
+    LOG(TRACE) << "Found request for message id " << responseMessage->id() << ", notifying sender";
+    
+    requestIter->second.set_value( unique_ptr<iop::locnet::Response>(
+        responseMessage->release_response() ) );
+    _pendingRequests.erase(requestIter);
+    
+    LOG(TRACE) << "Response was dispatched, " << _pendingRequests.size() << " pending requests remain";
+}
+
+
+
+
+NetworkDispatcher::NetworkDispatcher(
+    shared_ptr<ProtoBufClientSession> session) : _session(session) {}
+
+    
+
+unique_ptr<iop::locnet::Message> RequestToMessage(unique_ptr<iop::locnet::Request> &&request)
+{
+    request->set_version({1,0,0});
+    unique_ptr<iop::locnet::Message> message( new iop::locnet::Message() );
+    message->set_allocated_request( request.release() );
+    return message;
+}
+
+
+unique_ptr<iop::locnet::Response> NetworkDispatcher::Dispatch(unique_ptr<iop::locnet::Request> &&request)
+{
+    unique_ptr<iop::locnet::Message> requestMessage( RequestToMessage( move(request) ) );
+    future< unique_ptr<iop::locnet::Response> > futureResponse = _session->SendRequest( move(requestMessage) );
+    if ( futureResponse.wait_for( GetRequestExpirationPeriod() ) != future_status::ready )
+    {
+        LOG(WARNING) << "Session " << _session->id() << " received no response, timed out";
+        throw LocationNetworkError( ErrorCode::ERROR_BAD_RESPONSE, "Timeout waiting for response of dispatched request" );
+    }
+    unique_ptr<iop::locnet::Response> result( futureResponse.get() );
     if ( result && result->status() != iop::locnet::Status::STATUS_OK )
     {
         LOG(WARNING) << "Session " << _session->id() << " received response code " << result->status()
@@ -435,19 +763,21 @@ unique_ptr<iop::locnet::Response> ProtoBufRequestNetworkDispatcher::Dispatch(con
 
 
 
-void TcpStreamConnectionFactory::detectedIpCallback(function<void(const Address&)> detectedIpCallback)
+void TcpNodeConnectionFactory::detectedIpCallback(function<void(const Address&)> detectedIpCallback)
 {
     _detectedIpCallback = detectedIpCallback;
     LOG(DEBUG) << "Callback for detecting external IP address is set " << static_cast<bool>(_detectedIpCallback); 
 }
 
 
-shared_ptr<INodeMethods> TcpStreamConnectionFactory::ConnectTo(const NetworkEndpoint& endpoint)
+shared_ptr<INodeMethods> TcpNodeConnectionFactory::ConnectTo(const NetworkEndpoint& endpoint)
 {
     LOG(DEBUG) << "Connecting to " << endpoint;
-    shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(endpoint) );
-    shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
+    shared_ptr<IProtoBufChannel> connection( new AsyncProtoBufTcpChannel(endpoint) );
+    shared_ptr<ProtoBufClientSession> session( ProtoBufClientSession::Create(connection) );
+    shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(session) );
     shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher, _detectedIpCallback) );
+    session->StartMessageLoop();
     return result;
 }
 
@@ -457,47 +787,46 @@ LocalServiceRequestDispatcherFactory::LocalServiceRequestDispatcherFactory(
     shared_ptr<ILocalServiceMethods> iLocal) : _iLocal(iLocal) {}
 
 
-shared_ptr<IProtoBufRequestDispatcher> LocalServiceRequestDispatcherFactory::Create(
-    shared_ptr<IProtoBufNetworkSession> session )
+shared_ptr<IBlockingRequestDispatcher> LocalServiceRequestDispatcherFactory::Create(
+    shared_ptr<ProtoBufClientSession> session )
 {
     shared_ptr<IChangeListenerFactory> listenerFactory(
-        new ProtoBufTcpStreamChangeListenerFactory(session) );
-    return shared_ptr<IProtoBufRequestDispatcher>(
+        new TcpChangeListenerFactory(session) );
+    return shared_ptr<IBlockingRequestDispatcher>(
         new IncomingLocalServiceRequestDispatcher(_iLocal, listenerFactory) );
 }
 
 
 
-StaticDispatcherFactory::StaticDispatcherFactory(shared_ptr<IProtoBufRequestDispatcher> dispatcher) :
+StaticBlockingDispatcherFactory::StaticBlockingDispatcherFactory(shared_ptr<IBlockingRequestDispatcher> dispatcher) :
     _dispatcher(dispatcher) {}
 
-shared_ptr<IProtoBufRequestDispatcher> StaticDispatcherFactory::Create(shared_ptr<IProtoBufNetworkSession>)
+shared_ptr<IBlockingRequestDispatcher> StaticBlockingDispatcherFactory::Create(shared_ptr<ProtoBufClientSession>)
     { return _dispatcher; }
 
 
 
-CombinedRequestDispatcherFactory::CombinedRequestDispatcherFactory(shared_ptr<Node> node) :
+CombinedBlockingRequestDispatcherFactory::CombinedBlockingRequestDispatcherFactory(shared_ptr<Node> node) :
     _node(node) {}
 
-shared_ptr<IProtoBufRequestDispatcher> CombinedRequestDispatcherFactory::Create(
-    shared_ptr<IProtoBufNetworkSession> session)
+shared_ptr<IBlockingRequestDispatcher> CombinedBlockingRequestDispatcherFactory::Create(
+    shared_ptr<ProtoBufClientSession> session)
 {
     shared_ptr<IChangeListenerFactory> listenerFactory(
-        new ProtoBufTcpStreamChangeListenerFactory(session) );
-    return shared_ptr<IProtoBufRequestDispatcher>(
+        new TcpChangeListenerFactory(session) );
+    return shared_ptr<IBlockingRequestDispatcher>(
         new IncomingRequestDispatcher(_node, listenerFactory) );
 }
 
 
 
 
-ProtoBufTcpStreamChangeListenerFactory::ProtoBufTcpStreamChangeListenerFactory(
-        shared_ptr<IProtoBufNetworkSession> session) :
+TcpChangeListenerFactory::TcpChangeListenerFactory(shared_ptr<ProtoBufClientSession> session) :
     _session(session) {}
 
 
 
-shared_ptr<IChangeListener> ProtoBufTcpStreamChangeListenerFactory::Create(
+shared_ptr<IChangeListener> TcpChangeListenerFactory::Create(
     shared_ptr<ILocalServiceMethods> localService)
 {
 //     shared_ptr<IProtoBufRequestDispatcher> dispatcher(
@@ -505,13 +834,13 @@ shared_ptr<IChangeListener> ProtoBufTcpStreamChangeListenerFactory::Create(
 //     return shared_ptr<IChangeListener>(
 //         new ProtoBufTcpStreamChangeListener(_session, localService, dispatcher) );
     return shared_ptr<IChangeListener>(
-        new ProtoBufTcpStreamChangeListener(_session, localService) );
+        new NeighbourChangeProtoBufNotifier(_session, localService) );
 }
 
 
 
-ProtoBufTcpStreamChangeListener::ProtoBufTcpStreamChangeListener(
-        shared_ptr<IProtoBufNetworkSession> session,
+NeighbourChangeProtoBufNotifier::NeighbourChangeProtoBufNotifier(
+        shared_ptr<ProtoBufClientSession> session,
         shared_ptr<ILocalServiceMethods> localService ) :
         // shared_ptr<IProtoBufRequestDispatcher> dispatcher ) :
     _sessionId(), _localService(localService), _session(session) //, _dispatcher(dispatcher)
@@ -520,17 +849,17 @@ ProtoBufTcpStreamChangeListener::ProtoBufTcpStreamChangeListener(
 }
 
 
-ProtoBufTcpStreamChangeListener::~ProtoBufTcpStreamChangeListener()
+NeighbourChangeProtoBufNotifier::~NeighbourChangeProtoBufNotifier()
 {
     Deregister();
     LOG(DEBUG) << "ChangeListener for session " << _sessionId << " destroyed";
 }
 
-void ProtoBufTcpStreamChangeListener::OnRegistered()
+void NeighbourChangeProtoBufNotifier::OnRegistered()
     { _sessionId = _session->id(); }
 
 
-void ProtoBufTcpStreamChangeListener::Deregister()
+void NeighbourChangeProtoBufNotifier::Deregister()
 {
     // Remove only after successful registration of this instance, needed to protect
     // from deregistering another instance after failed (e.g. repeated) addlistener request for same session
@@ -544,30 +873,25 @@ void ProtoBufTcpStreamChangeListener::Deregister()
 
 
 
-const SessionId& ProtoBufTcpStreamChangeListener::sessionId() const
+const SessionId& NeighbourChangeProtoBufNotifier::sessionId() const
     { return _sessionId; }
 
 
 
-void ProtoBufTcpStreamChangeListener::AddedNode(const NodeDbEntry& node)
+void NeighbourChangeProtoBufNotifier::AddedNode(const NodeDbEntry& node)
 {
     if ( node.relationType() == NodeRelationType::Neighbour )
     {
         try
         {
-            iop::locnet::Request req;
+            unique_ptr<iop::locnet::Request> req( new iop::locnet::Request() );
             iop::locnet::NeighbourhoodChange *change =
-                req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
+                req->mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
             iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
             Converter::FillProtoBuf(info, node);
             
-            shared_ptr<IProtoBufNetworkSession> session(_session);
-            shared_ptr<iop::locnet::MessageWithHeader> msgToSend( RequestToMessage(req) );
-            // TODO this is a potentially long lasting operation that should not block the same queue
-            //      as socket accepts and other fast operations. Thus notifications should be done in
-            //      the ClientReactor but it's somehow blocked for some strange reason.
-            IoService::Instance().Server().post(
-                [session, msgToSend] { session->SendMessage(*msgToSend); } );
+            unique_ptr<iop::locnet::Message> msgToSend( RequestToMessage( move(req) ) );
+            _session->SendRequest( move(msgToSend) );
         }
         catch (exception &ex)
         {
@@ -578,22 +902,20 @@ void ProtoBufTcpStreamChangeListener::AddedNode(const NodeDbEntry& node)
 }
 
 
-void ProtoBufTcpStreamChangeListener::UpdatedNode(const NodeDbEntry& node)
+void NeighbourChangeProtoBufNotifier::UpdatedNode(const NodeDbEntry& node)
 {
     if ( node.relationType() == NodeRelationType::Neighbour )
     {
         try
         {
-            iop::locnet::Request req;
+            unique_ptr<iop::locnet::Request> req( new iop::locnet::Request() );
             iop::locnet::NeighbourhoodChange *change =
-                req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
+                req->mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
             iop::locnet::NodeInfo *info = change->mutable_updatednodeinfo();
             Converter::FillProtoBuf(info, node);
             
-            shared_ptr<IProtoBufNetworkSession> session(_session);
-            shared_ptr<iop::locnet::MessageWithHeader> msgToSend( RequestToMessage(req) );
-            IoService::Instance().Server().post(
-                [session, msgToSend] { session->SendMessage(*msgToSend); } );
+            unique_ptr<iop::locnet::Message> msgToSend( RequestToMessage( move(req) ) );
+            _session->SendRequest( move(msgToSend) );
         }
         catch (exception &ex)
         {
@@ -604,21 +926,19 @@ void ProtoBufTcpStreamChangeListener::UpdatedNode(const NodeDbEntry& node)
 }
 
 
-void ProtoBufTcpStreamChangeListener::RemovedNode(const NodeDbEntry& node)
+void NeighbourChangeProtoBufNotifier::RemovedNode(const NodeDbEntry& node)
 {
     if ( node.relationType() == NodeRelationType::Neighbour )
     {
         try
         {
-            iop::locnet::Request req;
+            unique_ptr<iop::locnet::Request> req( new iop::locnet::Request() );
             iop::locnet::NeighbourhoodChange *change =
-                req.mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
+                req->mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
             change->set_removednodeid( node.id() );
-         
-            shared_ptr<IProtoBufNetworkSession> session(_session);
-            shared_ptr<iop::locnet::MessageWithHeader> msgToSend( RequestToMessage(req) );
-            IoService::Instance().Server().post(
-                [session, msgToSend] { session->SendMessage(*msgToSend); } );
+        
+            unique_ptr<iop::locnet::Message> msgToSend( RequestToMessage( move(req) ) );
+            _session->SendRequest( move(msgToSend) );
         }
         catch (exception &ex)
         {

@@ -41,80 +41,90 @@ int main(int argc, const char* const argv[])
         
         const NetworkEndpoint nodeContact(host, port);
         LOG(INFO) << "Connecting to server " << nodeContact;
-        shared_ptr<IProtoBufNetworkSession> session( new ProtoBufTcpStreamSession(nodeContact) );
-        shared_ptr<IProtoBufRequestDispatcher> dispatcher( new ProtoBufRequestNetworkDispatcher(session) );
- 
-        // Test listening for neighbourhood notifications
-        thread msgThread( [session, dispatcher]
+        shared_ptr<IProtoBufChannel> channel( new AsyncProtoBufTcpChannel(nodeContact) );
+        shared_ptr<ProtoBufClientSession> session( ProtoBufClientSession::Create(channel) );
+        
+        uint32_t notificationsReceived = 0;
+        session->StartMessageLoop( [&notificationsReceived, channel, session]
+            ( unique_ptr<iop::locnet::Message> &&requestMsg )
         {
-            try
+            if ( ! requestMsg ||
+                 ! requestMsg->has_request() ||
+                 ! requestMsg->request().has_localservice() ||
+                 ! requestMsg->request().localservice().has_neighbourhoodchanged() )
             {
-                LOG(INFO) << "Sending registerservice request";
-                shared_ptr<iop::locnet::Request> registerRequest( new iop::locnet::Request() );
-                registerRequest->mutable_localservice()->mutable_registerservice()->set_allocated_service(
-                    Converter::ToProtoBuf( ServiceInfo(ServiceType::Profile, 16999, "ProfileServerId") ) );
-                unique_ptr<iop::locnet::Response> registerResponse = dispatcher->Dispatch(*registerRequest);
-                
-                uint32_t requestsSent = 0;
-                while (! ShutdownRequested && requestsSent < 3)
-                {
-                    LOG(INFO) << "Sending getneighbournodes request";
-                    shared_ptr<iop::locnet::Request> neighbourhoodRequest( new iop::locnet::Request() );
-                    neighbourhoodRequest->mutable_localservice()->mutable_getneighbournodes()->set_keepaliveandsendupdates(true);
-                    unique_ptr<iop::locnet::Response> neighbourhoodResponse = dispatcher->Dispatch(*neighbourhoodRequest);
-                    if ( ! neighbourhoodResponse->has_localservice() ||
-                         ! neighbourhoodResponse->localservice().has_getneighbournodes() )
-                    {
-                        LOG(ERROR) << "Received unexpected response";
-                        break;
-                    }
-                    LOG(INFO) << "Received getneighbournodes response";
-                    ++requestsSent;
-                }
-                
-                uint32_t notificationsReceived = 0;
-                while (! ShutdownRequested && notificationsReceived < 2)
-                {
-                    LOG(INFO) << "Reading change notification";
-                    unique_ptr<iop::locnet::MessageWithHeader> changeNote( session->ReceiveMessage() );
-                    if (! changeNote)
-                    {
-                        LOG(ERROR) << "Received empty message";
-                        break;
-                    }
-                    if ( ! changeNote->has_body() || ! changeNote->body().has_request() ||
-                         ! changeNote->body().request().has_localservice() ||
-                         ! changeNote->body().request().localservice().has_neighbourhoodchanged() )
-                    {
-                        LOG(ERROR) << "Received unexpected message";
-                        break;
-                    }
-                    
-                    ++notificationsReceived;
-                    LOG(INFO) << "Sending acknowledgement";
-                    iop::locnet::MessageWithHeader changeAckn;
-                    changeAckn.mutable_body()->mutable_response()->mutable_localservice()->mutable_neighbourhoodupdated();
-                    session->SendMessage(changeAckn);
-                }
-                
+                LOG(ERROR) << "Received unexpected request";
+                return;
+            }
+            
+//             const iop::locnet::NeighbourhoodChangedNotificationRequest &changeNote =
+//                 requestMsg->request().localservice().neighbourhoodchanged();
+            
+            ++notificationsReceived;
+            
+            unique_ptr<iop::locnet::Message> changeAckn( new iop::locnet::Message() );
+            changeAckn->set_id( requestMsg->id() );
+            changeAckn->mutable_response()->mutable_localservice()->mutable_neighbourhoodupdated();
+            LOG(INFO) << "Sending acknowledgement";
+            channel->SendMessage( move(changeAckn), [] {} );
+            LOG(INFO) << "Sent acknowledgement";
+
+            if (notificationsReceived == 2)
+            {
                 LOG(INFO) << "Sending deregisterservice request";
-                shared_ptr<iop::locnet::Request> deregisterRequest( new iop::locnet::Request() );
-                deregisterRequest->mutable_localservice()->mutable_deregisterservice()->set_servicetype(
+                unique_ptr<iop::locnet::Message> deregisterRequest( new iop::locnet::Message() );
+                deregisterRequest->mutable_request()->set_version({1,0,0});
+                deregisterRequest->mutable_request()->mutable_localservice()->mutable_deregisterservice()->set_servicetype(
                     Converter::ToProtoBuf(ServiceType::Profile) );
-                unique_ptr<iop::locnet::Response> deregisterResponse = dispatcher->Dispatch(*deregisterRequest);
+                session->SendRequest( move(deregisterRequest) );
+                
+                LOG(INFO) << "Shutting down test";
+                signalHandler(SIGINT);
             }
-            catch (exception &ex)
-            {
-                LOG(ERROR) << "Error: " << ex.what();
-            }
-            LOG(INFO) << "Stopped reading notifications";
-            ShutdownRequested = true;
         } );
-        msgThread.detach();
-        
-        while (! ShutdownRequested)
-            { this_thread::sleep_for( chrono::milliseconds(50) ); }
-        
+         
+        thread reactorThread( []
+        {
+            while (! ShutdownRequested)
+            {
+                Reactor::Instance().AsioService().run_one();
+                if ( Reactor::Instance().AsioService().stopped() )
+                    { Reactor::Instance().AsioService().reset(); }
+            }
+        } );
+ 
+        try
+        {
+            shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(session) );
+            LOG(INFO) << "Sending registerservice request";
+            unique_ptr<iop::locnet::Request> registerRequest( new iop::locnet::Request() );
+            registerRequest->mutable_localservice()->mutable_registerservice()->set_allocated_service(
+                Converter::ToProtoBuf( ServiceInfo(ServiceType::Profile, 16999, "ProfileServerId") ) );
+            unique_ptr<iop::locnet::Response> registerResponse = dispatcher->Dispatch( move(registerRequest) );
+            
+            uint32_t requestsSent = 0;
+            while (! ShutdownRequested && requestsSent < 3)
+            {
+                LOG(INFO) << "Sending getneighbournodes request";
+                unique_ptr<iop::locnet::Request> neighbourhoodRequest( new iop::locnet::Request() );
+                neighbourhoodRequest->mutable_localservice()->mutable_getneighbournodes()->set_keepaliveandsendupdates(true);
+                unique_ptr<iop::locnet::Response> neighbourhoodResponse = dispatcher->Dispatch( move(neighbourhoodRequest) );
+                if ( ! neighbourhoodResponse->has_localservice() ||
+                        ! neighbourhoodResponse->localservice().has_getneighbournodes() )
+                {
+                    LOG(ERROR) << "Received unexpected response";
+                    break;
+                }
+                LOG(INFO) << "Received getneighbournodes response";
+                ++requestsSent;
+            }
+        }
+        catch (exception &ex)
+        {
+            LOG(ERROR) << "Error: " << ex.what();
+        }
+
+        reactorThread.join();
         return 0;
     }
     catch (exception &e)

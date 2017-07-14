@@ -87,11 +87,11 @@ public:
 
 // Factory interface to return callable node methods for potentially remote nodes,
 // hiding away the exact way and complexity of communication.
-class INodeConnectionFactory
+class INodeProxyFactory
 {
 public:
     
-    virtual ~INodeConnectionFactory() {}
+    virtual ~INodeProxyFactory() {}
     
     virtual std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &endpoint) = 0;
 };
@@ -99,17 +99,18 @@ public:
 
 
 // Implementation of all provided interfaces in a single class
-class Node : public ILocalServiceMethods, public IClientMethods, public INodeMethods
+class Node : public ILocalServiceMethods, public IClientMethods, public INodeMethods,
+             public std::enable_shared_from_this<Node>
 {
     static std::random_device _randomDevice;
     
-    std::shared_ptr<ISpatialDatabase>       _spatialDb;
-    mutable std::shared_ptr<INodeConnectionFactory> _connectionFactory;
+    std::shared_ptr<ISpatialDatabase>          _spatialDb;
+    mutable std::shared_ptr<INodeProxyFactory> _proxyFactory;
     
     
     std::shared_ptr<INodeMethods> SafeConnectTo(const NetworkEndpoint &endpoint) const;
     bool SafeStoreNode( const NodeDbEntry &entry,
-        std::shared_ptr<INodeMethods> nodeConnection = std::shared_ptr<INodeMethods>() );
+        std::shared_ptr<INodeMethods> nodeProxy = std::shared_ptr<INodeMethods>() );
     
     bool InitializeWorld(const std::vector<NetworkEndpoint> &seedNodes);
     bool InitializeNeighbourhood(const std::vector<NetworkEndpoint> &seedNodes);
@@ -118,11 +119,14 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     bool BubbleOverlaps(const GpsLocation &newNodeLocation,
                         const std::string &nodeIdToIgnore = "") const;
     
-public:
-    
     Node( std::shared_ptr<ISpatialDatabase> spatialDb,
-          std::shared_ptr<INodeConnectionFactory> connectionFactory );
+          std::shared_ptr<INodeProxyFactory> proxyFactory );
 
+public:
+
+    static std::shared_ptr<Node> Create( std::shared_ptr<ISpatialDatabase> spatialDb,
+                                         std::shared_ptr<INodeProxyFactory> proxyFactory );
+    
     void EnsureMapFilled();
     
     void DetectedExternalAddress(const Address &address);

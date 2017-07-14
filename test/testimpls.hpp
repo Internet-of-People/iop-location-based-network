@@ -70,7 +70,7 @@ public:
 
     
 
-class DummyNodeConnectionFactory: public INodeConnectionFactory
+class DummyNodeConnectionFactory: public INodeProxyFactory
 {
 public:
     

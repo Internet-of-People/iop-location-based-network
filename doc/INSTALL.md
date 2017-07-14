@@ -107,7 +107,7 @@ The project has multiple dependencies. Some of them are shipped with the sources
 others has to be installed independently.
 
 Some (mostly header-only) dependencies already included in directory `extlib`:
-- `asio` 1.11.0 standalone mode without Boost. Used for networking,
+- `asio` 1.10.8 standalone mode without Boost. Used for networking,
   [download here](http://think-async.com/Asio/Download).
   Note that this library is to be included in the C++ standard soon.
 - `easylogging++` 9.94.2, used for logging in the whole source,

@@ -3,10 +3,10 @@
 
 #include <functional>
 #include <memory>
-#include <thread>
 
 #define ASIO_STANDALONE
-#include <asio.hpp>
+#include "asio.hpp"
+#include "asio/use_future.hpp"
 
 #include "messaging.hpp"
 
@@ -16,126 +16,215 @@ namespace LocNet
 {
 
 
-// class ProActor
-// {
-//     static std::shared_ptr<ProActor> _instance;
-//     
-// protected:
-//     
-//     ProActor();
-//     ProActor(const IoService &other) = delete;
-//     ProActor& operator=(const IoService &other) = delete;
-//     
-// public:
-//     
-//     static ProActor& Instance();
-//     
-//     virtual void Shutdown() = 0;
-// };
 
-
-
-class IoService
+class Reactor
 {
-    static IoService _instance;
+    static Reactor _instance;
     
-    asio::io_service _serverIoService;
+    asio::io_service _asioService;
     
 protected:
     
-    IoService();
-    IoService(const IoService &other) = delete;
-    IoService& operator=(const IoService &other) = delete;
+    Reactor();
+    Reactor(const Reactor &other) = delete;
+    Reactor& operator=(const Reactor &other) = delete;
     
 public:
     
-    static IoService& Instance();
+    static Reactor& Instance();
 
     void Shutdown();
+    bool IsShutdown() const;
     
-    asio::io_service& Server();
+    asio::io_service& AsioService();
+};
+
+
+
+class IAsyncNetwork : public std::enable_shared_from_this<IAsyncNetwork>
+{
+    // TODO consider whether socket member should be weak_ptr or shared_ptr
+    std::weak_ptr<asio::ip::tcp::socket>    _socket;
+    std::unique_ptr<std::string>            _buffer;
+    size_t                                  _offset;
+
+    IAsyncNetwork( std::weak_ptr<asio::ip::tcp::socket> socket,
+                   std::unique_ptr<std::string> &&buffer, size_t offset );
+    
+    void AsyncReadCallback ( const asio::error_code &error, size_t bytesRead,
+        std::function< void ( std::unique_ptr<std::string> &&releasedBuffer ) > completionCallback );
+    void AsyncWriteCallback( const asio::error_code &error, size_t bytesWritten,
+        std::function< void ( std::unique_ptr<std::string> &&releasedBuffer ) > completionCallback );
+    
+public:
+    
+    static std::shared_ptr<IAsyncNetwork> Create(
+        std::weak_ptr<asio::ip::tcp::socket> socket,
+        std::unique_ptr<std::string> &&buffer, size_t offset = 0 );
+    
+    void ReadBuffer( std::function< void ( std::unique_ptr<std::string>&& ) > completionCallback );
+//    std::future< std::unique_ptr<std::string> > ReadBuffer(asio::use_future_t<>);
+    
+    void WriteBuffer( std::function< void ( std::unique_ptr<std::string>&& ) > completionCallback );
+//    std::future< std::unique_ptr<std::string> > WriteBuffer(asio::use_future_t<>);
 };
 
 
 
 // Abstract TCP server that accepts clients asynchronously on a specific port number
 // and has a customizable client accept callback to customize concrete provided service.
-class TcpServer
+class TcpServer: public std::enable_shared_from_this<TcpServer>
 {
 protected:
     
     asio::ip::tcp::acceptor _acceptor;
-    
-    virtual void AsyncAcceptHandler( std::shared_ptr<asio::ip::tcp::socket> socket,
-                                     const asio::error_code &ec ) = 0;
+
 public:
 
     TcpServer(TcpPort portNumber);
     virtual ~TcpServer();
+    
+    virtual void StartListening() = 0;
+    virtual void AsyncAcceptHandler( std::shared_ptr<asio::ip::tcp::socket> socket,
+                                     const asio::error_code &ec ) = 0;
 };
 
 
 
-// Interface of a network session, i.e. a client connection that allows
-// sending and receiving protobuf messages (either request or response).
-// TODO this would be more independent if would send/receive byte arrays,
-//      but receiving a message we have to be aware of the message header
-//      to know how many bytes to read, it cannot be determined in advance.
-class IProtoBufNetworkSession
+// Interface of an asynchronous channel that allows sending and receiving protobuf messages.
+// NOTE just messages, requests and responses are not distinguished here.
+class IProtoBufChannel
 {
 public:
- 
-    virtual ~IProtoBufNetworkSession() {}
+    
+    typedef void ReceivedMessageCallback( std::unique_ptr<iop::locnet::Message> &&receivedMessage );
+    typedef void SentMessageCallback();
+    
+    virtual ~IProtoBufChannel() {}
     
     virtual const SessionId& id() const = 0;
     virtual const Address& remoteAddress() const = 0;
     
-    virtual iop::locnet::MessageWithHeader* ReceiveMessage() = 0;
-    virtual void SendMessage(iop::locnet::MessageWithHeader &message) = 0;
+    virtual void ReceiveMessage( std::function<ReceivedMessageCallback> callback ) = 0;
+    virtual std::future< std::unique_ptr<iop::locnet::Message> > ReceiveMessage(asio::use_future_t<>) = 0;
+    
+    virtual void SendMessage( std::unique_ptr<iop::locnet::Message> &&message, std::function<SentMessageCallback> callback ) = 0;
+    virtual std::future<void> SendMessage(std::unique_ptr<iop::locnet::Message> &&message, asio::use_future_t<>) = 0;
+};
 
-// TODO Would be nice and more convenient to implement using these methods,
-//      but they do not seem to nicely fit ASIO
-//     virtual void KeepAlive() = 0;
-//     virtual bool IsAlive() const = 0;
-//     virtual void Close() = 0;
+
+
+// ProtoBuf message channel that sends messages through an async TCP network connection.
+class AsyncProtoBufTcpChannel : public IProtoBufChannel
+{
+    std::shared_ptr<asio::ip::tcp::socket>  _socket;
+    SessionId                               _id;
+    Address                                 _remoteAddress;
+    uint32_t                                _nextRequestId;
+    
+    //std::mutex                              _socketWriteMutex;
+    //std::mutex                              _socketReadMutex;
+
+public:
+
+    // Server connection to client with accepted socket
+    AsyncProtoBufTcpChannel(std::shared_ptr<asio::ip::tcp::socket> socket);
+    // Client connection to server, endpoint resolution to be done
+    AsyncProtoBufTcpChannel(const NetworkEndpoint &endpoint);
+    ~AsyncProtoBufTcpChannel();
+
+    const SessionId& id() const override;
+    const Address& remoteAddress() const override;
+    
+    void ReceiveMessage( std::function<ReceivedMessageCallback> callback ) override;
+    std::future< std::unique_ptr<iop::locnet::Message> > ReceiveMessage(asio::use_future_t<>) override;
+    void SendMessage( std::unique_ptr<iop::locnet::Message> &&message, std::function<SentMessageCallback> callback ) override;
+    std::future<void> SendMessage(std::unique_ptr<iop::locnet::Message> &&message, asio::use_future_t<>) override;
+};
+
+
+
+// TODO Maybe this should work not only for a specific connection/channel but generalized and
+//      the message loop could be served by a centralized multiplexer singleton.
+class ProtoBufClientSession : public std::enable_shared_from_this<ProtoBufClientSession>
+{
+public:
+    
+    typedef void IncomingRequestHandler( std::unique_ptr<iop::locnet::Message> &&incomingRequest );
+    
+private:
+    
+    std::shared_ptr<IProtoBufChannel> _messageChannel;
+    
+    uint32_t _nextMessageId;
+    std::unordered_map< uint32_t, std::promise< std::unique_ptr<iop::locnet::Response> > > _pendingRequests;
+    std::mutex _pendingRequestsMutex;
+
+    static void AsyncMessageLoopHandler( std::weak_ptr<ProtoBufClientSession> sessionWeakRef,
+                                         const std::string &sessionId,
+                                         std::function<IncomingRequestHandler> requestHandler );
+    
+    ProtoBufClientSession(std::shared_ptr<IProtoBufChannel> connection);
+    
+public:
+    
+    static std::shared_ptr<ProtoBufClientSession> Create(std::shared_ptr<IProtoBufChannel> connection);
+    
+    virtual ~ProtoBufClientSession();
+    
+    virtual const SessionId& id() const;
+    virtual std::shared_ptr<IProtoBufChannel> messageChannel();
+    
+    virtual void StartMessageLoop( std::function<IncomingRequestHandler> requestHandler = std::function<IncomingRequestHandler>() );
+    virtual std::future< std::unique_ptr<iop::locnet::Response> > SendRequest(
+        std::unique_ptr<iop::locnet::Message> &&requestMessage);
+    virtual void ResponseArrived( std::unique_ptr<iop::locnet::Message> &&responseMessage);
 };
 
 
 
 // Factory interface to create a dispatcher object for a session.
-// Implemented specifically for the keepalive feature, otherwise would not be needed.
-class IProtoBufRequestDispatcherFactory
+// Implemented specifically for the notify/keepalive feature, otherwise would not be needed.
+class IBlockingRequestDispatcherFactory
 {
 public:
     
-    virtual ~IProtoBufRequestDispatcherFactory() {}
+    virtual ~IBlockingRequestDispatcherFactory() {}
     
-    virtual std::shared_ptr<IProtoBufRequestDispatcher> Create(
-        std::shared_ptr<IProtoBufNetworkSession> session ) = 0;
+    virtual std::shared_ptr<IBlockingRequestDispatcher> Create(
+        std::shared_ptr<ProtoBufClientSession> session ) = 0;
 };
 
 
 
 // Tcp server implementation that serves protobuf requests for accepted clients.
-class ProtoBufDispatchingTcpServer : public TcpServer
+class DispatchingTcpServer : public TcpServer
 {
 protected:
     
-    std::shared_ptr<IProtoBufRequestDispatcherFactory> _dispatcherFactory;
+    std::shared_ptr<IBlockingRequestDispatcherFactory> _dispatcherFactory;
     
-    void AsyncAcceptHandler( std::shared_ptr<asio::ip::tcp::socket> socket,
-                             const asio::error_code &ec ) override;
+    DispatchingTcpServer( TcpPort portNumber,
+        std::shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory );
+
 public:
     
-    ProtoBufDispatchingTcpServer( TcpPort portNumber,
-        std::shared_ptr<IProtoBufRequestDispatcherFactory> dispatcherFactory );
+    static std::shared_ptr<DispatchingTcpServer> Create( TcpPort portNumber,
+        std::shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory );
+    
+    static void AsyncServeMessageHandler( std::unique_ptr<iop::locnet::Message> &&receivedMessage,
+                                          std::shared_ptr<ProtoBufClientSession> session,
+                                          std::shared_ptr<IBlockingRequestDispatcher> dispatcher );
+    void StartListening() override;
+    void AsyncAcceptHandler( std::shared_ptr<asio::ip::tcp::socket> socket,
+                             const asio::error_code &ec ) override;
 };
 
 
 
 // Request dispatcher to serve incoming requests from clients.
 // Implemented specifically for the keepalive feature.
-class LocalServiceRequestDispatcherFactory : public IProtoBufRequestDispatcherFactory
+class LocalServiceRequestDispatcherFactory : public IBlockingRequestDispatcherFactory
 {
     std::shared_ptr<ILocalServiceMethods> _iLocal;
     
@@ -143,96 +232,59 @@ public:
     
     LocalServiceRequestDispatcherFactory(std::shared_ptr<ILocalServiceMethods> iLocal);
     
-    std::shared_ptr<IProtoBufRequestDispatcher> Create(
-        std::shared_ptr<IProtoBufNetworkSession> session ) override;
+    std::shared_ptr<IBlockingRequestDispatcher> Create(
+        std::shared_ptr<ProtoBufClientSession> session ) override;
 };
 
 
 
 // Dispatcher factory that ignores the session and returns a simple dispatcher
-class StaticDispatcherFactory : public IProtoBufRequestDispatcherFactory
+class StaticBlockingDispatcherFactory : public IBlockingRequestDispatcherFactory
 {
-    std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
+    std::shared_ptr<IBlockingRequestDispatcher> _dispatcher;
     
 public:
     
-    StaticDispatcherFactory(std::shared_ptr<IProtoBufRequestDispatcher> dispatcher);
+    StaticBlockingDispatcherFactory(std::shared_ptr<IBlockingRequestDispatcher> dispatcher);
     
-    std::shared_ptr<IProtoBufRequestDispatcher> Create(
-        std::shared_ptr<IProtoBufNetworkSession> session ) override;
+    std::shared_ptr<IBlockingRequestDispatcher> Create(
+        std::shared_ptr<ProtoBufClientSession> session ) override;
 };
 
 
 
-class CombinedRequestDispatcherFactory : public IProtoBufRequestDispatcherFactory
+class CombinedBlockingRequestDispatcherFactory : public IBlockingRequestDispatcherFactory
 {
     std::shared_ptr<Node> _node;
     
 public:
     
-    CombinedRequestDispatcherFactory(std::shared_ptr<Node> node);
+    CombinedBlockingRequestDispatcherFactory(std::shared_ptr<Node> node);
     
-    std::shared_ptr<IProtoBufRequestDispatcher> Create(
-        std::shared_ptr<IProtoBufNetworkSession> session ) override;
-};
-
-
-// Network session that uses a blocking TCP stream for the easiest implementation.
-// TODO ideally would use async networking, but it's hard in C++
-//      to implement a simple (blocking) interface using async operations.
-//      Maybe boost stackful coroutines could be useful here, but we shouldn't depend on boost.
-class ProtoBufTcpStreamSession : public IProtoBufNetworkSession
-{
-    std::shared_ptr<asio::ip::tcp::socket>  _socket;
-    SessionId                               _id;
-    Address                                 _remoteAddress;
-    std::mutex                              _socketWriteMutex;
-    uint32_t                                _nextRequestId;
-    
-    // NOTE notification messages may be sent from different threads, but only the message loop reads them.
-    //      This still may be useful for debugging if we have any doubts about this statement being true.
-    //std::mutex                              _socketReadMutex;
-    
-public:
-
-    // Server connection to client with accepted socket
-    ProtoBufTcpStreamSession(std::shared_ptr<asio::ip::tcp::socket> socket);
-    // Client connection to server, endpoint resolution to be done
-    ProtoBufTcpStreamSession(const NetworkEndpoint &endpoint);
-    ~ProtoBufTcpStreamSession();
-    
-    const SessionId& id() const override;
-    const Address& remoteAddress() const override;
-    
-    iop::locnet::MessageWithHeader* ReceiveMessage() override;
-    void SendMessage(iop::locnet::MessageWithHeader &message) override;
-    
-// TODO implement these
-//     void KeepAlive() override;
-//     bool IsAlive() const override;
-//     void Close() override;
+    std::shared_ptr<IBlockingRequestDispatcher> Create(
+        std::shared_ptr<ProtoBufClientSession> session ) override;
 };
 
 
 
 // A protobuf request dispatcher that delivers requests through a network session
 // and reads response messages from it.
-class ProtoBufRequestNetworkDispatcher : public IProtoBufRequestDispatcher
+class NetworkDispatcher : public IBlockingRequestDispatcher
 {
-    std::shared_ptr<IProtoBufNetworkSession> _session;
+    std::shared_ptr<ProtoBufClientSession> _session;
     
 public:
 
-    ProtoBufRequestNetworkDispatcher(std::shared_ptr<IProtoBufNetworkSession> session);
-    virtual ~ProtoBufRequestNetworkDispatcher() {}
+    NetworkDispatcher(std::shared_ptr<ProtoBufClientSession> session);
+    virtual ~NetworkDispatcher() {}
     
-    std::unique_ptr<iop::locnet::Response> Dispatch(const iop::locnet::Request &request) override;
+    std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
 
 
 
-// Connection factory that creates a blocking TCP stream to communicate with remote node.
-class TcpStreamConnectionFactory : public INodeConnectionFactory
+// Connection factory that creates proxies that transparently communicate with a remote node.
+class TcpNodeConnectionFactory : public INodeProxyFactory
 {
     std::function<void(const Address&)> _detectedIpCallback;
     
@@ -246,13 +298,13 @@ public:
 
 
 // Factory implementation that creates ProtoBufTcpStreamChangeListener objects.
-class ProtoBufTcpStreamChangeListenerFactory : public IChangeListenerFactory
+class TcpChangeListenerFactory : public IChangeListenerFactory
 {
-    std::shared_ptr<IProtoBufNetworkSession> _session;
+    std::shared_ptr<ProtoBufClientSession> _session;
     
 public:
     
-    ProtoBufTcpStreamChangeListenerFactory(std::shared_ptr<IProtoBufNetworkSession> session);
+    TcpChangeListenerFactory(std::shared_ptr<ProtoBufClientSession> session);
     
     std::shared_ptr<IChangeListener> Create(
         std::shared_ptr<ILocalServiceMethods> localService) override;
@@ -262,20 +314,20 @@ public:
 
 // Listener implementation that translates node notifications to protobuf
 // and uses a dispatcher to send them and notify a remote peer.
-class ProtoBufTcpStreamChangeListener : public IChangeListener
+class NeighbourChangeProtoBufNotifier : public IChangeListener
 {
-    SessionId                                   _sessionId;
-    std::shared_ptr<ILocalServiceMethods>       _localService;
+    SessionId                                      _sessionId;
+    std::shared_ptr<ILocalServiceMethods>          _localService;
     // std::shared_ptr<IProtoBufRequestDispatcher> _dispatcher;
-    std::shared_ptr<IProtoBufNetworkSession>    _session;
+    std::shared_ptr<ProtoBufClientSession>  _session;
     
 public:
     
-    ProtoBufTcpStreamChangeListener(
-        std::shared_ptr<IProtoBufNetworkSession> session,
+    NeighbourChangeProtoBufNotifier(
+        std::shared_ptr<ProtoBufClientSession> session,
         std::shared_ptr<ILocalServiceMethods> localService );
         // std::shared_ptr<IProtoBufRequestDispatcher> dispatcher );
-    ~ProtoBufTcpStreamChangeListener();
+    ~NeighbourChangeProtoBufNotifier();
     
     void Deregister();
     

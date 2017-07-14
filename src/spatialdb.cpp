@@ -67,12 +67,15 @@ NodeRelationType NodeDbEntry::relationType() const { return _relationType; }
 NodeContactRoleType NodeDbEntry::roleType() const { return _roleType; }
 
 
-bool NodeDbEntry::operator==(const NodeDbEntry& other) const
+bool NodeDbEntry::operator==(const NodeDbEntry &other) const
 {
     return  NodeInfo::operator==(other) &&
             _relationType == other._relationType &&
             _roleType == other._roleType;
 }
+
+bool NodeDbEntry::operator!=(const NodeDbEntry &other) const
+    { return ! operator==(other); }
 
 
 

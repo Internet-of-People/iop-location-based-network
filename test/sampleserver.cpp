@@ -73,38 +73,35 @@ int main()
 //         for (const NodeDbEntry &entry : entries)
 //             { LOG(DEBUG) << "  Entry id: " << entry.profile().id(); }
         
-        shared_ptr<INodeConnectionFactory> connectionFactory(
+        shared_ptr<INodeProxyFactory> connectionFactory(
             new DummyNodeConnectionFactory() );
-        shared_ptr<Node> node( new Node(geodb, connectionFactory) );
+        shared_ptr<Node> node = Node::Create(geodb, connectionFactory);
         node->EnsureMapFilled();
         
         const NodeContact &BudapestNodeContact( TestData::NodeBudapest.contact() );
         
-        shared_ptr<IProtoBufRequestDispatcherFactory> nodeDispatcherFactory(
-            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
+        shared_ptr<IBlockingRequestDispatcherFactory> nodeDispatcherFactory(
+            new StaticBlockingDispatcherFactory( shared_ptr<IBlockingRequestDispatcher>(
                 new IncomingNodeRequestDispatcher(node) ) ) );
-        shared_ptr<IProtoBufRequestDispatcherFactory> clientDispatcherFactory(
-            new StaticDispatcherFactory( shared_ptr<IProtoBufRequestDispatcher>(
+        shared_ptr<IBlockingRequestDispatcherFactory> clientDispatcherFactory(
+            new StaticBlockingDispatcherFactory( shared_ptr<IBlockingRequestDispatcher>(
                 new IncomingClientRequestDispatcher(node) ) ) );
         
-        ProtoBufDispatchingTcpServer nodeTcpServer(
+        shared_ptr<DispatchingTcpServer> nodeTcpServer = DispatchingTcpServer::Create(
             BudapestNodeContact.nodePort(), nodeDispatcherFactory );
-        ProtoBufDispatchingTcpServer clientTcpServer(
+        shared_ptr<DispatchingTcpServer> clientTcpServer = DispatchingTcpServer::Create(
             BudapestNodeContact.clientPort(), clientDispatcherFactory );
         
-        bool ShutdownRequested = false;
-
-        mySignalHandlerFunc = [&ShutdownRequested, &nodeTcpServer, &clientTcpServer] (int)
-        {
-            ShutdownRequested = true;
-            IoService::Instance().Shutdown();
-        };
+        nodeTcpServer->StartListening();
+        clientTcpServer->StartListening();
+        
+        mySignalHandlerFunc = [] (int) { Reactor::Instance().Shutdown(); };
         
         std::signal(SIGINT,  signalHandler);
         std::signal(SIGTERM, signalHandler);
         
-        while (! ShutdownRequested)
-            { IoService::Instance().Server().run_one(); }
+        while ( ! Reactor::Instance().IsShutdown() )
+            { Reactor::Instance().AsioService().run_one(); }
         
         LOG(INFO) << "Finished successfully";
         return 0;

@@ -35,17 +35,17 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
         geodb->Store(TestData::EntryWien);
         geodb->Store(TestData::EntryCapeTown);
         
-        shared_ptr<INodeConnectionFactory> connectionFactory( new DummyNodeConnectionFactory() );
+        shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
         shared_ptr<IChangeListenerFactory> listenerFactory( new DummyChangeListenerFactory() );
-        shared_ptr<Node> node( new Node(geodb, connectionFactory) );
+        shared_ptr<Node> node = Node::Create(geodb, connectionFactory);
         IncomingRequestDispatcher dispatcher(node, listenerFactory);
         
         THEN("Local service GetNeighbours requests are properly served") {
-            iop::locnet::Request request;
-            request.set_version({1,0,0});
-            request.mutable_localservice()->mutable_getneighbournodes();
+            unique_ptr<iop::locnet::Request> request( new iop::locnet::Request() );
+            request->set_version({1,0,0});
+            request->mutable_localservice()->mutable_getneighbournodes();
                 
-            shared_ptr<iop::locnet::Response> response = dispatcher.Dispatch(request);
+            unique_ptr<iop::locnet::Response> response = dispatcher.Dispatch( move(request) );
             REQUIRE( response->has_localservice() );
             REQUIRE( response->localservice().has_getneighbournodes() );
             
