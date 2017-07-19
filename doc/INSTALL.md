@@ -1,3 +1,12 @@
+- [Installing the packaged version](#installing-the-packaged-version)
+- [Starting the application](#starting-the-application)
+- [Using the sources](#using-the-sources)
+  - [Dependencies](#dependencies)
+  - [Compile on Ubuntu](#compile-on-ubuntu)
+  - [Troubleshooting](#troubleshoothing)
+  - [Compile on Windows](#compile-on-windows)
+  - [Creating an install package for Linux](#creating-an-install-package-for-linux)
+
 # Installing the packaged version
 
 Packages can be downloaded as `iop-locnet` from the Fermat package repositories.
