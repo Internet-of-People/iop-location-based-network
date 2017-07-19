@@ -109,7 +109,7 @@ others has to be installed independently.
 Some (mostly header-only) dependencies already included in directory `extlib`:
 - `asio` 1.10.8 standalone mode without Boost. Used for networking,
   [download here](http://think-async.com/Asio/Download).
-  Note that this library is to be included in the C++ standard soon.
+  Note that this library is a candidate to be included in the C++ standard.
 - `easylogging++` 9.94.2, used for logging in the whole source,
   [download here](https://github.com/easylogging/easyloggingpp)
 - `ezOptionParser` 0.2.2 (with minimal changes to compile on Windows, see file history),
@@ -128,9 +128,10 @@ External dependencies to be manually installed on your system:
   should work with any standard compiler (maybe minimal changes to CMake project files are needed).
 - `cmake` used to generated Makefiles. 3.x preferred, but 2.8 still should be enough.
 - `protobuf3` used for messaging between nodes and clients.
-  Included sources are generated with 3.x, but using 2.x should not be hard after minimal changes
-  (e.g. marking fields optional in the protocol definition). Unless present in your package manager, you have to
-  [download and compile cpp version manually](https://github.com/google/protobuf)
+  Included sources are generated with 3.0, but using 2.x should not be hard after minimal changes
+  (e.g. marking fields optional in the protocol definition). Unless present in your package manager, you have to download and compile cpp version manually
+  [from this page](https://github.com/google/protobuf), currently the latest version is
+  [ProtoBuf 3.3](https://github.com/google/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz)
 - `spatialite` used to persist node data with locations, any recent version is expected to work.
   Available as an Ubuntu package or
   [download and compile manually](https://www.gaia-gis.it/fossil/libspatialite/index)
@@ -159,11 +160,46 @@ CMake should have successfully generated a `Makefile`, so you can just execute
 
     make
 
-Assuming you followed the suggested directory structure, you should find executable
-file `src/iop-locnetd` created under your `build` directory, it is all you need.
+Assuming the stars aligned luckily for your environment and you followed the suggested directory structure, you find the executable file `src/iop-locnetd` created under your `build` directory.
 If you also want to install the software to your system directories, you have to run
 
     sudo make install
+
+
+## Troubleshooting
+
+So you were not so lucky and had problems, most probably compile errors. What to do?
+
+If you encounter errors complaining about no file found for imported headers like
+`#include <some/header.h>` then you missed to deploy the shown dependent library.
+Make sure that all dependent libraries are properly installed and try again.
+
+Most often you may encounter compile errors about some ProtoBuf definitions, usually in files
+located in directory `generated`. Whenever you see a ProtoBuf-related error,
+the reason may be that your ProtoBuf library version is slightly different
+from what we used to generate the files. To get rid of the problem,
+you have to regenerate these files for your version.
+
+First of all, you will need a protobuf compiler for that. If you're using a fresh enough
+Linux distribution, all you have to do is
+
+    apt-get install protobuf-compiler
+
+Otherwise (e.g. for Ubuntu 16.04) you have to compile one for yourself.
+First, to avoid conflicting versions, uninstall any old ProtoBuf compilers or libraries you have.
+Then download the [latest ProtoBuf release](https://github.com/google/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz) up to date.
+Extract the sources to a directory, then compile and install everything by
+
+    ./configure
+    make
+    sudo make install
+
+If succeeded then go back to the sources of the location-based network. In directory `generated`,
+simply run
+
+    ./regenerate.sh
+
+then try again compiling our source code.
 
 
 ## Compile on Windows

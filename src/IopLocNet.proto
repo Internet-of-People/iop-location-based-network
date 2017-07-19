@@ -1,0 +1,363 @@
+// Definition of IoP Location Based Network protocol.
+// We strictly use only features that are binary compatible in ProtoBuf v2 and v3.
+// We use no v2 or v3 specific features.
+
+syntax = "proto3";
+
+package iop.locnet;
+
+
+
+// Return codes to mark whether the operation completed successfully or which error occurred.
+// TODO should status codes be shared between projects and maybe separated into an IopCommon.proto?
+// NOTE value of common status codes are exactly the same as defined in IopProfileServer to make this easy.
+//
+enum Status {
+  // General codes that can be returned to any message.
+  STATUS_OK = 0;                                   // The operation completed successfully.
+
+  ERROR_PROTOCOL_VIOLATION = 1;                    // The incoming request does not follow the protocol.
+  ERROR_UNSUPPORTED = 2;                           // The peer does not support the request. This is returned when a peer sends a message with an unsupported protocol version.
+  ERROR_INTERNAL = 8;                              // Internal error occurred while processing the message.
+
+  ERROR_INVALID_VALUE = 54;                        // A field in the request contains an invalid value.
+}
+
+
+
+// All further network/server types of the Internet of People
+// that can be registered here so as it can be searched geographically on the client interface.
+enum ServiceType
+{
+// Low level networks
+  Unstructured = 0;
+  Content      = 1;
+  Latency      = 2;
+  Location     = 3;
+
+// High level servers
+  Token       = 10;
+  Profile     = 11;
+  Proximity   = 12;
+  Relay       = 13;
+  Reputation  = 14;
+  Minting     = 15;
+};
+
+
+
+// Describe a single service running on the same host. Fields and their formats are analogue to NodeInfo.
+// We assume that the service can be accessed on the same IP address as the location based network node.
+message ServiceInfo {
+  ServiceType type = 1;
+  uint32 port = 2;       // Network port where service is reachable on this host.
+  bytes serviceData = 3; // Optional binary data that the service can share about itself. Has no predefined format, any custom data can be added here. Useful for e.g. sharing the profile server node ID. Must be no more than 1KB.
+}
+
+
+
+// GpsLocation represents a 2D GPS position without height.
+// Latitude and longitude coordinates use a signed integer stored as type decimal(9,6),
+// which means that a floating point value of the latitude or longitude is multiplied by 1,000,000
+// and converted to integer (cutting any digits right of the decimal point without rounding).
+// To get the floating point value back, simply divide the integer value by 1,000,000.
+// For latitudes, valid values are in range [-90,000,000;90,000,000], for longitudes the range is 
+// [-179,999,999;180,000,000].
+//
+message GpsLocation {
+  sfixed32 latitude = 1;
+  sfixed32 longitude = 2;
+}
+
+
+// Node endpoints that can be contacted by a client.
+// IP address is represented as a byte array which must contain 4 bytes for Ipv4 addresses and
+// 16 bytes for an Ipv6 address.
+// Port must be a simple TCP port which should be uint16, but there is no appropriate data type
+// in ProtoBuf so it is represented as uint32.
+message NodeContact {
+  bytes  ipAddress = 1;
+  uint32 nodePort = 2;   // Port where remote node interface (for nodes of the same network) is available
+  uint32 clientPort = 3; // Port where client interface (for end users) is available
+}
+
+
+// Publicly known identity of a node, created after the similar "profile" entity of the profile server,
+// extended the GPS location of the node.
+message NodeInfo {
+  // TODO do we also need a public key here?
+  bytes nodeId = 1;
+  NodeContact contact = 2;
+  GpsLocation location = 3;
+  repeated ServiceInfo services = 32;
+}
+
+
+
+// This is complete message as it goes over the wire. It includes the 32-bit header with message length.
+//
+// There is a 1 byte prefix because of Google Protobuf protocol, so the actual binary data for a message
+// with body size 4660 bytes would be:
+//
+//   0D 34 12 00 00
+//
+// where 0x0D means type 'fixed32' (which value is 5) + index of 'header', which is 1 << 3,
+// this is followed be the 4 byte sequence 34 12 00 00, which is little endian of 0x00001234, which is 4660 decimal.
+// Thus the total number of bytes sent over the wire for this message would be 4665 bytes.
+//
+message MessageWithHeader {
+  fixed32 header = 1;                              // Message length (without the size of the header) as a little-endian 32-bit unsigned integer.
+  Message body = 2;                                // Message itself.
+}
+
+
+
+// Format of a single message.
+message Message {
+  uint32 id = 1;                                   // Requestor defined message ID that the requestee has to return in the response. 
+                                                   // Requestor is responsible for using different ID for every unprocessed message.
+                                                   // If at any point there exist two open requests (i.e. without a response) with the same ID, it is a violation of the protocol and the behavior is undefined.
+
+  oneof MessageType {                              // A message can be either a request or a response.
+    Request request = 2;
+    Response response = 3;
+  }
+}
+
+
+// Requests use semantic versioning (major,minor,patch) represented as a 3 byte array.
+// For more details see the Profile Server protocol definition.
+// NOTE this type also could be part of an IopCommon.proto file.
+//
+// The Location-based Network provides three interfaces, each used by a specific type of clients.
+// One interface is used by local services (e.g. the Profile Server) running on the same host
+// to expose their availability and check the neighbourhood.
+// Another interface is used for communication between nodes to build the network.
+// The third interface is for "end users" (i.e. client programs) to locate nodes and services
+// based on geographical information.
+// The different operation set for each interface is collected under a specific RequestType here.
+//
+message Request {
+  bytes version = 1;                               
+  oneof RequestType {
+    LocalServiceRequest localService = 2;
+    RemoteNodeRequest remoteNode = 3;
+    ClientRequest client = 4;
+  }
+}
+
+
+// There must a response for every request. Responses are divided by the interface just like requests.
+message Response {
+  Status status = 1;                               // Status code marking whether the request was successfully served or an error occured.
+  sint64 timestamp = 2;                            // NOTE this field was simply kept from IopProfileServer.proto, currently unused, but might be useful implementing security features later.
+  string details = 3;                              // In case of an error, this field may contain additional details.
+
+  oneof ResponseType {
+    LocalServiceResponse localService = 4;
+    RemoteNodeResponse remoteNode = 5;
+    ClientResponse client = 6;
+  }
+}
+
+
+// Distinct operations of the local service interface.
+message LocalServiceRequest {
+  oneof LocalServiceRequestType {
+    // These requests are sent as usual from the client to the server asking to perform an operation.
+    RegisterServiceRequest registerService = 1;
+    DeregisterServiceRequest deregisterService = 2;
+    GetNeighbourNodesByDistanceLocalRequest getNeighbourNodes = 3;
+
+    // This is an unique, exceptional request. If the client previously sent
+    // a getNeigbhourNodes request to the server and set the keepAlive flag,
+    // the server is supposed to keep the connection alive and notify the client
+    // about changes in its neigbhourhood by sending the following request to the client.
+    NeighbourhoodChangedNotificationRequest neighbourhoodChanged = 4;
+  }
+}
+
+message LocalServiceResponse {
+  oneof LocalServiceResponseType {
+    // Responses sent back to the client from the server as usual.
+    RegisterServiceResponse registerService = 1;
+    DeregisterServiceResponse deregisterService = 2;
+    GetNeighbourNodesByDistanceResponse getNeighbourNodes = 3;
+
+    // For each neigbhourhood change notification, the client must send this response as an acknowledgement.
+    NeighbourhoodChangedNotificationResponse neighbourhoodUpdated = 4;
+  }
+}
+
+
+
+// Register a local service (e.g. the Profile Server) with the location-based network
+// so as clients can detect its existence and contact it.
+message RegisterServiceRequest {
+  ServiceInfo service = 1;
+}
+
+message RegisterServiceResponse {
+  GpsLocation location = 1; // GPS location of the LOC node.
+}
+
+// Remove a previously registered entry of a service.
+message DeregisterServiceRequest {
+  ServiceType serviceType = 1;
+}
+
+message DeregisterServiceResponse {
+}
+
+
+// Get the list of neighbouring nodes by distance.
+// If the keepAlive flag is set, the server must keep the connection alive and notify the client
+// about changes in its neigbhourhood by sending NeighbourhoodChangeRequests to the client.
+message GetNeighbourNodesByDistanceLocalRequest {
+  bool keepAliveAndSendUpdates = 1;
+}
+
+// Response is a list of node data about all neighbours.
+message GetNeighbourNodesByDistanceResponse {
+  repeated NodeInfo nodes = 1;
+}
+
+
+// Atomic change notification element: a neigbhour node is either added, updated or deleted.
+message NeighbourhoodChange {
+  oneof ChangeType {
+    NodeInfo addedNodeInfo = 1;
+    NodeInfo updatedNodeInfo = 2;
+    bytes removedNodeId = 3;
+  }; 
+}
+
+// A list of changes to be sent in a single bulk notification.
+message NeighbourhoodChangedNotificationRequest {
+  repeated NeighbourhoodChange changes = 1;
+}
+
+message NeighbourhoodChangedNotificationResponse {
+}
+
+
+message RemoteNodeRequest {
+  oneof RemoteNodeRequestType {
+    BuildNetworkRequest acceptColleague = 1;
+    BuildNetworkRequest renewColleague = 2;
+    BuildNetworkRequest acceptNeighbour = 3;
+    BuildNetworkRequest renewNeighbour = 4;
+    GetNodeCountRequest getNodeCount = 5;
+    GetRandomNodesRequest getRandomNodes = 6;
+    GetClosestNodesByDistanceRequest getClosestNodes = 7;
+    GetNodeInfoRequest  getNodeInfo = 8;
+  }
+}
+
+message RemoteNodeResponse {
+  oneof RemoteNodeResponseType {
+    BuildNetworkResponse acceptColleague = 1;
+    BuildNetworkResponse renewColleague = 2;
+    BuildNetworkResponse acceptNeighbour = 3;
+    BuildNetworkResponse renewNeighbour = 4;
+    GetNodeCountResponse getNodeCount = 5;
+    GetRandomNodesResponse getRandomNodes = 6;
+    GetClosestNodesByDistanceResponse getClosestNodes = 7;
+    GetNodeInfoResponse  getNodeInfo = 8;
+  }
+}
+
+
+// Initiate/Renew a colleage/neighbour relationship between nodes.
+// The requestor node sends its own node information to the other node in the request.
+message BuildNetworkRequest {
+  NodeInfo requestorNodeInfo = 1;
+}
+
+message BuildNetworkResponse {
+  bool accepted = 1;             // Whether the remote node agreed to create/renew the requested relation.
+  NodeInfo acceptorNodeInfo = 2; // If the remote node accepted the request, it returns its latest node information to make sure that no outdated external Ip address or location is stored.
+  bytes remoteIpAddress = 3;     // The remote external IP address of the initiator node as detected by the addressed (i.e. this) node. Useful for autodetection of the external IP address and its changes.
+}
+
+// Get the total count of network nodes known by the remote node.
+message GetNodeCountRequest {
+}
+
+message GetNodeCountResponse {
+  uint32 nodeCount = 1;
+}
+
+// Request for a list of random nodes.
+message GetRandomNodesRequest {
+  uint32 maxNodeCount = 1;
+  bool includeNeighbours = 2;
+}
+
+message GetRandomNodesResponse {
+  repeated NodeInfo nodes = 1;
+}
+
+// List the nodes that are closest to a specific location, useful for exploring the map.
+message GetClosestNodesByDistanceRequest {
+  GpsLocation location = 1;
+  float maxRadiusKm = 2;
+  uint32 maxNodeCount = 3;
+  bool includeNeighbours = 4;
+}
+
+message GetClosestNodesByDistanceResponse {
+  repeated NodeInfo nodes = 1;
+}
+
+
+
+message ClientRequest {
+  oneof ClientRequestType {
+    GetNodeInfoRequest getNodeInfo = 1;
+    GetNeighbourNodesByDistanceClientRequest getNeighbourNodes = 2;
+    GetClosestNodesByDistanceRequest getClosestNodes = 3;
+    ExploreNetworkNodesByDistanceRequest exploreNodes = 4;
+  }
+}
+
+message ClientResponse {
+  oneof ClientResponseType {
+    GetNodeInfoResponse getNodeInfo = 1;
+    GetNeighbourNodesByDistanceResponse getNeighbourNodes = 2;
+    GetClosestNodesByDistanceResponse getClosestNodes = 3;
+    ExploreNetworkNodesByDistanceResponse exploreNodes = 4;
+  }
+}
+
+
+// List the list of other Internet of People services that are accessible for clients on the same node.
+message GetNodeInfoRequest {
+}
+
+message GetNodeInfoResponse {
+  NodeInfo nodeInfo = 1;
+}
+
+
+// Requests for the same service as provided on the Local Service interface.
+// It's a different request type only because clients are not allowed
+// to keep the connection alive and wait for neighbourhood notication changes.
+message GetNeighbourNodesByDistanceClientRequest {
+}
+
+
+// Explore the closest nodes around the specified location.
+// While GetClosestNodesByDistanceResponse queries information only from this single node,
+// this call requests the node to contact also other nodes which might know the location better
+// so as the mobile client doesn't have to drain too much battery for such network communication.
+message ExploreNetworkNodesByDistanceRequest {
+  GpsLocation location = 1;
+  uint32 targetNodeCount = 2;
+  uint32 maxNodeHops = 3;
+}
+
+message ExploreNetworkNodesByDistanceResponse {
+  repeated NodeInfo closestNodes = 1;
+}
+
