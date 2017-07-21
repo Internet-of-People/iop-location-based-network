@@ -1,7 +1,7 @@
 <img src="https://raw.githubusercontent.com/Internet-of-People/media/master/official/iop_logo_main.png" alt="IoP Logo" height="100px">
 
 # IoP Location-based Network
-[![Build Status](https://travis-ci.org/Fermat-ORG/iop-location-based-network.svg?branch=master)](https://travis-ci.org/Fermat-ORG/iop-location-based-network)
+[![build status](https://gitlab.com/iop-ventures/iop-location-based-network/badges/master/build.svg)](https://gitlab.com/iop-ventures/iop-location-based-network/commits/master)
 
 IoP-locnet is the Internet of People implementation of a location based server that builds,
 maintains and explores a geographical network of similar nodes,
