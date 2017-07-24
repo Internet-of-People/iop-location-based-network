@@ -57,12 +57,9 @@ package:deb:
     - cd build
     - echo Creating amd64 deb binary
     - checkinstall --install=no --fstrans=yes --nodoc --maintainer="Internet of People" --pkgsource="https://gitlab.com/iop-ventures/iop-location-based-network.git" --pkglicense=MIT --pkggroup=net --pkgname=iop-locnet --pkgversion=$CI_PIPELINE_ID --pkgarch=amd64 --type=debian --pkgrelease=ubuntu-1704 --requires="libprotobuf10,libspatialite7"
-    - echo Creating i386 deb binary
-    - checkinstall --install=no --fstrans=yes --nodoc --maintainer="Internet of People" --pkgsource="https://gitlab.com/iop-ventures/iop-location-based-network.git" --pkglicense=MIT --pkggroup=net --pkgname=iop-locnet --pkgversion=$CI_PIPELINE_ID --pkgarch=i386 --type=debian --pkgrelease=ubuntu-1704 --requires="libprotobuf10,libspatialite7"
   dependencies:
     - build:gxx
   artifacts:
     paths:
       - build/iop-locnet_$CI_PIPELINE_ID-ubuntu-1704_amd64.deb
-      - build/iop-locnet_$CI_PIPELINE_ID-ubuntu-1704_i386.deb
-
+  
