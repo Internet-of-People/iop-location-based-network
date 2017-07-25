@@ -148,16 +148,31 @@ External dependencies to be manually installed on your system:
 
 ## Compile on Ubuntu
 
-First you have to install all external dependencies by
+First, you have to install all external dependencies.  
+If you are on Ubuntu 17.04 you are lucky and just have to do:
 
-    sudo apt-get install git g++ cmake make libprotobuf-dev libspatialite-dev
+    apt-get install -y g++ cmake protobuf-compiler libprotobuf-dev libspatialite-dev
 
-and then clone the sources using git
+Otherwise, for others Ubuntu distributions from 14.04, you will have to compile a protobuf compiler by yourself:
 
-    git clone https://github.com/Fermat-ORG/iop-location-based-network.git
+    apt-get install -y curl g++ cmake automake autoconf libprotobuf-dev libspatialite-dev  
+    curl -OL https://github.com/google/protobuf/releases/download/v3.0.0/protobuf-cpp-3.0.0.tar.gz
+    tar zxvf protobuf-cpp-3.0.0.tar.gz
+    cd protobuf-3.0.0
+    ./configure
+    make
+    make install
+    ldconfig
 
-After installing successfully, you can just run `build.sh` or perform the same steps
-as the script as follows. First you have to generate build files with CMake, specifying the directory
+Once this done, go inside the folder where you cloned or uncompressed this project in order to start to type the build commands.
+
+Optionally, you can regenerate the C++ sources from the protocol definitions in order to make sure these files are compatible with your protobuf version:
+
+    cd generated && ./regenerate.sh && cd ..
+
+Finally, you can just run `build.sh` or perform the same steps as the script as follows:
+
+First you have to generate build files with CMake, specifying the directory
 containing our main `CMakeLists.txt` file. We suggest running the build in a dedicated directory,
 the provided script uses directory `build`. Thus from the project root you can run
 
@@ -172,8 +187,7 @@ CMake should have successfully generated a `Makefile`, so you can just execute
 Assuming the stars aligned luckily for your environment and you followed the suggested directory structure, you find the executable file `src/iop-locnetd` created under your `build` directory.
 If you also want to install the software to your system directories, you have to run
 
-    sudo make install
-
+    make install
 
 ## Troubleshooting
 
@@ -189,30 +203,13 @@ the reason may be that your ProtoBuf library version is slightly different
 from what we used to generate the files. To get rid of the problem,
 you have to regenerate these files for your version.
 
-First of all, you will need a protobuf compiler for that. If you're using a fresh enough
-Linux distribution, all you have to do is
-
-    apt-get install protobuf-compiler
-
-Otherwise (e.g. for Ubuntu 16.04) you have to compile one for yourself.
-First, to avoid conflicting versions, uninstall any old ProtoBuf compilers or libraries you have.
-Then download the [latest ProtoBuf release](https://github.com/google/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz) up to date.
-Extract the sources to a directory, then compile and install everything by
-
-    ./configure
-    make
-    sudo make install
-
-If succeeded then go back to the sources of the location-based network. In directory `generated`,
-simply run
+To do this, go back to the sources of the location-based network. In directory `generated`, simply run:
 
     ./regenerate.sh
 
 then try again compiling our source code.
 
-
 ## Compile on Windows
-
 
 You should already have a version of the Visual Studio C++ compiler installed, we do not detail this here.
 Please make sure that you have the directory of the 64bit binaries set on your PATH

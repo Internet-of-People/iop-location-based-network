@@ -1,0 +1,65 @@
+image: ubuntu:17.04
+
+stages:
+  - build
+  - test
+  - deploy
+
+.build_script: &build_script
+  script:
+    - cd generated
+    - ./regenerate.sh
+    - cd ..
+    - rm -rf build
+    - mkdir build
+    - cd build
+    - echo Generating makefiles
+    - cmake ..
+    - echo Compiling and installing from sources
+    - make
+    - make install
+  artifacts:
+    paths:
+      - build
+
+build:gxx:
+  stage: build
+  before_script:
+    - apt-get update
+    - apt-get install -y g++ cmake protobuf-compiler libprotobuf-dev libspatialite-dev
+  <<: *build_script
+
+build:clang:
+  stage: build
+  before_script:
+    - apt-get update
+    - apt-get install -y clang cmake protobuf-compiler libprotobuf-dev libspatialite-dev
+  <<: *build_script
+
+test:all:
+  stage: test
+  before_script:
+    - apt-get update
+    - apt-get install -y libprotobuf-dev libspatialite-dev
+  script:
+    - cd build
+    - test/tests
+  dependencies:
+    - build:gxx
+
+package:deb:
+  stage: deploy
+  before_script:
+    - apt-get update
+    - apt-get install -y g++ cmake protobuf-compiler libprotobuf-dev libspatialite-dev checkinstall
+  script:
+    - cp ./package/locnet/description-pak ./build
+    - cd build
+    - echo Creating amd64 deb binary
+    - checkinstall --install=no --fstrans=yes --nodoc --maintainer="Internet of People" --pkgsource="https://gitlab.com/iop-ventures/iop-location-based-network.git" --pkglicense=MIT --pkggroup=net --pkgname=iop-locnet --pkgversion=$CI_PIPELINE_ID --pkgarch=amd64 --type=debian --pkgrelease=ubuntu-1704 --requires="libprotobuf10,libspatialite7"
+  dependencies:
+    - build:gxx
+  artifacts:
+    paths:
+      - build/iop-locnet_$CI_PIPELINE_ID-ubuntu-1704_amd64.deb
+  
