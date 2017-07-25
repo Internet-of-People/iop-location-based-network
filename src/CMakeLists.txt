@@ -1,5 +1,5 @@
 add_library(iop-locnet ../generated/IopLocNet.pb.cc ../extlib/easylogging++.cc
-    basic.cpp config.cpp spatialdb.cpp locnet.cpp messaging.cpp network.cpp)
+    basic.cpp config.cpp spatialdb.cpp locnet.cpp messaging.cpp network.cpp server.cpp)
 target_include_directories (iop-locnet PUBLIC
     "${CMAKE_SOURCE_DIR}/extlib" "${CMAKE_SOURCE_DIR}/generated")
 target_link_libraries (iop-locnet LINK_PUBLIC pthread protobuf sqlite3 spatialite)

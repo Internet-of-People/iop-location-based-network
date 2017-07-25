@@ -7,7 +7,7 @@
 
 #include "config.hpp"
 #include "IopLocNet.pb.h"
-#include "network.hpp"
+#include "server.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 

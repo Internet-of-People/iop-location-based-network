@@ -295,15 +295,6 @@ SCENARIO("Server registration", "[localservice][logic]")
         ServiceInfo minterService(ServiceType::Minting, 2222);
         ServiceInfo profileService(ServiceType::Profile, 3333, "ProfileServerId");
         
-//         // TODO remove
-//         NodeInfo::Services services{
-//             { tokenService.type(), tokenService },
-//             { minterService.type(), minterService },
-//             { profileService.type(), profileService } };
-//             
-//         NodeInfo::Services servicesCopy(services);
-//         REQUIRE(services == servicesCopy);
-        
         WHEN("adding services") {
             geonet->RegisterService(tokenService);
             geonet->RegisterService(minterService);

@@ -60,16 +60,18 @@ Directories, files and sources are organized as follows:
     (local services, other network nodes and end user clients) and
     implements the application business logic for all interfaces in a single `Node` class
     on top of a spatial database
+  - `network` implements asynchronous communication on top of TCP.
+     Contains an abstraction for a Reactor task queue, a connection class to read/write byte buffers
+     asynchronously and a generic Tcp server that accepts connections asynchronously.
   - `messaging` provides utilities to convert between basic application data holder classes
     and ProtoBuf messages. Additionally it defines an interface to dispatch requests
     to a peer and return its responses (i.e. hiding the complexity of communication)
     and defines implementations used for serving remote requests and a proxy for
     using services of a potentially remote node without exposing any communication details.
-  - `network` implements communication on top of TCP. Defines interfaces
-    for client session and a generic Tcp server. Implements a session on
-    top of blocking TCP streams and gives a server implementation
-    that runs a request dispatch loop for its sessions. It also implements a message
-    dispatcher that sends requests to a remote peer using a network session.
+  - `server` assembles the network and messaging together. Defines a client and server classes
+    for dispatching requests and pairing them up with responses that may come out of order.
+    It also implements a message dispatcher that transparently sends requests
+    to a remote peer using a network session.
   - `main` instantiates, links and runs all these building blocks that make up the software.
 - `test` contains sources to test our software
 
@@ -91,7 +93,7 @@ and added to the task queue of `asio::io_service`. Function `io_service::run()`
 from this queue, thus our registered task accepts client connections and
 invokes our callback `TcpServer::AsyncAcceptHandler()` registered for this event.
 
-Our implementation of this callback in `ProtoBufDispatchingTcpServer` instantiates a session
+Our implementation of this callback in `DispatchingTcpServer` instantiates a session
 and reads requests in a loop. When a request is read, a request dispatcher is invoked to deliver
 the message and return a response. Our configured request dispatcher translates the request
 from the format of our ProtoBuf protocol definition into our internal representation and

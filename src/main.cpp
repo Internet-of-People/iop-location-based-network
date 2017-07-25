@@ -2,7 +2,7 @@
 #include <csignal>
 
 #include "config.hpp"
-#include "network.hpp"
+#include "server.hpp"
 
 #include <easylogging++.h>
 

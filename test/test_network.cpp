@@ -3,7 +3,7 @@
 #include <asio.hpp>
 #include <catch.hpp>
 
-#include "network.hpp"
+#include "server.hpp"
 #include "testimpls.hpp"
 #include "testdata.hpp"
 

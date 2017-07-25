@@ -4,7 +4,7 @@
 #include <easylogging++.h>
 
 #include "config.hpp"
-#include "network.hpp"
+#include "server.hpp"
 #include "testimpls.hpp"
 #include "testdata.hpp"
 
