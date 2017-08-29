@@ -125,22 +125,22 @@ void DispatchingTcpServer::AsyncServeMessageHandler( unique_ptr<iop::locnet::Mes
             
             // TODO the ip detection and keepalive features are violating the current abstraction layers.
             //      This is not a nice implementation, abstractions should be better prepared for these features
-            if ( request->has_remotenode() )
+            if ( request->has_remote_node() )
             {
-                if ( request->remotenode().has_acceptcolleague() ) {
-                    request->mutable_remotenode()->mutable_acceptcolleague()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
+                if ( request->remote_node().has_accept_colleague() ) {
+                    request->mutable_remote_node()->mutable_accept_colleague()->mutable_requestor_node_info()->mutable_contact()->set_ip_address(
                         NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
                 }
-                else if ( request->remotenode().has_renewcolleague() ) {
-                    request->mutable_remotenode()->mutable_renewcolleague()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
+                else if ( request->remote_node().has_renew_colleague() ) {
+                    request->mutable_remote_node()->mutable_renew_colleague()->mutable_requestor_node_info()->mutable_contact()->set_ip_address(
                         NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
                 }
-                else if ( request->remotenode().has_acceptneighbour() ) {
-                    request->mutable_remotenode()->mutable_acceptneighbour()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
+                else if ( request->remote_node().has_accept_neighbour() ) {
+                    request->mutable_remote_node()->mutable_accept_neighbour()->mutable_requestor_node_info()->mutable_contact()->set_ip_address(
                         NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
                 }
-                else if ( request->remotenode().has_renewneighbour() ) {
-                    request->mutable_remotenode()->mutable_renewneighbour()->mutable_requestornodeinfo()->mutable_contact()->set_ipaddress(
+                else if ( request->remote_node().has_renew_neighbour() ) {
+                    request->mutable_remote_node()->mutable_renew_neighbour()->mutable_requestor_node_info()->mutable_contact()->set_ip_address(
                         NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
                 }
             }
@@ -148,22 +148,22 @@ void DispatchingTcpServer::AsyncServeMessageHandler( unique_ptr<iop::locnet::Mes
             response = dispatcher->Dispatch( move(request) );
             response->set_status(iop::locnet::Status::STATUS_OK);
             
-            if ( response->has_remotenode() )
+            if ( response->has_remote_node() )
             {
-                if ( response->remotenode().has_acceptcolleague() ) {
-                    response->mutable_remotenode()->mutable_acceptcolleague()->set_remoteipaddress(
+                if ( response->remote_node().has_accept_colleague() ) {
+                    response->mutable_remote_node()->mutable_accept_colleague()->set_remote_ip_address(
                         NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
                 }
-                else if ( response->remotenode().has_renewcolleague() ) {
-                    response->mutable_remotenode()->mutable_renewcolleague()->set_remoteipaddress(
+                else if ( response->remote_node().has_renew_colleague() ) {
+                    response->mutable_remote_node()->mutable_renew_colleague()->set_remote_ip_address(
                         NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
                 }
-                else if ( response->remotenode().has_acceptneighbour() ) {
-                    response->mutable_remotenode()->mutable_acceptneighbour()->set_remoteipaddress(
+                else if ( response->remote_node().has_accept_neighbour() ) {
+                    response->mutable_remote_node()->mutable_accept_neighbour()->set_remote_ip_address(
                         NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
                 }
-                else if ( response->remotenode().has_renewneighbour() ) {
-                    response->mutable_remotenode()->mutable_renewneighbour()->set_remoteipaddress(
+                else if ( response->remote_node().has_renew_neighbour() ) {
+                    response->mutable_remote_node()->mutable_renew_neighbour()->set_remote_ip_address(
                         NodeContact::AddressToBytes( session->messageChannel()->remoteAddress() ) );
                 }
             }
@@ -669,8 +669,8 @@ void NeighbourChangeProtoBufNotifier::AddedNode(const NodeDbEntry& node)
         {
             unique_ptr<iop::locnet::Request> req( new iop::locnet::Request() );
             iop::locnet::NeighbourhoodChange *change =
-                req->mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
-            iop::locnet::NodeInfo *info = change->mutable_addednodeinfo();
+                req->mutable_local_service()->mutable_neighbourhood_changed()->add_changes();
+            iop::locnet::NodeInfo *info = change->mutable_added_node_info();
             Converter::FillProtoBuf(info, node);
             
             unique_ptr<iop::locnet::Message> msgToSend( RequestToMessage( move(req) ) );
@@ -693,8 +693,8 @@ void NeighbourChangeProtoBufNotifier::UpdatedNode(const NodeDbEntry& node)
         {
             unique_ptr<iop::locnet::Request> req( new iop::locnet::Request() );
             iop::locnet::NeighbourhoodChange *change =
-                req->mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
-            iop::locnet::NodeInfo *info = change->mutable_updatednodeinfo();
+                req->mutable_local_service()->mutable_neighbourhood_changed()->add_changes();
+            iop::locnet::NodeInfo *info = change->mutable_updated_node_info();
             Converter::FillProtoBuf(info, node);
             
             unique_ptr<iop::locnet::Message> msgToSend( RequestToMessage( move(req) ) );
@@ -717,8 +717,8 @@ void NeighbourChangeProtoBufNotifier::RemovedNode(const NodeDbEntry& node)
         {
             unique_ptr<iop::locnet::Request> req( new iop::locnet::Request() );
             iop::locnet::NeighbourhoodChange *change =
-                req->mutable_localservice()->mutable_neighbourhoodchanged()->add_changes();
-            change->set_removednodeid( node.id() );
+                req->mutable_local_service()->mutable_neighbourhood_changed()->add_changes();
+            change->set_removed_node_id( node.id() );
         
             unique_ptr<iop::locnet::Message> msgToSend( RequestToMessage( move(req) ) );
             _session->SendRequest( move(msgToSend) );

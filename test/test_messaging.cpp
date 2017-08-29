@@ -43,14 +43,14 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
         THEN("Local service GetNeighbours requests are properly served") {
             unique_ptr<iop::locnet::Request> request( new iop::locnet::Request() );
             request->set_version({1,0,0});
-            request->mutable_localservice()->mutable_getneighbournodes();
+            request->mutable_local_service()->mutable_get_neighbour_nodes();
                 
             unique_ptr<iop::locnet::Response> response = dispatcher.Dispatch( move(request) );
-            REQUIRE( response->has_localservice() );
-            REQUIRE( response->localservice().has_getneighbournodes() );
+            REQUIRE( response->has_local_service() );
+            REQUIRE( response->local_service().has_get_neighbour_nodes() );
             
             const iop::locnet::GetNeighbourNodesByDistanceResponse &getNeighboursResp =
-                response->localservice().getneighbournodes();
+                response->local_service().get_neighbour_nodes();
             REQUIRE( getNeighboursResp.nodes_size() == 2 );
             
             NodeInfo closestNeighbour( Converter::FromProtoBuf( getNeighboursResp.nodes(0) ) );
@@ -61,3 +61,4 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
     }
     
 }
+

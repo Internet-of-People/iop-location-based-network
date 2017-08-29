@@ -67,29 +67,29 @@ SCENARIO("Client-Server requests and responses with TCP networking", "[network]"
                 BudapestNodeContact.nodeEndpoint() ) );
             {
                 unique_ptr<iop::locnet::Message> requestMsg( new iop::locnet::Message() );
-                requestMsg->mutable_request()->mutable_localservice()->mutable_getneighbournodes();
+                requestMsg->mutable_request()->mutable_local_service()->mutable_get_neighbour_nodes();
                 requestMsg->mutable_request()->set_version({1,0,0});
                 clientChannel->SendMessage( move(requestMsg), asio::use_future ).get();
                 
                 unique_ptr<iop::locnet::Message> msgReceived( clientChannel->ReceiveMessage(asio::use_future).get() );
                 
                 const iop::locnet::GetNeighbourNodesByDistanceResponse &response =
-                    msgReceived->response().localservice().getneighbournodes();
+                    msgReceived->response().local_service().get_neighbour_nodes();
                 REQUIRE( response.nodes_size() == 2 );
                 REQUIRE( Converter::FromProtoBuf( response.nodes(0) ) == TestData::NodeKecskemet );
                 REQUIRE( Converter::FromProtoBuf( response.nodes(1) ) == TestData::NodeWien );
             }
             {
                 unique_ptr<iop::locnet::Message> requestMsg( new iop::locnet::Message() );
-                requestMsg->mutable_request()->mutable_remotenode()->mutable_getnodecount();
+                requestMsg->mutable_request()->mutable_remote_node()->mutable_get_node_count();
                 requestMsg->mutable_request()->set_version({1,0,0});
                 clientChannel->SendMessage( move(requestMsg), asio::use_future ).get();
                 
                 unique_ptr<iop::locnet::Message> msgReceived( clientChannel->ReceiveMessage(asio::use_future).get() );
                 
                 const iop::locnet::GetNodeCountResponse &response =
-                    msgReceived->response().remotenode().getnodecount();
-                REQUIRE( response.nodecount() == 6 );
+                    msgReceived->response().remote_node().get_node_count();
+                REQUIRE( response.node_count() == 6 );
             }
         }
 
@@ -146,8 +146,8 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
             {
                 REQUIRE( requestMsg );
                 REQUIRE( requestMsg->has_request() );
-                REQUIRE( requestMsg->request().has_localservice() );
-                REQUIRE( requestMsg->request().localservice().has_neighbourhoodchanged() );
+                REQUIRE( requestMsg->request().has_local_service() );
+                REQUIRE( requestMsg->request().local_service().has_neighbourhood_changed() );
             
                 ++notificationsReceived;
             
@@ -156,7 +156,7 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
             
                 unique_ptr<iop::locnet::Message> changeAckn( new iop::locnet::Message() );
                 changeAckn->set_id( requestMsg->id() );
-                changeAckn->mutable_response()->mutable_localservice()->mutable_neighbourhoodupdated();
+                changeAckn->mutable_response()->mutable_local_service()->mutable_neighbourhood_updated();
                 LOG(INFO) << "Sending acknowledgement";
                 channel->SendMessage( move(changeAckn), [] {} );
                 LOG(INFO) << "Sent acknowledgement";
@@ -165,7 +165,7 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
             shared_ptr<IBlockingRequestDispatcher> requestDispatcher( new NetworkDispatcher(session) );
             LOG(INFO) << "Sending registerservice request";
             unique_ptr<iop::locnet::Request> registerRequest( new iop::locnet::Request() );
-            registerRequest->mutable_localservice()->mutable_registerservice()->set_allocated_service(
+            registerRequest->mutable_local_service()->mutable_register_service()->set_allocated_service(
                 Converter::ToProtoBuf( ServiceInfo(ServiceType::Profile, 16999, "ProfileServerId") ) );
             requestDispatcher->Dispatch( move(registerRequest) );
             
@@ -173,10 +173,10 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
             {
                 LOG(INFO) << "Sending getneighbournodes request";
                 unique_ptr<iop::locnet::Request> neighbourhoodRequest( new iop::locnet::Request() );
-                neighbourhoodRequest->mutable_localservice()->mutable_getneighbournodes()->set_keepaliveandsendupdates(true);
+                neighbourhoodRequest->mutable_local_service()->mutable_get_neighbour_nodes()->set_keep_alive_and_send_updates(true);
                 unique_ptr<iop::locnet::Response> neighbourhoodResponse = requestDispatcher->Dispatch( move(neighbourhoodRequest) );
-                REQUIRE( neighbourhoodResponse->has_localservice() );
-                REQUIRE( neighbourhoodResponse->localservice().has_getneighbournodes() );
+                REQUIRE( neighbourhoodResponse->has_local_service() );
+                REQUIRE( neighbourhoodResponse->local_service().has_get_neighbour_nodes() );
                 LOG(INFO) << "Received getneighbournodes response";
             }
 
@@ -186,7 +186,7 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
 
             LOG(INFO) << "Sending deregisterservice request";
             unique_ptr<iop::locnet::Request> deregisterRequest( new iop::locnet::Request() );
-            deregisterRequest->mutable_localservice()->mutable_deregisterservice()->set_servicetype(
+            deregisterRequest->mutable_local_service()->mutable_deregister_service()->set_service_type(
                 Converter::ToProtoBuf(ServiceType::Profile) );
             requestDispatcher->Dispatch( move(deregisterRequest) );
 
@@ -196,3 +196,4 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
         }
     }
 }
+

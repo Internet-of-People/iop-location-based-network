@@ -50,8 +50,8 @@ int main(int argc, const char* const argv[])
         {
             if ( ! requestMsg ||
                  ! requestMsg->has_request() ||
-                 ! requestMsg->request().has_localservice() ||
-                 ! requestMsg->request().localservice().has_neighbourhoodchanged() )
+                 ! requestMsg->request().has_local_service() ||
+                 ! requestMsg->request().local_service().has_neighbourhood_changed() )
             {
                 LOG(ERROR) << "Received unexpected request";
                 return;
@@ -64,7 +64,7 @@ int main(int argc, const char* const argv[])
             
             unique_ptr<iop::locnet::Message> changeAckn( new iop::locnet::Message() );
             changeAckn->set_id( requestMsg->id() );
-            changeAckn->mutable_response()->mutable_localservice()->mutable_neighbourhoodupdated();
+            changeAckn->mutable_response()->mutable_local_service()->mutable_neighbourhood_updated();
             LOG(INFO) << "Sending acknowledgement";
             channel->SendMessage( move(changeAckn), [] {} );
             LOG(INFO) << "Sent acknowledgement";
@@ -74,7 +74,7 @@ int main(int argc, const char* const argv[])
                 LOG(INFO) << "Sending deregisterservice request";
                 unique_ptr<iop::locnet::Message> deregisterRequest( new iop::locnet::Message() );
                 deregisterRequest->mutable_request()->set_version({1,0,0});
-                deregisterRequest->mutable_request()->mutable_localservice()->mutable_deregisterservice()->set_servicetype(
+                deregisterRequest->mutable_request()->mutable_local_service()->mutable_deregister_service()->set_service_type(
                     Converter::ToProtoBuf(ServiceType::Profile) );
                 session->SendRequest( move(deregisterRequest) );
                 
@@ -98,7 +98,7 @@ int main(int argc, const char* const argv[])
             shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(session) );
             LOG(INFO) << "Sending registerservice request";
             unique_ptr<iop::locnet::Request> registerRequest( new iop::locnet::Request() );
-            registerRequest->mutable_localservice()->mutable_registerservice()->set_allocated_service(
+            registerRequest->mutable_local_service()->mutable_register_service()->set_allocated_service(
                 Converter::ToProtoBuf( ServiceInfo(ServiceType::Profile, 16999, "ProfileServerId") ) );
             unique_ptr<iop::locnet::Response> registerResponse = dispatcher->Dispatch( move(registerRequest) );
             
@@ -107,10 +107,10 @@ int main(int argc, const char* const argv[])
             {
                 LOG(INFO) << "Sending getneighbournodes request";
                 unique_ptr<iop::locnet::Request> neighbourhoodRequest( new iop::locnet::Request() );
-                neighbourhoodRequest->mutable_localservice()->mutable_getneighbournodes()->set_keepaliveandsendupdates(true);
+                neighbourhoodRequest->mutable_local_service()->mutable_get_neighbour_nodes()->set_keep_alive_and_send_updates(true);
                 unique_ptr<iop::locnet::Response> neighbourhoodResponse = dispatcher->Dispatch( move(neighbourhoodRequest) );
-                if ( ! neighbourhoodResponse->has_localservice() ||
-                        ! neighbourhoodResponse->localservice().has_getneighbournodes() )
+                if ( ! neighbourhoodResponse->has_local_service() ||
+                        ! neighbourhoodResponse->local_service().has_get_neighbour_nodes() )
                 {
                     LOG(ERROR) << "Received unexpected response";
                     break;
@@ -133,3 +133,4 @@ int main(int argc, const char* const argv[])
         return 1;
     }
 }
+
