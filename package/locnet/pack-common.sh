@@ -4,11 +4,11 @@ sudo checkinstall \
     --install=no \
     --fstrans=yes \
     --nodoc \
-    --maintainer="Fermat Developers \<fermat-developers.group@fermat.org\>" \
-    --pkgsource="https://github.com/Fermat-ORG/iop-location-based-network.git" \
-    --pkglicense=MIT \
+    --maintainer="IoP Developers \<developer@iop-ventures.com\>" \
+    --pkgsource="https://github.com/Internet-of-People/iop-location-based-network.git" \
+    --pkglicense=GPLv3 \
     --pkggroup=net \
     --pkgname=iop-locnet \
-    --pkgversion=1.0.0-a1 \
+    --pkgversion=1.1.0-b1 \
     --pkgarch=$(dpkg --print-architecture) \
     $@
