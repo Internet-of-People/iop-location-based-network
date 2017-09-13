@@ -1,3 +1,6 @@
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/world/simplemaps-worldcities-basic.csv"
+    "${CMAKE_CURRENT_BINARY_DIR}/worldcities.csv" COPYONLY)
+
 #include_directories ("${CMAKE_SOURCE_DIR}/src")
 add_executable (tests testdata.cpp testimpls.cpp
     test_locnet.cpp test_messaging.cpp test_network.cpp test_concept.cpp test_main.cpp)
