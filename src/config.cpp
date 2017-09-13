@@ -58,14 +58,14 @@ bool Config::Init(int argc, const char* argv[])
 }
 
 
-void Config::InitForTest()
+void Config::InitForTest(const char *argv0)
 {
     _instance.reset( new EzParserConfig() );
     _instance->_testMode = true;
     
     int argc = 7;
     const char *argv[] = {
-        "test",
+        argv0,
         "--test",
         "--nodeid", "TestNodeId",
         "--latitude", "0.0",
@@ -182,6 +182,8 @@ static const vector<NetworkEndpoint> DefaultSeedNodes {
 
 bool EzParserConfig::Initialize(int argc, const char *argv[])
 {
+    _execPath = argv[0];
+    
     ez::ezOptionParser _optParser;
     
     _optParser.overview = "Internet of People : Location Based Network";
@@ -313,6 +315,9 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
 bool EzParserConfig::versionRequested() const
     { return _versionRequested; }
 
+const string& EzParserConfig::execPath() const
+    { return _execPath; }    
+    
 const string& EzParserConfig::logPath() const
     { return _logPath; }    
 

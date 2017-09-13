@@ -33,7 +33,7 @@ public:
 
     // Used to initialize a config instance with command line parameters, call only once
     static bool Init(int argc, const char *argv[]);
-    static void InitForTest();
+    static void InitForTest(const char *argv0);
     
     // Used to access the singleton object after it's properly initialized
     static const Config& Instance();
@@ -51,6 +51,7 @@ public:
     virtual TcpPort localServicePort() const = 0;
     virtual const std::vector<NetworkEndpoint>& seedNodes() const = 0;
     
+    virtual const std::string& execPath() const = 0;
     virtual const std::string& logPath() const = 0;
     virtual const std::string& dbPath() const = 0;
     virtual std::chrono::duration<uint32_t> dbMaintenancePeriod() const = 0;
@@ -76,6 +77,7 @@ class EzParserConfig : public Config
     TcpPort         _localPort;
     GpsCoordinate   _latitude;
     GpsCoordinate   _longitude;
+    std::string     _execPath;
     std::string     _logPath;
     std::string     _dbPath;
     std::vector<NetworkEndpoint> _seedNodes;
@@ -92,6 +94,7 @@ public:
     TcpPort localServicePort() const override;
     const std::vector<NetworkEndpoint>& seedNodes() const override;
     
+    const std::string& execPath() const override;
     const std::string& logPath() const override;
     const std::string& dbPath() const override;
     std::chrono::duration<uint32_t> dbMaintenancePeriod() const override;

@@ -21,11 +21,11 @@ void signalHandler(int signal)
     { mySignalHandlerFunc(signal); }
 
 
-int main()
+int main(int, const char* const argv[])
 {
     try
     {
-        Config::InitForTest();
+        Config::InitForTest( argv[0] );
         
         LOG(INFO) << "Initializing server";
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,

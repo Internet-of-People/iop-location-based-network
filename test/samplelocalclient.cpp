@@ -35,7 +35,7 @@ int main(int argc, const char* const argv[])
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
-        Config::InitForTest();
+        Config::InitForTest( argv[0] );
         
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
         
