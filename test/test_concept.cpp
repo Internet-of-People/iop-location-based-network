@@ -20,6 +20,18 @@ const char PATH_SEPARATOR =
 ;
 
 
+
+struct Settlement
+{
+    Settlement(const string &name, GpsCoordinate latitude, GpsCoordinate longitude, uint32_t population) :
+        name(name), location(latitude, longitude), population(population) {}
+    
+    string      name;
+    GpsLocation location;
+    uint32_t    population;
+};
+
+
 SCENARIO("Conceptual correctness of the algorithm organizing the global network", "[concept]")
 {
     GIVEN("A map of the biggest cities")
@@ -37,6 +49,7 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
         REQUIRE( getline(citiesCsvFile, csvLine) );
         
         // Process entries from CSV file
+        vector<Settlement> settlements;
         while( getline(citiesCsvFile, csvLine) )
         {
             stringstream lineStream(csvLine);
@@ -63,11 +76,19 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
                 }
             }
             
-            for (auto token : tokens)
-                { cout << token << "\t"; }
-            cout << endl;
             REQUIRE( tokens.size() == 9 );
+            const string &city       = tokens[1];
+            GpsCoordinate latitude   = stof( tokens[2] );
+            GpsCoordinate longitude  = stof( tokens[3] );
+            uint32_t      population = stoul( tokens[4] );
+            
+            settlements.emplace_back(city, latitude, longitude, population);
         }
+
+//         for (auto &settlement : settlements)
+//         {
+//             cout << settlement.name << "\t" << settlement.location << "\t" << settlement.population << endl;
+//         }
         
         THEN("It works fine") {
             //REQUIRE(false);
