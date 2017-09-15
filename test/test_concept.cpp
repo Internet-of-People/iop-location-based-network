@@ -76,13 +76,16 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
                 }
             }
             
-            REQUIRE( tokens.size() == 9 );
+            //REQUIRE( tokens.size() == 9 ); // Unnecessarily creates thousands of assertions included in the reports
             const string &city       = tokens[1];
             GpsCoordinate latitude   = stof( tokens[2] );
             GpsCoordinate longitude  = stof( tokens[3] );
             uint32_t      population = stoul( tokens[4] );
+            const string &country    = tokens[5];
+            const string &region     = tokens[8].substr(0, tokens[8].size() - 1); // Cut \r
             
-            settlements.emplace_back(city, latitude, longitude, population);
+            string settlementName = city + "(" + country + "," + region + ")";
+            settlements.emplace_back(settlementName, latitude, longitude, population);
         }
         
         shared_ptr<NodeRegistry> proxyFactory = shared_ptr<NodeRegistry>( new NodeRegistry() );
@@ -103,7 +106,7 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
         for ( auto node : proxyFactory->nodes() )
         {
             auto const &nodeInfo = node.second->GetNodeInfo();
-            cout << nodeInfo << endl;
+            cout << nodeInfo << ", map size: " << node.second->GetNodeCount() << endl;
         }
         
         THEN("It works fine") {
