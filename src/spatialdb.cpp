@@ -55,6 +55,10 @@ const vector<string> DatabaseInitCommands = {
 
 
 
+NodeDbEntry NodeDbEntry::FromSelfInfo(const NodeInfo &thisNodeInfo)
+    { return NodeDbEntry(thisNodeInfo, NodeRelationType::Self, NodeContactRoleType::Self); }
+
+
 NodeDbEntry::NodeDbEntry(const NodeDbEntry& other) :
     NodeInfo(other), _relationType(other._relationType), _roleType(other._roleType) {}
 
@@ -233,10 +237,6 @@ vector<NodeDbEntry> SpatiaLiteDatabase::QueryEntries(const GpsLocation &fromLoca
 }
 
 
-NodeDbEntry ThisNodeToDbEntry(const NodeInfo &thisNodeInfo)
-    { return NodeDbEntry(thisNodeInfo, NodeRelationType::Self, NodeContactRoleType::Self); }
-
-
 // SpatiaLite initialization/shutdown sequence is documented here:
 // https://groups.google.com/forum/#!msg/spatialite-users/83SOajOJ2JU/sgi5fuYAVVkJ
 SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string &dbPath,
@@ -286,8 +286,8 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
         { throw LocationNetworkError(ErrorCode::ERROR_BAD_STATE, "Node id changed, database is invalidated. Delete database file " +
             dbPath + " to force signing up to the network with the new node id."); }
     
-    if ( selfEntries.empty() )  { Store ( ThisNodeToDbEntry(_myNodeInfo), false ); }
-    else                        { Update( ThisNodeToDbEntry(_myNodeInfo), false ); }
+    if ( selfEntries.empty() )  { Store ( NodeDbEntry::FromSelfInfo(_myNodeInfo), false ); }
+    else                        { Update( NodeDbEntry::FromSelfInfo(_myNodeInfo), false ); }
     LOG(DEBUG) << "Database ready with node count: " << GetNodeCount();
 }
 
@@ -768,7 +768,7 @@ vector<NodeDbEntry> SpatiaLiteDatabase::GetClosestNodesByDistance(
 
 NodeDbEntry SpatiaLiteDatabase::ThisNode() const
 {
-    return ThisNodeToDbEntry(_myNodeInfo);
+    return NodeDbEntry::FromSelfInfo(_myNodeInfo);
 //     string whereCondition = "WHERE relationType = " + to_string( static_cast<int>(NodeRelationType::Colleague) );
 //     vector<NodeDbEntry> result = QueryEntries( _myNodeInfo.location(), whereCondition );
 //     if ( result.empty() )

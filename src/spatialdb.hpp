@@ -49,6 +49,8 @@ class NodeDbEntry : public NodeInfo
     
 public:
     
+    static NodeDbEntry FromSelfInfo(const NodeInfo &thisNodeInfo);
+    
     NodeDbEntry(const NodeDbEntry& other);
     NodeDbEntry( const NodeInfo& info,
                  NodeRelationType relationType, NodeContactRoleType roleType );

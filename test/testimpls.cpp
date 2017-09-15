@@ -10,18 +10,6 @@ namespace LocNet
 {
 
 
-ChangeCounter::ChangeCounter(const SessionId& sessionId) : _sessionId(sessionId) {}
-
-const SessionId& ChangeCounter::sessionId() const { return _sessionId; }
-
-void ChangeCounter::OnRegistered() {}
-void ChangeCounter::AddedNode(const NodeDbEntry&)   { ++addedCount; }
-void ChangeCounter::UpdatedNode(const NodeDbEntry&) { ++updatedCount; }
-void ChangeCounter::RemovedNode(const NodeDbEntry&) { ++removedCount; }
-
-
-
-
 shared_ptr<INodeMethods> DummyNodeConnectionFactory::ConnectTo(const NetworkEndpoint&)
 {
     return shared_ptr<INodeMethods>();
@@ -34,15 +22,44 @@ shared_ptr<IChangeListener> DummyChangeListenerFactory::Create(shared_ptr<ILocal
 
 
 
+ChangeCounter::ChangeCounter(const SessionId& sessionId) : _sessionId(sessionId) {}
+
+const SessionId& ChangeCounter::sessionId() const { return _sessionId; }
+
+void ChangeCounter::OnRegistered() {}
+void ChangeCounter::AddedNode(const NodeDbEntry&)   { ++addedCount; }
+void ChangeCounter::UpdatedNode(const NodeDbEntry&) { ++updatedCount; }
+void ChangeCounter::RemovedNode(const NodeDbEntry&) { ++removedCount; }
+
+
+
+void NodeRegistry::Register(shared_ptr<Node> node)
+{
+    if (! node)
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Received empty node"); }
+    _nodes.emplace( node->GetNodeInfo().contact().nodeEndpoint().address(), node );
+}
+
+const NodeRegistry::NodeContainer& NodeRegistry::nodes() const
+    { return _nodes; }
+
+std::shared_ptr<INodeMethods> NodeRegistry::ConnectTo(const NetworkEndpoint &endpoint)
+    { return _nodes[ endpoint.address() ]; }
+
+
+
 random_device InMemorySpatialDatabase::_randomDevice;
 
 
 InMemorySpatialDatabase::InMemorySpatialDatabase(const NodeInfo& myNodeInfo) :
-    _myLocation( myNodeInfo.location() )
+    _myNodeInfo(myNodeInfo)
 {
     Store( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor) );
 }
 
+
+NodeDbEntry InMemorySpatialDatabase::ThisNode() const
+    { return NodeDbEntry::FromSelfInfo(_myNodeInfo); }
 
 
 void InMemorySpatialDatabase::Store(const NodeDbEntry &node, bool)
@@ -89,7 +106,7 @@ void InMemorySpatialDatabase::Remove(const string &nodeId)
 
 void InMemorySpatialDatabase::ExpireOldNodes()
 {
-    // TODO maybe we could implement it here, but this class is useful for testing, not production
+    throw LocationNetworkError(ErrorCode::ERROR_UNSUPPORTED, "Implement this if needed for testing");
 }
 
 
@@ -205,8 +222,8 @@ vector<NodeDbEntry> InMemorySpatialDatabase::GetNeighbourNodesByDistance() const
     vector<NodeDbEntry> neighbours( GetNodes(NodeRelationType::Neighbour) );
     sort( neighbours.begin(), neighbours.end(),
         [this] (const NodeDbEntry &one, const NodeDbEntry &other)
-            { return GetDistanceKm( one.location(), _myLocation ) <
-                     GetDistanceKm( other.location(), _myLocation ); } );
+            { return GetDistanceKm( one.location(), _myNodeInfo.location() ) <
+                     GetDistanceKm( other.location(), _myNodeInfo.location() ); } );
     return neighbours;
 }
     

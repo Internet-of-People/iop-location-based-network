@@ -84,11 +84,27 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             
             settlements.emplace_back(city, latitude, longitude, population);
         }
+        
+        shared_ptr<NodeRegistry> proxyFactory = shared_ptr<NodeRegistry>( new NodeRegistry() );
+        for (auto &settlement : settlements)
+        {
+            //cout << settlement.name << "\t" << settlement.location << "\t" << settlement.population << endl;
 
-//         for (auto &settlement : settlements)
-//         {
-//             cout << settlement.name << "\t" << settlement.location << "\t" << settlement.population << endl;
-//         }
+            NodeInfo nodeInfo( settlement.name, settlement.location,
+                NodeContact(settlement.name, 8888, 9999), NodeInfo::Services() );
+            shared_ptr<ISpatialDatabase> spatialDb = shared_ptr<ISpatialDatabase>(
+                new InMemorySpatialDatabase(nodeInfo) );
+            // TODO check if many in-memory SpatiaLite instances can be unique with acceptable memory requirement
+            //    new SpatiaLiteDatabase(nodeInfo, SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
+            shared_ptr<Node> node = Node::Create(spatialDb, proxyFactory);
+            proxyFactory->Register(node);
+        }
+        
+        for ( auto node : proxyFactory->nodes() )
+        {
+            auto const &nodeInfo = node.second->GetNodeInfo();
+            cout << nodeInfo << endl;
+        }
         
         THEN("It works fine") {
             //REQUIRE(false);

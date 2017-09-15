@@ -9,6 +9,23 @@ namespace LocNet
 {
 
 
+class DummyNodeConnectionFactory: public INodeProxyFactory
+{
+public:
+    
+    std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &endpoint) override;
+};
+
+
+class DummyChangeListenerFactory: public IChangeListenerFactory
+{
+public:
+    
+    std::shared_ptr<IChangeListener> Create(std::shared_ptr<ILocalServiceMethods> localService) override;
+};
+
+
+
 class ChangeCounter : public IChangeListener
 {
     SessionId _sessionId;
@@ -31,12 +48,30 @@ public:
 
 
 
+struct NodeRegistry : public INodeProxyFactory
+{
+    typedef std::unordered_map< Address, std::shared_ptr<Node> > NodeContainer;
+    
+protected:
+    
+    NodeContainer _nodes;
+    
+public:
+    
+    const NodeContainer& nodes() const;
+    void Register(std::shared_ptr<Node> node);
+    
+    std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &endpoint) override;
+};
+
+
+
 // NOTE NOT PERSISTENT, suited for development/testing only
 class InMemorySpatialDatabase : public ISpatialDatabase
 {
     static std::random_device _randomDevice;
     
-    GpsLocation _myLocation;
+    NodeInfo _myNodeInfo;
     std::unordered_map<NodeId,NodeDbEntry> _nodes;
     
     std::vector<NodeDbEntry> GetNodes(NodeRelationType relationType) const;
@@ -56,7 +91,8 @@ public:
     void ExpireOldNodes() override;
     
     IChangeListenerRegistry& changeListenerRegistry() override;
-    
+
+    NodeDbEntry ThisNode() const override;
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
@@ -68,25 +104,8 @@ public:
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
 
-    
-
-class DummyNodeConnectionFactory: public INodeProxyFactory
-{
-public:
-    
-    std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &endpoint) override;
-};
-
-
-class DummyChangeListenerFactory: public IChangeListenerFactory
-{
-public:
-    
-    std::shared_ptr<IChangeListener> Create(std::shared_ptr<ILocalServiceMethods> localService) override;
-};
 
 
 } // namespace LocNet
-
 
 #endif // __LOCNET_TEST_IMPLEMENTATIONS_H__
