@@ -50,7 +50,7 @@ public:
 
 struct NodeRegistry : public INodeProxyFactory
 {
-    typedef std::unordered_map< Address, std::shared_ptr<Node> > NodeContainer;
+    typedef std::unordered_map< Address, std::shared_ptr<Node> >   NodeContainer;
     
 protected:
     

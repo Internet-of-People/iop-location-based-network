@@ -46,32 +46,32 @@ int main(int argc, const char *argv[])
 {
     try
     {
-        bool configCreated = Config::Init(argc, argv);
+        shared_ptr<Config> config( new EzParserConfig() );
+        bool configCreated = config->Initialize(argc, argv);
         if (! configCreated)
             { return 1; }
 
-        const Config &config( Config::Instance() ); 
-        if ( config.versionRequested() )
+        if ( config->versionRequested() )
         {
-            cout << "Internet of People - Location based network " << config.version() << endl;
+            cout << "Internet of People - Location based network " << config->version() << endl;
             return 0;
         }
         
         
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
-        el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Filename, config.logPath());
+        el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Filename, config->logPath());
         el::Loggers::reconfigureAllLoggers(el::Level::Trace, el::ConfigurationType::ToStandardOutput, "false");
         
         // Initialize server components
-        NodeInfo myNodeInfo( config.myNodeInfo() );
+        NodeInfo myNodeInfo( config->myNodeInfo() );
         LOG(INFO) << "Initializing server with node info: " << myNodeInfo;
         
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(
-            myNodeInfo, config.dbPath(), config.dbExpirationPeriod() ) );
+            myNodeInfo, config->dbPath(), config->dbExpirationPeriod() ) );
 
-        TcpNodeConnectionFactory *connFactPtr = new TcpNodeConnectionFactory();
+        TcpNodeConnectionFactory *connFactPtr = new TcpNodeConnectionFactory(config);
         shared_ptr<INodeProxyFactory> connectionFactory(connFactPtr);
-        shared_ptr<Node> node = Node::Create(geodb, connectionFactory);
+        shared_ptr<Node> node = Node::Create(config, geodb, connectionFactory);
 
         LOG(INFO) << "Connecting node to the network";
         shared_ptr<IBlockingRequestDispatcherFactory> nodeDispatcherFactory(
@@ -95,7 +95,7 @@ int main(int argc, const char *argv[])
                 new IncomingClientRequestDispatcher(node) ) ) );
         
         shared_ptr<DispatchingTcpServer> localTcpServer = DispatchingTcpServer::Create(
-            config.localServicePort(), localDispatcherFactory );
+            config->localServicePort(), localDispatcherFactory );
         shared_ptr<DispatchingTcpServer> clientTcpServer = DispatchingTcpServer::Create(
             myNodeInfo.contact().clientPort(), clientDispatcherFactory );
 
@@ -108,13 +108,13 @@ int main(int argc, const char *argv[])
         signal(SIGTERM, signalHandler);
         
         // start threads for periodic db maintenance (relation renewal and expiration) and discovery
-        thread dbMaintenanceThread( [&config, node]
+        thread dbMaintenanceThread( [config, node]
         {
             while ( ! Reactor::Instance().IsShutdown() )
             {
                 try
                 {
-                    this_thread::sleep_for( config.dbMaintenancePeriod() );
+                    this_thread::sleep_for( config->dbMaintenancePeriod() );
                     node->RenewNodeRelations();
                     node->ExpireOldNodes();
                 }
@@ -124,13 +124,13 @@ int main(int argc, const char *argv[])
         } );
         dbMaintenanceThread.detach();
         
-        thread discoveryThread( [&config, node]
+        thread discoveryThread( [config, node]
         {
             while ( ! Reactor::Instance().IsShutdown() )
             {
                 try
                 {
-                    this_thread::sleep_for( config.discoveryPeriod() );
+                    this_thread::sleep_for( config->discoveryPeriod() );
                     node->DiscoverUnknownAreas();
                 }
                 catch (exception &ex)

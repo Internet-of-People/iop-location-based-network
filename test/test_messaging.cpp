@@ -35,9 +35,11 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
         geodb->Store(TestData::EntryWien);
         geodb->Store(TestData::EntryCapeTown);
         
+        shared_ptr<Config> config( new EzParserConfig() );
+        config->InitForTest();
         shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
         shared_ptr<IChangeListenerFactory> listenerFactory( new DummyChangeListenerFactory() );
-        shared_ptr<Node> node = Node::Create(geodb, connectionFactory);
+        shared_ptr<Node> node = Node::Create(config, geodb, connectionFactory);
         IncomingRequestDispatcher dispatcher(node, listenerFactory);
         
         THEN("Local service GetNeighbours requests are properly served") {

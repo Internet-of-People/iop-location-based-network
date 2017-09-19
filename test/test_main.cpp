@@ -20,7 +20,7 @@ int main( int argc, const char* const argv[] )
     el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToFile, "false");
     el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToStandardOutput, "false");
     
-    LocNet::Config::InitForTest( argv[0] );
+    LocNet::Config::SetExecPath( argv[0] );
     
     Catch::Session session;
     try { return session.run( argc, argv ); }

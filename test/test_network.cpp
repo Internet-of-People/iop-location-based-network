@@ -49,8 +49,10 @@ SCENARIO("Client-Server requests and responses with TCP networking", "[network]"
         geodb->Store(TestData::EntryWien);
         geodb->Store(TestData::EntryCapeTown);
 
+        shared_ptr<Config> config( new EzParserConfig() );
+        config->InitForTest();
         shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
-        shared_ptr<Node> node = Node::Create(geodb, connectionFactory);
+        shared_ptr<Node> node = Node::Create(config, geodb, connectionFactory);
         
         shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory(
             new CombinedBlockingRequestDispatcherFactory(node) );
@@ -100,7 +102,7 @@ SCENARIO("Client-Server requests and responses with TCP networking", "[network]"
             shared_ptr<ProtoBufClientSession> clientSession( ProtoBufClientSession::Create(clientChannel) );
             clientSession->StartMessageLoop();
 
-            shared_ptr<IBlockingRequestDispatcher> netDispatcher( new NetworkDispatcher(clientSession) );
+            shared_ptr<IBlockingRequestDispatcher> netDispatcher( new NetworkDispatcher(config, clientSession) );
             NodeMethodsProtoBufClient client(netDispatcher, {});
             
             size_t nodeCount = client.GetNodeCount();
@@ -122,8 +124,10 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
 
+        shared_ptr<Config> config( new EzParserConfig() );
+        config->InitForTest();
         shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
-        shared_ptr<Node> node = Node::Create(geodb, connectionFactory);
+        shared_ptr<Node> node = Node::Create(config, geodb, connectionFactory);
         
         shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory(
             new CombinedBlockingRequestDispatcherFactory(node) );
@@ -141,7 +145,7 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
             shared_ptr<ProtoBufClientSession> session( ProtoBufClientSession::Create(channel) );
 
             uint32_t notificationsReceived = 0;
-            session->StartMessageLoop( [&notificationsReceived, channel, session]
+            session->StartMessageLoop( [&notificationsReceived, config, channel, session]
                 ( unique_ptr<iop::locnet::Message> &&requestMsg )
             {
                 REQUIRE( requestMsg );
@@ -162,7 +166,7 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
                 LOG(INFO) << "Sent acknowledgement";
             } );
             
-            shared_ptr<IBlockingRequestDispatcher> requestDispatcher( new NetworkDispatcher(session) );
+            shared_ptr<IBlockingRequestDispatcher> requestDispatcher( new NetworkDispatcher(config, session) );
             LOG(INFO) << "Sending registerservice request";
             unique_ptr<iop::locnet::Request> registerRequest( new iop::locnet::Request() );
             registerRequest->mutable_local_service()->mutable_register_service()->set_allocated_service(

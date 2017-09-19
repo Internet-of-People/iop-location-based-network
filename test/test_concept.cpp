@@ -32,10 +32,10 @@ struct Settlement
 };
 
 
-vector<Settlement> LoadWorldCitiesCSV()
+vector<Settlement> LoadWorldCitiesCSV(shared_ptr<Config> testConfig)
 {
     // CSV input is in the same file as the test executable
-    const string &execPath = Config::Instance().execPath();
+    const string &execPath = testConfig->execPath();
     int pos = execPath.rfind(PATH_SEPARATOR);
     string execDir( execPath.substr(0, pos+1) ); // if not found, pos will be -1, substr will be empty
     
@@ -95,31 +95,43 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
 {
     GIVEN("A map of the biggest cities")
     {
-        vector<Settlement> settlements( LoadWorldCitiesCSV() );
+        shared_ptr<Config> config( new EzParserConfig() );
+        config->InitForTest();
+        vector<Settlement> settlements( LoadWorldCitiesCSV(config) );
         
-        shared_ptr<NodeRegistry> proxyFactory = shared_ptr<NodeRegistry>( new NodeRegistry() );
+        vector<NetworkEndpoint> seedNodes;
+        shared_ptr<NodeRegistry> proxyFactory( new NodeRegistry() );
         for (auto &settlement : settlements)
         {
             //cout << settlement.name << "\t" << settlement.location << "\t" << settlement.population << endl;
 
             NodeInfo nodeInfo( settlement.name, settlement.location,
                 NodeContact(settlement.name, 8888, 9999), NodeInfo::Services() );
-            shared_ptr<ISpatialDatabase> spatialDb = shared_ptr<ISpatialDatabase>(
-                new InMemorySpatialDatabase(nodeInfo) );
+            shared_ptr<ISpatialDatabase> spatialDb( new InMemorySpatialDatabase(nodeInfo) );
             // TODO check if many in-memory SpatiaLite instances can be unique with acceptable memory requirement
             //    new SpatiaLiteDatabase(nodeInfo, SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
-            shared_ptr<Node> node = Node::Create(spatialDb, proxyFactory);
+            shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
             proxyFactory->Register(node);
             
-            // TODO dedicate some seed nodes
-            // TODO make filling in node map work fine with
-            // node->EnsureMapFilled();
+            // Dedicate the first cities as seed nodes
+            if ( seedNodes.size() < 3 )
+                { seedNodes.push_back( nodeInfo.contact().nodeEndpoint() ); }
         }
+
+        // TODO somehow assign collected seed nodes to config
+        //Config::Instance().seedNodes();
+        
+        REQUIRE( proxyFactory->nodes().size() > 100 ); // No point of running this test on just a few nodes
         
         for ( auto node : proxyFactory->nodes() )
         {
             auto const &nodeInfo = node.second->GetNodeInfo();
             cout << nodeInfo << ", map size: " << node.second->GetNodeCount() << endl;
+            
+            // TODO make sure that all parameters needed to be overwritten for testing (expiration times, etc)
+            //      can be overridden as config options or at least method args
+            // TODO make filling in node map work fine with
+            // node.second->EnsureMapFilled();
         }
         
         THEN("It works fine") {

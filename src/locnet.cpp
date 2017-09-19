@@ -29,15 +29,20 @@ const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT     = 5;
 random_device Node::_randomDevice;
 
 
-shared_ptr<Node> Node::Create( shared_ptr<ISpatialDatabase> spatialDb,
+shared_ptr<Node> Node::Create( shared_ptr<Config> config,
+                               shared_ptr<ISpatialDatabase> spatialDb,
                                shared_ptr<INodeProxyFactory> proxyFactory )
-{ return shared_ptr<Node>( new Node(spatialDb, proxyFactory) ); }
+{ return shared_ptr<Node>( new Node(config, spatialDb, proxyFactory) ); }
 
 
-Node::Node( shared_ptr<ISpatialDatabase> spatialDb,
+Node::Node( shared_ptr<Config> config,
+            shared_ptr<ISpatialDatabase> spatialDb,
             shared_ptr<INodeProxyFactory> proxyFactory ) :
-    _spatialDb(spatialDb), _proxyFactory(proxyFactory)
+    _config(config), _spatialDb(spatialDb), _proxyFactory(proxyFactory)
 {
+    if (_config == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No config instantiated");
+    }
     if (_spatialDb == nullptr) {
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No spatial database instantiated");
     }
@@ -49,7 +54,7 @@ Node::Node( shared_ptr<ISpatialDatabase> spatialDb,
 
 void Node::EnsureMapFilled()
 {
-    vector<NetworkEndpoint> seedNodes = Config::Instance().seedNodes();
+    vector<NetworkEndpoint> seedNodes = _config->seedNodes();
     if ( GetNodeCount() <= 1 && ! seedNodes.empty() )
     {
         LOG(INFO) << "Map is empty, discovering the network";
@@ -312,7 +317,7 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint) co
 {
     // There is no point in connecting to ourselves
     if ( endpoint == _spatialDb->ThisNode().contact().nodeEndpoint() ||
-         ( endpoint.isLoopback() && ! Config::Instance().isTestMode() ) )
+         ( endpoint.isLoopback() && ! _config->isTestMode() ) )
     {
         LOG(TRACE) << "Address " << endpoint << " is self or local, refusing";
         return shared_ptr<INodeMethods>();
@@ -383,7 +388,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             
             case NodeRelationType::Neighbour:
             {
-                size_t neighbourhoodTargetSize = Config::Instance().neighbourhoodTargetSize();
+                size_t neighbourhoodTargetSize = _config->neighbourhoodTargetSize();
                 vector<NodeInfo> neighboursByDistance( GetNeighbourNodesByDistance() );
                 if (storedInfo == nullptr || storedInfo->relationType() == NodeRelationType::Colleague)
                 {
@@ -514,7 +519,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
 bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
 {
     LOG(DEBUG) << "Discovering world map for colleagues";
-    const size_t INIT_WORLD_RANDOM_NODE_COUNT = 2 * Config::Instance().neighbourhoodTargetSize();
+    const size_t INIT_WORLD_RANDOM_NODE_COUNT = 2 * _config->neighbourhoodTargetSize();
     
     vector<NetworkEndpoint> triedNodes;
     
@@ -706,7 +711,7 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
     
     // Try to fill neighbourhood map until limit reached or no new nodes left to ask
     vector<NodeInfo> neighbourCandidates;
-    while ( neighbourCandidates.size() < Config::Instance().neighbourhoodTargetSize() &&
+    while ( neighbourCandidates.size() < _config->neighbourhoodTargetSize() &&
             ! nodesToAskQueue.empty() )
     {
         // Get next candidate

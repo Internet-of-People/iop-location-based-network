@@ -4,6 +4,7 @@
 #include <random>
 #include <unordered_map>
 
+#include "config.hpp"
 #include "spatialdb.hpp"
 
 
@@ -104,6 +105,7 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
 {
     static std::random_device _randomDevice;
     
+    std::shared_ptr<Config>                    _config;
     std::shared_ptr<ISpatialDatabase>          _spatialDb;
     mutable std::shared_ptr<INodeProxyFactory> _proxyFactory;
     
@@ -119,12 +121,14 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     bool BubbleOverlaps(const GpsLocation &newNodeLocation,
                         const std::string &nodeIdToIgnore = "") const;
     
-    Node( std::shared_ptr<ISpatialDatabase> spatialDb,
+    Node( std::shared_ptr<Config> config,
+          std::shared_ptr<ISpatialDatabase> spatialDb,
           std::shared_ptr<INodeProxyFactory> proxyFactory );
 
 public:
 
-    static std::shared_ptr<Node> Create( std::shared_ptr<ISpatialDatabase> spatialDb,
+    static std::shared_ptr<Node> Create( std::shared_ptr<Config> config,
+                                         std::shared_ptr<ISpatialDatabase> spatialDb,
                                          std::shared_ptr<INodeProxyFactory> proxyFactory );
     
     void EnsureMapFilled();

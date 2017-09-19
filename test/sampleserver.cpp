@@ -21,11 +21,12 @@ void signalHandler(int signal)
     { mySignalHandlerFunc(signal); }
 
 
-int main(int, const char* const argv[])
+int main(int, const char* const [])
 {
     try
     {
-        Config::InitForTest( argv[0] );
+        shared_ptr<Config> config( new EzParserConfig() );
+        config->InitForTest();
         
         LOG(INFO) << "Initializing server";
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
@@ -75,7 +76,7 @@ int main(int, const char* const argv[])
         
         shared_ptr<INodeProxyFactory> connectionFactory(
             new DummyNodeConnectionFactory() );
-        shared_ptr<Node> node = Node::Create(geodb, connectionFactory);
+        shared_ptr<Node> node = Node::Create(config, geodb, connectionFactory);
         node->EnsureMapFilled();
         
         const NodeContact &BudapestNodeContact( TestData::NodeBudapest.contact() );

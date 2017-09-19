@@ -17,13 +17,13 @@ namespace LocNet
 // Built with the singleton pattern.
 class Config
 {
-    static std::unique_ptr<Config> _instance;
+//    static std::unique_ptr<Config> _instance;
     
 protected:
 
-    bool _testMode = false;
+    static std::string _argv0;
     
-    virtual bool Initialize(int argc, const char *argv[]) = 0;
+    bool _testMode = false;
     
     Config();
     Config(const Config &other) = delete;
@@ -31,15 +31,21 @@ protected:
     
 public:
 
-    // Used to initialize a config instance with command line parameters, call only once
-    static bool Init(int argc, const char *argv[]);
-    static void InitForTest(const char *argv0);
+//     // Used to initialize a config instance with command line parameters, call only once
+//     static bool Init(int argc, const char *argv[]);
+//     static void InitForTest(const char *argv0);
     
-    // Used to access the singleton object after it's properly initialized
-    static const Config& Instance();
+    static void SetExecPath(const char *argv0); // While testing command line args are forwarded to the tester framework, only argv0 is used to load up resources
+    static std::pair<size_t, const char**> TestArgs();
+    
+//     // Used to access the singleton object after it's properly initialized
+//     static const Config& Instance();
     
 
     virtual ~Config() {}
+    
+    virtual bool Initialize(int argc, const char *argv[]) = 0;
+    virtual bool InitForTest();
     
     virtual bool isTestMode() const;
     virtual const std::string& version() const;
@@ -54,6 +60,7 @@ public:
     virtual const std::string& execPath() const = 0;
     virtual const std::string& logPath() const = 0;
     virtual const std::string& dbPath() const = 0;
+    virtual std::chrono::duration<uint32_t> requestExpirationPeriod() const = 0;
     virtual std::chrono::duration<uint32_t> dbMaintenancePeriod() const = 0;
     virtual std::chrono::duration<uint32_t> dbExpirationPeriod() const = 0;
     virtual std::chrono::duration<uint32_t> discoveryPeriod() const = 0;
@@ -65,6 +72,7 @@ public:
 // to parse options from the command line and/or config files.
 class EzParserConfig : public Config
 {
+    static const std::chrono::duration<uint32_t> _requestExpirationPeriod;
     static const std::chrono::duration<uint32_t> _dbMaintenancePeriod;
     static const std::chrono::duration<uint32_t> _dbExpirationPeriod;
     static const std::chrono::duration<uint32_t> _discoveryPeriod;
@@ -97,6 +105,7 @@ public:
     const std::string& execPath() const override;
     const std::string& logPath() const override;
     const std::string& dbPath() const override;
+    std::chrono::duration<uint32_t> requestExpirationPeriod() const override;
     std::chrono::duration<uint32_t> dbMaintenancePeriod() const override;
     std::chrono::duration<uint32_t> dbExpirationPeriod() const override;
     std::chrono::duration<uint32_t> discoveryPeriod() const override;

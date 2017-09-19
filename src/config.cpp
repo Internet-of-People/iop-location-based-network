@@ -32,50 +32,62 @@ static const string LOCNET_VERSION = to_string(VERSION_MAJOR) + "." +
 
 static const size_t NEIGHBOURHOOD_TARGET_SIZE = 50;
 
-const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::hours(7);
+const chrono::duration<uint32_t> EzParserConfig::_requestExpirationPeriod = chrono::seconds(10);
 const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod  = chrono::hours(24);
+const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::hours(7);
 const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod     = chrono::minutes(5);
 
 
 
-unique_ptr<Config> Config::_instance(nullptr);
+// unique_ptr<Config> Config::_instance(nullptr);
+// 
+// const Config& Config::Instance()
+// {
+//     if (! _instance)
+//     {
+//         LOG(ERROR) << "Configuration is missing: either not properly initialized (call Config::Init or InitForTest) or destroyed already during shutdown.";
+//         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Missing configuration");
+//     }
+//     return *_instance;
+// }
+// 
+// 
+// bool Config::Init(int argc, const char* argv[])
+// {
+//     _instance.reset( new EzParserConfig() );
+//     return _instance->Initialize(argc, argv);
+// }
 
-const Config& Config::Instance()
+
+
+string Config::_argv0("UNINITIALIZED");
+
+void Config::SetExecPath(const char *argv0) { _argv0 = argv0; }
+
+pair<size_t, const char**> Config::TestArgs()
 {
-    if (! _instance)
-    {
-        LOG(ERROR) << "Configuration is missing: either not properly initialized (call Config::Init or InitForTest) or destroyed already during shutdown.";
-        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Missing configuration");
-    }
-    return *_instance;
-}
-
-
-bool Config::Init(int argc, const char* argv[])
-{
-    _instance.reset( new EzParserConfig() );
-    return _instance->Initialize(argc, argv);
-}
-
-
-void Config::InitForTest(const char *argv0)
-{
-    _instance.reset( new EzParserConfig() );
-    _instance->_testMode = true;
-    
-    int argc = 7;
-    const char *argv[] = {
-        argv0,
+    static const char* options[] = {
+        _argv0.c_str(),
         "--test",
         "--nodeid", "TestNodeId",
         "--latitude", "0.0",
         "--longitude", "0.0",
     };
-    _instance->Initialize(argc, argv);
+    return make_pair(8, options);
 }
 
 
+
 Config::Config() {}
+
+
+bool Config::InitForTest()
+{
+    _testMode = true;
+    auto testArgs = TestArgs();
+    return Initialize(testArgs.first, testArgs.second);
+}
+
 
 const string& Config::version() const
     { return LOCNET_VERSION; }
@@ -105,7 +117,7 @@ string GetPosixHomeDirectory()
 {
     const char *home = getenv("HOME");
     if ( home == nullptr || strlen(home) == 0 )
-        { home = getpwuid(getuid())->pw_dir; }
+        { home = getpwuid( getuid() )->pw_dir; }
     return home;
 }
 
@@ -316,7 +328,7 @@ bool EzParserConfig::versionRequested() const
     { return _versionRequested; }
 
 const string& EzParserConfig::execPath() const
-    { return _execPath; }    
+    { return _argv0; }    
     
 const string& EzParserConfig::logPath() const
     { return _logPath; }    
@@ -332,7 +344,10 @@ const vector<NetworkEndpoint>& EzParserConfig::seedNodes() const
 
 TcpPort EzParserConfig::localServicePort() const
     { return _localPort; }
-    
+
+chrono::duration<uint32_t> EzParserConfig::requestExpirationPeriod() const
+     { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(60)) : _requestExpirationPeriod; }
+
 chrono::duration<uint32_t> EzParserConfig::dbMaintenancePeriod() const
     { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(35)) : _dbMaintenancePeriod; }
 

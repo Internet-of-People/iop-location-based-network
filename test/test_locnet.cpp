@@ -280,8 +280,11 @@ SCENARIO("Server registration", "[localservice][logic]")
         NodeInfo nodeInfo( NodeInfo("NodeId", loc, NodeContact("127.0.0.1", 6666, 7777), {} ) );
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(nodeInfo,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
+        
+        shared_ptr<Config> config( new EzParserConfig() );
+        config->InitForTest();
         shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
-        shared_ptr<Node> geonet = Node::Create(geodb, connectionFactory);
+        shared_ptr<Node> geonet = Node::Create(config, geodb, connectionFactory);
         
         WHEN("it's newly created") {
             THEN("it has no registered servers") {

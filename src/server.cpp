@@ -21,8 +21,6 @@ static const size_t MessageSizeOffset = 1;
 
 // static chrono::duration<uint32_t> GetNetworkExpirationPeriod()
 //     { return Config::Instance().isTestMode() ? chrono::seconds(1) : chrono::seconds(10); }
-static chrono::duration<uint32_t> GetRequestExpirationPeriod()
-    { return Config::Instance().isTestMode() ? chrono::seconds(60) : chrono::seconds(10); }
 
 //static const chrono::duration<uint32_t> KeepAliveStreamExpirationPeriod = chrono::hours(168);
 
@@ -511,10 +509,10 @@ void ProtoBufClientSession::ResponseArrived(unique_ptr<iop::locnet::Message> &&r
 
 
 
-NetworkDispatcher::NetworkDispatcher(
-    shared_ptr<ProtoBufClientSession> session) : _session(session) {}
+NetworkDispatcher::NetworkDispatcher(shared_ptr<Config> config, shared_ptr<ProtoBufClientSession> session) :
+    _config(config), _session(session) {}
 
-    
+
 
 unique_ptr<iop::locnet::Message> RequestToMessage(unique_ptr<iop::locnet::Request> &&request)
 {
@@ -525,11 +523,12 @@ unique_ptr<iop::locnet::Message> RequestToMessage(unique_ptr<iop::locnet::Reques
 }
 
 
+
 unique_ptr<iop::locnet::Response> NetworkDispatcher::Dispatch(unique_ptr<iop::locnet::Request> &&request)
 {
     unique_ptr<iop::locnet::Message> requestMessage( RequestToMessage( move(request) ) );
     future< unique_ptr<iop::locnet::Response> > futureResponse = _session->SendRequest( move(requestMessage) );
-    if ( futureResponse.wait_for( GetRequestExpirationPeriod() ) != future_status::ready )
+    if ( futureResponse.wait_for( _config->requestExpirationPeriod() ) != future_status::ready )
     {
         LOG(WARNING) << "Session " << _session->id() << " received no response, timed out";
         throw LocationNetworkError( ErrorCode::ERROR_BAD_RESPONSE, "Timeout waiting for response of dispatched request" );
@@ -546,6 +545,9 @@ unique_ptr<iop::locnet::Response> NetworkDispatcher::Dispatch(unique_ptr<iop::lo
 
 
 
+TcpNodeConnectionFactory::TcpNodeConnectionFactory(shared_ptr<Config> config) :
+    _config(config) {}
+
 void TcpNodeConnectionFactory::detectedIpCallback(function<void(const Address&)> detectedIpCallback)
 {
     _detectedIpCallback = detectedIpCallback;
@@ -558,7 +560,7 @@ shared_ptr<INodeMethods> TcpNodeConnectionFactory::ConnectTo(const NetworkEndpoi
     LOG(DEBUG) << "Connecting to " << endpoint;
     shared_ptr<IProtoBufChannel> connection( new AsyncProtoBufTcpChannel(endpoint) );
     shared_ptr<ProtoBufClientSession> session( ProtoBufClientSession::Create(connection) );
-    shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(session) );
+    shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(_config, session) );
     shared_ptr<INodeMethods> result( new NodeMethodsProtoBufClient(dispatcher, _detectedIpCallback) );
     session->StartMessageLoop();
     return result;
