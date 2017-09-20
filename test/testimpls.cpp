@@ -76,7 +76,8 @@ shared_ptr<NodeDbEntry> InMemorySpatialDatabase::Load(const string &nodeId) cons
 {
     auto it = _nodes.find(nodeId);
     if ( it == _nodes.end() ) {
-        throw runtime_error("Node is not found");
+        // throw runtime_error("Node is not found");
+        return shared_ptr<NodeDbEntry>();
     }
     
     return shared_ptr<NodeDbEntry>( new NodeDbEntry(it->second) );
