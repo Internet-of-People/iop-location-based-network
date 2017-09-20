@@ -21,12 +21,12 @@ void signalHandler(int signal)
     { mySignalHandlerFunc(signal); }
 
 
-int main(int, const char* const [])
+int main(int argc, const char *argv[])
 {
     try
     {
-        shared_ptr<Config> config( new EzParserConfig() );
-        config->InitForTest();
+        shared_ptr<EzParserConfig> config( new EzParserConfig() );
+        config->Initialize(argc, argv);
         
         LOG(INFO) << "Initializing server";
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,

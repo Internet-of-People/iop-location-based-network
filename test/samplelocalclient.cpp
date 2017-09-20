@@ -23,7 +23,7 @@ void signalHandler(int)
 
 
 
-int main(int argc, const char* const argv[])
+int main(int argc, const char* argv[])
 {
     try
     {
@@ -35,8 +35,8 @@ int main(int argc, const char* const argv[])
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
-        shared_ptr<Config> config( new EzParserConfig() );
-        config->InitForTest();
+        shared_ptr<EzParserConfig> config( new EzParserConfig() );
+        config->Initialize(argc, argv);
         
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
         

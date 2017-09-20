@@ -21,10 +21,6 @@ class Config
     
 protected:
 
-    static std::string _argv0;
-    
-    bool _testMode = false;
-    
     Config();
     Config(const Config &other) = delete;
     Config& operator=(const Config &other) = delete;
@@ -35,29 +31,21 @@ public:
 //     static bool Init(int argc, const char *argv[]);
 //     static void InitForTest(const char *argv0);
     
-    static void SetExecPath(const char *argv0); // While testing command line args are forwarded to the tester framework, only argv0 is used to load up resources
-    static std::pair<size_t, const char**> TestArgs();
-    
 //     // Used to access the singleton object after it's properly initialized
 //     static const Config& Instance();
     
+//    virtual bool InitForTest();
 
     virtual ~Config() {}
     
-    virtual bool Initialize(int argc, const char *argv[]) = 0;
-    virtual bool InitForTest();
-    
-    virtual bool isTestMode() const;
     virtual const std::string& version() const;
     virtual size_t neighbourhoodTargetSize() const;
     
-    virtual bool versionRequested() const = 0;
-    
+    virtual bool isTestMode() const = 0;
     virtual const NodeInfo& myNodeInfo() const = 0;
     virtual TcpPort localServicePort() const = 0;
     virtual const std::vector<NetworkEndpoint>& seedNodes() const = 0;
     
-    virtual const std::string& execPath() const = 0;
     virtual const std::string& logPath() const = 0;
     virtual const std::string& dbPath() const = 0;
     virtual std::chrono::duration<uint32_t> requestExpirationPeriod() const = 0;
@@ -77,15 +65,15 @@ class EzParserConfig : public Config
     static const std::chrono::duration<uint32_t> _dbExpirationPeriod;
     static const std::chrono::duration<uint32_t> _discoveryPeriod;
     
-    bool            _versionRequested;
+    bool            _testMode = false;
+    bool            _versionRequested = false;
     NodeId          _nodeId;
     Address         _ipAddr;
-    TcpPort         _nodePort;
-    TcpPort         _clientPort;
-    TcpPort         _localPort;
-    GpsCoordinate   _latitude;
-    GpsCoordinate   _longitude;
-    std::string     _execPath;
+    TcpPort         _nodePort = 0;
+    TcpPort         _clientPort = 0;
+    TcpPort         _localPort = 0;
+    GpsCoordinate   _latitude = 0;
+    GpsCoordinate   _longitude = 0;
     std::string     _logPath;
     std::string     _dbPath;
     std::vector<NetworkEndpoint> _seedNodes;
@@ -94,15 +82,15 @@ class EzParserConfig : public Config
     
 public:
 
-    bool Initialize(int argc, const char *argv[]) override;
-    
-    bool versionRequested() const override;
-    
+    bool Initialize(int argc, const char *argv[]);
+    bool versionRequested() const;
+
+    bool isTestMode() const override;
     const NodeInfo& myNodeInfo() const override;
     TcpPort localServicePort() const override;
     const std::vector<NetworkEndpoint>& seedNodes() const override;
     
-    const std::string& execPath() const override;
+    //const std::string& execPath() const override;
     const std::string& logPath() const override;
     const std::string& dbPath() const override;
     std::chrono::duration<uint32_t> requestExpirationPeriod() const override;

@@ -46,7 +46,7 @@ int main(int argc, const char *argv[])
 {
     try
     {
-        shared_ptr<Config> config( new EzParserConfig() );
+        shared_ptr<EzParserConfig> config( new EzParserConfig() );
         bool configCreated = config->Initialize(argc, argv);
         if (! configCreated)
             { return 1; }

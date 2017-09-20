@@ -39,9 +39,9 @@ SCENARIO("Client-Server requests and responses with TCP networking", "[network]"
 {
     GIVEN("A configured Node and Tcp networking")
     {
-        const NodeContact &BudapestNodeContact( TestData::NodeBudapest.contact() );
+        shared_ptr<TestConfig> config( new TestConfig(TestData::NodeBudapest) );
         
-        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
+        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( config->myNodeInfo(),
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         geodb->Store(TestData::EntryKecskemet);
         geodb->Store(TestData::EntryLondon);
@@ -49,15 +49,14 @@ SCENARIO("Client-Server requests and responses with TCP networking", "[network]"
         geodb->Store(TestData::EntryWien);
         geodb->Store(TestData::EntryCapeTown);
 
-        shared_ptr<Config> config( new EzParserConfig() );
-        config->InitForTest();
+        const NodeContact &nodeContact( config->myNodeInfo().contact() );
         shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
         shared_ptr<Node> node = Node::Create(config, geodb, connectionFactory);
         
         shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory(
             new CombinedBlockingRequestDispatcherFactory(node) );
         shared_ptr<DispatchingTcpServer> tcpServer = DispatchingTcpServer::Create(
-            BudapestNodeContact.nodePort(), dispatcherFactory );
+            nodeContact.nodePort(), dispatcherFactory );
         tcpServer->StartListening();
         
         thread reactorMainThread( [] { reactorLoop("ReactorMain"); } );
@@ -66,7 +65,7 @@ SCENARIO("Client-Server requests and responses with TCP networking", "[network]"
         THEN("It serves clients via sync TCP")
         {
             shared_ptr<IProtoBufChannel> clientChannel( new AsyncProtoBufTcpChannel(
-                BudapestNodeContact.nodeEndpoint() ) );
+                        nodeContact.nodeEndpoint() ) );
             {
                 unique_ptr<iop::locnet::Message> requestMsg( new iop::locnet::Message() );
                 requestMsg->mutable_request()->mutable_local_service()->mutable_get_neighbour_nodes();
@@ -98,7 +97,7 @@ SCENARIO("Client-Server requests and responses with TCP networking", "[network]"
         THEN("It serves transparent clients using ProtoBuf/TCP protocol")
         {
             shared_ptr<IProtoBufChannel> clientChannel( new AsyncProtoBufTcpChannel(
-                BudapestNodeContact.nodeEndpoint() ) );
+                        nodeContact.nodeEndpoint() ) );
             shared_ptr<ProtoBufClientSession> clientSession( ProtoBufClientSession::Create(clientChannel) );
             clientSession->StartMessageLoop();
 
@@ -119,16 +118,15 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
 {
     GIVEN("A configured Node and Tcp networking")
     {
-        const NodeContact &BudapestNodeContact( TestData::NodeBudapest.contact() );
+        shared_ptr<TestConfig> config( new TestConfig(TestData::NodeBudapest) );
         
-        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
+        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( config->myNodeInfo(),
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
 
-        shared_ptr<Config> config( new EzParserConfig() );
-        config->InitForTest();
         shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
         shared_ptr<Node> node = Node::Create(config, geodb, connectionFactory);
         
+        const NodeContact &BudapestNodeContact( config->myNodeInfo().contact() );
         shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory(
             new CombinedBlockingRequestDispatcherFactory(node) );
         shared_ptr<DispatchingTcpServer> tcpServer = DispatchingTcpServer::Create(

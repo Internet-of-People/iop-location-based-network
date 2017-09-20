@@ -5,6 +5,7 @@
 #include <easylogging++.h>
 
 #include "config.hpp"
+#include "testimpls.hpp"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ int main( int argc, const char* const argv[] )
     el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToFile, "false");
     el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToStandardOutput, "false");
     
-    LocNet::Config::SetExecPath( argv[0] );
+    LocNet::TestConfig::ExecPath = argv[0];
     
     Catch::Session session;
     try { return session.run( argc, argv ); }

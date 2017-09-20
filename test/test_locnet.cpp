@@ -281,8 +281,7 @@ SCENARIO("Server registration", "[localservice][logic]")
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(nodeInfo,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         
-        shared_ptr<Config> config( new EzParserConfig() );
-        config->InitForTest();
+        shared_ptr<TestConfig> config( new TestConfig(nodeInfo) );
         shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
         shared_ptr<Node> geonet = Node::Create(config, geodb, connectionFactory);
         

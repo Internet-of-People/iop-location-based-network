@@ -3,8 +3,6 @@
 #include <catch.hpp>
 #include <easylogging++.h>
 
-#include "config.hpp"
-#include "testdata.hpp"
 #include "testimpls.hpp"
 
 using namespace std;
@@ -32,10 +30,10 @@ struct Settlement
 };
 
 
-vector<Settlement> LoadWorldCitiesCSV(shared_ptr<Config> testConfig)
+vector<Settlement> LoadWorldCitiesCSV()
 {
     // CSV input is in the same file as the test executable
-    const string &execPath = testConfig->execPath();
+    const string &execPath = TestConfig::ExecPath;
     int pos = execPath.rfind(PATH_SEPARATOR);
     string execDir( execPath.substr(0, pos+1) ); // if not found, pos will be -1, substr will be empty
     
@@ -95,9 +93,7 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
 {
     GIVEN("A map of the biggest cities")
     {
-        shared_ptr<Config> config( new EzParserConfig() );
-        config->InitForTest();
-        vector<Settlement> settlements( LoadWorldCitiesCSV(config) );
+        vector<Settlement> settlements( LoadWorldCitiesCSV() );
         
         vector<NetworkEndpoint> seedNodes;
         shared_ptr<NodeRegistry> proxyFactory( new NodeRegistry() );
@@ -107,7 +103,8 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
 
             NodeInfo nodeInfo( settlement.name, settlement.location,
                 NodeContact(settlement.name, 8888, 9999), NodeInfo::Services() );
-            shared_ptr<ISpatialDatabase> spatialDb( new InMemorySpatialDatabase(nodeInfo) );
+            shared_ptr<TestConfig> config( new TestConfig(nodeInfo) );
+            shared_ptr<ISpatialDatabase> spatialDb( new InMemorySpatialDatabase( config->myNodeInfo() ) );
             // TODO check if many in-memory SpatiaLite instances can be unique with acceptable memory requirement
             //    new SpatiaLiteDatabase(nodeInfo, SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
             shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);

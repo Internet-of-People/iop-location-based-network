@@ -106,6 +106,35 @@ public:
 
 
 
+struct TestConfig : public Config
+{
+    // While testing command line args are forwarded to the tester framework, only argv0 is used to load up resources
+    static std::string ExecPath;
+    //static std::pair<size_t, const char**> TestArgs();
+    
+    NodeInfo        _nodeInfo;
+    TcpPort         _localPort = 0;
+    std::string     _logPath;
+    std::string     _dbPath;
+    std::vector<NetworkEndpoint> _seedNodes;
+        
+    
+    TestConfig(const NodeInfo &nodeInfo);
+    
+    bool isTestMode() const override;
+    const NodeInfo& myNodeInfo() const override;
+    TcpPort localServicePort() const override;
+    const std::vector<NetworkEndpoint>& seedNodes() const override;
+    
+    const std::string& logPath() const override;
+    const std::string& dbPath() const override;
+    std::chrono::duration<uint32_t> requestExpirationPeriod() const override;
+    std::chrono::duration<uint32_t> dbMaintenancePeriod() const override;
+    std::chrono::duration<uint32_t> dbExpirationPeriod() const override;
+    std::chrono::duration<uint32_t> discoveryPeriod() const override;
+};
+
+
 } // namespace LocNet
 
 #endif // __LOCNET_TEST_IMPLEMENTATIONS_H__

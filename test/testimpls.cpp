@@ -269,4 +269,44 @@ Distance InMemorySpatialDatabase::GetDistanceKm(const GpsLocation &one, const Gp
 
 
 
+string TestConfig::ExecPath("UNINITIALIZED");
+
+
+TestConfig::TestConfig(const NodeInfo &aNodeInfo) : _nodeInfo(aNodeInfo) {}
+
+bool TestConfig::isTestMode() const             { return true; }
+const NodeInfo& TestConfig::myNodeInfo() const  { return _nodeInfo; }
+TcpPort TestConfig::localServicePort() const    { return _localPort; }
+const std::string& TestConfig::logPath() const  { return _logPath; }
+const std::string& TestConfig::dbPath() const   { return _dbPath; }
+
+const std::vector<NetworkEndpoint>& TestConfig::seedNodes() const           { return _seedNodes; }
+std::chrono::duration<uint32_t> TestConfig::requestExpirationPeriod() const { return chrono::seconds(60); }
+std::chrono::duration<uint32_t> TestConfig::dbMaintenancePeriod() const     { return chrono::hours(7); }
+std::chrono::duration<uint32_t> TestConfig::dbExpirationPeriod() const      { return chrono::hours(24); }
+std::chrono::duration<uint32_t> TestConfig::discoveryPeriod() const         { return chrono::minutes(5); }
+
+
+// bool Config::InitForTest()
+// {
+//     _testMode = true;
+//     auto testArgs = TestArgs();
+//     return Initialize(testArgs.first, testArgs.second);
+// }
+//
+//
+// pair<size_t, const char**> Config::TestArgs()
+// {
+//     static const char* options[] = {
+//         _argv0.c_str(),
+//         "--test",
+//         "--nodeid", "TestNodeId",
+//         "--latitude", "0.0",
+//         "--longitude", "0.0",
+//     };
+//     return make_pair(8, options);
+// }
+
+
+
 } // namespace LocNet

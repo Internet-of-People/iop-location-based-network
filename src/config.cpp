@@ -60,40 +60,11 @@ const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod     = chrono::
 
 
 
-string Config::_argv0("UNINITIALIZED");
-
-void Config::SetExecPath(const char *argv0) { _argv0 = argv0; }
-
-pair<size_t, const char**> Config::TestArgs()
-{
-    static const char* options[] = {
-        _argv0.c_str(),
-        "--test",
-        "--nodeid", "TestNodeId",
-        "--latitude", "0.0",
-        "--longitude", "0.0",
-    };
-    return make_pair(8, options);
-}
-
-
-
 Config::Config() {}
-
-
-bool Config::InitForTest()
-{
-    _testMode = true;
-    auto testArgs = TestArgs();
-    return Initialize(testArgs.first, testArgs.second);
-}
 
 
 const string& Config::version() const
     { return LOCNET_VERSION; }
-
-bool Config::isTestMode() const
-    { return _testMode; }
 
 size_t Config::neighbourhoodTargetSize() const
     { return isTestMode() ? 3 : NEIGHBOURHOOD_TARGET_SIZE; }
@@ -194,8 +165,6 @@ static const vector<NetworkEndpoint> DefaultSeedNodes {
 
 bool EzParserConfig::Initialize(int argc, const char *argv[])
 {
-    _execPath = argv[0];
-    
     ez::ezOptionParser _optParser;
     
     _optParser.overview = "Internet of People : Location Based Network";
@@ -247,12 +216,9 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     // ... then from config file if present (will not overwrite existing values)
     string filename;
     _optParser.get(OPTNAME_CONFIGFILE)->getString(filename);
-    if ( ! isTestMode() ) // NOTE members are not filled in yet, but InitForTest() has already set testmode
-    {
-        if ( _optParser.importFile( filename.c_str() ) )
-             { cout << "Processed config file " << filename << endl; }
-        else { cout << "Config file '" << filename << "' not found, using command line values only" << endl; }
-    }
+    if ( _optParser.importFile( filename.c_str() ) )
+            { cout << "Processed config file " << filename << endl; }
+    else { cout << "Config file '" << filename << "' not found, using command line values only" << endl; }
     
     // Check for missing mandatory options
     vector<string> badOptions;
@@ -323,12 +289,11 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
 }
 
 
+bool EzParserConfig::isTestMode() const
+    { return _testMode; }
 
 bool EzParserConfig::versionRequested() const
     { return _versionRequested; }
-
-const string& EzParserConfig::execPath() const
-    { return _argv0; }    
     
 const string& EzParserConfig::logPath() const
     { return _logPath; }    
