@@ -109,7 +109,7 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             
 //             if ( seedNodes.size() < 3 )
 //                 { seedNodes.push_back( nodeInfo.contact().nodeEndpoint() ); }
-            if (nodeConfigs.size() >= 200)
+            if (nodeConfigs.size() >= 1000)
                 { break; }
         }
         
@@ -130,8 +130,9 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             
             node->EnsureMapFilled();
             
-            cout << proxyFactory->nodes().size() << " - "
-                 << node->GetNodeInfo() << ", map size " << node->GetNodeCount() << endl;
+            cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo()
+                 << ", map size " << node->GetNodeCount()
+                 << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
         }
         
         THEN("It works fine") {

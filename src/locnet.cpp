@@ -3,6 +3,7 @@
 #include <chrono>
 #include <deque>
 #include <limits>
+#include <list>
 #include <thread>
 #include <unordered_set>
 
@@ -335,7 +336,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
 {
     try
     {
-        NodeDbEntry myNode = _spatialDb->ThisNode();
+        NodeDbEntry myNode( _spatialDb->ThisNode() );
         
         // We must not explicitly add or overwrite our own node info here.
         // Whether or not our own nodeinfo is stored in the db is an implementation detail of the SpatialDatabase.
@@ -389,6 +390,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
             case NodeRelationType::Neighbour:
             {
                 size_t neighbourhoodTargetSize = _config->neighbourhoodTargetSize();
+                // TODO optimize neighbourhood size query
                 vector<NodeInfo> neighboursByDistance( GetNeighbourNodesByDistance() );
                 if (storedInfo == nullptr || storedInfo->relationType() == NodeRelationType::Colleague)
                 {
@@ -419,7 +421,7 @@ bool Node::SafeStoreNode(const NodeDbEntry& plannedEntry, shared_ptr<INodeMethod
                         LOG(ERROR) << "Implementation problem: stored neighbour is not found in neighbour list";
                         throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Please report this to the developers");
                     }
-                    // Don't care about location change here. IF moved too far away we will expire it
+                    // Don't care about location change here. If moved too far away we will expire it
                     // at the next renewal request when it's at its new place in the neighbour list.
                     size_t neighbourIndex = distance( neighboursByDistance.begin(), neighbourIter );
                     if (neighbourIndex >= neighbourhoodTargetSize)
@@ -710,8 +712,8 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
     unordered_set<string> askedNodeIds;
     
     // Try to fill neighbourhood map until limit reached or no new nodes left to ask
-    vector<NodeInfo> neighbourCandidates;
-    while ( neighbourCandidates.size() < _config->neighbourhoodTargetSize() &&
+    list<NodeInfo> neighbourCandidates;
+    while ( _spatialDb->GetNeighbourNodesByDistance().size() < _config->neighbourhoodTargetSize() &&
             ! nodesToAskQueue.empty() )
     {
         // Get next candidate
@@ -719,10 +721,10 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
         nodesToAskQueue.pop_front();
         
         // Skip it if has been processed already
-        auto askedIt = find( askedNodeIds.begin(), askedNodeIds.end(), neighbourCandidate.id() );
+        auto askedIt = askedNodeIds.find( neighbourCandidate.id() );
         if ( askedIt != askedNodeIds.end() )
             { continue; }
-            
+        
         try
         {
             // Try connecting to the node
