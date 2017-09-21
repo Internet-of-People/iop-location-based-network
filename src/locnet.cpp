@@ -317,7 +317,7 @@ shared_ptr<INodeMethods> Node::SafeConnectTo(const NetworkEndpoint& endpoint) co
 {
     // There is no point in connecting to ourselves
     if ( endpoint == _spatialDb->ThisNode().contact().nodeEndpoint() ||
-         ( endpoint.isLoopback() && ! _config->isTestMode() ) )
+         ( ! _config->isTestMode() && endpoint.isLoopback() ) )
     {
         LOG(TRACE) << "Address " << endpoint << " is self or local, refusing";
         return shared_ptr<INodeMethods>();

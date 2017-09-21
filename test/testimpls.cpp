@@ -1,3 +1,4 @@
+#include <list>
 #include <easylogging++.h>
 
 #include "testimpls.hpp"
@@ -119,39 +120,35 @@ IChangeListenerRegistry& InMemorySpatialDatabase::changeListenerRegistry()
 vector<NodeDbEntry> InMemorySpatialDatabase::GetClosestNodesByDistance(
     const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const
 {
-    // Start with all nodes
-    vector<NodeDbEntry> remainingNodes;
+    //vector<NodeDbEntry> candidateNodes;
+    list< pair<Distance,NodeDbEntry> > candidateNodes;
     for (auto const &entry : _nodes)
-        { remainingNodes.push_back(entry.second); }
-    
-    // Remove nodes out of range
-    auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-        [this, &location, maxRadiusKm](const NodeDbEntry &node)
-            { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
-    remainingNodes.erase( newEnd, remainingNodes.end() );
-
-    // Remove nodes with wrong relationType
-    if (filter == Neighbours::Excluded) {
-        newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-            [](const NodeDbEntry &node)
-                { return node.relationType() == NodeRelationType::Neighbour; } );
-        remainingNodes.erase( newEnd, remainingNodes.end() );
+    {
+        const NodeDbEntry &node = entry.second;
+        Distance nodeDistance = GetDistanceKm( location, node.location() );
+        if (maxRadiusKm >= nodeDistance)
+        {
+            if ( (filter == Neighbours::Included) ||
+                 (filter == Neighbours::Excluded && node.relationType() != NodeRelationType::Neighbour) )
+            {
+                candidateNodes.emplace_back(nodeDistance, node);
+            }
+        }
     }
-    
+        
     vector<NodeDbEntry> result;
     while ( result.size() < maxNodeCount )
     {
         // Select closest element
-        auto minElement = min_element( remainingNodes.begin(), remainingNodes.end(),
-            [this, &location](const NodeDbEntry &one, const NodeDbEntry &other) {
-                return this->GetDistanceKm( location, one.location() ) <
-                       this->GetDistanceKm( location, other.location() ); } );
-        if (minElement == remainingNodes.end() )
+        auto minElement = min_element( candidateNodes.begin(), candidateNodes.end(),
+            [] (const pair<Distance,NodeDbEntry> &one, const pair<Distance,NodeDbEntry> &other)
+                { return one.first < other.first; } );
+        if (minElement == candidateNodes.end() )
             { break; }
 
         // Save element to result and remove it from candidates
-        result.push_back(*minElement);
-        remainingNodes.erase(minElement);
+        result.push_back(minElement->second);
+        candidateNodes.erase(minElement);
     }
     return result;
 }

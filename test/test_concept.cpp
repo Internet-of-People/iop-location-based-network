@@ -109,6 +109,8 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             
 //             if ( seedNodes.size() < 3 )
 //                 { seedNodes.push_back( nodeInfo.contact().nodeEndpoint() ); }
+            if (nodeConfigs.size() >= 200)
+                { break; }
         }
         
         // Dedicate the first cities as seed nodes
@@ -126,12 +128,10 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
             proxyFactory->Register(node);
             
-            // TODO make sure that all parameters needed to be overwritten for testing (expiration times, etc)
-            //      can be overridden as config options or at least method args
-            // TODO make filling in node map work fine with
             node->EnsureMapFilled();
             
-            cout << node->GetNodeInfo() << ", map size: " << node->GetNodeCount() << endl;
+            cout << proxyFactory->nodes().size() << " - "
+                 << node->GetNodeInfo() << ", map size " << node->GetNodeCount() << endl;
         }
         
         THEN("It works fine") {
