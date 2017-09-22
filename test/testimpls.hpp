@@ -96,6 +96,7 @@ public:
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
+    size_t GetNodeCount(NodeRelationType filter) const override;
     std::vector<NodeDbEntry> GetNeighbourNodesByDistance() const override;
     std::vector<NodeDbEntry> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const override;

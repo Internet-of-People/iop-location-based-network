@@ -200,7 +200,15 @@ std::vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeRelationType rela
 size_t InMemorySpatialDatabase::GetNodeCount() const
     { return _nodes.size(); }
 
-
+size_t InMemorySpatialDatabase::GetNodeCount(NodeRelationType filter) const
+{
+    size_t result = 0;
+    for (auto const &entry : _nodes)
+        { if (entry.second.relationType() == filter)
+            { ++result; } }
+    return result;
+}
+    
 
 vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeContactRoleType roleType)
 {

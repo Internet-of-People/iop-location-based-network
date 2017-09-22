@@ -3,7 +3,6 @@
 #include <chrono>
 #include <deque>
 #include <limits>
-#include <list>
 #include <thread>
 #include <unordered_set>
 
@@ -708,12 +707,10 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
     }
     while ( oldClosestNode.id() != newClosestNode.id() );
     
-    deque<NodeInfo> nodesToAskQueue{newClosestNode};
-    unordered_set<string> askedNodeIds;
-    
     // Try to fill neighbourhood map until limit reached or no new nodes left to ask
-    list<NodeInfo> neighbourCandidates;
-    while ( _spatialDb->GetNeighbourNodesByDistance().size() < _config->neighbourhoodTargetSize() &&
+    unordered_set<string> askedNodeIds;
+    deque<NodeInfo> nodesToAskQueue{newClosestNode};
+    while ( _spatialDb->GetNodeCount(NodeRelationType::Neighbour) < _config->neighbourhoodTargetSize() &&
             ! nodesToAskQueue.empty() )
     {
         // Get next candidate
@@ -753,7 +750,7 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
     }
     
     LOG(DEBUG) << "Neighbourhood discovery finished with total node count " << GetNodeCount()
-               << ", neighbourhood size is " << _spatialDb->GetNeighbourNodesByDistance().size();
+               << ", neighbourhood size is " << _spatialDb->GetNodeCount(NodeRelationType::Neighbour);
     return true;
 }
 

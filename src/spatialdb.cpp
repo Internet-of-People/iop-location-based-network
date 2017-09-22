@@ -728,6 +728,15 @@ size_t SpatiaLiteDatabase::GetNodeCount() const
 }
 
 
+size_t SpatiaLiteDatabase::GetNodeCount(NodeRelationType filter) const
+{
+    // NOTE this would be better done by SELECT COUNT(*) but that would need a lot more boilerplate code again
+    vector<NodeDbEntry> nodes( QueryEntries( _myNodeInfo.location(),
+        "WHERE relationType = " + to_string( static_cast<int>(filter) ) ) );
+    return nodes.size();
+}
+
+
 
 vector<NodeDbEntry> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 {

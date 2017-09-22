@@ -115,6 +115,7 @@ public:
     virtual std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) = 0;
 
     virtual size_t GetNodeCount() const = 0;
+    virtual size_t GetNodeCount(NodeRelationType filter) const = 0;
     virtual std::vector<NodeDbEntry> GetNeighbourNodesByDistance() const = 0;
     
     virtual std::vector<NodeDbEntry> GetClosestNodesByDistance(
@@ -185,6 +186,7 @@ public:
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
+    size_t GetNodeCount(NodeRelationType filter) const override;
     std::vector<NodeDbEntry> GetNeighbourNodesByDistance() const override;
     std::vector<NodeDbEntry> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const override;
