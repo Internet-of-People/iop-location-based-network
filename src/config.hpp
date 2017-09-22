@@ -39,15 +39,17 @@ public:
     virtual ~Config() {}
     
     virtual const std::string& version() const;
-    virtual size_t neighbourhoodTargetSize() const;
     
-    virtual bool isTestMode() const = 0;
     virtual const NodeInfo& myNodeInfo() const = 0;
     virtual TcpPort localServicePort() const = 0;
-    virtual const std::vector<NetworkEndpoint>& seedNodes() const = 0;
     
     virtual const std::string& logPath() const = 0;
     virtual const std::string& dbPath() const = 0;
+    
+    virtual bool isTestMode() const = 0;
+    virtual const std::vector<NetworkEndpoint>& seedNodes() const = 0;
+    virtual size_t neighbourhoodTargetSize() const = 0;
+    
     virtual std::chrono::duration<uint32_t> requestExpirationPeriod() const = 0;
     virtual std::chrono::duration<uint32_t> dbMaintenancePeriod() const = 0;
     virtual std::chrono::duration<uint32_t> dbExpirationPeriod() const = 0;
@@ -85,14 +87,16 @@ public:
     bool Initialize(int argc, const char *argv[]);
     bool versionRequested() const;
 
-    bool isTestMode() const override;
     const NodeInfo& myNodeInfo() const override;
     TcpPort localServicePort() const override;
-    const std::vector<NetworkEndpoint>& seedNodes() const override;
     
-    //const std::string& execPath() const override;
     const std::string& logPath() const override;
     const std::string& dbPath() const override;
+    
+    bool isTestMode() const override;
+    const std::vector<NetworkEndpoint>& seedNodes() const override;
+    size_t neighbourhoodTargetSize() const override;
+    
     std::chrono::duration<uint32_t> requestExpirationPeriod() const override;
     std::chrono::duration<uint32_t> dbMaintenancePeriod() const override;
     std::chrono::duration<uint32_t> dbExpirationPeriod() const override;

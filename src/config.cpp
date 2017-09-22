@@ -39,35 +39,11 @@ const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod     = chrono::
 
 
 
-// unique_ptr<Config> Config::_instance(nullptr);
-// 
-// const Config& Config::Instance()
-// {
-//     if (! _instance)
-//     {
-//         LOG(ERROR) << "Configuration is missing: either not properly initialized (call Config::Init or InitForTest) or destroyed already during shutdown.";
-//         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Missing configuration");
-//     }
-//     return *_instance;
-// }
-// 
-// 
-// bool Config::Init(int argc, const char* argv[])
-// {
-//     _instance.reset( new EzParserConfig() );
-//     return _instance->Initialize(argc, argv);
-// }
-
-
-
 Config::Config() {}
 
 
 const string& Config::version() const
     { return LOCNET_VERSION; }
-
-size_t Config::neighbourhoodTargetSize() const
-    { return isTestMode() ? 3 : NEIGHBOURHOOD_TARGET_SIZE; }
 
 
 
@@ -158,8 +134,6 @@ static const vector<NetworkEndpoint> DefaultSeedNodes {
     NetworkEndpoint("ham5.fermat.cloud", DefaultNodePort),
     NetworkEndpoint("ham6.fermat.cloud", DefaultNodePort),
     NetworkEndpoint("ham7.fermat.cloud", DefaultNodePort),
-//    NetworkEndpoint("iop-loc-m1.amberloom.com", DefaultNodePort),
-//    NetworkEndpoint("iop-loc-m2.amberloom.com", DefaultNodePort),
 };
 
 
@@ -306,6 +280,9 @@ const NodeInfo& EzParserConfig::myNodeInfo() const
 
 const vector<NetworkEndpoint>& EzParserConfig::seedNodes() const
     { return _seedNodes.empty() ? DefaultSeedNodes : _seedNodes; }
+
+size_t EzParserConfig::neighbourhoodTargetSize() const
+    { return isTestMode() ? 3 : NEIGHBOURHOOD_TARGET_SIZE; }
 
 TcpPort EzParserConfig::localServicePort() const
     { return _localPort; }

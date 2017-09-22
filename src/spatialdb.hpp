@@ -166,6 +166,7 @@ class SpatiaLiteDatabase : public ISpatialDatabase
 public:
     
     static const std::string IN_MEMORY_DB;
+    static const std::string TEMPORARY_DB;
     
     
     SpatiaLiteDatabase(const NodeInfo &myNodeInfo, const std::string &dbPath,

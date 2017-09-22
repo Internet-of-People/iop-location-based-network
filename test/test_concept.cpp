@@ -122,16 +122,17 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
         {
             config->_seedNodes = seedNodes;
             
+            // NOTE only 64 in-memory SpatiaLite instances are allowed, we'd have to use temporary DBs for more instances
             shared_ptr<ISpatialDatabase> spatialDb( new InMemorySpatialDatabase( config->myNodeInfo() ) );
-            // TODO check if many in-memory SpatiaLite instances can be unique with acceptable memory requirement
-            //    new SpatiaLiteDatabase(nodeInfo, SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
+                // new SpatiaLiteDatabase( config->myNodeInfo(), SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
             shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
             proxyFactory->Register(node);
             
             node->EnsureMapFilled();
             
+            shared_ptr<Node> seed = proxyFactory->nodes().at( seedNodes.front().address() );
             cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo()
-                 << ", map size " << node->GetNodeCount()
+                 << ", node/seed map size " << node->GetNodeCount() << "/" << seed->GetNodeCount()
                  << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
         }
         

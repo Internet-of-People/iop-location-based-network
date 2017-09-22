@@ -117,18 +117,22 @@ struct TestConfig : public Config
     TcpPort         _localPort = 0;
     std::string     _logPath;
     std::string     _dbPath;
+    size_t          _neighbourhoodTargetSize = 5;
     std::vector<NetworkEndpoint> _seedNodes;
         
     
     TestConfig(const NodeInfo &nodeInfo);
     
-    bool isTestMode() const override;
     const NodeInfo& myNodeInfo() const override;
     TcpPort localServicePort() const override;
-    const std::vector<NetworkEndpoint>& seedNodes() const override;
     
     const std::string& logPath() const override;
     const std::string& dbPath() const override;
+    
+    bool isTestMode() const override;
+    const std::vector<NetworkEndpoint>& seedNodes() const override;
+    size_t neighbourhoodTargetSize() const override;
+    
     std::chrono::duration<uint32_t> requestExpirationPeriod() const override;
     std::chrono::duration<uint32_t> dbMaintenancePeriod() const override;
     std::chrono::duration<uint32_t> dbExpirationPeriod() const override;

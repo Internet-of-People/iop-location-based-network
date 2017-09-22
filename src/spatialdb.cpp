@@ -17,6 +17,7 @@ namespace LocNet
 
 
 const string SpatiaLiteDatabase::IN_MEMORY_DB = ":memory:";
+const string SpatiaLiteDatabase::TEMPORARY_DB = "";
 
 const vector<string> DatabaseInitCommands = {
 "BEGIN TRANSACTION;",

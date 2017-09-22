@@ -286,6 +286,7 @@ TcpPort TestConfig::localServicePort() const    { return _localPort; }
 const std::string& TestConfig::logPath() const  { return _logPath; }
 const std::string& TestConfig::dbPath() const   { return _dbPath; }
 
+size_t TestConfig::neighbourhoodTargetSize() const  { return _neighbourhoodTargetSize; }
 const std::vector<NetworkEndpoint>& TestConfig::seedNodes() const           { return _seedNodes; }
 std::chrono::duration<uint32_t> TestConfig::requestExpirationPeriod() const { return chrono::seconds(60); }
 std::chrono::duration<uint32_t> TestConfig::dbMaintenancePeriod() const     { return chrono::hours(7); }
