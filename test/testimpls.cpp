@@ -147,7 +147,7 @@ vector<NodeDbEntry> InMemorySpatialDatabase::GetClosestNodesByDistance(
             { break; }
 
         // Save element to result and remove it from candidates
-        result.push_back(minElement->second);
+        result.emplace_back(minElement->second);
         candidateNodes.erase(minElement);
     }
     return result;
@@ -160,7 +160,7 @@ InMemorySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) 
     // Start with all nodes
     vector<NodeDbEntry> remainingNodes;
     for (auto const &entry : _nodes)
-        { remainingNodes.push_back(entry.second); }
+        { remainingNodes.emplace_back(entry.second); }
         
     // Remove nodes with wrong relationType
     if (filter == Neighbours::Excluded) {
@@ -178,7 +178,7 @@ InMemorySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) 
         size_t selectedNodeIdx = fromRange(_randomDevice);
         
         // Save element to result and remove it from candidates
-        result.push_back( remainingNodes[selectedNodeIdx] );
+        result.emplace_back( remainingNodes[selectedNodeIdx] );
         remainingNodes.erase( remainingNodes.begin() + selectedNodeIdx );
     }
     return result;
@@ -191,7 +191,7 @@ std::vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeRelationType rela
     for (auto const &entry : _nodes)
     {
         if ( entry.second.relationType() == relationType )
-            { result.push_back(entry.second); }
+            { result.emplace_back(entry.second); }
     }
     return result;
 }
@@ -216,7 +216,7 @@ vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeContactRoleType roleTy
     for (auto const &entry : _nodes)
     {
         if ( entry.second.roleType() == roleType )
-            { result.push_back(entry.second); }
+            { result.emplace_back(entry.second); }
     }
     return result;
 }

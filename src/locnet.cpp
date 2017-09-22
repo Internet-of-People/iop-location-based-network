@@ -525,7 +525,7 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
     LOG(DEBUG) << "Discovering world map for colleagues";
     const size_t INIT_WORLD_RANDOM_NODE_COUNT = 2 * _config->neighbourhoodTargetSize();
     
-    vector<NetworkEndpoint> triedNodes;
+    unordered_set<Address> triedNodes;
     
     size_t nodeCountAtSeed = 0;
     vector<NodeInfo> randomColleagueCandidates;
@@ -533,7 +533,7 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
     {
         try
         {
-            triedNodes.push_back(seedContact);
+            triedNodes.emplace( seedContact.address() );
             
             // Try connecting to selected seed node
             shared_ptr<INodeMethods> seedNodeProxy = SafeConnectTo(seedContact);
@@ -550,7 +550,7 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
             nodeCountAtSeed = seedNodeProxy->GetNodeCount();
             LOG(DEBUG) << "Node count on seed is " << nodeCountAtSeed;
             randomColleagueCandidates = seedNodeProxy->GetRandomNodes(
-                min(INIT_WORLD_RANDOM_NODE_COUNT, nodeCountAtSeed), Neighbours::Included );
+                INIT_WORLD_RANDOM_NODE_COUNT, Neighbours::Included );
             
             // If got a reasonable response from a seed server, stop contacting other seeds
             if ( nodeCountAtSeed > 0 && ! randomColleagueCandidates.empty() )
@@ -576,49 +576,41 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
     LOG(DEBUG) << "Targeted node count is " << targetNodeCount;
     
     // Keep trying until we either reached targeted node count or run out of all candidates
-    while ( GetNodeCount() < targetNodeCount &&
-            ( ! randomColleagueCandidates.empty() || triedNodes.size() < GetNodeCount() ) )
+    while ( GetNodeCount() < targetNodeCount )
     {
-        if ( ! randomColleagueCandidates.empty() )
+        if ( randomColleagueCandidates.empty() )
+            { break; }
+        
+        // Pick a single node from the candidate list and try to make it a colleague node
+        NodeInfo nodeInfo( randomColleagueCandidates.back() );
+        randomColleagueCandidates.pop_back();
+        
+        // Check if we tried it already
+        if ( triedNodes.find( nodeInfo.contact().nodeEndpoint().address() ) != triedNodes.end() )
+            { continue; }
+        
+        triedNodes.emplace( nodeInfo.contact().nodeEndpoint().address() );
+        
+        try
         {
-            // Pick a single node from the candidate list and try to make it a colleague node
-            NodeInfo nodeInfo( randomColleagueCandidates.back() );
-            randomColleagueCandidates.pop_back();
-            
-            // Check if we tried it already
-            if ( find( triedNodes.begin(), triedNodes.end(), nodeInfo.contact().nodeEndpoint() ) != triedNodes.end() )
+            // Connect to selected random node
+            shared_ptr<INodeMethods> nodeProxy = SafeConnectTo( nodeInfo.contact().nodeEndpoint() );
+            if (nodeProxy == nullptr)
                 { continue; }
+                
+            SafeStoreNode( NodeDbEntry(nodeInfo, NodeRelationType::Colleague, NodeContactRoleType::Initiator),
+                           nodeProxy );
+        
+            // Ask it for random colleague candidates
+            vector<NodeInfo> candidates = nodeProxy->GetRandomNodes(
+                INIT_WORLD_RANDOM_NODE_COUNT, Neighbours::Excluded);
             
-            triedNodes.push_back( nodeInfo.contact().nodeEndpoint() );
-            
-            SafeStoreNode( NodeDbEntry(nodeInfo, NodeRelationType::Colleague, NodeContactRoleType::Initiator) );
+            randomColleagueCandidates.insert( randomColleagueCandidates.begin(),
+                candidates.begin(), candidates.end() );
         }
-        else // We ran out of colleague candidates, try pick some more randomly
+        catch (exception &e)
         {
-            LOG(TRACE) << "Run out of colleague candidates, asking randomly for more";
-            
-            // Get a shuffled list of all colleague nodes known so far
-            vector<NodeInfo> nodesKnownSoFar = GetRandomNodes( GetNodeCount(), Neighbours::Included );
-            
-            for (const auto &nodeInfo : nodesKnownSoFar)
-            {
-                try
-                {
-                    // Connect to selected random node
-                    shared_ptr<INodeMethods> randomNodeProxy = SafeConnectTo( nodeInfo.contact().nodeEndpoint() );
-                    if (randomNodeProxy == nullptr)
-                        { continue; }
-                    
-                    // Ask it for random colleague candidates
-                    randomColleagueCandidates = randomNodeProxy->GetRandomNodes(
-                        INIT_WORLD_RANDOM_NODE_COUNT, Neighbours::Excluded);
-                    break;
-                }
-                catch (exception &e)
-                {
-                    LOG(WARNING) << "Failed to fetch more random nodes: " << e.what();
-                }
-            }
+            LOG(WARNING) << "Failed to fetch more random nodes: " << e.what();
         }
     }
     
