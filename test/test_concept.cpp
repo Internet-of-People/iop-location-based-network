@@ -91,7 +91,7 @@ vector<Settlement> LoadWorldCitiesCSV()
 
 const size_t SEED_NODE_COUNT            = 5;
 const size_t NEIGHBOURHOOD_TARGET_SIZE  = 50;
-const size_t TOTAL_NODE_COUNT           = 500;
+const size_t TOTAL_NODE_COUNT           = 200;
 
 SCENARIO("Conceptual correctness of the algorithm organizing the global network", "[concept]")
 {
@@ -144,6 +144,14 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
                 cout << seed->GetNodeCount() << " ";
             }
             cout << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
+        }
+        
+        for ( auto &entry : proxyFactory->nodes() )
+        {
+            shared_ptr<Node> node = entry.second;
+            node->RenewNodeRelations();
+            // TODO wait until relations that were not renewed expire
+            //node->ExpireOldNodes();
         }
         
         THEN("It works fine") {

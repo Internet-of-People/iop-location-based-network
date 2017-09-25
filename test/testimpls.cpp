@@ -49,13 +49,21 @@ std::shared_ptr<INodeMethods> NodeRegistry::ConnectTo(const NetworkEndpoint &end
 
 
 
+InMemDbEntry::InMemDbEntry(const NodeDbEntry &other, chrono::system_clock::time_point expiresAt) :
+    NodeDbEntry(other), _expiresAt(expiresAt) {}
+
+InMemDbEntry::InMemDbEntry(const InMemDbEntry &other) :
+    NodeDbEntry(other), _expiresAt(other._expiresAt) {}
+
+
 random_device InMemorySpatialDatabase::_randomDevice;
 
 
-InMemorySpatialDatabase::InMemorySpatialDatabase(const NodeInfo& myNodeInfo) :
-    _myNodeInfo(myNodeInfo)
+InMemorySpatialDatabase::InMemorySpatialDatabase(const NodeInfo& myNodeInfo,
+        chrono::duration<uint32_t> entryExpirationPeriod) :
+    _myNodeInfo(myNodeInfo), _entryExpirationPeriod(entryExpirationPeriod)
 {
-    Store( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor) );
+    Store( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor), false );
 }
 
 
@@ -63,13 +71,17 @@ NodeDbEntry InMemorySpatialDatabase::ThisNode() const
     { return NodeDbEntry::FromSelfInfo(_myNodeInfo); }
 
 
-void InMemorySpatialDatabase::Store(const NodeDbEntry &node, bool)
+
+void InMemorySpatialDatabase::Store(const NodeDbEntry &node, bool expires)
 {
     auto it = _nodes.find( node.id() );
     if ( it != _nodes.end() ) {
         throw runtime_error("Node is already present");
     }
-    _nodes.emplace( unordered_map<std::string,NodeDbEntry>::value_type( node.id(), node ) );
+    
+    chrono::system_clock::time_point expiresAt = expires ?
+        chrono::system_clock::now() + _entryExpirationPeriod : chrono::system_clock::time_point::max();
+    _nodes.emplace( node.id(), InMemDbEntry(node, expiresAt) );
 }
 
 
@@ -85,14 +97,16 @@ shared_ptr<NodeDbEntry> InMemorySpatialDatabase::Load(const string &nodeId) cons
 }
 
 
-void InMemorySpatialDatabase::Update(const NodeDbEntry &node, bool)
+void InMemorySpatialDatabase::Update(const NodeDbEntry &node, bool expires)
 {
     auto it = _nodes.find( node.id() );
     if ( it == _nodes.end() ) {
         throw runtime_error("Node is not found");
     }
     
-    it->second = node;
+    chrono::system_clock::time_point expiresAt = expires ?
+        chrono::system_clock::now() + _entryExpirationPeriod : chrono::system_clock::time_point::max();
+    it->second = InMemDbEntry(node, expiresAt);
 }
 
 
@@ -108,7 +122,19 @@ void InMemorySpatialDatabase::Remove(const string &nodeId)
 
 void InMemorySpatialDatabase::ExpireOldNodes()
 {
-    throw LocationNetworkError(ErrorCode::ERROR_UNSUPPORTED, "Implement this if needed for testing");
+// WTF: this is probably a GLIBC bug, it should compile
+//     auto newEnd = remove_if( _nodes.begin(), _nodes.end(),
+//         [] (const decltype(_nodes)::value_type &entry)
+//             { return entry.second._expiresAt < chrono::system_clock::now(); } );
+//     _nodes.erase( newEnd, _nodes.end() );
+    
+    decltype(_nodes) newCollection;
+    for (auto &entry : _nodes)
+    {
+        if ( entry.second._expiresAt < chrono::system_clock::now() )
+            { newCollection.emplace(entry); }
+    }
+    _nodes = newCollection;
 }
 
 

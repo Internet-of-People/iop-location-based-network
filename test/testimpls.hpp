@@ -66,13 +66,23 @@ public:
 
 
 
+struct InMemDbEntry : public NodeDbEntry
+{
+    InMemDbEntry(const InMemDbEntry& other);
+    InMemDbEntry(const NodeDbEntry& other, std::chrono::system_clock::time_point expiresAt);
+    
+    std::chrono::system_clock::time_point _expiresAt = std::chrono::system_clock::now();
+};
+
+
 // NOTE NOT PERSISTENT, suited for development/testing only
 class InMemorySpatialDatabase : public ISpatialDatabase
 {
     static std::random_device _randomDevice;
     
     NodeInfo _myNodeInfo;
-    std::unordered_map<NodeId,NodeDbEntry> _nodes;
+    std::unordered_map<NodeId,InMemDbEntry> _nodes;
+    std::chrono::duration<uint32_t> _entryExpirationPeriod;
     
     std::vector<NodeDbEntry> GetNodes(NodeRelationType relationType) const;
     
@@ -80,7 +90,8 @@ class InMemorySpatialDatabase : public ISpatialDatabase
     
 public:
     
-    InMemorySpatialDatabase(const NodeInfo &myNodeInfo);
+    InMemorySpatialDatabase( const NodeInfo &myNodeInfo,
+        std::chrono::duration<uint32_t> entryExpirationPeriod = std::chrono::seconds(1) );
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
