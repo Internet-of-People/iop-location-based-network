@@ -19,10 +19,8 @@ namespace LocNet
 {
 
 
-const float    INIT_WORLD_NODE_FILL_TARGET_RATE     = 0.75;
-const size_t   INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT  = 10;
-
-const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT     = 5;
+const float    INIT_WORLD_NODE_FILL_TARGET_RATE = 0.75;
+const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT = 5;
 
 
 
@@ -627,6 +625,8 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
     NodeDbEntry myNode = _spatialDb->ThisNode();
     vector<NodeInfo> closestNodesByDistance = GetClosestNodesByDistance(
         myNode.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
+    
+    // TODO maybe this should be relaxed: if multiple nodes share the exact same location, ordering may be random between those nodes
     if ( closestNodesByDistance.size() >= 1 && closestNodesByDistance[0].location() != GetNodeInfo().location() )
     {
         LOG(ERROR) << "Assert: there cannot be a node that is closer to you than yourself";
@@ -731,7 +731,7 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
             // Get its neighbours closest to us
             vector<NodeInfo> newNeighbourCandidates = candidateProxy->GetClosestNodesByDistance(
                 myNode.location(), numeric_limits<Distance>::max(),
-                INIT_NEIGHBOURHOOD_QUERY_NODE_COUNT, Neighbours::Included );
+                _config->neighbourhoodTargetSize(), Neighbours::Included );
             
             // Mark current node as processed and append new neighbour candidates to our todo list
             askedNodeIds.insert( neighbourCandidate.id() );

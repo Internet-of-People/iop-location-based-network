@@ -89,6 +89,10 @@ vector<Settlement> LoadWorldCitiesCSV()
 
 
 
+const size_t SEED_NODE_COUNT            = 5;
+const size_t NEIGHBOURHOOD_TARGET_SIZE  = 50;
+const size_t TOTAL_NODE_COUNT           = 500;
+
 SCENARIO("Conceptual correctness of the algorithm organizing the global network", "[concept]")
 {
     GIVEN("A map of the biggest cities")
@@ -107,20 +111,22 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             shared_ptr<TestConfig> config( new TestConfig(nodeInfo) );
             nodeConfigs.push_back(config);
             
-//             if ( seedNodes.size() < 3 )
-//                 { seedNodes.push_back( nodeInfo.contact().nodeEndpoint() ); }
-            if (nodeConfigs.size() >= 1000)
+            if (nodeConfigs.size() >= TOTAL_NODE_COUNT)
                 { break; }
         }
         
         // Dedicate the first cities as seed nodes
         vector<NetworkEndpoint> seedNodes;
-        seedNodes.emplace_back( nodeConfigs[0]->myNodeInfo().contact().nodeEndpoint() );
+//        seedNodes.emplace_back( nodeConfigs[0]->myNodeInfo().contact().nodeEndpoint() );
         
         shared_ptr<NodeRegistry> proxyFactory( new NodeRegistry() );
         for (auto config : nodeConfigs)
         {
+            if ( seedNodes.size() < SEED_NODE_COUNT )
+                { seedNodes.push_back( config->myNodeInfo().contact().nodeEndpoint() ); }
+            
             config->_seedNodes = seedNodes;
+            config->_neighbourhoodTargetSize = NEIGHBOURHOOD_TARGET_SIZE;
             
             // NOTE only 64 in-memory SpatiaLite instances are allowed, we'd have to use temporary DBs for more instances
             shared_ptr<ISpatialDatabase> spatialDb( new InMemorySpatialDatabase( config->myNodeInfo() ) );
@@ -130,10 +136,14 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             
             node->EnsureMapFilled();
             
-            shared_ptr<Node> seed = proxyFactory->nodes().at( seedNodes.front().address() );
-            cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo()
-                 << ", node/seed map size " << node->GetNodeCount() << "/" << seed->GetNodeCount()
-                 << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
+            cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo() << endl
+                 << "  node/seed(s) map size " << node->GetNodeCount() << "/";
+            for (auto seedEndpoint : seedNodes)
+            {
+                shared_ptr<Node> seed = proxyFactory->nodes().at( seedEndpoint.address() );
+                cout << seed->GetNodeCount() << " ";
+            }
+            cout << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
         }
         
         THEN("It works fine") {
