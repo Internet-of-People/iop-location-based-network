@@ -91,7 +91,7 @@ vector<Settlement> LoadWorldCitiesCSV()
 
 const size_t SEED_NODE_COUNT            = 5;
 const size_t NEIGHBOURHOOD_TARGET_SIZE  = 50;
-const size_t TOTAL_NODE_COUNT           = 200;
+const size_t TOTAL_NODE_COUNT           = 500;
 
 SCENARIO("Conceptual correctness of the algorithm organizing the global network", "[concept]")
 {
@@ -115,13 +115,11 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
                 { break; }
         }
         
-        // Dedicate the first cities as seed nodes
-        vector<NetworkEndpoint> seedNodes;
-//        seedNodes.emplace_back( nodeConfigs[0]->myNodeInfo().contact().nodeEndpoint() );
-        
+        vector<NetworkEndpoint> seedNodes;        
         shared_ptr<NodeRegistry> proxyFactory( new NodeRegistry() );
         for (auto config : nodeConfigs)
         {
+            // Dedicate the first cities as seed nodes
             if ( seedNodes.size() < SEED_NODE_COUNT )
                 { seedNodes.push_back( config->myNodeInfo().contact().nodeEndpoint() ); }
             
@@ -129,7 +127,8 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             config->_neighbourhoodTargetSize = NEIGHBOURHOOD_TARGET_SIZE;
             
             // NOTE only 64 in-memory SpatiaLite instances are allowed, we'd have to use temporary DBs for more instances
-            shared_ptr<ISpatialDatabase> spatialDb( new InMemorySpatialDatabase( config->myNodeInfo() ) );
+            shared_ptr<ISpatialDatabase> spatialDb(
+                new InMemorySpatialDatabase( config->myNodeInfo(), chrono::milliseconds(100) ) );
                 // new SpatiaLiteDatabase( config->myNodeInfo(), SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
             shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
             proxyFactory->Register(node);
@@ -146,12 +145,13 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             cout << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
         }
         
+        cout << endl << endl << " -------------------------------------------- " << endl << endl << endl;
+        
         for ( auto &entry : proxyFactory->nodes() )
         {
             shared_ptr<Node> node = entry.second;
             node->RenewNodeRelations();
-            // TODO wait until relations that were not renewed expire
-            //node->ExpireOldNodes();
+            node->ExpireOldNodes();
         }
         
         THEN("It works fine") {

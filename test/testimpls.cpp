@@ -60,7 +60,7 @@ random_device InMemorySpatialDatabase::_randomDevice;
 
 
 InMemorySpatialDatabase::InMemorySpatialDatabase(const NodeInfo& myNodeInfo,
-        chrono::duration<uint32_t> entryExpirationPeriod) :
+        chrono::duration<int64_t,milli> entryExpirationPeriod) :
     _myNodeInfo(myNodeInfo), _entryExpirationPeriod(entryExpirationPeriod)
 {
     Store( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor), false );
@@ -122,19 +122,14 @@ void InMemorySpatialDatabase::Remove(const string &nodeId)
 
 void InMemorySpatialDatabase::ExpireOldNodes()
 {
-// WTF: this is probably a GLIBC bug, it should compile
-//     auto newEnd = remove_if( _nodes.begin(), _nodes.end(),
-//         [] (const decltype(_nodes)::value_type &entry)
-//             { return entry.second._expiresAt < chrono::system_clock::now(); } );
-//     _nodes.erase( newEnd, _nodes.end() );
-    
-    decltype(_nodes) newCollection;
-    for (auto &entry : _nodes)
+//     cout << _myNodeInfo << " before " << GetNodeCount();
+    for ( auto it = _nodes.begin(); it != _nodes.end(); )
     {
-        if ( entry.second._expiresAt < chrono::system_clock::now() )
-            { newCollection.emplace(entry); }
+        if ( it->second._expiresAt < chrono::system_clock::now() )
+            { it = _nodes.erase(it); }
+        else { ++it; }
     }
-    _nodes = newCollection;
+//     cout << ", after " << GetNodeCount() << endl;
 }
 
 

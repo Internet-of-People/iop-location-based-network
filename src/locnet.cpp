@@ -753,9 +753,15 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
 
 void Node::ExpireOldNodes()
 {
+//     size_t sizeBefore = _spatialDb->GetNodeCount();
     LOG(DEBUG) << "Deleting expired node connections";
     _spatialDb->ExpireOldNodes();
-    EnsureMapFilled();
+    if ( _spatialDb->GetNodeCount() <= 1 )
+    {
+        EnsureMapFilled();
+//         cout << "  *** " << _config->myNodeInfo() << " had " << sizeBefore << " nodes"
+//              << " but all expired, reexplored node count is " << _spatialDb->GetNodeCount() << endl;
+    }
 }
 
 

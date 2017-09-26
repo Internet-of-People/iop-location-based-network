@@ -82,7 +82,7 @@ class InMemorySpatialDatabase : public ISpatialDatabase
     
     NodeInfo _myNodeInfo;
     std::unordered_map<NodeId,InMemDbEntry> _nodes;
-    std::chrono::duration<uint32_t> _entryExpirationPeriod;
+    std::chrono::duration<int64_t,std::milli> _entryExpirationPeriod;
     
     std::vector<NodeDbEntry> GetNodes(NodeRelationType relationType) const;
     
@@ -91,7 +91,7 @@ class InMemorySpatialDatabase : public ISpatialDatabase
 public:
     
     InMemorySpatialDatabase( const NodeInfo &myNodeInfo,
-        std::chrono::duration<uint32_t> entryExpirationPeriod = std::chrono::seconds(1) );
+        std::chrono::duration<int64_t,std::milli> entryExpirationPeriod = std::chrono::milliseconds(1000) );
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
