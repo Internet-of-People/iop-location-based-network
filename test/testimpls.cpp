@@ -49,6 +49,11 @@ std::shared_ptr<INodeMethods> NodeRegistry::ConnectTo(const NetworkEndpoint &end
 
 
 
+TestClock::TestClock() : _now( chrono::system_clock::now() ) {}
+chrono::system_clock::time_point TestClock::now() const { return _now; }
+void TestClock::elapse(chrono::duration<int64_t> period) { _now += period; }
+
+
 InMemDbEntry::InMemDbEntry(const NodeDbEntry &other, chrono::system_clock::time_point expiresAt) :
     NodeDbEntry(other), _expiresAt(expiresAt) {}
 
@@ -56,15 +61,17 @@ InMemDbEntry::InMemDbEntry(const InMemDbEntry &other) :
     NodeDbEntry(other), _expiresAt(other._expiresAt) {}
 
 
+
 random_device InMemorySpatialDatabase::_randomDevice;
 
 
 InMemorySpatialDatabase::InMemorySpatialDatabase(const NodeInfo& myNodeInfo,
-        chrono::duration<int64_t,milli> entryExpirationPeriod) :
-    _myNodeInfo(myNodeInfo), _entryExpirationPeriod(entryExpirationPeriod)
+        shared_ptr<TestClock> testClock, chrono::duration<int64_t> entryExpirationPeriod) :
+    _myNodeInfo(myNodeInfo), _testClock(testClock), _entryExpirationPeriod(entryExpirationPeriod)
 {
     Store( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor), false );
 }
+
 
 
 NodeDbEntry InMemorySpatialDatabase::ThisNode() const
@@ -80,7 +87,7 @@ void InMemorySpatialDatabase::Store(const NodeDbEntry &node, bool expires)
     }
     
     chrono::system_clock::time_point expiresAt = expires ?
-        chrono::system_clock::now() + _entryExpirationPeriod : chrono::system_clock::time_point::max();
+         _testClock->now() + _entryExpirationPeriod : chrono::system_clock::time_point::max();
     _nodes.emplace( node.id(), InMemDbEntry(node, expiresAt) );
 }
 
@@ -105,7 +112,7 @@ void InMemorySpatialDatabase::Update(const NodeDbEntry &node, bool expires)
     }
     
     chrono::system_clock::time_point expiresAt = expires ?
-        chrono::system_clock::now() + _entryExpirationPeriod : chrono::system_clock::time_point::max();
+        _testClock->now() + _entryExpirationPeriod : chrono::system_clock::time_point::max();
     it->second = InMemDbEntry(node, expiresAt);
 }
 
@@ -125,7 +132,7 @@ void InMemorySpatialDatabase::ExpireOldNodes()
 //     cout << _myNodeInfo << " before " << GetNodeCount();
     for ( auto it = _nodes.begin(); it != _nodes.end(); )
     {
-        if ( it->second._expiresAt < chrono::system_clock::now() )
+        if ( it->second._expiresAt < _testClock->now() )
             { it = _nodes.erase(it); }
         else { ++it; }
     }
@@ -297,6 +304,7 @@ Distance InMemorySpatialDatabase::GetDistanceKm(const GpsLocation &one, const Gp
 
 
 string TestConfig::ExecPath("UNINITIALIZED");
+chrono::duration<uint32_t> TestConfig::DbExpirationPeriod( chrono::hours(24) );
 
 
 TestConfig::TestConfig(const NodeInfo &aNodeInfo) : _nodeInfo(aNodeInfo) {}
@@ -311,7 +319,7 @@ size_t TestConfig::neighbourhoodTargetSize() const  { return _neighbourhoodTarge
 const std::vector<NetworkEndpoint>& TestConfig::seedNodes() const           { return _seedNodes; }
 std::chrono::duration<uint32_t> TestConfig::requestExpirationPeriod() const { return chrono::seconds(60); }
 std::chrono::duration<uint32_t> TestConfig::dbMaintenancePeriod() const     { return chrono::hours(7); }
-std::chrono::duration<uint32_t> TestConfig::dbExpirationPeriod() const      { return chrono::hours(24); }
+std::chrono::duration<uint32_t> TestConfig::dbExpirationPeriod() const      { return DbExpirationPeriod; }
 std::chrono::duration<uint32_t> TestConfig::discoveryPeriod() const         { return chrono::minutes(5); }
 
 

@@ -115,7 +115,8 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
                 { break; }
         }
         
-        vector<NetworkEndpoint> seedNodes;        
+        vector<NetworkEndpoint> seedNodes;
+        shared_ptr<TestClock> testClock( new TestClock() );
         shared_ptr<NodeRegistry> proxyFactory( new NodeRegistry() );
         for (auto config : nodeConfigs)
         {
@@ -126,9 +127,9 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             config->_seedNodes = seedNodes;
             config->_neighbourhoodTargetSize = NEIGHBOURHOOD_TARGET_SIZE;
             
-            // NOTE only 64 in-memory SpatiaLite instances are allowed, we'd have to use temporary DBs for more instances
             shared_ptr<ISpatialDatabase> spatialDb(
-                new InMemorySpatialDatabase( config->myNodeInfo(), chrono::milliseconds(100) ) );
+                new InMemorySpatialDatabase( config->myNodeInfo(), testClock, config->dbExpirationPeriod() ) );
+                // NOTE only 64 in-memory SpatiaLite instances are allowed, use temporary DBs on disk for more
                 // new SpatiaLiteDatabase( config->myNodeInfo(), SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
             shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
             proxyFactory->Register(node);
@@ -147,15 +148,20 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
         
         cout << endl << endl << " -------------------------------------------- " << endl << endl << endl;
         
-        for ( auto &entry : proxyFactory->nodes() )
+        THEN("It works fine")
         {
-            shared_ptr<Node> node = entry.second;
-            node->RenewNodeRelations();
-            node->ExpireOldNodes();
-        }
-        
-        THEN("It works fine") {
-            //REQUIRE(false);
+            // Elapse some time but node relations must not expire yet
+            testClock->elapse(TestConfig::DbExpirationPeriod / 2);
+            for ( auto &entry : proxyFactory->nodes() )
+                { entry.second->RenewNodeRelations(); }
+            
+            // Elapse more time to expire all entries that not were renewed
+            testClock->elapse(TestConfig::DbExpirationPeriod);
+            for ( auto &entry : proxyFactory->nodes() )
+            {
+                entry.second->ExpireOldNodes();
+                REQUIRE( entry.second->GetNodeCount() > SEED_NODE_COUNT );
+            }        
         }
     }
 }

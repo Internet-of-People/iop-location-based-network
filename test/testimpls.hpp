@@ -66,6 +66,19 @@ public:
 
 
 
+class TestClock
+{
+    std::chrono::system_clock::time_point _now;
+    
+public:
+    
+    TestClock();
+    
+    std::chrono::system_clock::time_point now() const;
+    void elapse(std::chrono::duration<int64_t> period);
+};
+
+
 struct InMemDbEntry : public NodeDbEntry
 {
     InMemDbEntry(const InMemDbEntry& other);
@@ -82,7 +95,8 @@ class InMemorySpatialDatabase : public ISpatialDatabase
     
     NodeInfo _myNodeInfo;
     std::unordered_map<NodeId,InMemDbEntry> _nodes;
-    std::chrono::duration<int64_t,std::milli> _entryExpirationPeriod;
+    std::shared_ptr<TestClock> _testClock;
+    std::chrono::duration<int64_t> _entryExpirationPeriod;
     
     std::vector<NodeDbEntry> GetNodes(NodeRelationType relationType) const;
     
@@ -90,8 +104,8 @@ class InMemorySpatialDatabase : public ISpatialDatabase
     
 public:
     
-    InMemorySpatialDatabase( const NodeInfo &myNodeInfo,
-        std::chrono::duration<int64_t,std::milli> entryExpirationPeriod = std::chrono::milliseconds(1000) );
+    InMemorySpatialDatabase( const NodeInfo &myNodeInfo, std::shared_ptr<TestClock> testClock,
+        std::chrono::duration<int64_t> entryExpirationPeriod );
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
@@ -122,6 +136,7 @@ struct TestConfig : public Config
 {
     // While testing command line args are forwarded to the tester framework, only argv0 is used to load up resources
     static std::string ExecPath;
+    static std::chrono::duration<uint32_t> DbExpirationPeriod;
     //static std::pair<size_t, const char**> TestArgs();
     
     NodeInfo        _nodeInfo;
