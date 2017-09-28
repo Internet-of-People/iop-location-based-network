@@ -9,15 +9,6 @@ using namespace std;
 using namespace LocNet;
 
 
-const char PATH_SEPARATOR =
-#ifdef _WIN32
-    '\\'
-#else
-    '/'
-#endif
-;
-
-
 
 struct Settlement
 {
@@ -29,6 +20,15 @@ struct Settlement
     uint32_t    population;
 };
 
+
+
+const char PATH_SEPARATOR =
+#ifdef _WIN32
+    '\\'
+#else
+    '/'
+#endif
+;
 
 vector<Settlement> LoadWorldCitiesCSV()
 {
@@ -89,9 +89,94 @@ vector<Settlement> LoadWorldCitiesCSV()
 
 
 
-const size_t SEED_NODE_COUNT            = 5;
-const size_t NEIGHBOURHOOD_TARGET_SIZE  = 50;
-const size_t TOTAL_NODE_COUNT           = 500;
+struct TestCase
+{
+    size_t _maxNodeCount;
+    size_t _seedCount;
+    size_t _maxNeighbourCount;
+    
+    TestCase(size_t maxNodeCount, size_t seedCount, size_t maxNeighbourCount) :
+        _maxNodeCount(maxNodeCount), _seedCount(seedCount), _maxNeighbourCount(maxNeighbourCount) {}
+};
+
+ostream& operator<<(ostream &out, const TestCase testCase)
+    { return out << "TestCase (maxNodes: " << testCase._maxNodeCount << ", seeds: " << testCase._seedCount << ", neighbours: " << testCase._maxNeighbourCount << ")"; }
+
+
+vector< shared_ptr<TestConfig> > createOneConfigByCity(const vector<Settlement> &settlements, const TestCase &testCase)
+{
+    vector< shared_ptr<TestConfig> > nodeConfigs;
+    for (auto &settlement : settlements)
+    {
+        //cout << settlement.name << "\t" << settlement.location << "\t" << settlement.population << endl;
+        
+        NodeInfo nodeInfo( settlement.name, settlement.location,
+            NodeContact(settlement.name, 8888, 9999), NodeInfo::Services() );
+        shared_ptr<TestConfig> config( new TestConfig(nodeInfo) );
+        nodeConfigs.push_back(config);
+        
+        if ( nodeConfigs.size() >= testCase._maxNodeCount )
+            { break; }
+    }
+    return nodeConfigs;
+}
+
+
+
+void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
+                const TestCase &testCase )
+{
+    vector<NetworkEndpoint> seedNodes;
+    shared_ptr<TestClock> testClock( new TestClock() );
+    shared_ptr<NodeRegistry> proxyFactory( new NodeRegistry() );
+    for (auto config : nodeConfigs)
+    {
+        // Dedicate the first cities as seed nodes
+        if ( seedNodes.size() < testCase._seedCount )
+            { seedNodes.push_back( config->myNodeInfo().contact().nodeEndpoint() ); }
+        
+        config->_seedNodes = seedNodes;
+        config->_neighbourhoodTargetSize = testCase._maxNeighbourCount;
+        
+        shared_ptr<ISpatialDatabase> spatialDb(
+            new InMemorySpatialDatabase( config->myNodeInfo(), testClock, config->dbExpirationPeriod() ) );
+            // NOTE only 64 in-memory SpatiaLite instances are allowed, use temporary DBs on disk for more
+            // new SpatiaLiteDatabase( config->myNodeInfo(), SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
+        shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
+        proxyFactory->Register(node);
+        
+        node->EnsureMapFilled();
+        
+        cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo() << endl
+            << "  node/seed(s) map size " << node->GetNodeCount() << "/";
+        for (auto seedEndpoint : seedNodes)
+        {
+            shared_ptr<Node> seed = proxyFactory->nodes().at( seedEndpoint.address() );
+            cout << seed->GetNodeCount() << " ";
+        }
+        cout << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
+    }
+
+    THEN("Nodes keep their node relations alive")
+    {
+        // Elapse some time but node relations must not expire yet
+        testClock->elapse(TestConfig::DbExpirationPeriod / 2);
+        for ( auto &entry : proxyFactory->nodes() )
+            { entry.second->RenewNodeRelations(); }
+        
+        // Elapse more time to expire all entries that not were renewed
+        testClock->elapse(TestConfig::DbExpirationPeriod);
+        for ( auto &entry : proxyFactory->nodes() )
+        {
+            entry.second->ExpireOldNodes();
+            REQUIRE( entry.second->GetNodeCount() > testCase._seedCount );
+        }
+    }
+    
+    // TODO somehow test if a splitted network can rejoin
+}
+
+
 
 SCENARIO("Conceptual correctness of the algorithm organizing the global network", "[concept]")
 {
@@ -99,69 +184,28 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
     {
         vector<Settlement> settlements( LoadWorldCitiesCSV() );
 
-        REQUIRE( settlements.size() > 100 ); // No point of running this test on just a few nodes
-        
-        vector< shared_ptr<TestConfig> > nodeConfigs;
-        for (auto &settlement : settlements)
+        vector<TestCase> testCases = {
+            TestCase(   10,  1,   3),
+            TestCase(   50,  2,  10),
+            TestCase(  100,  3,  15),
+//             TestCase(  200,  4,  20),
+//             TestCase(  500,  5,  50),
+//             TestCase( 1000,  8,  70),
+//             TestCase( 2000,  9,  80),
+//             TestCase( 5000, 10,  90),
+//             TestCase(10000, 15, 100),
+        };
+
+        for (auto const &testCase : testCases)
         {
-            //cout << settlement.name << "\t" << settlement.location << "\t" << settlement.population << endl;
-            
-            NodeInfo nodeInfo( settlement.name, settlement.location,
-                NodeContact(settlement.name, 8888, 9999), NodeInfo::Services() );
-            shared_ptr<TestConfig> config( new TestConfig(nodeInfo) );
-            nodeConfigs.push_back(config);
-            
-            if (nodeConfigs.size() >= TOTAL_NODE_COUNT)
-                { break; }
-        }
-        
-        vector<NetworkEndpoint> seedNodes;
-        shared_ptr<TestClock> testClock( new TestClock() );
-        shared_ptr<NodeRegistry> proxyFactory( new NodeRegistry() );
-        for (auto config : nodeConfigs)
-        {
-            // Dedicate the first cities as seed nodes
-            if ( seedNodes.size() < SEED_NODE_COUNT )
-                { seedNodes.push_back( config->myNodeInfo().contact().nodeEndpoint() ); }
-            
-            config->_seedNodes = seedNodes;
-            config->_neighbourhoodTargetSize = NEIGHBOURHOOD_TARGET_SIZE;
-            
-            shared_ptr<ISpatialDatabase> spatialDb(
-                new InMemorySpatialDatabase( config->myNodeInfo(), testClock, config->dbExpirationPeriod() ) );
-                // NOTE only 64 in-memory SpatiaLite instances are allowed, use temporary DBs on disk for more
-                // new SpatiaLiteDatabase( config->myNodeInfo(), SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
-            shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
-            proxyFactory->Register(node);
-            
-            node->EnsureMapFilled();
-            
-            cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo() << endl
-                 << "  node/seed(s) map size " << node->GetNodeCount() << "/";
-            for (auto seedEndpoint : seedNodes)
+            WHEN("No node GPS locations are unique for " + to_string(testCase._maxNodeCount) + " nodes")
             {
-                shared_ptr<Node> seed = proxyFactory->nodes().at( seedEndpoint.address() );
-                cout << seed->GetNodeCount() << " ";
+                cout << endl << endl << endl << endl << "Running " << testCase << endl
+                     << "-------------------------------------------------------------------" << endl << endl;
+                
+                auto nodeConfigs = createOneConfigByCity(settlements, testCase);
+                testNodes(nodeConfigs, testCase);
             }
-            cout << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
-        }
-        
-        cout << endl << endl << " -------------------------------------------- " << endl << endl << endl;
-        
-        THEN("It works fine")
-        {
-            // Elapse some time but node relations must not expire yet
-            testClock->elapse(TestConfig::DbExpirationPeriod / 2);
-            for ( auto &entry : proxyFactory->nodes() )
-                { entry.second->RenewNodeRelations(); }
-            
-            // Elapse more time to expire all entries that not were renewed
-            testClock->elapse(TestConfig::DbExpirationPeriod);
-            for ( auto &entry : proxyFactory->nodes() )
-            {
-                entry.second->ExpireOldNodes();
-                REQUIRE( entry.second->GetNodeCount() > SEED_NODE_COUNT );
-            }        
         }
     }
 }
