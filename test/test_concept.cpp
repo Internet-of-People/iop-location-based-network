@@ -103,7 +103,8 @@ ostream& operator<<(ostream &out, const TestCase testCase)
     { return out << "TestCase (maxNodes: " << testCase._maxNodeCount << ", seeds: " << testCase._seedCount << ", neighbours: " << testCase._maxNeighbourCount << ")"; }
 
 
-vector< shared_ptr<TestConfig> > createOneConfigByCity(const vector<Settlement> &settlements, const TestCase &testCase)
+vector< shared_ptr<TestConfig> > createOneConfigByCity(
+    const vector<Settlement> &settlements, const TestCase &testCase)
 {
     vector< shared_ptr<TestConfig> > nodeConfigs;
     for (auto &settlement : settlements)
@@ -122,6 +123,38 @@ vector< shared_ptr<TestConfig> > createOneConfigByCity(const vector<Settlement> 
 }
 
 
+vector< shared_ptr<TestConfig> > createConfigsByPopulation(
+    const vector<Settlement> &settlements, const TestCase &testCase, size_t populationByNode)
+{
+    vector<Settlement> cities(settlements);
+    
+    vector< shared_ptr<TestConfig> > nodeConfigs;
+    for (auto &city : cities)
+    {
+        size_t nodeUniqueIndex = 0;
+        do
+        {
+            //cout << settlement.name << "\t" << settlement.location << "\t" << settlement.population << endl;
+            
+            ++nodeUniqueIndex;
+            NodeInfo nodeInfo( city.name + "-" + to_string(nodeUniqueIndex), city.location,
+                NodeContact(city.name, 8888, 9999), NodeInfo::Services() );
+            shared_ptr<TestConfig> config( new TestConfig(nodeInfo) );
+            nodeConfigs.push_back(config);
+            
+            if (city.population > populationByNode)
+                { city.population -= populationByNode; }
+        }
+        while ( city.population > populationByNode &&
+                nodeConfigs.size() < testCase._maxNodeCount );
+        
+        if ( nodeConfigs.size() >= testCase._maxNodeCount )
+            { break; }
+    }
+    return nodeConfigs;
+}
+
+
 
 void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
                 const TestCase &testCase )
@@ -132,8 +165,12 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
     for (auto config : nodeConfigs)
     {
         // Dedicate the first cities as seed nodes
+        bool isSeed = false;
         if ( seedNodes.size() < testCase._seedCount )
-            { seedNodes.push_back( config->myNodeInfo().contact().nodeEndpoint() ); }
+        {
+            isSeed = true;
+            seedNodes.push_back( config->myNodeInfo().contact().nodeEndpoint() );
+        }
         
         config->_seedNodes = seedNodes;
         config->_neighbourhoodTargetSize = testCase._maxNeighbourCount;
@@ -155,6 +192,9 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
             cout << seed->GetNodeCount() << " ";
         }
         cout << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
+        
+        if (! isSeed)
+            { REQUIRE( node->GetNodeCount() > testCase._seedCount ); }
     }
 
     THEN("Nodes keep their node relations alive")
@@ -188,7 +228,7 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             TestCase(   10,  1,   3),
             TestCase(   50,  2,  10),
             TestCase(  100,  3,  15),
-//             TestCase(  200,  4,  20),
+            TestCase(  200,  4,  20),
 //             TestCase(  500,  5,  50),
 //             TestCase( 1000,  8,  70),
 //             TestCase( 2000,  9,  80),
@@ -198,12 +238,24 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
 
         for (auto const &testCase : testCases)
         {
-            WHEN("No node GPS locations are unique for " + to_string(testCase._maxNodeCount) + " nodes")
+            WHEN("Node GPS locations are unique for " + to_string(testCase._maxNodeCount) + " nodes")
             {
                 cout << endl << endl << endl << endl << "Running " << testCase << endl
                      << "-------------------------------------------------------------------" << endl << endl;
                 
                 auto nodeConfigs = createOneConfigByCity(settlements, testCase);
+                testNodes(nodeConfigs, testCase);
+            }
+        }
+        
+        for (auto const &testCase : testCases)
+        {
+            WHEN("Nodes with duplicate positions for " + to_string(testCase._maxNodeCount) + " nodes")
+            {
+                cout << endl << endl << endl << endl << "Running " << testCase << endl
+                     << "-------------------------------------------------------------------" << endl << endl;
+                
+                auto nodeConfigs = createConfigsByPopulation(settlements, testCase, 1000000);
                 testNodes(nodeConfigs, testCase);
             }
         }
