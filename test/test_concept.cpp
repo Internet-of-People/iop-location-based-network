@@ -138,7 +138,7 @@ vector< shared_ptr<TestConfig> > createConfigsByPopulation(
             
             ++nodeUniqueIndex;
             NodeInfo nodeInfo( city.name + "-" + to_string(nodeUniqueIndex), city.location,
-                NodeContact(city.name, 8888, 9999), NodeInfo::Services() );
+                NodeContact(city.name + "-" + to_string(nodeUniqueIndex), 8888, 9999), NodeInfo::Services() );
             shared_ptr<TestConfig> config( new TestConfig(nodeInfo) );
             nodeConfigs.push_back(config);
             
