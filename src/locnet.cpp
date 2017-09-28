@@ -700,11 +700,12 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
             // TODO consider what else to do here
         }
     }
-    while ( oldClosestNode.id() != newClosestNode.id() );
+    while ( _spatialDb->GetDistanceKm( _config->myNodeInfo().location(), newClosestNode.location() ) <
+            _spatialDb->GetDistanceKm( _config->myNodeInfo().location(), oldClosestNode.location() ) );
     
     // Try to fill neighbourhood map until limit reached or no new nodes left to ask
     unordered_set<string> askedNodeIds;
-    deque<NodeInfo> nodesToAskQueue{newClosestNode};
+    deque<NodeInfo> nodesToAskQueue{oldClosestNode};
     while ( _spatialDb->GetNodeCount(NodeRelationType::Neighbour) < _config->neighbourhoodTargetSize() &&
             ! nodesToAskQueue.empty() )
     {

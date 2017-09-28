@@ -181,11 +181,12 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
             // new SpatiaLiteDatabase( config->myNodeInfo(), SpatiaLiteDatabase::IN_MEMORY_DB, chrono::seconds(1) ) );
         shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
         proxyFactory->Register(node);
+     
+        cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo() << endl;
         
         node->EnsureMapFilled();
         
-        cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo() << endl
-            << "  node/seed(s) map size " << node->GetNodeCount() << "/";
+        cout << "  node/seed(s) map size " << node->GetNodeCount() << "/";
         for (auto seedEndpoint : seedNodes)
         {
             shared_ptr<Node> seed = proxyFactory->nodes().at( seedEndpoint.address() );
