@@ -100,7 +100,7 @@ struct TestCase
 };
 
 ostream& operator<<(ostream &out, const TestCase testCase)
-    { return out << "TestCase (maxNodes: " << testCase._maxNodeCount << ", seeds: " << testCase._seedCount << ", neighbours: " << testCase._maxNeighbourCount << ")"; }
+    { return out << "test case (maxNodes: " << testCase._maxNodeCount << ", seeds: " << testCase._seedCount << ", neighbours: " << testCase._maxNeighbourCount << ")"; }
 
 
 vector< shared_ptr<TestConfig> > createOneConfigByCity(
@@ -182,17 +182,17 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
         shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
         proxyFactory->Register(node);
      
-        cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo() << endl;
+//        cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo() << endl;
         
         node->EnsureMapFilled();
         
-        cout << "  node/seed(s) map size " << node->GetNodeCount() << "/";
-        for (auto seedEndpoint : seedNodes)
-        {
-            shared_ptr<Node> seed = proxyFactory->nodes().at( seedEndpoint.address() );
-            cout << seed->GetNodeCount() << " ";
-        }
-        cout << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
+//         cout << "  node/seed(s) map size " << node->GetNodeCount() << "/";
+//         for (auto seedEndpoint : seedNodes)
+//         {
+//             shared_ptr<Node> seed = proxyFactory->nodes().at( seedEndpoint.address() );
+//             cout << seed->GetNodeCount() << " ";
+//         }
+//         cout << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
         
         if (! isSeed)
             { REQUIRE( node->GetNodeCount() > testCase._seedCount ); }
@@ -230,32 +230,27 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             TestCase(   50,  2,  10),
             TestCase(  100,  3,  15),
             TestCase(  200,  4,  20),
-//             TestCase(  500,  5,  50),
-//             TestCase( 1000,  8,  70),
-//             TestCase( 2000,  9,  80),
-//             TestCase( 5000, 10,  90),
-//             TestCase(10000, 15, 100),
+//            TestCase(  500,  5,  30), // TODO fix this: Mariehamn(Aland,Finström) fails with this neighbourhood size
+            TestCase( 1000,  8,  40),
+//            TestCase( 2000,  9,  50),
+//            TestCase( 5000, 10,  60),
+//            TestCase(10000, 15, 100),
         };
 
         for (auto const &testCase : testCases)
         {
             WHEN("Node GPS locations are unique for " + to_string(testCase._maxNodeCount) + " nodes")
             {
-                cout << endl << endl << endl << endl << "Running " << testCase << endl
-                     << "-------------------------------------------------------------------" << endl << endl;
-                
+                cout // << endl << endl << endl << endl 
+                     << "Running network simulation with unique nodes, " << testCase << endl;
                 auto nodeConfigs = createOneConfigByCity(settlements, testCase);
                 testNodes(nodeConfigs, testCase);
             }
-        }
-        
-        for (auto const &testCase : testCases)
-        {
+            
             WHEN("Nodes with duplicate positions for " + to_string(testCase._maxNodeCount) + " nodes")
             {
-                cout << endl << endl << endl << endl << "Running " << testCase << endl
-                     << "-------------------------------------------------------------------" << endl << endl;
-                
+                cout // << endl << endl << endl << endl 
+                     << "Running network simulation with redundant nodes, " << testCase << endl;
                 auto nodeConfigs = createConfigsByPopulation(settlements, testCase, 1000000);
                 testNodes(nodeConfigs, testCase);
             }

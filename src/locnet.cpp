@@ -626,7 +626,6 @@ bool Node::InitializeNeighbourhood(const vector<NetworkEndpoint> &seedNodes)
     vector<NodeInfo> closestNodesByDistance = GetClosestNodesByDistance(
         myNode.location(), numeric_limits<Distance>::max(), 2, Neighbours::Included);
     
-    // TODO maybe this should be relaxed: if multiple nodes share the exact same location, ordering may be random between those nodes
     if ( closestNodesByDistance.size() >= 1 && closestNodesByDistance[0].location() != GetNodeInfo().location() )
     {
         LOG(ERROR) << "Assert: there cannot be a node that is closer to you than yourself";
