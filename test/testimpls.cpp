@@ -132,6 +132,8 @@ void InMemorySpatialDatabase::ExpireOldNodes()
 //     cout << _myNodeInfo << " before " << GetNodeCount();
     for ( auto it = _nodes.begin(); it != _nodes.end(); )
     {
+        // TODO use <= here
+        // if ( it->second._expiresAt <= _testClock->now() )
         if ( it->second._expiresAt < _testClock->now() )
             { it = _nodes.erase(it); }
         else { ++it; }
@@ -321,27 +323,6 @@ std::chrono::duration<uint32_t> TestConfig::requestExpirationPeriod() const { re
 std::chrono::duration<uint32_t> TestConfig::dbMaintenancePeriod() const     { return chrono::hours(7); }
 std::chrono::duration<uint32_t> TestConfig::dbExpirationPeriod() const      { return DbExpirationPeriod; }
 std::chrono::duration<uint32_t> TestConfig::discoveryPeriod() const         { return chrono::minutes(5); }
-
-
-// bool Config::InitForTest()
-// {
-//     _testMode = true;
-//     auto testArgs = TestArgs();
-//     return Initialize(testArgs.first, testArgs.second);
-// }
-//
-//
-// pair<size_t, const char**> Config::TestArgs()
-// {
-//     static const char* options[] = {
-//         _argv0.c_str(),
-//         "--test",
-//         "--nodeid", "TestNodeId",
-//         "--latitude", "0.0",
-//         "--longitude", "0.0",
-//     };
-//     return make_pair(8, options);
-// }
 
 
 

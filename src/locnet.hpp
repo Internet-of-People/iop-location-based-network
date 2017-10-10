@@ -119,8 +119,6 @@ class Node : public ILocalServiceMethods, public IClientMethods, public INodeMet
     
     Distance GetBubbleSize(const GpsLocation &location) const;
     bool BubbleOverlaps(const NodeInfo &node) const;
-//     bool BubbleOverlaps(const GpsLocation &newNodeLocation,
-//                         const std::string &nodeIdToIgnore = "") const;
     
     Node( std::shared_ptr<Config> config,
           std::shared_ptr<ISpatialDatabase> spatialDb,

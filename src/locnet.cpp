@@ -581,18 +581,17 @@ bool Node::InitializeWorld(const vector<NetworkEndpoint> &seedNodes)
         
         // Pick a single node from the candidate list and try to make it a colleague node
         NodeInfo nodeInfo( randomColleagueCandidates.back() );
+        auto const &nodeEndpoint = nodeInfo.contact().nodeEndpoint();
         randomColleagueCandidates.pop_back();
         
-        // Check if we tried it already
-        if ( triedNodes.find( nodeInfo.contact().nodeEndpoint().address() ) != triedNodes.end() )
+        // Add it as a tried node, skip if we tried it already
+        if ( ! triedNodes.emplace( nodeEndpoint.address() ).second )
             { continue; }
-        
-        triedNodes.emplace( nodeInfo.contact().nodeEndpoint().address() );
         
         try
         {
             // Connect to selected random node
-            shared_ptr<INodeMethods> nodeProxy = SafeConnectTo( nodeInfo.contact().nodeEndpoint() );
+            shared_ptr<INodeMethods> nodeProxy = SafeConnectTo(nodeEndpoint);
             if (nodeProxy == nullptr)
                 { continue; }
                 

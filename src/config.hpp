@@ -17,8 +17,6 @@ namespace LocNet
 // Built with the singleton pattern.
 class Config
 {
-//    static std::unique_ptr<Config> _instance;
-    
 protected:
 
     Config();
@@ -26,15 +24,6 @@ protected:
     Config& operator=(const Config &other) = delete;
     
 public:
-
-//     // Used to initialize a config instance with command line parameters, call only once
-//     static bool Init(int argc, const char *argv[]);
-//     static void InitForTest(const char *argv0);
-    
-//     // Used to access the singleton object after it's properly initialized
-//     static const Config& Instance();
-    
-//    virtual bool InitForTest();
 
     virtual ~Config() {}
     
