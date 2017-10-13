@@ -27,7 +27,8 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
     }
     
     GIVEN("A message dispatcher") {
-        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(TestData::NodeBudapest,
+        shared_ptr<TestConfig> config( new TestConfig(TestData::NodeBudapest) );
+        shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( config->myNodeInfo(),
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
         geodb->Store(TestData::EntryKecskemet);
         geodb->Store(TestData::EntryLondon);
@@ -37,7 +38,7 @@ SCENARIO("ProtoBuf messaging", "[messaging]")
         
         shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
         shared_ptr<IChangeListenerFactory> listenerFactory( new DummyChangeListenerFactory() );
-        shared_ptr<Node> node = Node::Create(geodb, connectionFactory);
+        shared_ptr<Node> node = Node::Create(config, geodb, connectionFactory);
         IncomingRequestDispatcher dispatcher(node, listenerFactory);
         
         THEN("Local service GetNeighbours requests are properly served") {

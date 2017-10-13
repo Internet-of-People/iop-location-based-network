@@ -9,6 +9,23 @@ namespace LocNet
 {
 
 
+class DummyNodeConnectionFactory: public INodeProxyFactory
+{
+public:
+    
+    std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &endpoint) override;
+};
+
+
+class DummyChangeListenerFactory: public IChangeListenerFactory
+{
+public:
+    
+    std::shared_ptr<IChangeListener> Create(std::shared_ptr<ILocalServiceMethods> localService) override;
+};
+
+
+
 class ChangeCounter : public IChangeListener
 {
     SessionId _sessionId;
@@ -31,13 +48,55 @@ public:
 
 
 
+struct NodeRegistry : public INodeProxyFactory
+{
+    typedef std::unordered_map< Address, std::shared_ptr<Node> >   NodeContainer;
+    
+protected:
+    
+    NodeContainer _nodes;
+    
+public:
+    
+    const NodeContainer& nodes() const;
+    void Register(std::shared_ptr<Node> node);
+    
+    std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &endpoint) override;
+};
+
+
+
+class TestClock
+{
+    std::chrono::system_clock::time_point _now;
+    
+public:
+    
+    TestClock();
+    
+    std::chrono::system_clock::time_point now() const;
+    void elapse(std::chrono::duration<int64_t> period);
+};
+
+
+struct InMemDbEntry : public NodeDbEntry
+{
+    InMemDbEntry(const InMemDbEntry& other);
+    InMemDbEntry(const NodeDbEntry& other, std::chrono::system_clock::time_point expiresAt);
+    
+    std::chrono::system_clock::time_point _expiresAt = std::chrono::system_clock::now();
+};
+
+
 // NOTE NOT PERSISTENT, suited for development/testing only
 class InMemorySpatialDatabase : public ISpatialDatabase
 {
     static std::random_device _randomDevice;
     
-    GpsLocation _myLocation;
-    std::unordered_map<NodeId,NodeDbEntry> _nodes;
+    NodeInfo _myNodeInfo;
+    std::unordered_map<NodeId,InMemDbEntry> _nodes;
+    std::shared_ptr<TestClock> _testClock;
+    std::chrono::duration<int64_t> _entryExpirationPeriod;
     
     std::vector<NodeDbEntry> GetNodes(NodeRelationType relationType) const;
     
@@ -45,7 +104,8 @@ class InMemorySpatialDatabase : public ISpatialDatabase
     
 public:
     
-    InMemorySpatialDatabase(const NodeInfo &myNodeInfo);
+    InMemorySpatialDatabase( const NodeInfo &myNodeInfo, std::shared_ptr<TestClock> testClock,
+        std::chrono::duration<int64_t> entryExpirationPeriod );
     
     Distance GetDistanceKm(const GpsLocation &one, const GpsLocation &other) const override;
 
@@ -56,10 +116,12 @@ public:
     void ExpireOldNodes() override;
     
     IChangeListenerRegistry& changeListenerRegistry() override;
-    
+
+    NodeDbEntry ThisNode() const override;
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
+    size_t GetNodeCount(NodeRelationType filter) const override;
     std::vector<NodeDbEntry> GetNeighbourNodesByDistance() const override;
     std::vector<NodeDbEntry> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const override;
@@ -68,25 +130,42 @@ public:
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
 };
 
-    
 
-class DummyNodeConnectionFactory: public INodeProxyFactory
+
+struct TestConfig : public Config
 {
-public:
+    // While testing command line args are forwarded to the tester framework, only argv0 is used to load up resources
+    static std::string ExecPath;
+    static std::chrono::duration<uint32_t> DbExpirationPeriod;
+    //static std::pair<size_t, const char**> TestArgs();
     
-    std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &endpoint) override;
-};
-
-
-class DummyChangeListenerFactory: public IChangeListenerFactory
-{
-public:
+    NodeInfo        _nodeInfo;
+    TcpPort         _localPort = 0;
+    std::string     _logPath;
+    std::string     _dbPath;
+    size_t          _neighbourhoodTargetSize = 5;
+    std::vector<NetworkEndpoint> _seedNodes;
+        
     
-    std::shared_ptr<IChangeListener> Create(std::shared_ptr<ILocalServiceMethods> localService) override;
+    TestConfig(const NodeInfo &nodeInfo);
+    
+    const NodeInfo& myNodeInfo() const override;
+    TcpPort localServicePort() const override;
+    
+    const std::string& logPath() const override;
+    const std::string& dbPath() const override;
+    
+    bool isTestMode() const override;
+    const std::vector<NetworkEndpoint>& seedNodes() const override;
+    size_t neighbourhoodTargetSize() const override;
+    
+    std::chrono::duration<uint32_t> requestExpirationPeriod() const override;
+    std::chrono::duration<uint32_t> dbMaintenancePeriod() const override;
+    std::chrono::duration<uint32_t> dbExpirationPeriod() const override;
+    std::chrono::duration<uint32_t> discoveryPeriod() const override;
 };
 
 
 } // namespace LocNet
-
 
 #endif // __LOCNET_TEST_IMPLEMENTATIONS_H__

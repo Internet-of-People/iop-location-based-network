@@ -189,13 +189,15 @@ public:
 // and reads response messages from it.
 class NetworkDispatcher : public IBlockingRequestDispatcher
 {
+    std::shared_ptr<Config>                _config;
     std::shared_ptr<ProtoBufClientSession> _session;
     
 public:
 
-    NetworkDispatcher(std::shared_ptr<ProtoBufClientSession> session);
+    NetworkDispatcher(std::shared_ptr<Config> config, std::shared_ptr<ProtoBufClientSession> session);
     virtual ~NetworkDispatcher() {}
     
+    std::chrono::duration<uint32_t> RequestExpirationPeriod();
     std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
 
@@ -204,10 +206,12 @@ public:
 // Connection factory that creates proxies that transparently communicate with a remote node.
 class TcpNodeConnectionFactory : public INodeProxyFactory
 {
+    std::shared_ptr<Config>             _config;
     std::function<void(const Address&)> _detectedIpCallback;
     
 public:
     
+    TcpNodeConnectionFactory(std::shared_ptr<Config> config);
     std::shared_ptr<INodeMethods> ConnectTo(const NetworkEndpoint &address) override;
     
     void detectedIpCallback(std::function<void(const Address&)> detectedIpCallback);

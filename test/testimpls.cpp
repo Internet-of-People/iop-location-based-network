@@ -1,3 +1,4 @@
+#include <list>
 #include <easylogging++.h>
 
 #include "testimpls.hpp"
@@ -8,18 +9,6 @@ using namespace std;
 
 namespace LocNet
 {
-
-
-ChangeCounter::ChangeCounter(const SessionId& sessionId) : _sessionId(sessionId) {}
-
-const SessionId& ChangeCounter::sessionId() const { return _sessionId; }
-
-void ChangeCounter::OnRegistered() {}
-void ChangeCounter::AddedNode(const NodeDbEntry&)   { ++addedCount; }
-void ChangeCounter::UpdatedNode(const NodeDbEntry&) { ++updatedCount; }
-void ChangeCounter::RemovedNode(const NodeDbEntry&) { ++removedCount; }
-
-
 
 
 shared_ptr<INodeMethods> DummyNodeConnectionFactory::ConnectTo(const NetworkEndpoint&)
@@ -34,24 +23,72 @@ shared_ptr<IChangeListener> DummyChangeListenerFactory::Create(shared_ptr<ILocal
 
 
 
+ChangeCounter::ChangeCounter(const SessionId& sessionId) : _sessionId(sessionId) {}
+
+const SessionId& ChangeCounter::sessionId() const { return _sessionId; }
+
+void ChangeCounter::OnRegistered() {}
+void ChangeCounter::AddedNode(const NodeDbEntry&)   { ++addedCount; }
+void ChangeCounter::UpdatedNode(const NodeDbEntry&) { ++updatedCount; }
+void ChangeCounter::RemovedNode(const NodeDbEntry&) { ++removedCount; }
+
+
+
+void NodeRegistry::Register(shared_ptr<Node> node)
+{
+    if (! node)
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Received empty node"); }
+    _nodes.emplace( node->GetNodeInfo().contact().nodeEndpoint().address(), node );
+}
+
+const NodeRegistry::NodeContainer& NodeRegistry::nodes() const
+    { return _nodes; }
+
+std::shared_ptr<INodeMethods> NodeRegistry::ConnectTo(const NetworkEndpoint &endpoint)
+    { return _nodes[ endpoint.address() ]; }
+
+
+
+TestClock::TestClock() : _now( chrono::system_clock::now() ) {}
+chrono::system_clock::time_point TestClock::now() const { return _now; }
+void TestClock::elapse(chrono::duration<int64_t> period) { _now += period; }
+
+
+InMemDbEntry::InMemDbEntry(const NodeDbEntry &other, chrono::system_clock::time_point expiresAt) :
+    NodeDbEntry(other), _expiresAt(expiresAt) {}
+
+InMemDbEntry::InMemDbEntry(const InMemDbEntry &other) :
+    NodeDbEntry(other), _expiresAt(other._expiresAt) {}
+
+
+
 random_device InMemorySpatialDatabase::_randomDevice;
 
 
-InMemorySpatialDatabase::InMemorySpatialDatabase(const NodeInfo& myNodeInfo) :
-    _myLocation( myNodeInfo.location() )
+InMemorySpatialDatabase::InMemorySpatialDatabase(const NodeInfo& myNodeInfo,
+        shared_ptr<TestClock> testClock, chrono::duration<int64_t> entryExpirationPeriod) :
+    _myNodeInfo(myNodeInfo), _testClock(testClock), _entryExpirationPeriod(entryExpirationPeriod)
 {
-    Store( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor) );
+    Store( NodeDbEntry(myNodeInfo, NodeRelationType::Self, NodeContactRoleType::Acceptor), false );
 }
 
 
 
-void InMemorySpatialDatabase::Store(const NodeDbEntry &node, bool)
+NodeDbEntry InMemorySpatialDatabase::ThisNode() const
+    { return NodeDbEntry::FromSelfInfo(_myNodeInfo); }
+
+
+
+void InMemorySpatialDatabase::Store(const NodeDbEntry &node, bool expires)
 {
     auto it = _nodes.find( node.id() );
     if ( it != _nodes.end() ) {
         throw runtime_error("Node is already present");
     }
-    _nodes.emplace( unordered_map<std::string,NodeDbEntry>::value_type( node.id(), node ) );
+    
+    chrono::system_clock::time_point expiresAt = expires ?
+         _testClock->now() + _entryExpirationPeriod : chrono::system_clock::time_point::max();
+    _nodes.emplace( node.id(), InMemDbEntry(node, expiresAt) );
 }
 
 
@@ -59,21 +96,24 @@ shared_ptr<NodeDbEntry> InMemorySpatialDatabase::Load(const string &nodeId) cons
 {
     auto it = _nodes.find(nodeId);
     if ( it == _nodes.end() ) {
-        throw runtime_error("Node is not found");
+        // throw runtime_error("Node is not found");
+        return shared_ptr<NodeDbEntry>();
     }
     
     return shared_ptr<NodeDbEntry>( new NodeDbEntry(it->second) );
 }
 
 
-void InMemorySpatialDatabase::Update(const NodeDbEntry &node, bool)
+void InMemorySpatialDatabase::Update(const NodeDbEntry &node, bool expires)
 {
     auto it = _nodes.find( node.id() );
     if ( it == _nodes.end() ) {
         throw runtime_error("Node is not found");
     }
     
-    it->second = node;
+    chrono::system_clock::time_point expiresAt = expires ?
+        _testClock->now() + _entryExpirationPeriod : chrono::system_clock::time_point::max();
+    it->second = InMemDbEntry(node, expiresAt);
 }
 
 
@@ -89,7 +129,18 @@ void InMemorySpatialDatabase::Remove(const string &nodeId)
 
 void InMemorySpatialDatabase::ExpireOldNodes()
 {
-    // TODO maybe we could implement it here, but this class is useful for testing, not production
+//     cout << _myNodeInfo << " before " << GetNodeCount();
+    for ( auto it = _nodes.begin(); it != _nodes.end(); )
+    {
+        // TODO remove this after debugging
+        const InMemDbEntry &entry = it->second;
+        auto now = _testClock->now();
+        
+        if ( it->second._expiresAt <= _testClock->now() )
+            { it = _nodes.erase(it); }
+        else { ++it; }
+    }
+//     cout << ", after " << GetNodeCount() << endl;
 }
 
 
@@ -101,39 +152,35 @@ IChangeListenerRegistry& InMemorySpatialDatabase::changeListenerRegistry()
 vector<NodeDbEntry> InMemorySpatialDatabase::GetClosestNodesByDistance(
     const GpsLocation &location, Distance maxRadiusKm, size_t maxNodeCount, Neighbours filter) const
 {
-    // Start with all nodes
-    vector<NodeDbEntry> remainingNodes;
+    //vector<NodeDbEntry> candidateNodes;
+    list< pair<Distance,NodeDbEntry> > candidateNodes;
     for (auto const &entry : _nodes)
-        { remainingNodes.push_back(entry.second); }
-    
-    // Remove nodes out of range
-    auto newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-        [this, &location, maxRadiusKm](const NodeDbEntry &node)
-            { return maxRadiusKm < this->GetDistanceKm(location, node.location() ); } );
-    remainingNodes.erase( newEnd, remainingNodes.end() );
-
-    // Remove nodes with wrong relationType
-    if (filter == Neighbours::Excluded) {
-        newEnd = remove_if( remainingNodes.begin(), remainingNodes.end(),
-            [](const NodeDbEntry &node)
-                { return node.relationType() == NodeRelationType::Neighbour; } );
-        remainingNodes.erase( newEnd, remainingNodes.end() );
+    {
+        const NodeDbEntry &node = entry.second;
+        Distance nodeDistance = GetDistanceKm( location, node.location() );
+        if (maxRadiusKm >= nodeDistance)
+        {
+            if ( (filter == Neighbours::Included) ||
+                 (filter == Neighbours::Excluded && node.relationType() != NodeRelationType::Neighbour) )
+            {
+                candidateNodes.emplace_back(nodeDistance, node);
+            }
+        }
     }
-    
+        
     vector<NodeDbEntry> result;
     while ( result.size() < maxNodeCount )
     {
         // Select closest element
-        auto minElement = min_element( remainingNodes.begin(), remainingNodes.end(),
-            [this, &location](const NodeDbEntry &one, const NodeDbEntry &other) {
-                return this->GetDistanceKm( location, one.location() ) <
-                       this->GetDistanceKm( location, other.location() ); } );
-        if (minElement == remainingNodes.end() )
+        auto minElement = min_element( candidateNodes.begin(), candidateNodes.end(),
+            [] (const pair<Distance,NodeDbEntry> &one, const pair<Distance,NodeDbEntry> &other)
+                { return one.first < other.first; } );
+        if (minElement == candidateNodes.end() )
             { break; }
 
         // Save element to result and remove it from candidates
-        result.push_back(*minElement);
-        remainingNodes.erase(minElement);
+        result.emplace_back(minElement->second);
+        candidateNodes.erase(minElement);
     }
     return result;
 }
@@ -145,7 +192,7 @@ InMemorySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) 
     // Start with all nodes
     vector<NodeDbEntry> remainingNodes;
     for (auto const &entry : _nodes)
-        { remainingNodes.push_back(entry.second); }
+        { remainingNodes.emplace_back(entry.second); }
         
     // Remove nodes with wrong relationType
     if (filter == Neighbours::Excluded) {
@@ -163,7 +210,7 @@ InMemorySpatialDatabase::GetRandomNodes(size_t maxNodeCount, Neighbours filter) 
         size_t selectedNodeIdx = fromRange(_randomDevice);
         
         // Save element to result and remove it from candidates
-        result.push_back( remainingNodes[selectedNodeIdx] );
+        result.emplace_back( remainingNodes[selectedNodeIdx] );
         remainingNodes.erase( remainingNodes.begin() + selectedNodeIdx );
     }
     return result;
@@ -176,7 +223,7 @@ std::vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeRelationType rela
     for (auto const &entry : _nodes)
     {
         if ( entry.second.relationType() == relationType )
-            { result.push_back(entry.second); }
+            { result.emplace_back(entry.second); }
     }
     return result;
 }
@@ -185,7 +232,15 @@ std::vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeRelationType rela
 size_t InMemorySpatialDatabase::GetNodeCount() const
     { return _nodes.size(); }
 
-
+size_t InMemorySpatialDatabase::GetNodeCount(NodeRelationType filter) const
+{
+    size_t result = 0;
+    for (auto const &entry : _nodes)
+        { if (entry.second.relationType() == filter)
+            { ++result; } }
+    return result;
+}
+    
 
 vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeContactRoleType roleType)
 {
@@ -193,7 +248,7 @@ vector<NodeDbEntry> InMemorySpatialDatabase::GetNodes(NodeContactRoleType roleTy
     for (auto const &entry : _nodes)
     {
         if ( entry.second.roleType() == roleType )
-            { result.push_back(entry.second); }
+            { result.emplace_back(entry.second); }
     }
     return result;
 }
@@ -205,8 +260,8 @@ vector<NodeDbEntry> InMemorySpatialDatabase::GetNeighbourNodesByDistance() const
     vector<NodeDbEntry> neighbours( GetNodes(NodeRelationType::Neighbour) );
     sort( neighbours.begin(), neighbours.end(),
         [this] (const NodeDbEntry &one, const NodeDbEntry &other)
-            { return GetDistanceKm( one.location(), _myLocation ) <
-                     GetDistanceKm( other.location(), _myLocation ); } );
+            { return GetDistanceKm( one.location(), _myNodeInfo.location() ) <
+                     GetDistanceKm( other.location(), _myNodeInfo.location() ); } );
     return neighbours;
 }
     
@@ -249,6 +304,27 @@ Distance InMemorySpatialDatabase::GetDistanceKm(const GpsLocation &one, const Gp
     Distance c = 2 * atan2( sqrt(a), sqrt(1-a) );
     return EARTH_RADIUS * c;
 }
+
+
+
+string TestConfig::ExecPath("UNINITIALIZED");
+chrono::duration<uint32_t> TestConfig::DbExpirationPeriod( chrono::hours(24) );
+
+
+TestConfig::TestConfig(const NodeInfo &aNodeInfo) : _nodeInfo(aNodeInfo) {}
+
+bool TestConfig::isTestMode() const             { return true; }
+const NodeInfo& TestConfig::myNodeInfo() const  { return _nodeInfo; }
+TcpPort TestConfig::localServicePort() const    { return _localPort; }
+const std::string& TestConfig::logPath() const  { return _logPath; }
+const std::string& TestConfig::dbPath() const   { return _dbPath; }
+
+size_t TestConfig::neighbourhoodTargetSize() const  { return _neighbourhoodTargetSize; }
+const std::vector<NetworkEndpoint>& TestConfig::seedNodes() const           { return _seedNodes; }
+std::chrono::duration<uint32_t> TestConfig::requestExpirationPeriod() const { return chrono::seconds(60); }
+std::chrono::duration<uint32_t> TestConfig::dbMaintenancePeriod() const     { return chrono::hours(7); }
+std::chrono::duration<uint32_t> TestConfig::dbExpirationPeriod() const      { return DbExpirationPeriod; }
+std::chrono::duration<uint32_t> TestConfig::discoveryPeriod() const         { return chrono::minutes(5); }
 
 
 

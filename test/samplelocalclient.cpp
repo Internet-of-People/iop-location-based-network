@@ -23,7 +23,7 @@ void signalHandler(int)
 
 
 
-int main(int argc, const char* const argv[])
+int main(int argc, const char* argv[])
 {
     try
     {
@@ -35,7 +35,8 @@ int main(int argc, const char* const argv[])
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
-        Config::InitForTest();
+        shared_ptr<EzParserConfig> config( new EzParserConfig() );
+        config->Initialize(argc, argv);
         
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
         
@@ -45,7 +46,7 @@ int main(int argc, const char* const argv[])
         shared_ptr<ProtoBufClientSession> session( ProtoBufClientSession::Create(channel) );
         
         uint32_t notificationsReceived = 0;
-        session->StartMessageLoop( [&notificationsReceived, channel, session]
+        session->StartMessageLoop( [&notificationsReceived, config, channel, session]
             ( unique_ptr<iop::locnet::Message> &&requestMsg )
         {
             if ( ! requestMsg ||
@@ -95,7 +96,7 @@ int main(int argc, const char* const argv[])
  
         try
         {
-            shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(session) );
+            shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(config, session) );
             LOG(INFO) << "Sending registerservice request";
             unique_ptr<iop::locnet::Request> registerRequest( new iop::locnet::Request() );
             registerRequest->mutable_local_service()->mutable_register_service()->set_allocated_service(

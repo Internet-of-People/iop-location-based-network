@@ -4,21 +4,23 @@ The project is currently in a proof-of-concept prototype state.
 Though the source code is supposed to be functional, there is a lot of room for improvements.
 
 
-## Algorithmic correctness
-
-Currently we are testing the network with the community.
-We should also build a test environment that runs a whole network (i.e. lots of nodes)
-on a single host to prove that the base algorithm and its current implementation
-works fine in practice. That means that nodes should always discover the network,
-no network split should happen without network blocks, a splitted network
-should automatically reunite when network blocking is lifted, etc.
-
-
 ## Technical debt
 
 While prototyping we delayed solving some minor technical issues.
 Accordingly, you can find some `// TODO` comments in the source
 reminding to (re)consider algorithms, error handling and other details.
+
+
+## Algorithmic correctness
+
+We already have a test environment that runs a whole network (i.e. lots of nodes)
+on a single host to prove that the base algorithm and its current implementation
+works fine in practice, e.g. the nodes discover each other and keep connected.
+There are some corner cases which we already identified and will work on it.
+
+Tests should also be extended to ensure that the network has high enough graph k-connectivity
+and after a network split (e.g. internet is turned off in a country then back on)
+the network is able to merge and reunite.
 
 
 ## Architecture
@@ -28,35 +30,28 @@ Connecting to a host is still blocking though, this should be transformed as wel
 Another potential blocking problem can be the routing implementation for clients
 (Node::ExploreNetworkNodesByDistance, see the TODO).
 
+All of our algorithm implementations (like discovery, relation renewal, etc) are translated
+from an algorithmic description in the specification thus currently they are all sequential.
+Though some algorithms (e.g. discovery) naturally have sequential parts,
+sequential execution might not scale well for huge networks and we may have to
+parallelize or use asynchronous execution where possible.
+
 Our current implementation uses a local database to store just a sparse subset of all the nodes
 of the network, but this is not necessarily the only direction.
 We could also experiment with using a distributed hash table (DHT).
 The advantage would be having a single, full node list of the whole network,
 readable by every node. Each node could write only its own details
 (e.g. when joining the network or changing its IP address).
-Note that this direction has shortcomings to solve: as far as we know
-it would not work locally if a country blocks external internet access,
+Note that this direction has shortcomings to solve:
+it might not work locally if a country blocks external internet access,
 see e.g. Great Firewall of China. However, it might be possible to create
 our own solution reusing some parts of DHT protocols and forging a custom solution.
 We just didn't have enough time and expertise to fully discover this direction.
-
-During prototyping, features were added layer by layer,
-starting from the application layer through messaging down to networking.
-Previously networking used some ProtoBuf messages in its interfaces,
-but it's fixed since. Currently network.h/cpp depends on messaging.h/cpp,
-but it should be in the opposite direction, but it needs relocation of some classes
-between these files.
 
 A reconsideration of the current layering implementation (application: Node, messaging: Dispatcher, session: Session)
 also might be necessary because features "connection keepalive" and "Ip autodetection"
 do not naturally fit into the picture, see the message loop implementation currently in
 `ProtoBufDispatchingTcpServer::AsyncAcceptHandler()`.
-
-All of our algorithm implementations (like discovery, relation renewal, etc) are translated
-from an algorithmic description in the specification thus currently they are all sequential.
-Though some algorithms like discovery naturally have sequential parts,
-sequential execution might not scale well for huge networks and we may have to
-parallelize or use asynchronous execution where possible.
 
 
 ## Convenience

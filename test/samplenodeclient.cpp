@@ -23,7 +23,7 @@ void signalHandler(int)
 
 
 
-int main(int argc, const char* const argv[])
+int main(int argc, const char* argv[])
 {
     try
     {
@@ -35,7 +35,8 @@ int main(int argc, const char* const argv[])
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
-        Config::InitForTest();
+        shared_ptr<EzParserConfig> config( new EzParserConfig() );
+        config->Initialize(argc, argv);
         
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
         
@@ -44,7 +45,7 @@ int main(int argc, const char* const argv[])
         shared_ptr<IProtoBufChannel> channel( new AsyncProtoBufTcpChannel(nodeContact) );
         shared_ptr<ProtoBufClientSession> session( ProtoBufClientSession::Create(channel) );
         session->StartMessageLoop();
-        shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(session) );
+        shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(config, session) );
 
         LOG(INFO) << "Sending getnodecount request";
         NodeMethodsProtoBufClient client(dispatcher, nullptr);

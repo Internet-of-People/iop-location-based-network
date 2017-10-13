@@ -17,6 +17,7 @@ namespace LocNet
 
 
 const string SpatiaLiteDatabase::IN_MEMORY_DB = ":memory:";
+const string SpatiaLiteDatabase::TEMPORARY_DB = "";
 
 const vector<string> DatabaseInitCommands = {
 "BEGIN TRANSACTION;",
@@ -53,6 +54,10 @@ const vector<string> DatabaseInitCommands = {
 "END TRANSACTION;" };
 
 
+
+
+NodeDbEntry NodeDbEntry::FromSelfInfo(const NodeInfo &thisNodeInfo)
+    { return NodeDbEntry(thisNodeInfo, NodeRelationType::Self, NodeContactRoleType::Self); }
 
 
 NodeDbEntry::NodeDbEntry(const NodeDbEntry& other) :
@@ -233,10 +238,6 @@ vector<NodeDbEntry> SpatiaLiteDatabase::QueryEntries(const GpsLocation &fromLoca
 }
 
 
-NodeDbEntry ThisNodeToDbEntry(const NodeInfo &thisNodeInfo)
-    { return NodeDbEntry(thisNodeInfo, NodeRelationType::Self, NodeContactRoleType::Self); }
-
-
 // SpatiaLite initialization/shutdown sequence is documented here:
 // https://groups.google.com/forum/#!msg/spatialite-users/83SOajOJ2JU/sgi5fuYAVVkJ
 SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string &dbPath,
@@ -286,8 +287,8 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
         { throw LocationNetworkError(ErrorCode::ERROR_BAD_STATE, "Node id changed, database is invalidated. Delete database file " +
             dbPath + " to force signing up to the network with the new node id."); }
     
-    if ( selfEntries.empty() )  { Store ( ThisNodeToDbEntry(_myNodeInfo), false ); }
-    else                        { Update( ThisNodeToDbEntry(_myNodeInfo), false ); }
+    if ( selfEntries.empty() )  { Store ( NodeDbEntry::FromSelfInfo(_myNodeInfo), false ); }
+    else                        { Update( NodeDbEntry::FromSelfInfo(_myNodeInfo), false ); }
     LOG(DEBUG) << "Database ready with node count: " << GetNodeCount();
 }
 
@@ -728,6 +729,15 @@ size_t SpatiaLiteDatabase::GetNodeCount() const
 }
 
 
+size_t SpatiaLiteDatabase::GetNodeCount(NodeRelationType filter) const
+{
+    // NOTE this would be better done by SELECT COUNT(*) but that would need a lot more boilerplate code again
+    vector<NodeDbEntry> nodes( QueryEntries( _myNodeInfo.location(),
+        "WHERE relationType = " + to_string( static_cast<int>(filter) ) ) );
+    return nodes.size();
+}
+
+
 
 vector<NodeDbEntry> SpatiaLiteDatabase::GetNeighbourNodesByDistance() const
 {
@@ -768,7 +778,7 @@ vector<NodeDbEntry> SpatiaLiteDatabase::GetClosestNodesByDistance(
 
 NodeDbEntry SpatiaLiteDatabase::ThisNode() const
 {
-    return ThisNodeToDbEntry(_myNodeInfo);
+    return NodeDbEntry::FromSelfInfo(_myNodeInfo);
 //     string whereCondition = "WHERE relationType = " + to_string( static_cast<int>(NodeRelationType::Colleague) );
 //     vector<NodeDbEntry> result = QueryEntries( _myNodeInfo.location(), whereCondition );
 //     if ( result.empty() )

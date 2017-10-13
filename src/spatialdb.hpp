@@ -49,6 +49,8 @@ class NodeDbEntry : public NodeInfo
     
 public:
     
+    static NodeDbEntry FromSelfInfo(const NodeInfo &thisNodeInfo);
+    
     NodeDbEntry(const NodeDbEntry& other);
     NodeDbEntry( const NodeInfo& info,
                  NodeRelationType relationType, NodeContactRoleType roleType );
@@ -113,6 +115,7 @@ public:
     virtual std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) = 0;
 
     virtual size_t GetNodeCount() const = 0;
+    virtual size_t GetNodeCount(NodeRelationType filter) const = 0;
     virtual std::vector<NodeDbEntry> GetNeighbourNodesByDistance() const = 0;
     
     virtual std::vector<NodeDbEntry> GetClosestNodesByDistance(
@@ -163,6 +166,7 @@ class SpatiaLiteDatabase : public ISpatialDatabase
 public:
     
     static const std::string IN_MEMORY_DB;
+    static const std::string TEMPORARY_DB;
     
     
     SpatiaLiteDatabase(const NodeInfo &myNodeInfo, const std::string &dbPath,
@@ -183,6 +187,7 @@ public:
     std::vector<NodeDbEntry> GetNodes(NodeContactRoleType roleType) override;
     
     size_t GetNodeCount() const override;
+    size_t GetNodeCount(NodeRelationType filter) const override;
     std::vector<NodeDbEntry> GetNeighbourNodesByDistance() const override;
     std::vector<NodeDbEntry> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const override;

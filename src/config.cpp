@@ -32,59 +32,18 @@ static const string LOCNET_VERSION = to_string(VERSION_MAJOR) + "." +
 
 static const size_t NEIGHBOURHOOD_TARGET_SIZE = 50;
 
-const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::hours(7);
+const chrono::duration<uint32_t> EzParserConfig::_requestExpirationPeriod = chrono::seconds(10);
 const chrono::duration<uint32_t> EzParserConfig::_dbExpirationPeriod  = chrono::hours(24);
+const chrono::duration<uint32_t> EzParserConfig::_dbMaintenancePeriod = chrono::hours(7);
 const chrono::duration<uint32_t> EzParserConfig::_discoveryPeriod     = chrono::minutes(5);
 
 
 
-unique_ptr<Config> Config::_instance(nullptr);
-
-const Config& Config::Instance()
-{
-    if (! _instance)
-    {
-        LOG(ERROR) << "Configuration is missing: either not properly initialized (call Config::Init or InitForTest) or destroyed already during shutdown.";
-        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Missing configuration");
-    }
-    return *_instance;
-}
-
-
-bool Config::Init(int argc, const char* argv[])
-{
-    _instance.reset( new EzParserConfig() );
-    return _instance->Initialize(argc, argv);
-}
-
-
-void Config::InitForTest()
-{
-    _instance.reset( new EzParserConfig() );
-    _instance->_testMode = true;
-    
-    int argc = 7;
-    const char *argv[] = {
-        "test",
-        "--test",
-        "--nodeid", "TestNodeId",
-        "--latitude", "0.0",
-        "--longitude", "0.0",
-    };
-    _instance->Initialize(argc, argv);
-}
-
-
 Config::Config() {}
+
 
 const string& Config::version() const
     { return LOCNET_VERSION; }
-
-bool Config::isTestMode() const
-    { return _testMode; }
-
-size_t Config::neighbourhoodTargetSize() const
-    { return isTestMode() ? 3 : NEIGHBOURHOOD_TARGET_SIZE; }
 
 
 
@@ -105,7 +64,7 @@ string GetPosixHomeDirectory()
 {
     const char *home = getenv("HOME");
     if ( home == nullptr || strlen(home) == 0 )
-        { home = getpwuid(getuid())->pw_dir; }
+        { home = getpwuid( getuid() )->pw_dir; }
     return home;
 }
 
@@ -175,8 +134,6 @@ static const vector<NetworkEndpoint> DefaultSeedNodes {
     NetworkEndpoint("ham5.fermat.cloud", DefaultNodePort),
     NetworkEndpoint("ham6.fermat.cloud", DefaultNodePort),
     NetworkEndpoint("ham7.fermat.cloud", DefaultNodePort),
-//    NetworkEndpoint("iop-loc-m1.amberloom.com", DefaultNodePort),
-//    NetworkEndpoint("iop-loc-m2.amberloom.com", DefaultNodePort),
 };
 
 
@@ -233,12 +190,9 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     // ... then from config file if present (will not overwrite existing values)
     string filename;
     _optParser.get(OPTNAME_CONFIGFILE)->getString(filename);
-    if ( ! isTestMode() ) // NOTE members are not filled in yet, but InitForTest() has already set testmode
-    {
-        if ( _optParser.importFile( filename.c_str() ) )
-             { cout << "Processed config file " << filename << endl; }
-        else { cout << "Config file '" << filename << "' not found, using command line values only" << endl; }
-    }
+    if ( _optParser.importFile( filename.c_str() ) )
+            { cout << "Processed config file " << filename << endl; }
+    else { cout << "Config file '" << filename << "' not found, using command line values only" << endl; }
     
     // Check for missing mandatory options
     vector<string> badOptions;
@@ -309,10 +263,12 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
 }
 
 
+bool EzParserConfig::isTestMode() const
+    { return _testMode; }
 
 bool EzParserConfig::versionRequested() const
     { return _versionRequested; }
-
+    
 const string& EzParserConfig::logPath() const
     { return _logPath; }    
 
@@ -325,9 +281,15 @@ const NodeInfo& EzParserConfig::myNodeInfo() const
 const vector<NetworkEndpoint>& EzParserConfig::seedNodes() const
     { return _seedNodes.empty() ? DefaultSeedNodes : _seedNodes; }
 
+size_t EzParserConfig::neighbourhoodTargetSize() const
+    { return isTestMode() ? 3 : NEIGHBOURHOOD_TARGET_SIZE; }
+
 TcpPort EzParserConfig::localServicePort() const
     { return _localPort; }
-    
+
+chrono::duration<uint32_t> EzParserConfig::requestExpirationPeriod() const
+     { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(60)) : _requestExpirationPeriod; }
+
 chrono::duration<uint32_t> EzParserConfig::dbMaintenancePeriod() const
     { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(35)) : _dbMaintenancePeriod; }
 
