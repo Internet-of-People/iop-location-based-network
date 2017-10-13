@@ -1,4 +1,5 @@
 #include <fstream>
+#include <unordered_set>
 
 #include <catch.hpp>
 #include <easylogging++.h>
@@ -182,7 +183,7 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
         shared_ptr<Node> node = Node::Create(config, spatialDb, proxyFactory);
         proxyFactory->Register(node);
      
-//        cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo() << endl;
+//         cout << proxyFactory->nodes().size() << " - " << node->GetNodeInfo() << endl;
         
         node->EnsureMapFilled();
         
@@ -195,26 +196,37 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
 //         cout << ", neighbours " << node->GetNeighbourNodesByDistance().size() << endl;
         
         if (! isSeed)
-            { REQUIRE( node->GetNodeCount() > testCase._seedCount ); }
+            { REQUIRE( node->GetNodeCount() >= testCase._seedCount + 1 ); } // NOTE seeds + self
     }
 
     THEN("Nodes keep their node relations alive")
     {
         // Elapse some time but node relations must not expire yet
-        testClock->elapse(TestConfig::DbExpirationPeriod / 3);
+        testClock->elapse(TestConfig::DbExpirationPeriod * 1 / 3);
         for ( auto &entry : proxyFactory->nodes() )
             { entry.second->RenewNodeRelations(); }
         
-        // Elapse more time to expire all entries that not were renewed
-        testClock->elapse(TestConfig::DbExpirationPeriod);
+        // Elapse more time to expire all entries that were not renewed
+        testClock->elapse(TestConfig::DbExpirationPeriod * 3 / 4);
         for ( auto &entry : proxyFactory->nodes() )
         {
+//             cout << entry.second->GetNodeInfo() << " before " << entry.second->GetNodeCount();
             entry.second->ExpireOldNodes();
-            REQUIRE( entry.second->GetNodeCount() > testCase._seedCount );
+//             cout << ", after " << entry.second->GetNodeCount() << endl;
+            REQUIRE( entry.second->GetNodeCount() >= testCase._seedCount + 1 ); // NOTE seeds + self
         }
     }
     
-    // TODO somehow test if a splitted network can rejoin
+//     THEN("Node connections form a connected graph")
+//     {
+//         unordered_set<Address> connectedNodes{ seedNodes[0].address() };
+//         //while() {}
+//     }
+//     THEN("K-connectivity of the network graph is high enough")
+//     {
+//         // TODO
+//     }
+//     // TODO somehow test if a splitted network can rejoin
 }
 
 

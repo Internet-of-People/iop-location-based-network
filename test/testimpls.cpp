@@ -132,9 +132,7 @@ void InMemorySpatialDatabase::ExpireOldNodes()
 //     cout << _myNodeInfo << " before " << GetNodeCount();
     for ( auto it = _nodes.begin(); it != _nodes.end(); )
     {
-        // TODO use <= here
-        // if ( it->second._expiresAt <= _testClock->now() )
-        if ( it->second._expiresAt < _testClock->now() )
+        if ( it->second._expiresAt <= _testClock->now() )
             { it = _nodes.erase(it); }
         else { ++it; }
     }
