@@ -160,6 +160,8 @@ vector< shared_ptr<TestConfig> > createConfigsByPopulation(
 void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
                 const TestCase &testCase )
 {
+    REQUIRE( testCase._seedCount > 0 );
+    
     vector<NetworkEndpoint> seedNodes;
     shared_ptr<TestClock> testClock( new TestClock() );
     shared_ptr<NodeRegistry> proxyFactory( new NodeRegistry() );
@@ -199,21 +201,37 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
             { REQUIRE( node->GetNodeCount() >= testCase._seedCount + 1 ); } // NOTE seeds + self
     }
 
+    REQUIRE( seedNodes.size() == testCase._seedCount );
+    
     THEN("Nodes keep their node relations alive")
     {
         // Elapse some time but node relations must not expire yet
-        testClock->elapse(TestConfig::DbExpirationPeriod * 1 / 3);
+        testClock->elapse(  TestConfig::DbExpirationPeriod * 1 / 2);
         for ( auto &entry : proxyFactory->nodes() )
             { entry.second->RenewNodeRelations(); }
         
-        // Elapse more time to expire all entries that were not renewed
-        testClock->elapse(TestConfig::DbExpirationPeriod * 3 / 4);
+        // Elapse some more time to expire all entries that were not renewed
+        testClock->elapse(TestConfig::DbExpirationPeriod * 1 / 2);
+        for ( auto &entry : proxyFactory->nodes() )
+        {
+            entry.second->ExpireOldNodes();
+                
+            REQUIRE( entry.second->GetNodeCount() >= testCase._seedCount + 1 ); // NOTE seeds + self
+            REQUIRE( entry.second->GetNeighbourNodesByDistance().size() <= testCase._maxNeighbourCount );
+        }
+        
+        // Expire all entries
+        testClock->elapse(TestConfig::DbExpirationPeriod * 1 / 2);
         for ( auto &entry : proxyFactory->nodes() )
         {
 //             cout << entry.second->GetNodeInfo() << " before " << entry.second->GetNodeCount();
             entry.second->ExpireOldNodes();
 //             cout << ", after " << entry.second->GetNodeCount() << endl;
-            REQUIRE( entry.second->GetNodeCount() >= testCase._seedCount + 1 ); // NOTE seeds + self
+//             cout << "  Remaining nodes: " << endl;
+//             for ( const auto &node : entry.second->GetRandomNodes(testCase._maxNodeCount, Neighbours::Included) )
+//                 { cout << "    " << node << endl; }
+                
+            REQUIRE( entry.second->GetNodeCount() == 1 ); // All connections expired, only Self remains
         }
     }
     
@@ -228,7 +246,7 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
 //     }
 //     // TODO somehow test if a splitted network can rejoin
 }
-
+    
 
 
 SCENARIO("Conceptual correctness of the algorithm organizing the global network", "[concept]")
@@ -242,11 +260,11 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             TestCase(   50,  2,  10),
             TestCase(  100,  3,  15),
             TestCase(  200,  4,  20),
-//            TestCase(  500,  5,  30), // TODO fix this: Mariehamn(Aland,Finström) fails with this neighbourhood size
-//            TestCase( 1000,  8,  40),
-//            TestCase( 2000,  9,  50),
-//            TestCase( 5000, 10,  60),
-//            TestCase(10000, 15, 100),
+//             TestCase(  500,  5,  30), // TODO fix this: Mariehamn(Aland,Finström) fails with this neighbourhood size
+//             TestCase( 1000,  8,  40),
+//             TestCase( 2000,  9,  50),
+//             TestCase( 5000, 10,  60),
+//             TestCase(10000, 15, 100),
         };
 
         for (auto const &testCase : testCases)

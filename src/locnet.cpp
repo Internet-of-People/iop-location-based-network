@@ -755,7 +755,7 @@ void Node::ExpireOldNodes()
 //     size_t sizeBefore = _spatialDb->GetNodeCount();
     LOG(DEBUG) << "Deleting expired node connections";
     _spatialDb->ExpireOldNodes();
-    if ( _spatialDb->GetNodeCount() <= 1 )
+    if ( _spatialDb->GetNodeCount() <= 1 && ! _config->isTestMode() )
     {
         EnsureMapFilled();
 //         cout << "  *** " << _config->myNodeInfo() << " had " << sizeBefore << " nodes"
