@@ -1,3 +1,4 @@
+#include <deque>
 #include <fstream>
 #include <unordered_set>
 
@@ -162,6 +163,7 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
 {
     REQUIRE( testCase._seedCount > 0 );
     
+    // Build up the network node by node
     vector<NetworkEndpoint> seedNodes;
     shared_ptr<TestClock> testClock( new TestClock() );
     shared_ptr<NodeRegistry> proxyFactory( new NodeRegistry() );
@@ -203,48 +205,66 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
 
     REQUIRE( seedNodes.size() == testCase._seedCount );
     
-    THEN("Nodes keep their node relations alive")
+    // Elapse some time but node relations must not expire yet
+    testClock->elapse(  TestConfig::DbExpirationPeriod * 1 / 2);
+    for ( auto &entry : proxyFactory->nodes() )
+        { entry.second->RenewNodeRelations(); }
+    
+    // Elapse some more time to expire all entries that were not renewed
+    testClock->elapse(TestConfig::DbExpirationPeriod * 1 / 2);
+    for ( auto &entry : proxyFactory->nodes() )
     {
-        // Elapse some time but node relations must not expire yet
-        testClock->elapse(  TestConfig::DbExpirationPeriod * 1 / 2);
-        for ( auto &entry : proxyFactory->nodes() )
-            { entry.second->RenewNodeRelations(); }
+        entry.second->ExpireOldNodes();
+            
+        REQUIRE( entry.second->GetNodeCount() >= testCase._seedCount + 1 ); // NOTE seeds + self
+        REQUIRE( entry.second->GetNeighbourNodesByDistance().size() <= testCase._maxNeighbourCount );
+    }
+    
+    // Check if node connections form a connected graph
+    size_t networkSize = proxyFactory->nodes().size();
+    unordered_set<Address> discoveredNodes;
+    unordered_set<Address> contactedNodes;
+    deque<NetworkEndpoint> nodesToContact{ seedNodes[0] };
+    while ( discoveredNodes.size() < networkSize && ! nodesToContact.empty() )
+    {
+        NetworkEndpoint nextNodeEndpoint = nodesToContact.front();
+        nodesToContact.pop_front();
+        shared_ptr<INodeMethods> conn = proxyFactory->ConnectTo(nextNodeEndpoint);
+        if (conn == nullptr)
+            { continue; }
         
-        // Elapse some more time to expire all entries that were not renewed
-        testClock->elapse(TestConfig::DbExpirationPeriod * 1 / 2);
-        for ( auto &entry : proxyFactory->nodes() )
+        contactedNodes.emplace( nextNodeEndpoint.address() );
+        vector<NodeInfo> newNodes = conn->GetRandomNodes(networkSize, Neighbours::Included);
+        for (const auto &newNode : newNodes)
         {
-            entry.second->ExpireOldNodes();
-                
-            REQUIRE( entry.second->GetNodeCount() >= testCase._seedCount + 1 ); // NOTE seeds + self
-            REQUIRE( entry.second->GetNeighbourNodesByDistance().size() <= testCase._maxNeighbourCount );
+            const NetworkEndpoint newEndpoint = newNode.contact().nodeEndpoint();
+            discoveredNodes.emplace( newEndpoint.address() );
+            if ( contactedNodes.find( newEndpoint.address() ) == contactedNodes.end() &&
+                    find( nodesToContact.begin(), nodesToContact.end(), newEndpoint ) == nodesToContact.end() )
+            {
+                nodesToContact.push_back(newEndpoint);
+            }
         }
-        
-        // Expire all entries
-        testClock->elapse(TestConfig::DbExpirationPeriod * 1 / 2);
-        for ( auto &entry : proxyFactory->nodes() )
-        {
+    }
+    
+    REQUIRE( discoveredNodes.size() == networkSize );
+
+    // TODO Test if K-connectivity of the network graph is high enough
+    // TODO somehow test if a splitted network can rejoin
+    
+    // Expire all entries
+    testClock->elapse(TestConfig::DbExpirationPeriod * 1 / 2);
+    for ( auto &entry : proxyFactory->nodes() )
+    {
 //             cout << entry.second->GetNodeInfo() << " before " << entry.second->GetNodeCount();
-            entry.second->ExpireOldNodes();
+        entry.second->ExpireOldNodes();
 //             cout << ", after " << entry.second->GetNodeCount() << endl;
 //             cout << "  Remaining nodes: " << endl;
 //             for ( const auto &node : entry.second->GetRandomNodes(testCase._maxNodeCount, Neighbours::Included) )
 //                 { cout << "    " << node << endl; }
-                
-            REQUIRE( entry.second->GetNodeCount() == 1 ); // All connections expired, only Self remains
-        }
+            
+        REQUIRE( entry.second->GetNodeCount() == 1 ); // All connections expired, only Self remains
     }
-    
-//     THEN("Node connections form a connected graph")
-//     {
-//         unordered_set<Address> connectedNodes{ seedNodes[0].address() };
-//         //while() {}
-//     }
-//     THEN("K-connectivity of the network graph is high enough")
-//     {
-//         // TODO
-//     }
-//     // TODO somehow test if a splitted network can rejoin
 }
     
 
