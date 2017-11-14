@@ -9,12 +9,12 @@
 
 # Installing the packaged version
 
-Packages can be downloaded as `iop-locnet` from the Fermat package repositories.
-The Fermat repository is located at `repo.fermat.community` which you can configure
+Packages can be downloaded as `iop-locnet` from the IoP package repositories.
+The IoP repository is located at `repo.iop.cash` which you can configure
 to your package manager. E.g. on Ubuntu add something like below into your
 `/etc/apt/sources.list.d`
 
-    deb [arch=amd64] http://repo.fermat.community/ 16.04 main
+    deb [arch=amd64] http://repo.iop.cash/ 16.04 main
 
 and accept the repository keys with the following commands
 
@@ -22,7 +22,7 @@ and accept the repository keys with the following commands
     gpg -a --export A69C84F4 | sudo apt-key add -
 
 You can find more details about how to configure the repository at
-[this document](https://github.com/Fermat-ORG/iop-token/blob/beta/INSTALL.md).
+[this document](https://github.com/Internet-of-People/iop-blockchain/blob/master/INSTALL.md).
 
 
 # Starting the application
@@ -220,7 +220,7 @@ You also have to install the Windows SDK,
 Recent Visual Studio versions have a bundled Git, so you can easily clone the repository either from the IDE
 or from the command line as
 
-    git clone https://github.com/Fermat-ORG/iop-location-based-network.git
+    git clone https://github.com/Internet-of-People/iop-location-based-network.git
     
 We couldn't easily achieve Windows compilation with CMake, so we're using a custom build system called Maiken.
 Sources or some binaries [are available here](https://github.com/Dekken/maiken/).
@@ -289,7 +289,7 @@ currently crash on startup.
 You will also need git to fetch our latest sources. VS 2015 already has git bundled so you can
 either use its GUI or open its git command line to clone the repository.
 
-    git clone https://github.com/Fermat-ORG/iop-location-based-network.git
+    git clone https://github.com/Internet-of-People/iop-location-based-network.git
 
 Then you have to make all ProtoBuf, SQLite and SpatiaLite headers and libs available for the compiler.
 You can either change the project files to add header paths as an include directory or
