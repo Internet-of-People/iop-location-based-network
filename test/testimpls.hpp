@@ -147,7 +147,8 @@ struct TestConfig : public Config
     std::vector<NetworkEndpoint> _seedNodes;
         
     
-    TestConfig(const NodeInfo &nodeInfo);
+    TestConfig(const NodeInfo &nodeInfo);   // For test servers
+    TestConfig();                           // For test clients where only network options matter
     
     const NodeInfo& myNodeInfo() const override;
     TcpPort localServicePort() const override;

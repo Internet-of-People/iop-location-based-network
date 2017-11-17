@@ -8,6 +8,7 @@
 #include "config.hpp"
 #include "IopLocNet.pb.h"
 #include "server.hpp"
+#include "testimpls.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -35,8 +36,7 @@ int main(int argc, const char* argv[])
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
-        shared_ptr<EzParserConfig> config( new EzParserConfig() );
-        config->Initialize(argc, argv);
+        shared_ptr<Config> config( new TestConfig() );
         
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
         
@@ -47,6 +47,16 @@ int main(int argc, const char* argv[])
         session->StartMessageLoop();
         shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(config, session) );
 
+        thread reactorThread( []
+        {
+            while (! ShutdownRequested)
+            {
+                Reactor::Instance().AsioService().run_one();
+                if ( Reactor::Instance().AsioService().stopped() )
+                    { Reactor::Instance().AsioService().reset(); }
+            }
+        } );
+        
         LOG(INFO) << "Sending getnodecount request";
         NodeMethodsProtoBufClient client(dispatcher, nullptr);
         size_t colleagueCount = client.GetNodeCount();

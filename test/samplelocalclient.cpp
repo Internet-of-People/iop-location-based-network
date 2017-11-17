@@ -8,6 +8,7 @@
 #include "config.hpp"
 #include "IopLocNet.pb.h"
 #include "server.hpp"
+#include "testimpls.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -35,8 +36,7 @@ int main(int argc, const char* argv[])
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
         
-        shared_ptr<EzParserConfig> config( new EzParserConfig() );
-        config->Initialize(argc, argv);
+        shared_ptr<Config> config( new TestConfig() );
         
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
         

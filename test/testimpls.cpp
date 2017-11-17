@@ -312,6 +312,8 @@ chrono::duration<uint32_t> TestConfig::DbExpirationPeriod( chrono::hours(24) );
 
 
 TestConfig::TestConfig(const NodeInfo &aNodeInfo) : _nodeInfo(aNodeInfo) {}
+TestConfig::TestConfig() :
+    _nodeInfo("TestNodeId", GpsLocation(0,0), NodeContact("Im.a.client", 0, 0), {} ) {}
 
 bool TestConfig::isTestMode() const             { return true; }
 const NodeInfo& TestConfig::myNodeInfo() const  { return _nodeInfo; }
