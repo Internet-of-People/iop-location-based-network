@@ -281,7 +281,7 @@ SCENARIO("Conceptual correctness of the algorithm organizing the global network"
             TestCase(  100,  3,  15),
             TestCase(  200,  4,  20),
 //             TestCase(  500,  5,  30), // TODO fix this: Mariehamn(Aland,Finström) fails with this neighbourhood size
-            TestCase( 1000,  8,  40),
+//             TestCase( 1000,  8,  40),
 //             TestCase( 2000,  9,  50),
 //             TestCase( 5000, 10,  60),
 //             TestCase(10000, 15, 100),
