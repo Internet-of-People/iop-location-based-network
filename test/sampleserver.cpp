@@ -26,7 +26,9 @@ int main(int argc, const char *argv[])
     try
     {
         shared_ptr<EzParserConfig> config( new EzParserConfig() );
-        config->Initialize(argc, argv);
+        bool configCreated = config->Initialize(argc, argv);
+        if (! configCreated)
+            { return 1; }
         
         LOG(INFO) << "Initializing server";
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase( TestData::NodeBudapest,
