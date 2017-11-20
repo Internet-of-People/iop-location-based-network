@@ -52,7 +52,7 @@ and query a rough approximation of your GPS location based on your IP address.
 It will print generated options to the console, so you can copy-paste them
 to your command line or redirect them to your config file as
 
-    generate-iop-locnet-config.py > ~/.iop-locnet/locnet.conf
+    generate-iop-locnet-config.py > ~/.iop-locnet/iop-locnet.cfg
 
 Note that the application will create its database and log files under `~/.iop-locnet` by default.
 If application startup is successful, it will open three sockets and serve requests on them.
@@ -156,9 +156,9 @@ If you are on Ubuntu 17.04 you are lucky and just have to do:
 Otherwise, for others Ubuntu distributions from 14.04, you will have to compile a protobuf compiler by yourself:
 
     apt-get install -y curl g++ cmake automake autoconf libprotobuf-dev libspatialite-dev  
-    curl -OL https://github.com/google/protobuf/releases/download/v3.0.0/protobuf-cpp-3.0.0.tar.gz
-    tar zxvf protobuf-cpp-3.0.0.tar.gz
-    cd protobuf-3.0.0
+    curl -OL https://github.com/google/protobuf/releases/download/v3.5.0/protobuf-cpp-3.5.0.tar.gz
+    tar zxvf protobuf-cpp-3.5.0.tar.gz
+    cd protobuf-3.5.0
     ./configure
     make
     make install
