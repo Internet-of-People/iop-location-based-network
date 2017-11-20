@@ -124,8 +124,8 @@ Some (mostly header-only) dependencies already included in directory `extlib`:
 - `ezOptionParser` 0.2.2 (with minimal changes to compile on Windows, see file history),
   used for handling options from command line and config files,
   [download here](http://ezoptionparser.sourceforge.net/)
-- `catch` 1.9.5, used only for testing,
-  [download here](https://github.com/philsquared/Catch)
+- `catch2` 2.0.1, used only for testing,
+  [download here](https://github.com/catchorg/Catch2)
 
 Generated sources already included in directory `generated`:
 - ProtoBuf classes used for messaging, generated from the protocol definitions

@@ -14,7 +14,7 @@ INITIALIZE_EASYLOGGINGPP
 
 
 
-int main( int argc, const char* const argv[] )
+int main( int argc, char* argv[] )
 {
     // Disable logging to prevent flooding the console
     el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Filename, "test.log");
