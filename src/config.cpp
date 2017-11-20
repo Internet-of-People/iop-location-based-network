@@ -130,10 +130,9 @@ static const char *OPTNAME_LOGPATH      = "--logpath";
 static const char *OPTNAME_TESTMODE     = "--test";
 
 static const vector<NetworkEndpoint> DefaultSeedNodes {
-    NetworkEndpoint("ham4.fermat.cloud", DefaultNodePort),
-    NetworkEndpoint("ham5.fermat.cloud", DefaultNodePort),
-    NetworkEndpoint("ham6.fermat.cloud", DefaultNodePort),
-    NetworkEndpoint("ham7.fermat.cloud", DefaultNodePort),
+    NetworkEndpoint("loc1.iop-project.com", DefaultNodePort),
+    NetworkEndpoint("loc2.iop-project.com", DefaultNodePort),
+    NetworkEndpoint("loc3.iop-project.com", DefaultNodePort),
 };
 
 
