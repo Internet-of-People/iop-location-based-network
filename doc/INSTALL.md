@@ -119,7 +119,7 @@ Some (mostly header-only) dependencies already included in directory `extlib`:
 - `asio` 1.10.8 standalone mode without Boost. Used for networking,
   [download here](http://think-async.com/Asio/Download).
   Note that this library is a candidate to be included in the C++ standard.
-- `easylogging++` 9.94.2, used for logging in the whole source,
+- `easylogging++` 9.95.3, used for logging in the whole source,
   [download here](https://github.com/easylogging/easyloggingpp)
 - `ezOptionParser` 0.2.2 (with minimal changes to compile on Windows, see file history),
   used for handling options from command line and config files,
