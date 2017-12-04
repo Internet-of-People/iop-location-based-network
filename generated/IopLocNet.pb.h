@@ -1061,6 +1061,7 @@ class LocalServiceRequest : public ::google::protobuf::Message /* @@protoc_inser
     kDeregisterService = 2,
     kGetNeighbourNodes = 3,
     kNeighbourhoodChanged = 4,
+    kGetNodeInfo = 5,
     LOCALSERVICEREQUESTTYPE_NOT_SET = 0,
   };
 
@@ -1145,6 +1146,15 @@ class LocalServiceRequest : public ::google::protobuf::Message /* @@protoc_inser
   ::iop::locnet::NeighbourhoodChangedNotificationRequest* release_neighbourhood_changed();
   void set_allocated_neighbourhood_changed(::iop::locnet::NeighbourhoodChangedNotificationRequest* neighbourhood_changed);
 
+  // optional .iop.locnet.GetNodeInfoRequest get_node_info = 5;
+  bool has_get_node_info() const;
+  void clear_get_node_info();
+  static const int kGetNodeInfoFieldNumber = 5;
+  const ::iop::locnet::GetNodeInfoRequest& get_node_info() const;
+  ::iop::locnet::GetNodeInfoRequest* mutable_get_node_info();
+  ::iop::locnet::GetNodeInfoRequest* release_get_node_info();
+  void set_allocated_get_node_info(::iop::locnet::GetNodeInfoRequest* get_node_info);
+
   LocalServiceRequestTypeCase LocalServiceRequestType_case() const;
   // @@protoc_insertion_point(class_scope:iop.locnet.LocalServiceRequest)
  private:
@@ -1152,6 +1162,7 @@ class LocalServiceRequest : public ::google::protobuf::Message /* @@protoc_inser
   inline void set_has_deregister_service();
   inline void set_has_get_neighbour_nodes();
   inline void set_has_neighbourhood_changed();
+  inline void set_has_get_node_info();
 
   inline bool has_LocalServiceRequestType() const;
   void clear_LocalServiceRequestType();
@@ -1165,6 +1176,7 @@ class LocalServiceRequest : public ::google::protobuf::Message /* @@protoc_inser
     ::iop::locnet::DeregisterServiceRequest* deregister_service_;
     ::iop::locnet::GetNeighbourNodesByDistanceLocalRequest* get_neighbour_nodes_;
     ::iop::locnet::NeighbourhoodChangedNotificationRequest* neighbourhood_changed_;
+    ::iop::locnet::GetNodeInfoRequest* get_node_info_;
   } LocalServiceRequestType_;
   mutable int _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -1198,6 +1210,7 @@ class LocalServiceResponse : public ::google::protobuf::Message /* @@protoc_inse
     kDeregisterService = 2,
     kGetNeighbourNodes = 3,
     kNeighbourhoodUpdated = 4,
+    kGetNodeInfo = 5,
     LOCALSERVICERESPONSETYPE_NOT_SET = 0,
   };
 
@@ -1282,6 +1295,15 @@ class LocalServiceResponse : public ::google::protobuf::Message /* @@protoc_inse
   ::iop::locnet::NeighbourhoodChangedNotificationResponse* release_neighbourhood_updated();
   void set_allocated_neighbourhood_updated(::iop::locnet::NeighbourhoodChangedNotificationResponse* neighbourhood_updated);
 
+  // optional .iop.locnet.GetNodeInfoResponse get_node_info = 5;
+  bool has_get_node_info() const;
+  void clear_get_node_info();
+  static const int kGetNodeInfoFieldNumber = 5;
+  const ::iop::locnet::GetNodeInfoResponse& get_node_info() const;
+  ::iop::locnet::GetNodeInfoResponse* mutable_get_node_info();
+  ::iop::locnet::GetNodeInfoResponse* release_get_node_info();
+  void set_allocated_get_node_info(::iop::locnet::GetNodeInfoResponse* get_node_info);
+
   LocalServiceResponseTypeCase LocalServiceResponseType_case() const;
   // @@protoc_insertion_point(class_scope:iop.locnet.LocalServiceResponse)
  private:
@@ -1289,6 +1311,7 @@ class LocalServiceResponse : public ::google::protobuf::Message /* @@protoc_inse
   inline void set_has_deregister_service();
   inline void set_has_get_neighbour_nodes();
   inline void set_has_neighbourhood_updated();
+  inline void set_has_get_node_info();
 
   inline bool has_LocalServiceResponseType() const;
   void clear_LocalServiceResponseType();
@@ -1302,6 +1325,7 @@ class LocalServiceResponse : public ::google::protobuf::Message /* @@protoc_inse
     ::iop::locnet::DeregisterServiceResponse* deregister_service_;
     ::iop::locnet::GetNeighbourNodesByDistanceResponse* get_neighbour_nodes_;
     ::iop::locnet::NeighbourhoodChangedNotificationResponse* neighbourhood_updated_;
+    ::iop::locnet::GetNodeInfoResponse* get_node_info_;
   } LocalServiceResponseType_;
   mutable int _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -3212,6 +3236,7 @@ class ClientRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
     kGetNeighbourNodes = 2,
     kGetClosestNodes = 3,
     kExploreNodes = 4,
+    kGetRandomNodes = 5,
     CLIENTREQUESTTYPE_NOT_SET = 0,
   };
 
@@ -3296,6 +3321,15 @@ class ClientRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::iop::locnet::ExploreNetworkNodesByDistanceRequest* release_explore_nodes();
   void set_allocated_explore_nodes(::iop::locnet::ExploreNetworkNodesByDistanceRequest* explore_nodes);
 
+  // optional .iop.locnet.GetRandomNodesRequest get_random_nodes = 5;
+  bool has_get_random_nodes() const;
+  void clear_get_random_nodes();
+  static const int kGetRandomNodesFieldNumber = 5;
+  const ::iop::locnet::GetRandomNodesRequest& get_random_nodes() const;
+  ::iop::locnet::GetRandomNodesRequest* mutable_get_random_nodes();
+  ::iop::locnet::GetRandomNodesRequest* release_get_random_nodes();
+  void set_allocated_get_random_nodes(::iop::locnet::GetRandomNodesRequest* get_random_nodes);
+
   ClientRequestTypeCase ClientRequestType_case() const;
   // @@protoc_insertion_point(class_scope:iop.locnet.ClientRequest)
  private:
@@ -3303,6 +3337,7 @@ class ClientRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   inline void set_has_get_neighbour_nodes();
   inline void set_has_get_closest_nodes();
   inline void set_has_explore_nodes();
+  inline void set_has_get_random_nodes();
 
   inline bool has_ClientRequestType() const;
   void clear_ClientRequestType();
@@ -3316,6 +3351,7 @@ class ClientRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
     ::iop::locnet::GetNeighbourNodesByDistanceClientRequest* get_neighbour_nodes_;
     ::iop::locnet::GetClosestNodesByDistanceRequest* get_closest_nodes_;
     ::iop::locnet::ExploreNetworkNodesByDistanceRequest* explore_nodes_;
+    ::iop::locnet::GetRandomNodesRequest* get_random_nodes_;
   } ClientRequestType_;
   mutable int _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -3349,6 +3385,7 @@ class ClientResponse : public ::google::protobuf::Message /* @@protoc_insertion_
     kGetNeighbourNodes = 2,
     kGetClosestNodes = 3,
     kExploreNodes = 4,
+    kGetRandomNodes = 5,
     CLIENTRESPONSETYPE_NOT_SET = 0,
   };
 
@@ -3433,6 +3470,15 @@ class ClientResponse : public ::google::protobuf::Message /* @@protoc_insertion_
   ::iop::locnet::ExploreNetworkNodesByDistanceResponse* release_explore_nodes();
   void set_allocated_explore_nodes(::iop::locnet::ExploreNetworkNodesByDistanceResponse* explore_nodes);
 
+  // optional .iop.locnet.GetRandomNodesResponse get_random_nodes = 5;
+  bool has_get_random_nodes() const;
+  void clear_get_random_nodes();
+  static const int kGetRandomNodesFieldNumber = 5;
+  const ::iop::locnet::GetRandomNodesResponse& get_random_nodes() const;
+  ::iop::locnet::GetRandomNodesResponse* mutable_get_random_nodes();
+  ::iop::locnet::GetRandomNodesResponse* release_get_random_nodes();
+  void set_allocated_get_random_nodes(::iop::locnet::GetRandomNodesResponse* get_random_nodes);
+
   ClientResponseTypeCase ClientResponseType_case() const;
   // @@protoc_insertion_point(class_scope:iop.locnet.ClientResponse)
  private:
@@ -3440,6 +3486,7 @@ class ClientResponse : public ::google::protobuf::Message /* @@protoc_insertion_
   inline void set_has_get_neighbour_nodes();
   inline void set_has_get_closest_nodes();
   inline void set_has_explore_nodes();
+  inline void set_has_get_random_nodes();
 
   inline bool has_ClientResponseType() const;
   void clear_ClientResponseType();
@@ -3453,6 +3500,7 @@ class ClientResponse : public ::google::protobuf::Message /* @@protoc_insertion_
     ::iop::locnet::GetNeighbourNodesByDistanceResponse* get_neighbour_nodes_;
     ::iop::locnet::GetClosestNodesByDistanceResponse* get_closest_nodes_;
     ::iop::locnet::ExploreNetworkNodesByDistanceResponse* explore_nodes_;
+    ::iop::locnet::GetRandomNodesResponse* get_random_nodes_;
   } ClientResponseType_;
   mutable int _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -5033,6 +5081,54 @@ inline void LocalServiceRequest::set_allocated_neighbourhood_changed(::iop::locn
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.LocalServiceRequest.neighbourhood_changed)
 }
 
+// optional .iop.locnet.GetNodeInfoRequest get_node_info = 5;
+inline bool LocalServiceRequest::has_get_node_info() const {
+  return LocalServiceRequestType_case() == kGetNodeInfo;
+}
+inline void LocalServiceRequest::set_has_get_node_info() {
+  _oneof_case_[0] = kGetNodeInfo;
+}
+inline void LocalServiceRequest::clear_get_node_info() {
+  if (has_get_node_info()) {
+    delete LocalServiceRequestType_.get_node_info_;
+    clear_has_LocalServiceRequestType();
+  }
+}
+inline  const ::iop::locnet::GetNodeInfoRequest& LocalServiceRequest::get_node_info() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.LocalServiceRequest.get_node_info)
+  return has_get_node_info()
+      ? *LocalServiceRequestType_.get_node_info_
+      : ::iop::locnet::GetNodeInfoRequest::default_instance();
+}
+inline ::iop::locnet::GetNodeInfoRequest* LocalServiceRequest::mutable_get_node_info() {
+  if (!has_get_node_info()) {
+    clear_LocalServiceRequestType();
+    set_has_get_node_info();
+    LocalServiceRequestType_.get_node_info_ = new ::iop::locnet::GetNodeInfoRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.LocalServiceRequest.get_node_info)
+  return LocalServiceRequestType_.get_node_info_;
+}
+inline ::iop::locnet::GetNodeInfoRequest* LocalServiceRequest::release_get_node_info() {
+  // @@protoc_insertion_point(field_release:iop.locnet.LocalServiceRequest.get_node_info)
+  if (has_get_node_info()) {
+    clear_has_LocalServiceRequestType();
+    ::iop::locnet::GetNodeInfoRequest* temp = LocalServiceRequestType_.get_node_info_;
+    LocalServiceRequestType_.get_node_info_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline void LocalServiceRequest::set_allocated_get_node_info(::iop::locnet::GetNodeInfoRequest* get_node_info) {
+  clear_LocalServiceRequestType();
+  if (get_node_info) {
+    set_has_get_node_info();
+    LocalServiceRequestType_.get_node_info_ = get_node_info;
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.LocalServiceRequest.get_node_info)
+}
+
 inline bool LocalServiceRequest::has_LocalServiceRequestType() const {
   return LocalServiceRequestType_case() != LOCALSERVICEREQUESTTYPE_NOT_SET;
 }
@@ -5236,6 +5332,54 @@ inline void LocalServiceResponse::set_allocated_neighbourhood_updated(::iop::loc
     LocalServiceResponseType_.neighbourhood_updated_ = neighbourhood_updated;
   }
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.LocalServiceResponse.neighbourhood_updated)
+}
+
+// optional .iop.locnet.GetNodeInfoResponse get_node_info = 5;
+inline bool LocalServiceResponse::has_get_node_info() const {
+  return LocalServiceResponseType_case() == kGetNodeInfo;
+}
+inline void LocalServiceResponse::set_has_get_node_info() {
+  _oneof_case_[0] = kGetNodeInfo;
+}
+inline void LocalServiceResponse::clear_get_node_info() {
+  if (has_get_node_info()) {
+    delete LocalServiceResponseType_.get_node_info_;
+    clear_has_LocalServiceResponseType();
+  }
+}
+inline  const ::iop::locnet::GetNodeInfoResponse& LocalServiceResponse::get_node_info() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.LocalServiceResponse.get_node_info)
+  return has_get_node_info()
+      ? *LocalServiceResponseType_.get_node_info_
+      : ::iop::locnet::GetNodeInfoResponse::default_instance();
+}
+inline ::iop::locnet::GetNodeInfoResponse* LocalServiceResponse::mutable_get_node_info() {
+  if (!has_get_node_info()) {
+    clear_LocalServiceResponseType();
+    set_has_get_node_info();
+    LocalServiceResponseType_.get_node_info_ = new ::iop::locnet::GetNodeInfoResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.LocalServiceResponse.get_node_info)
+  return LocalServiceResponseType_.get_node_info_;
+}
+inline ::iop::locnet::GetNodeInfoResponse* LocalServiceResponse::release_get_node_info() {
+  // @@protoc_insertion_point(field_release:iop.locnet.LocalServiceResponse.get_node_info)
+  if (has_get_node_info()) {
+    clear_has_LocalServiceResponseType();
+    ::iop::locnet::GetNodeInfoResponse* temp = LocalServiceResponseType_.get_node_info_;
+    LocalServiceResponseType_.get_node_info_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline void LocalServiceResponse::set_allocated_get_node_info(::iop::locnet::GetNodeInfoResponse* get_node_info) {
+  clear_LocalServiceResponseType();
+  if (get_node_info) {
+    set_has_get_node_info();
+    LocalServiceResponseType_.get_node_info_ = get_node_info;
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.LocalServiceResponse.get_node_info)
 }
 
 inline bool LocalServiceResponse::has_LocalServiceResponseType() const {
@@ -6971,6 +7115,54 @@ inline void ClientRequest::set_allocated_explore_nodes(::iop::locnet::ExploreNet
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.ClientRequest.explore_nodes)
 }
 
+// optional .iop.locnet.GetRandomNodesRequest get_random_nodes = 5;
+inline bool ClientRequest::has_get_random_nodes() const {
+  return ClientRequestType_case() == kGetRandomNodes;
+}
+inline void ClientRequest::set_has_get_random_nodes() {
+  _oneof_case_[0] = kGetRandomNodes;
+}
+inline void ClientRequest::clear_get_random_nodes() {
+  if (has_get_random_nodes()) {
+    delete ClientRequestType_.get_random_nodes_;
+    clear_has_ClientRequestType();
+  }
+}
+inline  const ::iop::locnet::GetRandomNodesRequest& ClientRequest::get_random_nodes() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ClientRequest.get_random_nodes)
+  return has_get_random_nodes()
+      ? *ClientRequestType_.get_random_nodes_
+      : ::iop::locnet::GetRandomNodesRequest::default_instance();
+}
+inline ::iop::locnet::GetRandomNodesRequest* ClientRequest::mutable_get_random_nodes() {
+  if (!has_get_random_nodes()) {
+    clear_ClientRequestType();
+    set_has_get_random_nodes();
+    ClientRequestType_.get_random_nodes_ = new ::iop::locnet::GetRandomNodesRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.ClientRequest.get_random_nodes)
+  return ClientRequestType_.get_random_nodes_;
+}
+inline ::iop::locnet::GetRandomNodesRequest* ClientRequest::release_get_random_nodes() {
+  // @@protoc_insertion_point(field_release:iop.locnet.ClientRequest.get_random_nodes)
+  if (has_get_random_nodes()) {
+    clear_has_ClientRequestType();
+    ::iop::locnet::GetRandomNodesRequest* temp = ClientRequestType_.get_random_nodes_;
+    ClientRequestType_.get_random_nodes_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline void ClientRequest::set_allocated_get_random_nodes(::iop::locnet::GetRandomNodesRequest* get_random_nodes) {
+  clear_ClientRequestType();
+  if (get_random_nodes) {
+    set_has_get_random_nodes();
+    ClientRequestType_.get_random_nodes_ = get_random_nodes;
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.ClientRequest.get_random_nodes)
+}
+
 inline bool ClientRequest::has_ClientRequestType() const {
   return ClientRequestType_case() != CLIENTREQUESTTYPE_NOT_SET;
 }
@@ -7174,6 +7366,54 @@ inline void ClientResponse::set_allocated_explore_nodes(::iop::locnet::ExploreNe
     ClientResponseType_.explore_nodes_ = explore_nodes;
   }
   // @@protoc_insertion_point(field_set_allocated:iop.locnet.ClientResponse.explore_nodes)
+}
+
+// optional .iop.locnet.GetRandomNodesResponse get_random_nodes = 5;
+inline bool ClientResponse::has_get_random_nodes() const {
+  return ClientResponseType_case() == kGetRandomNodes;
+}
+inline void ClientResponse::set_has_get_random_nodes() {
+  _oneof_case_[0] = kGetRandomNodes;
+}
+inline void ClientResponse::clear_get_random_nodes() {
+  if (has_get_random_nodes()) {
+    delete ClientResponseType_.get_random_nodes_;
+    clear_has_ClientResponseType();
+  }
+}
+inline  const ::iop::locnet::GetRandomNodesResponse& ClientResponse::get_random_nodes() const {
+  // @@protoc_insertion_point(field_get:iop.locnet.ClientResponse.get_random_nodes)
+  return has_get_random_nodes()
+      ? *ClientResponseType_.get_random_nodes_
+      : ::iop::locnet::GetRandomNodesResponse::default_instance();
+}
+inline ::iop::locnet::GetRandomNodesResponse* ClientResponse::mutable_get_random_nodes() {
+  if (!has_get_random_nodes()) {
+    clear_ClientResponseType();
+    set_has_get_random_nodes();
+    ClientResponseType_.get_random_nodes_ = new ::iop::locnet::GetRandomNodesResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:iop.locnet.ClientResponse.get_random_nodes)
+  return ClientResponseType_.get_random_nodes_;
+}
+inline ::iop::locnet::GetRandomNodesResponse* ClientResponse::release_get_random_nodes() {
+  // @@protoc_insertion_point(field_release:iop.locnet.ClientResponse.get_random_nodes)
+  if (has_get_random_nodes()) {
+    clear_has_ClientResponseType();
+    ::iop::locnet::GetRandomNodesResponse* temp = ClientResponseType_.get_random_nodes_;
+    ClientResponseType_.get_random_nodes_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline void ClientResponse::set_allocated_get_random_nodes(::iop::locnet::GetRandomNodesResponse* get_random_nodes) {
+  clear_ClientResponseType();
+  if (get_random_nodes) {
+    set_has_get_random_nodes();
+    ClientResponseType_.get_random_nodes_ = get_random_nodes;
+  }
+  // @@protoc_insertion_point(field_set_allocated:iop.locnet.ClientResponse.get_random_nodes)
 }
 
 inline bool ClientResponse::has_ClientResponseType() const {

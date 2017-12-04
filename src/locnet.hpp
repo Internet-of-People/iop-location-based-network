@@ -24,6 +24,7 @@ public:
     virtual GpsLocation RegisterService(const ServiceInfo &serviceInfo) = 0;
     virtual void DeregisterService(ServiceType serviceType) = 0;
     virtual std::vector<NodeInfo> GetNeighbourNodesByDistance() const = 0;
+    virtual NodeInfo GetNodeInfo() const = 0;
     
     // NOTE methods used through this interface, but not exported to remote nodes
     virtual void AddListener(std::shared_ptr<IChangeListener> listener) = 0;
@@ -68,6 +69,8 @@ public:
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const = 0;
     virtual std::vector<NodeInfo> ExploreNetworkNodesByDistance(const GpsLocation &location,
         size_t targetNodeCount, size_t maxNodeHops) const = 0;
+    virtual std::vector<NodeInfo> GetRandomNodes(
+        size_t maxNodeCount, Neighbours filter) const = 0;
 };
 
 
