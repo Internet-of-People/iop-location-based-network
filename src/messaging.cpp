@@ -251,6 +251,16 @@ unique_ptr<iop::locnet::Response> IncomingLocalServiceRequestDispatcher::Dispatc
             }
             break;
         }
+
+        case iop::locnet::LocalServiceRequest::kGetNodeInfo:
+        {
+            NodeInfo node = _iLocalService->GetNodeInfo();
+            LOG(DEBUG) << "Served GetNodeInfo(): " << node;
+            
+            auto responseContent = localServiceResponse->mutable_get_node_info();
+            responseContent->set_allocated_node_info( Converter::ToProtoBuf(node) );
+            break;
+        }
         
         case iop::locnet::LocalServiceRequest::kNeighbourhoodChanged:
             throw LocationNetworkError(ErrorCode::ERROR_BAD_REQUEST,
@@ -505,6 +515,25 @@ unique_ptr<iop::locnet::Response> IncomingClientRequestDispatcher::Dispatch(uniq
             for (auto const &node : exploredNodes)
             {
                 iop::locnet::NodeInfo *info = responseContent->add_closest_nodes();
+                Converter::FillProtoBuf(info, node);
+            }
+            break;
+        }
+        
+        case iop::locnet::ClientRequest::kGetRandomNodes:
+        {
+            auto randomNodesReq = clientRequest.get_random_nodes();
+            Neighbours neighbourFilter = randomNodesReq.include_neighbours() ?
+                Neighbours::Included : Neighbours::Excluded;
+                
+            vector<NodeInfo> randomNodes = _iClient->GetRandomNodes(
+                randomNodesReq.max_node_count(), neighbourFilter );
+            LOG(DEBUG) << "Served GetRandomNodes(), node count: " << randomNodes.size();
+            
+            auto responseContent = clientResponse->mutable_get_random_nodes();
+            for (auto const &node : randomNodes)
+            {
+                iop::locnet::NodeInfo *info = responseContent->add_nodes();
                 Converter::FillProtoBuf(info, node);
             }
             break;
