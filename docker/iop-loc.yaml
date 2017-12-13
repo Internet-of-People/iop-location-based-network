@@ -1,0 +1,12 @@
+image: libertaria/iop-loc:latest
+manifests:
+    -
+        image: libertaria/iop-loc:amd64-v1.2Beta
+        platform:
+            architecture: amd64
+            os: linux
+    -
+        image: libertaria/iop-loc:arm7-v1.2Beta
+        platform:
+            architecture: arm
+            os: linux
