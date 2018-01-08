@@ -20,19 +20,19 @@ namespace LocNet
 struct Converter
 {
     // Functions that convert from protobuf to internal representation, creating a new object
-    static ServiceType FromProtoBuf(iop::locnet::ServiceType value);
+    static std::string FromProtoBuf(std::string value);
     static ServiceInfo FromProtoBuf(const iop::locnet::ServiceInfo &value);
     static GpsLocation FromProtoBuf(const iop::locnet::GpsLocation &value);
     static NodeInfo FromProtoBuf(const iop::locnet::NodeInfo &value);
-    
+
     // Functions that fill up an existing protobuf object from the internal representation
     static void FillProtoBuf(iop::locnet::ServiceInfo *target, const ServiceInfo &source);
     static void FillProtoBuf(iop::locnet::GpsLocation *target, const GpsLocation &source);
     static void FillProtoBuf(iop::locnet::NodeInfo *target, const NodeInfo &source);
-    
+
     // Functions that convert from the internal representation to protobuf, creating a new object
     static iop::locnet::Status ToProtoBuf(ErrorCode value);
-    static iop::locnet::ServiceType ToProtoBuf(ServiceType value);
+    static std::string ToProtoBuf(std::string value);
     static iop::locnet::ServiceInfo* ToProtoBuf(const ServiceInfo &value);
     static iop::locnet::GpsLocation* ToProtoBuf(const GpsLocation &location);
     static iop::locnet::NodeInfo* ToProtoBuf(const NodeInfo &info);
@@ -46,9 +46,9 @@ struct Converter
 class IBlockingRequestDispatcher
 {
 public:
-    
+
     virtual ~IBlockingRequestDispatcher() {}
-    
+
     virtual std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) = 0;
 };
 
@@ -59,12 +59,12 @@ class IncomingLocalServiceRequestDispatcher : public IBlockingRequestDispatcher
 {
     std::shared_ptr<ILocalServiceMethods>   _iLocalService;
     std::shared_ptr<IChangeListenerFactory> _listenerFactory;
-    
+
 public:
-    
+
     IncomingLocalServiceRequestDispatcher( std::shared_ptr<ILocalServiceMethods> iLocalService,
         std::shared_ptr<IChangeListenerFactory> listenerFactory );
-    
+
     std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
 
@@ -74,11 +74,11 @@ public:
 class IncomingNodeRequestDispatcher : public IBlockingRequestDispatcher
 {
     std::shared_ptr<INodeMethods> _iNode;
-    
+
 public:
-    
+
     IncomingNodeRequestDispatcher(std::shared_ptr<INodeMethods> iNode);
-    
+
     std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
 
@@ -88,11 +88,11 @@ public:
 class IncomingClientRequestDispatcher : public IBlockingRequestDispatcher
 {
     std::shared_ptr<IClientMethods> _iClient;
-    
+
 public:
-    
+
     IncomingClientRequestDispatcher(std::shared_ptr<IClientMethods> iClient);
-    
+
     std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
 
@@ -103,17 +103,17 @@ class IncomingRequestDispatcher : public IBlockingRequestDispatcher
     std::shared_ptr<IncomingLocalServiceRequestDispatcher> _iLocalService;
     std::shared_ptr<IncomingNodeRequestDispatcher>         _iRemoteNode;
     std::shared_ptr<IncomingClientRequestDispatcher>       _iClient;
-    
+
 public:
-    
+
     IncomingRequestDispatcher( std::shared_ptr<Node> node,
         std::shared_ptr<IChangeListenerFactory> listenerFactory );
-    
+
     IncomingRequestDispatcher(
         std::shared_ptr<IncomingLocalServiceRequestDispatcher> iLocalServices,
         std::shared_ptr<IncomingNodeRequestDispatcher> iRemoteNode,
         std::shared_ptr<IncomingClientRequestDispatcher> iClient );
-    
+
     std::unique_ptr<iop::locnet::Response> Dispatch(std::unique_ptr<iop::locnet::Request> &&request) override;
 };
 
@@ -123,9 +123,9 @@ public:
 // class IDelayedRequestDispatcher
 // {
 // public:
-//     
+//
 //     virtual ~IDelayedRequestDispatcher() {}
-//     
+//
 //     virtual std::future<std::unique_ptr<iop::locnet::Response>>
 //         Dispatch(std::unique_ptr<iop::locnet::Request> &&request) = 0;
 // };
@@ -140,23 +140,23 @@ class NodeMethodsProtoBufClient : public INodeMethods
     // TODO use a IDelayedRequestDispatcher instance instead
     std::shared_ptr<IBlockingRequestDispatcher> _dispatcher;
     std::function<void(const Address&)> _detectedIpCallback;
-    
+
     std::unique_ptr<iop::locnet::Response> WaitForDispatch(
         std::unique_ptr<iop::locnet::Request> request);
-    
+
 public:
-    
+
     NodeMethodsProtoBufClient( std::shared_ptr<IBlockingRequestDispatcher> dispatcher,
                                std::function<void(const Address&)> detectedIpCallback );
-    
+
     NodeInfo GetNodeInfo() const override;
     size_t GetNodeCount() const override;
     std::vector<NodeInfo> GetRandomNodes(
         size_t maxNodeCount, Neighbours filter) const override;
-    
+
     std::vector<NodeInfo> GetClosestNodesByDistance(const GpsLocation &location,
         Distance radiusKm, size_t maxNodeCount, Neighbours filter) const override;
-    
+
     std::shared_ptr<NodeInfo> AcceptColleague(const NodeInfo &node) override;
     std::shared_ptr<NodeInfo> RenewColleague (const NodeInfo &node) override;
     std::shared_ptr<NodeInfo> AcceptNeighbour(const NodeInfo &node) override;
