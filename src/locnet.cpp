@@ -53,28 +53,43 @@ Node::Node( shared_ptr<Config> config,
 void Node::EnsureMapFilled()
 {
     vector<NetworkEndpoint> seedNodes = _config->seedNodes();
-    if ( GetNodeCount() <= 1 && ! seedNodes.empty() )
+    if ( seedNodes.empty() )
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No seed nodes configured, can't bootstrap exploration"); }
+    
+    NodeInfo myInfo = _spatialDb->ThisNode();
+    auto seedIt = find_if( seedNodes.begin(), seedNodes.end(),
+        [&myInfo] (const NetworkEndpoint &contact)
+            { return myInfo.contact().nodeEndpoint() == contact; } );
+    bool IAmSeed = seedIt != seedNodes.end();
+    
+    // Initialize random generator and shuffle seeds for balancing their load during client exploration
+    mt19937 generator( _randomDevice() );
+    shuffle( seedNodes.begin(), seedNodes.end(), generator );
+    
+    while ( GetNodeCount() <= 1 )
     {
         LOG(INFO) << "Map is empty, discovering the network";
-        
-        // Initialize random generator and shuffle seeds
-        mt19937 generator( _randomDevice() );
-        shuffle( seedNodes.begin(), seedNodes.end(), generator );
         
         bool discoverySucceeded = InitializeWorld(seedNodes) && InitializeNeighbourhood(seedNodes);
         if (! discoverySucceeded)
             { LOG(WARNING) << "Failed to properly discover the full network, current node count is " << GetNodeCount(); }
-        if ( GetNodeCount() <= 1 )
+
+        // If at least another node is known then step over bootstrapping phase,
+        // should discover more nodes and make more neighbours with periodic exploration.
+        // Also exploration can fail if bootstrapping the network with the very first seed.
+        if ( GetNodeCount() > 1 || IAmSeed )
         {
-            // This still might be normal if we're the very first seed node of the whole network
-            NodeInfo myInfo = _spatialDb->ThisNode();
-            auto seedIt = find_if( seedNodes.begin(), seedNodes.end(),
-                [&myInfo] (const NetworkEndpoint &contact)
-                    { return myInfo.contact().nodeEndpoint() == contact; } );
-            if ( seedIt == seedNodes.end() )
-                 { throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Failed to discover any node of the network"); }
-            else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
+            LOG(INFO) << "Server is still expected to function properly, continue normally";
+            break;
         }
+        else
+            { LOG(INFO) << "Exploration failed, will retry after some delay"; }
+        
+        // TODO delay probably should be configurable somewhere
+        std::uniform_int_distribution<int> randomRange(0, 5);
+        uint32_t count = 5 + randomRange(generator);
+        chrono::duration<uint32_t> delay = _config->isTestMode() ? chrono::seconds(count) : chrono::minutes(count);
+        this_thread::sleep_for(delay);
     }
 }
 
