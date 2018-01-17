@@ -44,7 +44,7 @@ const vector<string> DatabaseInitCommands = {
 
     "CREATE TABLE IF NOT EXISTS services ( "
     "  nodeId       TEXT NOT NULL, "
-    "  serviceType  TEXT NOT NULL, "
+    "  serviceType  INT NOT NULL, "
     "  port         INT NOT NULL, "
     "  data         BLOB, "
     "  PRIMARY KEY(nodeId, serviceType), "
