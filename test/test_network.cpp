@@ -168,7 +168,7 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
             LOG(INFO) << "Sending registerservice request";
             unique_ptr<iop::locnet::Request> registerRequest( new iop::locnet::Request() );
             registerRequest->mutable_local_service()->mutable_register_service()->set_allocated_service(
-                Converter::ToProtoBuf( ServiceInfo(ServiceType::Profile, 16999, "ProfileServerId") ) );
+                Converter::ToProtoBuf( ServiceInfo("ServiceType::Profile", 16999, "ProfileServerId") ) );
             requestDispatcher->Dispatch( move(registerRequest) );
             
             for (size_t requestsSent = 0; requestsSent < 3; ++requestsSent)
@@ -189,7 +189,7 @@ SCENARIO("Neighbourhood notifications for local services", "[network]")
             LOG(INFO) << "Sending deregisterservice request";
             unique_ptr<iop::locnet::Request> deregisterRequest( new iop::locnet::Request() );
             deregisterRequest->mutable_local_service()->mutable_deregister_service()->set_service_type(
-                Converter::ToProtoBuf(ServiceType::Profile) );
+                "ServiceType::Profile");
             requestDispatcher->Dispatch( move(deregisterRequest) );
 
             REQUIRE( notificationsReceived == 2 );

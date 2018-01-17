@@ -76,7 +76,7 @@ int main(int argc, const char* argv[])
                 unique_ptr<iop::locnet::Message> deregisterRequest( new iop::locnet::Message() );
                 deregisterRequest->mutable_request()->set_version({1,0,0});
                 deregisterRequest->mutable_request()->mutable_local_service()->mutable_deregister_service()->set_service_type(
-                    Converter::ToProtoBuf(ServiceType::Profile) );
+                    "ServiceType::Profile" );
                 session->SendRequest( move(deregisterRequest) );
                 
                 LOG(INFO) << "Shutting down test";
@@ -100,7 +100,7 @@ int main(int argc, const char* argv[])
             LOG(INFO) << "Sending registerservice request";
             unique_ptr<iop::locnet::Request> registerRequest( new iop::locnet::Request() );
             registerRequest->mutable_local_service()->mutable_register_service()->set_allocated_service(
-                Converter::ToProtoBuf( ServiceInfo(ServiceType::Profile, 16999, "ProfileServerId") ) );
+                Converter::ToProtoBuf( ServiceInfo("ServiceType::Profile", 16999, "ProfileServerId") ) );
             unique_ptr<iop::locnet::Response> registerResponse = dispatcher->Dispatch( move(registerRequest) );
             
             uint32_t requestsSent = 0;

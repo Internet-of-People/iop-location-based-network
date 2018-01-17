@@ -59,47 +59,47 @@ iop::locnet::GpsLocation* Converter::ToProtoBuf(const GpsLocation &location)
 
 
 
-ServiceType Converter::FromProtoBuf(iop::locnet::ServiceType value)
-{
-    switch(value)
-    {
-        case iop::locnet::ServiceType::UNSTRUCTURED:return ServiceType::Unstructured;
-        case iop::locnet::ServiceType::CONTENT:     return ServiceType::Content;
-        case iop::locnet::ServiceType::LATENCY:     return ServiceType::Latency;
-        case iop::locnet::ServiceType::LOCATION:    return ServiceType::Location;
-        case iop::locnet::ServiceType::TOKEN:       return ServiceType::Token;
-        case iop::locnet::ServiceType::PROFILE:     return ServiceType::Profile;
-        case iop::locnet::ServiceType::PROXIMITY:   return ServiceType::Proximity;
-        case iop::locnet::ServiceType::RELAY:       return ServiceType::Relay;
-        case iop::locnet::ServiceType::REPUTATION:  return ServiceType::Reputation;
-        case iop::locnet::ServiceType::MINTING:     return ServiceType::Minting;
-        default: throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Missing or unknown service type");
-    }
-}
-
-iop::locnet::ServiceType Converter::ToProtoBuf(ServiceType value)
-{
-    switch(value)
-    {
-        case ServiceType::Unstructured: return iop::locnet::ServiceType::UNSTRUCTURED;
-        case ServiceType::Content:      return iop::locnet::ServiceType::CONTENT;
-        case ServiceType::Latency:      return iop::locnet::ServiceType::LATENCY;
-        case ServiceType::Location:     return iop::locnet::ServiceType::LOCATION;
-        case ServiceType::Token:        return iop::locnet::ServiceType::TOKEN;
-        case ServiceType::Profile:      return iop::locnet::ServiceType::PROFILE;
-        case ServiceType::Proximity:    return iop::locnet::ServiceType::PROXIMITY;
-        case ServiceType::Relay:        return iop::locnet::ServiceType::RELAY;
-        case ServiceType::Reputation:   return iop::locnet::ServiceType::REPUTATION;
-        case ServiceType::Minting:      return iop::locnet::ServiceType::MINTING;
-        default: throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Conversion for service type not implemented");
-    }
-}
+// ServiceType Converter::FromProtoBuf(iop::locnet::ServiceType value)
+// {
+//     switch(value)
+//     {
+//         case iop::locnet::ServiceType::UNSTRUCTURED:return ServiceType::Unstructured;
+//         case iop::locnet::ServiceType::CONTENT:     return ServiceType::Content;
+//         case iop::locnet::ServiceType::LATENCY:     return ServiceType::Latency;
+//         case iop::locnet::ServiceType::LOCATION:    return ServiceType::Location;
+//         case iop::locnet::ServiceType::TOKEN:       return ServiceType::Token;
+//         case iop::locnet::ServiceType::PROFILE:     return ServiceType::Profile;
+//         case iop::locnet::ServiceType::PROXIMITY:   return ServiceType::Proximity;
+//         case iop::locnet::ServiceType::RELAY:       return ServiceType::Relay;
+//         case iop::locnet::ServiceType::REPUTATION:  return ServiceType::Reputation;
+//         case iop::locnet::ServiceType::MINTING:     return ServiceType::Minting;
+//         default: throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Missing or unknown service type");
+//     }
+// }
+// 
+// iop::locnet::ServiceType Converter::ToProtoBuf(ServiceType value)
+// {
+//     switch(value)
+//     {
+//         case ServiceType::Unstructured: return iop::locnet::ServiceType::UNSTRUCTURED;
+//         case ServiceType::Content:      return iop::locnet::ServiceType::CONTENT;
+//         case ServiceType::Latency:      return iop::locnet::ServiceType::LATENCY;
+//         case ServiceType::Location:     return iop::locnet::ServiceType::LOCATION;
+//         case ServiceType::Token:        return iop::locnet::ServiceType::TOKEN;
+//         case ServiceType::Profile:      return iop::locnet::ServiceType::PROFILE;
+//         case ServiceType::Proximity:    return iop::locnet::ServiceType::PROXIMITY;
+//         case ServiceType::Relay:        return iop::locnet::ServiceType::RELAY;
+//         case ServiceType::Reputation:   return iop::locnet::ServiceType::REPUTATION;
+//         case ServiceType::Minting:      return iop::locnet::ServiceType::MINTING;
+//         default: throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Conversion for service type not implemented");
+//     }
+// }
 
 
 
 ServiceInfo Converter::FromProtoBuf(const iop::locnet::ServiceInfo& value)
 {
-    return ServiceInfo( FromProtoBuf( value.type() ), value.port(), value.service_data() );
+    return ServiceInfo(value.type() , value.port(), value.service_data() );
 }
 
 
@@ -129,7 +129,7 @@ NodeInfo Converter::FromProtoBuf(const iop::locnet::NodeInfo& value)
 
 void Converter::FillProtoBuf(iop::locnet::ServiceInfo *target, const ServiceInfo &source)
 {
-    target->set_type( ToProtoBuf( source.type() ) );
+    target->set_type( source.type() );
     target->set_port( source.port() );
     if ( ! source.customData().empty() )
         { target->set_service_data( source.customData() ); }
@@ -219,7 +219,7 @@ unique_ptr<iop::locnet::Response> IncomingLocalServiceRequestDispatcher::Dispatc
         case iop::locnet::LocalServiceRequest::kDeregisterService:
         {
             auto const &deregisterRequest = localServiceRequest.deregister_service();
-            ServiceType serviceType = Converter::FromProtoBuf( deregisterRequest.service_type() );
+            std::string serviceType =  deregisterRequest.service_type() ;
             
             _iLocalService->DeregisterService(serviceType);
             LOG(DEBUG) << "Served DeregisterService()";

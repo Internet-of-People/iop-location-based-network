@@ -20,7 +20,7 @@ namespace LocNet
 struct Converter
 {
     // Functions that convert from protobuf to internal representation, creating a new object
-    static ServiceType FromProtoBuf(iop::locnet::ServiceType value);
+    static std::string FromProtoBuf(std::string value);
     static ServiceInfo FromProtoBuf(const iop::locnet::ServiceInfo &value);
     static GpsLocation FromProtoBuf(const iop::locnet::GpsLocation &value);
     static NodeInfo FromProtoBuf(const iop::locnet::NodeInfo &value);
@@ -32,7 +32,7 @@ struct Converter
     
     // Functions that convert from the internal representation to protobuf, creating a new object
     static iop::locnet::Status ToProtoBuf(ErrorCode value);
-    static iop::locnet::ServiceType ToProtoBuf(ServiceType value);
+    static std::string ToProtoBuf(std::string value);
     static iop::locnet::ServiceInfo* ToProtoBuf(const ServiceInfo &value);
     static iop::locnet::GpsLocation* ToProtoBuf(const GpsLocation &location);
     static iop::locnet::NodeInfo* ToProtoBuf(const NodeInfo &info);

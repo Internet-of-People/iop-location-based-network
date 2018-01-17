@@ -60,7 +60,7 @@ SCENARIO("Construction and behaviour of data holder types", "[basic][logic]")
     
     GIVEN("A node info object") {
         NodeInfo::Services services{
-            { ServiceType::Profile, ServiceInfo(ServiceType::Profile, 1111) } };
+            { "ServiceType::Profile", ServiceInfo("ServiceType::Profile", 1111) } };
         NodeInfo node( "NodeId", loc, NodeContact("127.0.0.1", 6666, 7777), services );
         THEN("its fields are properly filled in") {
             REQUIRE( node.id() == "NodeId" );
@@ -74,9 +74,9 @@ SCENARIO("Construction and behaviour of data holder types", "[basic][logic]")
 
             REQUIRE( node.services() == services );
             REQUIRE( node.services().size() == 1 );
-            REQUIRE( node.services().find(ServiceType::Profile) != node.services().end() );
-            const ServiceInfo &service = node.services().at(ServiceType::Profile);
-            REQUIRE( service.type() == ServiceType::Profile );
+            REQUIRE( node.services().find("ServiceType::Profile") != node.services().end() );
+            const ServiceInfo &service = node.services().at("ServiceType::Profile");
+            REQUIRE( service.type() == "ServiceType::Profile" );
             REQUIRE( service.port() == 1111 );
             
             contact.address( Address("1.2.3.4") );
@@ -121,10 +121,10 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
         
         WHEN("adding nodes") {
             NodeInfo::Services services1{
-                { ServiceType::Profile, ServiceInfo(ServiceType::Profile, 1111, "ProfileServerId") },
-                { ServiceType::Token, ServiceInfo(ServiceType::Token, 2222) } };
+                { "ServiceType::Profile", ServiceInfo("ServiceType::Profile", 1111, "ProfileServerId") },
+                { "ServiceType::Token", ServiceInfo("ServiceType::Token", 2222) } };
             NodeInfo::Services services2{
-                { ServiceType::Relay, ServiceInfo(ServiceType::Relay, 3333) } };
+                { "ServiceType::Relay", ServiceInfo("ServiceType::Relay", 3333) } };
             NodeDbEntry entry1( NodeInfo( "ColleagueNodeId1", GpsLocation(1.0, 1.0),
                 NodeContact("127.0.0.1", 6666, 7777), services1 ),
                     NodeRelationType::Colleague, NodeContactRoleType::Initiator );
@@ -141,17 +141,20 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
                 
                 shared_ptr<NodeDbEntry> loaded1 = geodb.Load("ColleagueNodeId1");
+                shared_ptr<NodeDbEntry> loaded2 = geodb.Load("NeighbourNodeId2");
+                 
+                
                 REQUIRE( loaded1 != nullptr );
                 REQUIRE( loaded1->services() == services1 );
-                REQUIRE( loaded1->services().at(ServiceType::Profile).customData() == "ProfileServerId" );
+                REQUIRE( loaded1->services().at("ServiceType::Profile").customData() == "ProfileServerId" );
                 
                 geodb.Remove("ColleagueNodeId1");
                 REQUIRE( geodb.GetNodeCount() == 2 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 1 );
                 
-                shared_ptr<NodeDbEntry> loaded2 = geodb.Load("NeighbourNodeId2");
                 REQUIRE( loaded2 != nullptr );
                 REQUIRE( loaded2->services() == services2 );
+                
                 
                 geodb.Remove("NeighbourNodeId2");
                 
@@ -289,13 +292,13 @@ SCENARIO("Server registration", "[localservice][logic]")
             THEN("it has no registered servers") {
                 auto services = geonet->GetNodeInfo().services();
                 REQUIRE( services.empty() );
-                REQUIRE( services.find(ServiceType::Token) == services.end() );
-                REQUIRE( services.find(ServiceType::Minting) == services.end() );
+                REQUIRE( services.find("ServiceType::Token") == services.end() );
+                REQUIRE( services.find("ServiceType::Minting") == services.end() );
             }
         }
-        ServiceInfo tokenService(ServiceType::Token, 1111);
-        ServiceInfo minterService(ServiceType::Minting, 2222);
-        ServiceInfo profileService(ServiceType::Profile, 3333, "ProfileServerId");
+        ServiceInfo tokenService("ServiceType::Token", 1111);
+        ServiceInfo minterService("ServiceType::Minting", 2222);
+        ServiceInfo profileService("ServiceType::Profile", 3333, "ProfileServerId");
         
         WHEN("adding services") {
             geonet->RegisterService(tokenService);
@@ -305,27 +308,27 @@ SCENARIO("Server registration", "[localservice][logic]")
                 NodeInfo nodeInfo = geonet->GetNodeInfo();
                 const auto &services = nodeInfo.services();
                 REQUIRE( services.size() == 3 );
-                REQUIRE( services.find(ServiceType::Relay) == services.end() );
-                REQUIRE( services.find(ServiceType::Token) != services.end() );
-                REQUIRE( services.at(ServiceType::Token) == tokenService );
-                REQUIRE( services.find(ServiceType::Minting) != services.end() );
-                REQUIRE( services.at(ServiceType::Minting) == minterService );
-                REQUIRE( services.find(ServiceType::Profile) != services.end() );
-                REQUIRE( services.at(ServiceType::Profile) == profileService );
-                REQUIRE( services.at(ServiceType::Profile).customData() == profileService.customData() );
+                REQUIRE( services.find("ServiceType::Relay") == services.end() );
+                REQUIRE( services.find("ServiceType::Token") != services.end() );
+                REQUIRE( services.at("ServiceType::Token") == tokenService );
+                REQUIRE( services.find("ServiceType::Minting") != services.end() );
+                REQUIRE( services.at("ServiceType::Minting") == minterService );
+                REQUIRE( services.find("ServiceType::Profile") != services.end() );
+                REQUIRE( services.at("ServiceType::Profile") == profileService );
+                REQUIRE( services.at("ServiceType::Profile").customData() == profileService.customData() );
             }
         }
         WHEN("removing servers") {
             geonet->RegisterService(tokenService);
             geonet->RegisterService(minterService);
-            geonet->DeregisterService(ServiceType::Minting);
+            geonet->DeregisterService("ServiceType::Minting");
             THEN("they disappear from the list") {
                 NodeInfo nodeInfo = geonet->GetNodeInfo();
                 const auto &services = nodeInfo.services();
-                REQUIRE( services.find(ServiceType::Relay) == services.end() );
-                REQUIRE( services.find(ServiceType::Minting) == services.end() );
-                REQUIRE( services.find(ServiceType::Token) != services.end() );
-                REQUIRE( services.at(ServiceType::Token) == tokenService );
+                REQUIRE( services.find("ServiceType::Relay") == services.end() );
+                REQUIRE( services.find("ServiceType::Minting") == services.end() );
+                REQUIRE( services.find("ServiceType::Token") != services.end() );
+                REQUIRE( services.at("ServiceType::Token") == tokenService );
             }
         }
     }

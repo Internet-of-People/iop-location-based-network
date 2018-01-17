@@ -133,10 +133,10 @@ ServiceInfo::ServiceInfo() : _type(), _port(0), _customData() {}
 ServiceInfo::ServiceInfo(const ServiceInfo& other) :
     _type(other._type), _port(other._port), _customData(other._customData) {}
 
-ServiceInfo::ServiceInfo(ServiceType type, TcpPort port, const string& customData) :
+ServiceInfo::ServiceInfo(std::string type, TcpPort port, const string& customData) :
     _type(type), _port(port), _customData(customData) {}
 
-ServiceType ServiceInfo::type() const { return _type; }
+const std::string& ServiceInfo::type() const { return _type; }
 TcpPort ServiceInfo::port() const { return _port; }
 const string& ServiceInfo::customData() const { return _customData; }
 
@@ -150,6 +150,8 @@ bool ServiceInfo::operator==(const ServiceInfo& other) const
 bool ServiceInfo::operator!=(const ServiceInfo& other) const
     { return ! operator==(other); }
 
+std::ostream& operator<<(std::ostream& out, const ServiceInfo &value)
+    { return out << value.type() << ":" << value.port() << " " << value.customData(); }
 
 
 
