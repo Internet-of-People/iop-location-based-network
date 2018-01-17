@@ -21,6 +21,7 @@ namespace LocNet
 
 const float    INIT_WORLD_NODE_FILL_TARGET_RATE = 0.75;
 const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT = 5;
+const size_t   MERGE_RANDOM_NODE_COuNT          = 10;
 
 
 
@@ -821,11 +822,49 @@ void Node::RenewNeighbours()
 }
 
 
+void Node::MergeSplits()
+{
+    LOG(DEBUG) << "Detect and merge a potentially splitted network";
+    auto seeds = _config->seedNodes();
+    mt19937 generator( _randomDevice() );
+    std::uniform_int_distribution<int> randomRange( 0, seeds.size() - 1 );
+    auto selectedSeed = seeds.begin();
+    advance( selectedSeed, randomRange(generator) );
+
+    // Connect to closest node
+    shared_ptr<INodeMethods> seedProxy = SafeConnectTo(*selectedSeed);
+    if (seedProxy == nullptr)
+    {
+        LOG(DEBUG) << "Failed to contact seed node " << *selectedSeed;
+        return;
+    }
+    
+    vector<NodeInfo> randomNodes( seedProxy->GetRandomNodes(MERGE_RANDOM_NODE_COuNT, Neighbours::Included) );
+    for (auto node : randomNodes)
+    {
+        shared_ptr<INodeMethods> nodeProxy = SafeConnectTo( node.contact().nodeEndpoint() );
+        if (nodeProxy == nullptr)
+        {
+            LOG(DEBUG) << "Failed to contact random node " << node;
+            return;
+        }
+        
+        bool colleague = SafeStoreNode( NodeDbEntry( node,
+            NodeRelationType::Colleague, NodeContactRoleType::Initiator), nodeProxy );
+        if (colleague)
+        {
+            SafeStoreNode( NodeDbEntry( node,
+                NodeRelationType::Neighbour, NodeContactRoleType::Initiator), nodeProxy );
+        }
+    }
+    
+    LOG(DEBUG) << "Merge finished";
+}
+
 
 void Node::DiscoverUnknownAreas()
 {
     LOG(DEBUG) << "Exploring white spots of the map";
-    
     for (size_t i = 0; i < PERIODIC_DISCOVERY_ATTEMPT_COUNT; ++i)
     {
         // Generate a random GPS location
@@ -861,9 +900,6 @@ void Node::DiscoverUnknownAreas()
                 { continue; }
             const auto &newClosestNode = newClosestNodes[0];
             LOG(DEBUG) << "Closest node to random position is " << newClosestNode;
-            
-// TODO probably we should also ask a random seed node here and get the closest of the two results
-//      if both available. This might help rejoining a splitted network.
             
             // If we already know this node, nothing to do here, renewals will keep it alive
             shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( newClosestNode.id() );

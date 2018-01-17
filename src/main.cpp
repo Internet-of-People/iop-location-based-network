@@ -131,6 +131,7 @@ int main(int argc, const char *argv[])
                 try
                 {
                     this_thread::sleep_for( config->discoveryPeriod() );
+                    node->MergeSplits();
                     node->DiscoverUnknownAreas();
                 }
                 catch (exception &ex)
