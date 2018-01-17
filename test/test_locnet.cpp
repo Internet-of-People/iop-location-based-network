@@ -43,7 +43,7 @@ SCENARIO("Construction and behaviour of data holder types", "[basic][logic]")
             REQUIRE( onError );
         }
     }
-
+    
     GpsLocation loc(1.0, 2.0);
     GIVEN("A location object") {
         THEN("its fields are properly filled in") {
@@ -51,13 +51,13 @@ SCENARIO("Construction and behaviour of data holder types", "[basic][logic]")
             REQUIRE( loc.longitude() == 2.0 );
         }
     }
-
+    
     GIVEN("A location object with invalid coordinates") {
         THEN("it will throw") {
             REQUIRE_THROWS( GpsLocation(100.0, 1.0) );
         }
     }
-
+    
     GIVEN("A node info object") {
         NodeInfo::Services services{
             { "ServiceType::Profile", ServiceInfo("ServiceType::Profile", 1111) } };
@@ -65,7 +65,7 @@ SCENARIO("Construction and behaviour of data holder types", "[basic][logic]")
         THEN("its fields are properly filled in") {
             REQUIRE( node.id() == "NodeId" );
             REQUIRE( node.location() == loc );
-
+            
             NodeContact &contact = node.contact();
             REQUIRE( contact.address() == "127.0.0.1" );
             REQUIRE( contact.nodeEndpoint().isLoopback() );
@@ -78,9 +78,9 @@ SCENARIO("Construction and behaviour of data holder types", "[basic][logic]")
             const ServiceInfo &service = node.services().at("ServiceType::Profile");
             REQUIRE( service.type() == "ServiceType::Profile" );
             REQUIRE( service.port() == 1111 );
-
+            
             contact.address( Address("1.2.3.4") );
-
+            
             REQUIRE( contact.address() == "1.2.3.4" );
             REQUIRE( ! contact.nodeEndpoint().isLoopback() );
         }
@@ -99,7 +99,7 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
             REQUIRE( geodb.GetNodeCount() == 1 ); // contains only self
             REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
-
+            
             shared_ptr<NodeDbEntry> self = geodb.Load(TestData::NodeBudapest.id() );
             REQUIRE( self );
             REQUIRE( static_cast<NodeInfo>(*self) == TestData::NodeBudapest );
@@ -110,7 +110,7 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
         Distance Budapest_London = geodb.GetDistanceKm(TestData::Budapest, TestData::London);
         Distance Budapest_NewYork = geodb.GetDistanceKm(TestData::Budapest, TestData::NewYork);
         Distance Budapest_CapeTown = geodb.GetDistanceKm(TestData::Budapest, TestData::CapeTown);
-
+        
         THEN("it can measure distances") {
             REQUIRE( Budapest_Kecskemet == Approx(83.03).epsilon(0.01) );
             REQUIRE( Budapest_Wien == Approx(214.59).epsilon(0.007) );
@@ -118,7 +118,7 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
             REQUIRE( Budapest_NewYork == Approx(7023.15).epsilon(0.005) );
             REQUIRE( Budapest_CapeTown == Approx(9053.66).epsilon(0.005) );
         }
-
+        
         WHEN("adding nodes") {
             NodeInfo::Services services1{
                 { "ServiceType::Profile", ServiceInfo("ServiceType::Profile", 1111, "ProfileServerId") },
@@ -131,44 +131,47 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
             NodeDbEntry entry2( NodeInfo( "NeighbourNodeId2", GpsLocation(2.0, 2.0),
                 NodeContact("127.0.0.1", 8888, 9999), services2 ),
                     NodeRelationType::Neighbour, NodeContactRoleType::Acceptor );
-
+            
             geodb.Store(entry1);
             geodb.Store(entry2);
-
+            
             THEN("they can be queried and removed") {
                 REQUIRE( geodb.GetNodeCount() == 3 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 1 );
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
-
+                
                 shared_ptr<NodeDbEntry> loaded1 = geodb.Load("ColleagueNodeId1");
+                shared_ptr<NodeDbEntry> loaded2 = geodb.Load("NeighbourNodeId2");
+                 
+                
                 REQUIRE( loaded1 != nullptr );
                 REQUIRE( loaded1->services() == services1 );
                 REQUIRE( loaded1->services().at("ServiceType::Profile").customData() == "ProfileServerId" );
-
+                
                 geodb.Remove("ColleagueNodeId1");
                 REQUIRE( geodb.GetNodeCount() == 2 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 1 );
-
-                shared_ptr<NodeDbEntry> loaded2 = geodb.Load("NeighbourNodeId2");
+                
                 REQUIRE( loaded2 != nullptr );
                 REQUIRE( loaded2->services() == services2 );
-
+                
+                
                 geodb.Remove("NeighbourNodeId2");
-
+                
                 REQUIRE_THROWS( geodb.Remove("NonExistingNodeId") );
                 REQUIRE( geodb.GetNodeCount() == 1 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             }
         }
-
+        
         WHEN("when having several nodes") {
             shared_ptr<ChangeCounter> listener( new ChangeCounter("TestListenerId") );
             geodb.changeListenerRegistry().AddListener(listener);
-
+            
             REQUIRE( listener->addedCount == 0 );
             REQUIRE( listener->updatedCount == 0 );
             REQUIRE( listener->removedCount == 0 );
-
+            
             geodb.Store(TestData::EntryKecskemet);
             geodb.Store(TestData::EntryLondon);
             geodb.Store(TestData::EntryNewYork);
@@ -178,7 +181,7 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
             REQUIRE( listener->addedCount == 5 );
             REQUIRE( listener->updatedCount == 0 );
             REQUIRE( listener->removedCount == 0 );
-
+            
             THEN("closest nodes are properly selected") {
                 {
                     vector<NodeDbEntry> closestNodes = geodb.GetClosestNodesByDistance(
@@ -211,7 +214,7 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
                     REQUIRE( closestNodes[0] == TestData::EntryLondon );
                 }
             }
-
+            
             THEN("random nodes are properly selected") {
                 {
                     vector<NodeDbEntry> randomNodes = geodb.GetRandomNodes(2, Neighbours::Included);
@@ -225,7 +228,7 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
                     REQUIRE( find( randomNodes.begin(), randomNodes.end(), TestData::EntryCapeTown ) != randomNodes.end() );
                 }
             }
-
+            
             THEN("Neighbours are properly listed by distance") {
                 vector<NodeDbEntry> neighboursByDistance( geodb.GetNeighbourNodesByDistance() );
                 REQUIRE( neighboursByDistance.size() == 2 );
@@ -235,14 +238,14 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
             THEN("Data is properly updated and deleted") {
                 REQUIRE( geodb.GetNodeCount() == 6 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().size() == 2 );
-
+                
                 NodeDbEntry updatedLondonEntry(TestData::NodeLondon,
                     NodeRelationType::Neighbour, NodeContactRoleType::Initiator);
                 geodb.Update(updatedLondonEntry);
-
+                
                 shared_ptr<NodeDbEntry> londonEntry = geodb.Load( TestData::NodeLondon.id() );
                 REQUIRE( *londonEntry == updatedLondonEntry );
-
+                
                 vector<NodeDbEntry> neighboursByDistance( geodb.GetNeighbourNodesByDistance() );
                 REQUIRE( geodb.GetNodeCount() == 6 );
                 REQUIRE( neighboursByDistance.size() == 3 );
@@ -253,17 +256,17 @@ SCENARIO("Spatial database", "[spatialdb][logic]")
                 REQUIRE( listener->addedCount == 5 );
                 REQUIRE( listener->updatedCount == 1 );
                 REQUIRE( listener->removedCount == 0 );
-
+                
                 geodb.Remove( TestData::NodeKecskemet.id() );
                 geodb.Remove( TestData::NodeLondon.id() );
                 geodb.Remove( TestData::NodeNewYork.id() );
                 geodb.Remove( TestData::NodeWien.id() );
                 geodb.Remove( TestData::NodeCapeTown.id() );
-
+                
                 REQUIRE( listener->addedCount == 5 );
                 REQUIRE( listener->updatedCount == 1 );
                 REQUIRE( listener->removedCount == 5 );
-
+                
                 REQUIRE( geodb.GetNodeCount() == 1 );
                 REQUIRE( geodb.GetNeighbourNodesByDistance().empty() );
             }
@@ -280,11 +283,11 @@ SCENARIO("Server registration", "[localservice][logic]")
         NodeInfo nodeInfo( NodeInfo("NodeId", loc, NodeContact("127.0.0.1", 6666, 7777), {} ) );
         shared_ptr<ISpatialDatabase> geodb( new SpatiaLiteDatabase(nodeInfo,
             SpatiaLiteDatabase::IN_MEMORY_DB, chrono::hours(1) ) );
-
+        
         shared_ptr<TestConfig> config( new TestConfig(nodeInfo) );
         shared_ptr<INodeProxyFactory> connectionFactory( new DummyNodeConnectionFactory() );
         shared_ptr<Node> geonet = Node::Create(config, geodb, connectionFactory);
-
+        
         WHEN("it's newly created") {
             THEN("it has no registered servers") {
                 auto services = geonet->GetNodeInfo().services();
@@ -296,7 +299,7 @@ SCENARIO("Server registration", "[localservice][logic]")
         ServiceInfo tokenService("ServiceType::Token", 1111);
         ServiceInfo minterService("ServiceType::Minting", 2222);
         ServiceInfo profileService("ServiceType::Profile", 3333, "ProfileServerId");
-
+        
         WHEN("adding services") {
             geonet->RegisterService(tokenService);
             geonet->RegisterService(minterService);

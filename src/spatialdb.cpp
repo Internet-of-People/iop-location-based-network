@@ -22,15 +22,15 @@ const string SpatiaLiteDatabase::TEMPORARY_DB = "";
 const vector<string> DatabaseInitCommands = {
 "BEGIN TRANSACTION;",
     "SELECT InitSpatialMetadata();",
-
+    
     "CREATE TABLE IF NOT EXISTS metainfo ( "
     "  key   TEXT PRIMARY KEY, "
     "  value TEXT NOT NULL "
     ");"
-
+    
     "INSERT OR IGNORE INTO metainfo (key, value) "
     "  VALUES ('version', '1');"
-
+    
     "CREATE TABLE IF NOT EXISTS nodes ( "
     "  id           TEXT PRIMARY KEY, "
     "  ipAddress    TEXT NOT NULL, "
@@ -41,7 +41,7 @@ const vector<string> DatabaseInitCommands = {
     "  expiresAt    INT NOT NULL, " // Unix timestamp. NOTE consider implementing non expiring entries to have NULL here.
     "  location     POINT NOT NULL "
     ");"
-
+    
     "CREATE TABLE IF NOT EXISTS services ( "
     "  nodeId       TEXT NOT NULL, "
     "  serviceType  TEXT NOT NULL, "
@@ -50,7 +50,7 @@ const vector<string> DatabaseInitCommands = {
     "  PRIMARY KEY(nodeId, serviceType), "
     "  FOREIGN KEY(nodeId) REFERENCES nodes(id) "
     ");"
-
+    
 "END TRANSACTION;" };
 
 
@@ -89,13 +89,13 @@ void ThreadSafeChangeListenerRegistry::AddListener(shared_ptr<IChangeListener> l
     lock_guard<mutex> lock(_mutex);
     if (listener == nullptr)
         { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Attempt to register listener instance null"); }
-
+    
     if ( _listeners.find( listener->sessionId() ) != _listeners.end() )
     {
         LOG(DEBUG) << "Session already have a registered listener, ignore request to add new one";
         return;
     }
-
+    
     _listeners[ listener->sessionId() ] = listener;
     listener->OnRegistered();
     LOG(DEBUG) << "Registered ChangeListener for session " << listener->sessionId();
@@ -130,7 +130,7 @@ vector<shared_ptr<IChangeListener>> ThreadSafeChangeListenerRegistry::listeners(
 //             { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to initialize SQLite environment"); }
 //     }
 // };
-//
+// 
 // StaticDatabaseInitializer SqlLiteInitializer;
 
 
@@ -170,7 +170,7 @@ void ExecuteSql(sqlite3 *dbHandle, const string &sql)
 //         LOG(ERROR) << "Failed to query neighbours by distance: " << errorMessage;
 //         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, errorMessage);
 //     }
-//
+//     
 //     scope_exit freeMsg( [results] { sqlite3_free_table(results); } );
 // }
 
@@ -180,7 +180,7 @@ string LocationPointSql(const GpsLocation &location)
 {
     // NOTE int-based numbers, no string or user input, so no SQL injection vulnerability
     return string( "MakePoint(" +
-        to_string( location.longitude() ) + "," +
+        to_string( location.longitude() ) + "," + 
         to_string( location.latitude()  ) + ")" );
 }
 
@@ -198,9 +198,9 @@ vector<NodeDbEntry> SpatiaLiteDatabase::QueryEntries(const GpsLocation &fromLoca
         whereCondition + " " +
         orderBy + " " +
         limit;
-
+    
     //LOG(DEBUG) << "Running query: " << queryStr;
-
+    
     int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
     {
@@ -209,7 +209,7 @@ vector<NodeDbEntry> SpatiaLiteDatabase::QueryEntries(const GpsLocation &fromLoca
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-
+    
     vector<NodeDbEntry> result;
     while ( sqlite3_step(statement) == SQLITE_ROW )
     {
@@ -222,7 +222,7 @@ vector<NodeDbEntry> SpatiaLiteDatabase::QueryEntries(const GpsLocation &fromLoca
         int            relationType = sqlite3_column_int   (statement, 6);
         int            roleType     = sqlite3_column_int   (statement, 7);
         //int            expiresAt    = sqlite3_column_int   (statement, 8);
-
+        
         NodeContact contact( reinterpret_cast<const char*>(ipAddrPtr),
                              static_cast<TcpPort>(nodePort), static_cast<TcpPort>(clientPort) );
         string nodeId( reinterpret_cast<const char*>(idPtr) );
@@ -233,7 +233,7 @@ vector<NodeDbEntry> SpatiaLiteDatabase::QueryEntries(const GpsLocation &fromLoca
             static_cast<NodeRelationType>(relationType),
             static_cast<NodeContactRoleType>(roleType) );
     }
-
+    
     return result;
 }
 
@@ -245,9 +245,9 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     _myNodeInfo(myNodeInfo), _dbHandle(nullptr), _entryExpirationPeriod(entryExpirationPeriod)
 {
     _spatialiteConnection = spatialite_alloc_connection();
-
+    
     bool creatingDb = ! FileExist(dbPath);
-
+    
     // TODO SQLITE_OPEN_FULLMUTEX performs operations sequentially using a mutex.
     //      We might have to change to a more performant but more complicated model here.
     int openResult = sqlite3_open_v2 ( dbPath.c_str(), &_dbHandle,
@@ -258,7 +258,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to open SpatiaLite database");
     }
     scope_error closeDbOnError( [this] { sqlite3_close(_dbHandle); } );
-
+    
 #ifndef _WIN32
     spatialite_init_ex(_dbHandle, _spatialiteConnection, 0);
     scope_error cleanupOnError( [this] { spatialite_cleanup_ex(_spatialiteConnection); } );
@@ -269,7 +269,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
 
     LOG(TRACE) << "SQLite version: " << sqlite3_libversion();
     LOG(TRACE) << "SpatiaLite version: " << spatialite_version();
-
+    
     if (creatingDb)
     {
         LOG(INFO) << "No SpatiaLite database found, generating: " << dbPath;
@@ -277,7 +277,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
             { ExecuteSql(_dbHandle, command); }
         LOG(INFO) << "Database initialized";
     }
-
+    
     LOG(DEBUG) << "Updating node information in database";
     vector<NodeDbEntry> selfEntries = QueryEntries( _myNodeInfo.location(),
         "WHERE relationType = " + to_string( static_cast<uint32_t>(NodeRelationType::Self) ) );
@@ -286,7 +286,7 @@ SpatiaLiteDatabase::SpatiaLiteDatabase( const NodeInfo& myNodeInfo, const string
     if ( ! selfEntries.empty() && selfEntries.front().id() != _myNodeInfo.id() )
         { throw LocationNetworkError(ErrorCode::ERROR_BAD_STATE, "Node id changed, database is invalidated. Delete database file " +
             dbPath + " to force signing up to the network with the new node id."); }
-
+    
     if ( selfEntries.empty() )  { Store ( NodeDbEntry::FromSelfInfo(_myNodeInfo), false ); }
     else                        { Update( NodeDbEntry::FromSelfInfo(_myNodeInfo), false ); }
     LOG(DEBUG) << "Database ready with node count: " << GetNodeCount();
@@ -321,7 +321,7 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
             LocationPointSql(other) + "," +
             "1" // Needed for GPS distance, without this SpatiaLite calculates only Euclidean distance
         ") / 1000 AS dist_km;" );
-
+            
     int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
     {
@@ -330,13 +330,13 @@ Distance SpatiaLiteDatabase::GetDistanceKm(const GpsLocation &one, const GpsLoca
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-
+    
     if ( sqlite3_step(statement) != SQLITE_ROW )
     {
         LOG(ERROR) << "Failed to run distance query";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to run distance query");
     }
-
+    
     double result = sqlite3_column_double(statement, 0);
     return result;
 }
@@ -351,28 +351,27 @@ NodeInfo::Services SpatiaLiteDatabase::LoadServices(const NodeId& nodeId) const
     string queryStr =
         "SELECT serviceType, port, data "
         "FROM services WHERE nodeId=?";
-
+    
     int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << queryStr;
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to prepare statement to load services");
     }
-
+    
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-
+    
     if ( sqlite3_bind_text( statement, 1, nodeId.c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind LoadServices query node id param";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind LoadServices query node id param");
     }
-
+    
     NodeInfo::Services services;
     while ( sqlite3_step(statement) == SQLITE_ROW )
     {
-         std::string serviceType  = std::string(reinterpret_cast<const char*>(
-           sqlite3_column_text(statement, 0)
-         ));
+        const uint8_t *serviceTypePtr = sqlite3_column_text(statement, 0);
+        std::string serviceType( reinterpret_cast<const char*>(serviceTypePtr) );
         int port         = sqlite3_column_int(statement, 1);
 
         string data;
@@ -383,11 +382,11 @@ NodeInfo::Services SpatiaLiteDatabase::LoadServices(const NodeId& nodeId) const
             if ( dataBytes != nullptr && dataBytesCnt > 0 )
                 { data = string( reinterpret_cast<const char*>(dataBytes), dataBytesCnt ); }
         }
-
+        
         ServiceInfo service( serviceType, port, data );
         services[ service.type() ] = service;
     }
-
+    
     return services;
 }
 
@@ -396,7 +395,7 @@ NodeInfo::Services SpatiaLiteDatabase::LoadServices(const NodeId& nodeId) const
 void SpatiaLiteDatabase::StoreServices(const NodeId& nodeId, const NodeInfo::Services& services)
 {
     RemoveServices(nodeId);
-
+    
     sqlite3_stmt *statement;
     string insertStr(
         "INSERT INTO services "
@@ -410,7 +409,7 @@ void SpatiaLiteDatabase::StoreServices(const NodeId& nodeId, const NodeInfo::Ser
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-
+    
     for (const auto &servicePair : services)
     {
         // TODO abstract bind checks away, probably with functions, or maybe macros
@@ -418,21 +417,21 @@ void SpatiaLiteDatabase::StoreServices(const NodeId& nodeId, const NodeInfo::Ser
         const char *blobData = service.customData().empty() ? nullptr : service.customData().data();
         int blobSize = service.customData().size();
         if ( sqlite3_bind_text( statement, 1, nodeId.c_str(), -1, SQLITE_STATIC )  != SQLITE_OK ||
-             sqlite3_bind_text(  statement, 2, service.type().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
+             sqlite3_bind_text( statement, 2, service.type().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
              sqlite3_bind_int(  statement, 3, service.port() )                     != SQLITE_OK ||
              sqlite3_bind_blob( statement, 4, blobData, blobSize, SQLITE_STATIC )  != SQLITE_OK )
         {
             LOG(ERROR) << "Failed to bind store service statement params";
             throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind store service statement params");
         }
-
+        
         int execResult = sqlite3_step(statement);
         if (execResult != SQLITE_DONE)
         {
             LOG(ERROR) << "Failed to run store service statement, error code: " << execResult;
             throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to run store service statement");
         }
-
+        
         int resetResult = sqlite3_reset(statement);
         int clearResult = sqlite3_clear_bindings(statement);
         if (resetResult != SQLITE_OK || clearResult != SQLITE_OK)
@@ -448,22 +447,22 @@ void SpatiaLiteDatabase::RemoveServices(const NodeId& nodeId)
 {
     sqlite3_stmt *statement;
     string queryStr = "DELETE FROM services WHERE nodeId=?";
-
+    
     int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
     {
         LOG(ERROR) << "Failed to prepare statement: " << queryStr;
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to prepare statement to remove services");
     }
-
+    
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-
+    
     if ( sqlite3_bind_text( statement, 1, nodeId.c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind RemoveService query node id param";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind remove service query node id param");
     }
-
+    
     int execResult = sqlite3_step(statement);
     if (execResult != SQLITE_DONE)
     {
@@ -484,9 +483,9 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
                "relationType, roleType "
         "FROM nodes "
         "WHERE id=?";
-
+    
     //LOG(DEBUG) << "Running query: " << queryStr;
-
+    
     int prepResult = sqlite3_prepare_v2( _dbHandle, queryStr.c_str(), -1, &statement, nullptr );
     if (prepResult != SQLITE_OK)
     {
@@ -495,7 +494,7 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-
+    
     if ( sqlite3_bind_text( statement, 1, nodeId.c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind load query node id param";
@@ -513,17 +512,17 @@ shared_ptr<NodeDbEntry> SpatiaLiteDatabase::Load(const NodeId& nodeId) const
         double         latitude     = sqlite3_column_double(statement, 5);
         int            relationType = sqlite3_column_int   (statement, 6);
         int            roleType     = sqlite3_column_int   (statement, 7);
-
+        
         // TODO create enums through checked "enum constructor" method
         NodeContact contact( reinterpret_cast<const char*>(ipAddrPtr),
                              static_cast<TcpPort>(nodePort), static_cast<TcpPort>(clientPort) );
-
+        
         NodeInfo::Services services = LoadServices(nodeId);
         result.reset( new NodeDbEntry(
             NodeInfo( reinterpret_cast<const char*>(idPtr), GpsLocation(latitude, longitude), contact, services ),
             static_cast<NodeRelationType>(relationType), static_cast<NodeContactRoleType>(roleType) ) );
     }
-
+    
     return result;
 }
 
@@ -545,7 +544,7 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-
+    
     time_t expiresAt = expires ?
         chrono::system_clock::to_time_t( chrono::system_clock::now() + _entryExpirationPeriod ) :
         numeric_limits<time_t>::max();
@@ -562,16 +561,16 @@ void SpatiaLiteDatabase::Store(const NodeDbEntry &node, bool expires)
         LOG(ERROR) << "Failed to bind node store statement params";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node store statement params");
     }
-
+    
     int execResult = sqlite3_step(statement);
     if (execResult != SQLITE_DONE)
     {
         LOG(ERROR) << "Failed to run node store statement, error code: " << execResult;
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to run node store statement");
     }
-
+    
     StoreServices( node.id(), node.services() );
-
+    
     for ( auto listenerEntry : _listenerRegistry.listeners() )
     {
         // if ( auto listener = listenerEntry.lock() )
@@ -597,7 +596,7 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-
+    
     time_t expiresAt = expires ?
         chrono::system_clock::to_time_t( chrono::system_clock::now() + _entryExpirationPeriod ) :
         numeric_limits<time_t>::max();
@@ -613,27 +612,27 @@ void SpatiaLiteDatabase::Update(const NodeDbEntry& node, bool expires)
         LOG(ERROR) << "Failed to bind node store statement params";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node store statement params");
     }
-
+    
     int execResult = sqlite3_step(statement);
     if (execResult != SQLITE_DONE)
     {
         LOG(ERROR) << "Failed to run node update statement, error code: " << execResult;
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to run node update statement");
     }
-
+    
     int affectedRows = sqlite3_changes(_dbHandle);
     if (affectedRows != 1)
     {
         LOG(ERROR) << "Affected row count for update should be 1, got : " << affectedRows;
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Wrong affected row count for update");
     }
-
+    
     StoreServices( node.id(), node.services() );
-
+    
     // update cached self node info
     if ( node.relationType() == NodeRelationType::Self )
         { _myNodeInfo = node; }
-
+    
     for ( auto listenerEntry : _listenerRegistry.listeners() )
     {
         // if ( auto listener = listenerEntry.lock() )
@@ -650,9 +649,9 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Node to be removed is not present: " + nodeId); }
     if ( storedNode->relationType() == NodeRelationType::Self )
         { throw LocationNetworkError(ErrorCode::ERROR_INVALID_VALUE, "Attempt to delete self entry"); }
-
+    
     RemoveServices(nodeId);
-
+    
     sqlite3_stmt *statement;
     string insertStr(
         "DELETE FROM nodes "
@@ -665,27 +664,27 @@ void SpatiaLiteDatabase::Remove(const NodeId &nodeId)
     }
 
     scope_exit finalizeStmt( [&statement] { sqlite3_finalize(statement); } );
-
+    
     if ( sqlite3_bind_text( statement, 1, nodeId.c_str(), -1, SQLITE_STATIC ) != SQLITE_OK )
     {
         LOG(ERROR) << "Failed to bind node delete statement id param";
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to bind node delete statement id param");
     }
-
+    
     int execResult = sqlite3_step(statement);
     if (execResult != SQLITE_DONE)
     {
         LOG(ERROR) << "Failed to run node delete statement, error code: " << execResult;
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Failed to run node delete statement");
     }
-
+    
     int affectedRows = sqlite3_changes(_dbHandle);
     if (affectedRows != 1)
     {
         LOG(ERROR) << "Affected row count for delete should be 1, got : " << affectedRows;
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "Wrong affected row count for delete");
     }
-
+    
     for ( auto listenerEntry : _listenerRegistry.listeners() )
     {
         // if ( auto listener = listenerEntry.lock() )
@@ -702,9 +701,9 @@ void SpatiaLiteDatabase::ExpireOldNodes()
     string expiredCondition(
         "WHERE expiresAt <= " + to_string(now) + " AND " +
             "relationType != " + to_string( static_cast<uint32_t>(NodeRelationType::Self) ) );
-
+    
     vector<NodeDbEntry> expiredEntries = QueryEntries( _myNodeInfo.location(), expiredCondition );
-
+    
     for (const auto &entry : expiredEntries)
     {
         Remove( entry.id() );
@@ -769,7 +768,7 @@ vector<NodeDbEntry> SpatiaLiteDatabase::GetClosestNodesByDistance(
         whereCondition += " AND relationType = " +
             to_string( static_cast<int>(NodeRelationType::Colleague) );
     }
-
+    
     return QueryEntries(location,
         whereCondition,
         "ORDER BY dist_km",

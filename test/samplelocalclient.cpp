@@ -29,22 +29,22 @@ int main(int argc, const char* argv[])
     try
     {
         cout << "Usage: sampleclient [host] [port]" << endl;
-
+        
         string   host = argc >= 2 ? argv[1] : "localhost";
         uint16_t port = argc >= 3 ? stoul( argv[2] ) : 16982;
-
+        
         signal(SIGINT,  signalHandler);
         signal(SIGTERM, signalHandler);
-
+        
         shared_ptr<Config> config( new TestConfig() );
-
+        
         el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %level %msg (%fbase:%line)");
-
+        
         const NetworkEndpoint nodeContact(host, port);
         LOG(INFO) << "Connecting to server " << nodeContact;
         shared_ptr<IProtoBufChannel> channel( new AsyncProtoBufTcpChannel(nodeContact) );
         shared_ptr<ProtoBufClientSession> session( ProtoBufClientSession::Create(channel) );
-
+        
         uint32_t notificationsReceived = 0;
         session->StartMessageLoop( [&notificationsReceived, config, channel, session]
             ( unique_ptr<iop::locnet::Message> &&requestMsg )
@@ -57,12 +57,12 @@ int main(int argc, const char* argv[])
                 LOG(ERROR) << "Received unexpected request";
                 return;
             }
-
+            
 //             const iop::locnet::NeighbourhoodChangedNotificationRequest &changeNote =
 //                 requestMsg->request().localservice().neighbourhoodchanged();
-
+            
             ++notificationsReceived;
-
+            
             unique_ptr<iop::locnet::Message> changeAckn( new iop::locnet::Message() );
             changeAckn->set_id( requestMsg->id() );
             changeAckn->mutable_response()->mutable_local_service()->mutable_neighbourhood_updated();
@@ -78,12 +78,12 @@ int main(int argc, const char* argv[])
                 deregisterRequest->mutable_request()->mutable_local_service()->mutable_deregister_service()->set_service_type(
                     "ServiceType::Profile" );
                 session->SendRequest( move(deregisterRequest) );
-
+                
                 LOG(INFO) << "Shutting down test";
                 signalHandler(SIGINT);
             }
         } );
-
+         
         thread reactorThread( []
         {
             while (! ShutdownRequested)
@@ -93,7 +93,7 @@ int main(int argc, const char* argv[])
                     { Reactor::Instance().AsioService().reset(); }
             }
         } );
-
+ 
         try
         {
             shared_ptr<IBlockingRequestDispatcher> dispatcher( new NetworkDispatcher(config, session) );
@@ -102,7 +102,7 @@ int main(int argc, const char* argv[])
             registerRequest->mutable_local_service()->mutable_register_service()->set_allocated_service(
                 Converter::ToProtoBuf( ServiceInfo("ServiceType::Profile", 16999, "ProfileServerId") ) );
             unique_ptr<iop::locnet::Response> registerResponse = dispatcher->Dispatch( move(registerRequest) );
-
+            
             uint32_t requestsSent = 0;
             while (! ShutdownRequested && requestsSent < 3)
             {
@@ -134,3 +134,4 @@ int main(int argc, const char* argv[])
         return 1;
     }
 }
+

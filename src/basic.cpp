@@ -54,7 +54,7 @@ ostream& operator<<(ostream &out, const NetworkEndpoint &value)
 
 
 // NodeContact::NodeContact() {}
-
+    
 NodeContact::NodeContact(const NodeContact& other) :
     _address(other._address), _nodePort(other._nodePort), _clientPort(other._clientPort) {}
 
@@ -95,7 +95,7 @@ ostream& operator<<(ostream &out, const NodeContact &value)
 
 GpsLocation::GpsLocation(const GpsLocation &other) :
     _latitude( other.latitude() ), _longitude( other.longitude() ) {}
-
+    
 GpsLocation::GpsLocation(GpsCoordinate latitude, GpsCoordinate longitude) :
     _latitude(latitude), _longitude(longitude)
     { Validate(); }
@@ -136,7 +136,7 @@ ServiceInfo::ServiceInfo(const ServiceInfo& other) :
 ServiceInfo::ServiceInfo(std::string type, TcpPort port, const string& customData) :
     _type(type), _port(port), _customData(customData) {}
 
-std::string ServiceInfo::type() const { return _type; }
+const std::string& ServiceInfo::type() const { return _type; }
 TcpPort ServiceInfo::port() const { return _port; }
 const string& ServiceInfo::customData() const { return _customData; }
 
@@ -150,6 +150,8 @@ bool ServiceInfo::operator==(const ServiceInfo& other) const
 bool ServiceInfo::operator!=(const ServiceInfo& other) const
     { return ! operator==(other); }
 
+std::ostream& operator<<(std::ostream& out, const ServiceInfo &value)
+    { return out << value.type() << ":" << value.port() << " " << value.customData(); }
 
 
 
