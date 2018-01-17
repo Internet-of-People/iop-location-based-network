@@ -27,29 +27,29 @@ enum Status {
 
 // All further network/server types of the Internet of People
 // that can be registered here so as it can be searched geographically on the client interface.
-//enum ServiceType
-//{
-//// Low level networks
-  //UNSTRUCTURED = 0;
-  //CONTENT      = 1;
-  //LATENCY      = 2;
-  //LOCATION     = 3;
+enum ServiceType
+{
+// Low level networks
+  UNSTRUCTURED = 0;
+  CONTENT      = 1;
+  LATENCY      = 2;
+  LOCATION     = 3;
 
 // High level servers
-  //TOKEN       = 10;
-  //PROFILE     = 11;
-  //PROXIMITY   = 12;
-  //RELAY       = 13;
-  //REPUTATION  = 14;
-  //MINTING     = 15;
-//};
+  TOKEN       = 10;
+  PROFILE     = 11;
+  PROXIMITY   = 12;
+  RELAY       = 13;
+  REPUTATION  = 14;
+  MINTING     = 15;
+};
 
 
 
 // Describe a single service running on the same host. Fields and their formats are analogue to NodeInfo.
 // We assume that the service can be accessed on the same IP address as the location based network node.
 message ServiceInfo {
-  string type = 1;
+  ServiceType type = 1;
   uint32 port = 2;       // Network port where service is reachable on this host.
   bytes service_data = 3; // Optional binary data that the service can share about itself. Has no predefined format, any custom data can be added here. Useful for e.g. sharing the profile server node ID. Must be no more than 1KB.
 }
@@ -61,7 +61,7 @@ message ServiceInfo {
 // which means that a floating point value of the latitude or longitude is multiplied by 1,000,000
 // and converted to integer (cutting any digits right of the decimal point without rounding).
 // To get the floating point value back, simply divide the integer value by 1,000,000.
-// For latitudes, valid values are in range [-90,000,000;90,000,000], for longitudes the range is
+// For latitudes, valid values are in range [-90,000,000;90,000,000], for longitudes the range is 
 // [-179,999,999;180,000,000].
 //
 message GpsLocation {
@@ -114,7 +114,7 @@ message MessageWithHeader {
 
 // Format of a single message.
 message Message {
-  uint32 id = 1;                                   // Requestor defined message ID that the requestee has to return in the response.
+  uint32 id = 1;                                   // Requestor defined message ID that the requestee has to return in the response. 
                                                    // Requestor is responsible for using different ID for every unprocessed message.
                                                    // If at any point there exist two open requests (i.e. without a response) with the same ID, it is a violation of the protocol and the behavior is undefined.
 
@@ -138,7 +138,7 @@ message Message {
 // The different operation set for each interface is collected under a specific RequestType here.
 //
 message Request {
-  bytes version = 1;
+  bytes version = 1;                               
   oneof RequestType {
     LocalServiceRequest local_service = 2;
     RemoteNodeRequest remote_node = 3;
@@ -207,7 +207,7 @@ message RegisterServiceResponse {
 
 // Remove a previously registered entry of a service.
 message DeregisterServiceRequest {
-  string service_type = 1;
+  ServiceType service_type = 1;
 }
 
 message DeregisterServiceResponse {
@@ -233,7 +233,7 @@ message NeighbourhoodChange {
     NodeInfo added_node_info = 1;
     NodeInfo updated_node_info = 2;
     bytes removed_node_id = 3;
-  };
+  }; 
 }
 
 // A list of changes to be sent in a single bulk notification.
@@ -366,3 +366,4 @@ message ExploreNetworkNodesByDistanceRequest {
 message ExploreNetworkNodesByDistanceResponse {
   repeated NodeInfo closest_nodes = 1;
 }
+
