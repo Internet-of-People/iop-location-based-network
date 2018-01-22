@@ -370,14 +370,14 @@ NodeInfo::Services SpatiaLiteDatabase::LoadServices(const NodeId& nodeId) const
     NodeInfo::Services services;
     while ( sqlite3_step(statement) == SQLITE_ROW )
     {
-        int serviceType  = sqlite3_column_int  (statement, 0);
-        int port         = sqlite3_column_int  (statement, 1);
+        int serviceType  = sqlite3_column_int(statement, 0);
+        int port         = sqlite3_column_int(statement, 1);
         
         string data;
         if ( sqlite3_column_type(statement, 2) == SQLITE_BLOB )
         {
             int dataBytesCnt = sqlite3_column_bytes(statement, 2);
-            const void *dataBytes  = sqlite3_column_blob (statement, 2);
+            const void *dataBytes  = sqlite3_column_blob(statement, 2);
             if ( dataBytes != nullptr && dataBytesCnt > 0 )
                 { data = string( reinterpret_cast<const char*>(dataBytes), dataBytesCnt ); }
         }
