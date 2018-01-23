@@ -219,7 +219,7 @@ unique_ptr<iop::locnet::Response> IncomingLocalServiceRequestDispatcher::Dispatc
         case iop::locnet::LocalServiceRequest::kDeregisterService:
         {
             auto const &deregisterRequest = localServiceRequest.deregister_service();
-            std::string serviceType =  deregisterRequest.service_type() ;
+            string serviceType =  deregisterRequest.service_type() ;
             
             _iLocalService->DeregisterService(serviceType);
             LOG(DEBUG) << "Served DeregisterService()";
@@ -597,8 +597,8 @@ unique_ptr<iop::locnet::Response> IncomingRequestDispatcher::Dispatch(unique_ptr
 
 
 NodeMethodsProtoBufClient::NodeMethodsProtoBufClient(
-    //std::shared_ptr<IDelayedRequestDispatcher> dispatcher, std::function<void(const Address&)> detectedIpCallback) :
-    std::shared_ptr<IBlockingRequestDispatcher> dispatcher, std::function<void(const Address&)> detectedIpCallback) :
+    //shared_ptr<IDelayedRequestDispatcher> dispatcher, function<void(const Address&)> detectedIpCallback) :
+    shared_ptr<IBlockingRequestDispatcher> dispatcher, function<void(const Address&)> detectedIpCallback) :
     _dispatcher(dispatcher), _detectedIpCallback(detectedIpCallback)
 {
     if (! _dispatcher)

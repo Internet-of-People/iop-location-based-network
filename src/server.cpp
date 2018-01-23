@@ -59,7 +59,7 @@ void DispatchingTcpServer::StartListening()
 
 
 void DispatchingTcpServer::AsyncAcceptHandler(
-    std::shared_ptr<asio::ip::tcp::socket> socket, const asio::error_code &ec)
+    shared_ptr<asio::ip::tcp::socket> socket, const asio::error_code &ec)
 {
     if (ec)
     {
@@ -381,7 +381,7 @@ future<void> AsyncProtoBufTcpChannel::SendMessage(unique_ptr<iop::locnet::Messag
 
 
 shared_ptr<ProtoBufClientSession> ProtoBufClientSession::Create(
-        std::shared_ptr<IProtoBufChannel> connection)
+        shared_ptr<IProtoBufChannel> connection)
     { return shared_ptr<ProtoBufClientSession>( new ProtoBufClientSession(connection) ); }
 
 ProtoBufClientSession::ProtoBufClientSession(shared_ptr<IProtoBufChannel> connection) :
@@ -394,7 +394,7 @@ ProtoBufClientSession::ProtoBufClientSession(shared_ptr<IProtoBufChannel> connec
 
 void ProtoBufClientSession::AsyncMessageLoopHandler(
     weak_ptr<ProtoBufClientSession> sessionWeakRef, const string &sessionId,
-    std::function<IncomingRequestHandler> requestHandler )
+    function<IncomingRequestHandler> requestHandler )
 {
     shared_ptr<ProtoBufClientSession> sessionPtr = sessionWeakRef.lock();
     if (! sessionPtr) // Session has been closed and destroyed, stop
@@ -438,7 +438,7 @@ void ProtoBufClientSession::AsyncMessageLoopHandler(
 }
 
 
-void ProtoBufClientSession::StartMessageLoop( std::function<IncomingRequestHandler> requestHandler )
+void ProtoBufClientSession::StartMessageLoop( function<IncomingRequestHandler> requestHandler )
 {
     shared_ptr<ProtoBufClientSession> session = shared_from_this();
     string sessionId = session->id();

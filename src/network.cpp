@@ -19,7 +19,7 @@ bool NetworkEndpoint::isLoopback() const
     catch (...) { return false; }
 }
 
-Address NodeContact::AddressFromBytes(const std::string &bytes)
+Address NodeContact::AddressFromBytes(const string &bytes)
 {
     if ( bytes.empty() )
         { return Address(); }
@@ -112,7 +112,7 @@ void AsyncConnection::ReadBuffer( function< void ( unique_ptr<string>&& ) > comp
     }
     
     asio::async_read( *socket, asio::buffer( &_buffer->operator[](_offset), _buffer->size() - _offset ),
-        [self, completionCallback] (const asio::error_code& error, std::size_t bytesRead)
+        [self, completionCallback] (const asio::error_code& error, size_t bytesRead)
         { self->AsyncReadCallback(error, bytesRead, completionCallback); } );
 }
 
@@ -150,7 +150,7 @@ void AsyncConnection::AsyncReadCallback( const asio::error_code &error, size_t b
         }
         
         asio::async_read( *socket, asio::buffer( &_buffer->operator[](_offset), _buffer->size() - _offset ),
-            [self, completionCallback] (const asio::error_code& error, std::size_t bytesRead)
+            [self, completionCallback] (const asio::error_code& error, size_t bytesRead)
             { self->AsyncReadCallback(error, bytesRead, completionCallback); } );
     }
     else { completionCallback( move(_buffer) ); }
@@ -168,7 +168,7 @@ void AsyncConnection::WriteBuffer( function< void ( unique_ptr<string>&& ) > com
         return;
     }
     asio::async_write( *socket, asio::buffer( &_buffer->operator[](_offset), _buffer->size() - _offset ),
-        [self, completionCallback] (const asio::error_code& error, std::size_t bytesWritten)
+        [self, completionCallback] (const asio::error_code& error, size_t bytesWritten)
     {
         self->AsyncWriteCallback(error, bytesWritten, completionCallback);
     } );
@@ -208,7 +208,7 @@ void AsyncConnection::AsyncWriteCallback( const asio::error_code &error, size_t 
         }
         
         asio::async_write( *socket, asio::buffer( &_buffer->operator[](_offset), _buffer->size() - _offset ),
-            [self, completionCallback] (const asio::error_code& error, std::size_t bytesWritten)
+            [self, completionCallback] (const asio::error_code& error, size_t bytesWritten)
             { self->AsyncWriteCallback(error, bytesWritten, completionCallback); } );
     }
     else

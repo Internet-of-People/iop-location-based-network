@@ -371,7 +371,7 @@ NodeInfo::Services SpatiaLiteDatabase::LoadServices(const NodeId& nodeId) const
     while ( sqlite3_step(statement) == SQLITE_ROW )
     {
         const uint8_t *serviceTypePtr = sqlite3_column_text(statement, 0);
-        std::string serviceType( reinterpret_cast<const char*>(serviceTypePtr) );
+        string serviceType( reinterpret_cast<const char*>(serviceTypePtr) );
         int port         = sqlite3_column_int(statement, 1);
 
         string data;
