@@ -21,6 +21,7 @@ namespace LocNet
 
 const float    INIT_WORLD_NODE_FILL_TARGET_RATE = 0.75;
 const size_t   PERIODIC_DISCOVERY_ATTEMPT_COUNT = 5;
+const size_t   MERGE_RANDOM_NODE_COuNT          = 10;
 
 
 
@@ -53,28 +54,43 @@ Node::Node( shared_ptr<Config> config,
 void Node::EnsureMapFilled()
 {
     vector<NetworkEndpoint> seedNodes = _config->seedNodes();
-    if ( GetNodeCount() <= 1 && ! seedNodes.empty() )
+    if ( seedNodes.empty() )
+        { throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No seed nodes configured, can't bootstrap exploration"); }
+    
+    NodeInfo myInfo = _spatialDb->ThisNode();
+    auto seedIt = find_if( seedNodes.begin(), seedNodes.end(),
+        [&myInfo] (const NetworkEndpoint &contact)
+            { return myInfo.contact().nodeEndpoint() == contact; } );
+    bool IAmSeed = seedIt != seedNodes.end();
+    
+    // Initialize random generator and shuffle seeds for balancing their load during client exploration
+    mt19937 generator( _randomDevice() );
+    shuffle( seedNodes.begin(), seedNodes.end(), generator );
+    
+    while ( GetNodeCount() <= 1 )
     {
         LOG(INFO) << "Map is empty, discovering the network";
-        
-        // Initialize random generator and shuffle seeds
-        mt19937 generator( _randomDevice() );
-        shuffle( seedNodes.begin(), seedNodes.end(), generator );
         
         bool discoverySucceeded = InitializeWorld(seedNodes) && InitializeNeighbourhood(seedNodes);
         if (! discoverySucceeded)
             { LOG(WARNING) << "Failed to properly discover the full network, current node count is " << GetNodeCount(); }
-        if ( GetNodeCount() <= 1 )
+
+        // If at least another node is known then step over bootstrapping phase,
+        // should discover more nodes and make more neighbours with periodic exploration.
+        // Also exploration can fail if bootstrapping the network with the very first seed.
+        if ( GetNodeCount() > 1 || IAmSeed )
         {
-            // This still might be normal if we're the very first seed node of the whole network
-            NodeInfo myInfo = _spatialDb->ThisNode();
-            auto seedIt = find_if( seedNodes.begin(), seedNodes.end(),
-                [&myInfo] (const NetworkEndpoint &contact)
-                    { return myInfo.contact().nodeEndpoint() == contact; } );
-            if ( seedIt == seedNodes.end() )
-                 { throw LocationNetworkError(ErrorCode::ERROR_CONCEPTUAL, "Failed to discover any node of the network"); }
-            else { LOG(DEBUG) << "I'm a seed and may be the first one started up, don't give up yet"; }
+            LOG(INFO) << "Server is still expected to function properly, continue normally";
+            break;
         }
+        else
+            { LOG(INFO) << "Exploration failed, will retry after some delay"; }
+        
+        // TODO delay probably should be configurable somewhere
+        std::uniform_int_distribution<int> randomRange(0, 5);
+        uint32_t count = 5 + randomRange(generator);
+        chrono::duration<uint32_t> delay = _config->isTestMode() ? chrono::seconds(count) : chrono::minutes(count);
+        this_thread::sleep_for(delay);
     }
 }
 
@@ -806,11 +822,49 @@ void Node::RenewNeighbours()
 }
 
 
+void Node::MergeSplits()
+{
+    LOG(DEBUG) << "Detect and merge a potentially splitted network";
+    auto seeds = _config->seedNodes();
+    mt19937 generator( _randomDevice() );
+    std::uniform_int_distribution<int> randomRange( 0, seeds.size() - 1 );
+    auto selectedSeed = seeds.begin();
+    advance( selectedSeed, randomRange(generator) );
+
+    // Connect to closest node
+    shared_ptr<INodeMethods> seedProxy = SafeConnectTo(*selectedSeed);
+    if (seedProxy == nullptr)
+    {
+        LOG(DEBUG) << "Failed to contact seed node " << *selectedSeed;
+        return;
+    }
+    
+    vector<NodeInfo> randomNodes( seedProxy->GetRandomNodes(MERGE_RANDOM_NODE_COuNT, Neighbours::Included) );
+    for (auto node : randomNodes)
+    {
+        shared_ptr<INodeMethods> nodeProxy = SafeConnectTo( node.contact().nodeEndpoint() );
+        if (nodeProxy == nullptr)
+        {
+            LOG(DEBUG) << "Failed to contact random node " << node;
+            return;
+        }
+        
+        bool colleague = SafeStoreNode( NodeDbEntry( node,
+            NodeRelationType::Colleague, NodeContactRoleType::Initiator), nodeProxy );
+        if (colleague)
+        {
+            SafeStoreNode( NodeDbEntry( node,
+                NodeRelationType::Neighbour, NodeContactRoleType::Initiator), nodeProxy );
+        }
+    }
+    
+    LOG(DEBUG) << "Merge finished";
+}
+
 
 void Node::DiscoverUnknownAreas()
 {
     LOG(DEBUG) << "Exploring white spots of the map";
-    
     for (size_t i = 0; i < PERIODIC_DISCOVERY_ATTEMPT_COUNT; ++i)
     {
         // Generate a random GPS location
@@ -846,9 +900,6 @@ void Node::DiscoverUnknownAreas()
                 { continue; }
             const auto &newClosestNode = newClosestNodes[0];
             LOG(DEBUG) << "Closest node to random position is " << newClosestNode;
-            
-// TODO probably we should also ask a random seed node here and get the closest of the two results
-//      if both available. This might help rejoining a splitted network.
             
             // If we already know this node, nothing to do here, renewals will keep it alive
             shared_ptr<NodeInfo> storedInfo = _spatialDb->Load( newClosestNode.id() );

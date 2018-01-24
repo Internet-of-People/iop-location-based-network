@@ -124,10 +124,14 @@ protected:
     
     DispatchingTcpServer( TcpPort portNumber,
         std::shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory );
+    DispatchingTcpServer( const std::string &interfaceName, TcpPort portNumber,
+        std::shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory );
 
 public:
     
     static std::shared_ptr<DispatchingTcpServer> Create( TcpPort portNumber,
+        std::shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory );
+    static std::shared_ptr<DispatchingTcpServer> Create( const std::string &interfaceName, TcpPort portNumber,
         std::shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory );
     
     static void AsyncServeMessageHandler( std::unique_ptr<iop::locnet::Message> &&receivedMessage,

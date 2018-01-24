@@ -90,13 +90,12 @@ The main goal of the current implementation is to prove that the concept works.
 So far the network is quite vulnerable as it does not implement appropriate protection from attacks.
 If we find no conceptual problems we should identify attack vectors and protect from malicious nodes and clients, e.g.
 
-- Protect network interfaces, e.g. LocalService interface should be exposed only to localhost
-  and other nodes of the network should be authenticated to be accepted as colleague or neighbour.
-- Use and check SHA256 hashes as node identifiers.
+- Require hashes of public keys as node identifiers.
+- Node identitites should be validated while negotiating a colleague or neighbour relationship.
 - Check integrity of advertised information. E.g. validate if host is really accessible
-  on the reported external address and address matches to its reported location.
+  on the reported external address and address approximately matches to its reported location.
 - Ensure that uniqueness of sensitive data (e.g. node ids and probably external addresses)
-  is strictly enforced everywhere and cannot be impersonated.
+  is strictly enforced everywhere and cannot be impersonated by 3rd party.
 - Ban misbehaving nodes.
 
 

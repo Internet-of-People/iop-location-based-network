@@ -47,7 +47,7 @@ class AsyncConnection : public std::enable_shared_from_this<AsyncConnection>
     size_t                                  _offset;
 
     AsyncConnection( std::weak_ptr<asio::ip::tcp::socket> socket,
-                   std::unique_ptr<std::string> &&buffer, size_t offset );
+                     std::unique_ptr<std::string> &&buffer, size_t offset );
     
     void AsyncReadCallback ( const asio::error_code &error, size_t bytesRead,
         std::function< void ( std::unique_ptr<std::string> &&releasedBuffer ) > completionCallback );
@@ -80,6 +80,7 @@ protected:
 public:
 
     TcpServer(TcpPort portNumber);
+    TcpServer(const std::string &device, TcpPort portNumber);
     virtual ~TcpServer();
     
     virtual void StartListening() = 0;

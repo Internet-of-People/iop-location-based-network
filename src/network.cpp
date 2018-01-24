@@ -129,7 +129,7 @@ void AsyncConnection::ReadBuffer( function< void ( unique_ptr<string>&& ) > comp
 
 
 void AsyncConnection::AsyncReadCallback( const asio::error_code &error, size_t bytesRead,
-                                       function< void ( unique_ptr<string>&& ) > completionCallback )
+                                         function< void ( unique_ptr<string>&& ) > completionCallback )
 {
     if (error)
     {
@@ -187,7 +187,7 @@ void AsyncConnection::WriteBuffer( function< void ( unique_ptr<string>&& ) > com
 
 
 void AsyncConnection::AsyncWriteCallback( const asio::error_code &error, size_t bytesWritten,
-                                        function< void ( unique_ptr<string>&& ) > completionCallback )
+                                          function< void ( unique_ptr<string>&& ) > completionCallback )
 {
     if (error)
     {
@@ -222,6 +222,17 @@ void AsyncConnection::AsyncWriteCallback( const asio::error_code &error, size_t 
 
 TcpServer::TcpServer(TcpPort portNumber) :
     _acceptor( Reactor::Instance().AsioService(), tcp::endpoint( tcp::v4(), portNumber ) ) {}
+
+TcpServer::TcpServer(const string &interfaceName, TcpPort portNumber) :
+_acceptor( Reactor::Instance().AsioService() )
+{
+    tcp::resolver resolver( Reactor::Instance().AsioService() );
+    tcp::resolver::query query( interfaceName, to_string(portNumber) );
+    auto it = resolver.resolve(query); // NOTE guaranteed to return non-empty iterator or throw exception
+    tcp::endpoint endpoint = *it;
+    _acceptor.open( endpoint.protocol() );
+    _acceptor.bind(endpoint);
+}
 
 
 TcpServer::~TcpServer() {}
