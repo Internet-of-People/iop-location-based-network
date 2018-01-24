@@ -141,6 +141,7 @@ public:
     void RenewNodeRelations();
     void RenewNeighbours();
     void DiscoverUnknownAreas();
+    void MergeSplits();
     
     
     // Interface provided to serve higher level services and clients

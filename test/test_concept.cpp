@@ -249,8 +249,7 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
     
     REQUIRE( discoveredNodes.size() == networkSize );
 
-    // TODO Test if K-connectivity of the network graph is high enough
-    // TODO somehow test if a splitted network can rejoin
+    // TODO Somehow test if K-connectivity of the network graph is high enough
     
     // Expire all entries
     testClock->elapse(TestConfig::DbExpirationPeriod * 1 / 2);
@@ -265,6 +264,12 @@ void testNodes( const vector< shared_ptr<TestConfig> > &nodeConfigs,
             
         REQUIRE( entry.second->GetNodeCount() == 1 ); // All connections expired, only Self remains
     }
+    
+    // Test if a splitted network can rejoin
+    for ( auto &entry : proxyFactory->nodes() )
+        { entry.second->MergeSplits(); }
+    for ( auto &entry : proxyFactory->nodes() )
+        { REQUIRE( entry.second->GetNodeCount() > 1 ); } // Connected to at least another node
 }
     
 

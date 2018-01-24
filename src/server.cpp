@@ -30,6 +30,10 @@ shared_ptr<DispatchingTcpServer> DispatchingTcpServer::Create(
         TcpPort portNumber, shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory )
     { return shared_ptr<DispatchingTcpServer>( new DispatchingTcpServer(portNumber, dispatcherFactory) ); }
 
+shared_ptr<DispatchingTcpServer> DispatchingTcpServer::Create( const string &interfaceName,
+        TcpPort portNumber, shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory )
+    { return shared_ptr<DispatchingTcpServer>( new DispatchingTcpServer(interfaceName, portNumber, dispatcherFactory) ); }
+
 
 DispatchingTcpServer::DispatchingTcpServer( TcpPort portNumber,
         shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory ) :
@@ -39,6 +43,16 @@ DispatchingTcpServer::DispatchingTcpServer( TcpPort portNumber,
         throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No dispatcher factory instantiated");
     }
 }
+
+DispatchingTcpServer::DispatchingTcpServer( const string &interfaceName, TcpPort portNumber,
+        shared_ptr<IBlockingRequestDispatcherFactory> dispatcherFactory ) :
+    TcpServer(interfaceName, portNumber), _dispatcherFactory(dispatcherFactory)
+{
+    if (_dispatcherFactory == nullptr) {
+        throw LocationNetworkError(ErrorCode::ERROR_INTERNAL, "No dispatcher factory instantiated");
+    }
+}
+
 
 
 void DispatchingTcpServer::StartListening()
