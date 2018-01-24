@@ -44,7 +44,7 @@ const vector<string> DatabaseInitCommands = {
     
     "CREATE TABLE IF NOT EXISTS services ( "
     "  nodeId       TEXT NOT NULL, "
-    "  serviceType  INT NOT NULL, "
+    "  serviceType  TEXT NOT NULL, "
     "  port         INT NOT NULL, "
     "  data         BLOB, "
     "  PRIMARY KEY(nodeId, serviceType), "
@@ -370,10 +370,10 @@ NodeInfo::Services SpatiaLiteDatabase::LoadServices(const NodeId& nodeId) const
     NodeInfo::Services services;
     while ( sqlite3_step(statement) == SQLITE_ROW )
     {
-        int serviceType  = sqlite3_column_int(statement, 0);
-        int port         = sqlite3_column_int(statement, 1);
-        
-        string data;
+        const uint8_t *serviceTypePtr = sqlite3_column_text(statement, 0);
+        std::string serviceType( reinterpret_cast<const char*>(serviceTypePtr) );
+        int port = sqlite3_column_int(statement, 1);
+
         if ( sqlite3_column_type(statement, 2) == SQLITE_BLOB )
         {
             int dataBytesCnt = sqlite3_column_bytes(statement, 2);
@@ -382,7 +382,7 @@ NodeInfo::Services SpatiaLiteDatabase::LoadServices(const NodeId& nodeId) const
                 { data = string( reinterpret_cast<const char*>(dataBytes), dataBytesCnt ); }
         }
         
-        ServiceInfo service( static_cast<ServiceType>(serviceType), port, data );
+        ServiceInfo service( serviceType, port, data );
         services[ service.type() ] = service;
     }
     
@@ -416,7 +416,7 @@ void SpatiaLiteDatabase::StoreServices(const NodeId& nodeId, const NodeInfo::Ser
         const char *blobData = service.customData().empty() ? nullptr : service.customData().data();
         int blobSize = service.customData().size();
         if ( sqlite3_bind_text( statement, 1, nodeId.c_str(), -1, SQLITE_STATIC )  != SQLITE_OK ||
-             sqlite3_bind_int(  statement, 2, static_cast<int>( service.type() ) ) != SQLITE_OK ||
+             sqlite3_bind_text( statement, 2, service.type().c_str(), -1, SQLITE_STATIC ) != SQLITE_OK ||
              sqlite3_bind_int(  statement, 3, service.port() )                     != SQLITE_OK ||
              sqlite3_bind_blob( statement, 4, blobData, blobSize, SQLITE_STATIC )  != SQLITE_OK )
         {

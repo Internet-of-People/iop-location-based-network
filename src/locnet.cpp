@@ -119,7 +119,7 @@ GpsLocation Node::RegisterService(const ServiceInfo& serviceInfo)
     return GetNodeInfo().location();
 }
 
-void Node::DeregisterService(ServiceType serviceType)
+void Node::DeregisterService(std::string serviceType)
 {
 // NOTE RegisterService() does not check. This would result more complex services and would be assymetric, better don't check
 //     auto it = _services.find(serviceType);

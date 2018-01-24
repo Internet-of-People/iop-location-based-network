@@ -142,37 +142,37 @@ std::ostream& operator<<(std::ostream& out, const GpsLocation &value);
 
 
 
-enum class ServiceType : uint8_t
-{
-    // Low level networks
-    Unstructured = 0,
-    Content      = 1,
-    Latency      = 2,
-    Location     = 3,
-
-    // High level servers
-    Token       = 11,
-    Profile     = 12,
-    Proximity   = 13,
-    Relay       = 14,
-    Reputation  = 15,
-    Minting     = 16,
-};
+// enum class ServiceType : uint8_t
+// {
+//     // Low level networks
+//     Unstructured = 0,
+//     Content      = 1,
+//     Latency      = 2,
+//     Location     = 3,
+// 
+//     // High level servers
+//     Token       = 11,
+//     Profile     = 12,
+//     Proximity   = 13,
+//     Relay       = 14,
+//     Reputation  = 15,
+//     Minting     = 16,
+// };
 
 // Utility class to enable enum classes to be used as a hash key until fixed in C++ standard
 // NOTE for simple (not class) enums, std::hash<int> also works instead of this class
-struct EnumHasher
-{
-    template <typename EnumType>
-    std::size_t operator()(EnumType e) const // static_cast any type to size_t using type deduction
-        { return static_cast<std::size_t>(e); }
-};
+// struct EnumHasher
+// {
+//     template <typename EnumType>
+//     std::size_t operator()(EnumType e) const // static_cast any type to size_t using type deduction
+//         { return static_cast<std::size_t>(e); }
+// };
 
 
 
 class ServiceInfo
 {
-    ServiceType _type;
+    std::string _type;
     TcpPort     _port;
     std::string _customData;
     
@@ -180,15 +180,17 @@ public:
     
     ServiceInfo(); // Required to be a value in a map
     ServiceInfo(const ServiceInfo &other);
-    ServiceInfo( ServiceType type, TcpPort port, const std::string &customData = std::string() );
+    ServiceInfo( std::string type, TcpPort port, const std::string &customData = std::string() );
     
-    ServiceType type() const;
+    const std::string& type() const;
     TcpPort port() const;
     const std::string& customData() const;
     
     bool operator==(const ServiceInfo &other) const;
     bool operator!=(const ServiceInfo &other) const;
 };
+
+std::ostream& operator<<(std::ostream& out, const ServiceInfo &value);
 
 
 
@@ -199,7 +201,7 @@ class NodeInfo
 {
 public:
 
-    typedef std::unordered_map<ServiceType, ServiceInfo, EnumHasher> Services;
+    typedef std::unordered_map<std::string, ServiceInfo> Services;
 
 private:
     
