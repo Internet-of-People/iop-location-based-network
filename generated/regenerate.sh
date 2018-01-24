@@ -9,7 +9,7 @@ protoc -I=../src --cpp_out=. ../src/IopLocNet.proto
 #mkdir /tmp/IopLocNet
 #echo Downloading Protobuf protocol definitions
 #wget --quiet --output-document /tmp/IopLocNet/IopLocNet.proto \
-#    https://raw.githubusercontent.com/Internet-of-People/message-protocol/60a1bf7cdca63ca3814bcfa1465118e5af87b66d/IopLocNet.proto
+#    https://raw.githubusercontent.com/Internet-of-People/message-protocol/5988a7d63562bdab776bcdadae16dd217ed9ee97/IopLocNet.proto
 
 #protoc -I=/tmp/IopLocNet --cpp_out=. /tmp/IopLocNet/IopLocNet.proto
 #rm -rf /tmp/IopLocNet
