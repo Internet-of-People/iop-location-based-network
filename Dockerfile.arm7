@@ -57,7 +57,7 @@ RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases
     ALPINE_GLIBC_BASE_PACKAGE_FILENAME="glibc-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
     ALPINE_GLIBC_BIN_PACKAGE_FILENAME="glibc-bin-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
     ALPINE_GLIBC_I18N_PACKAGE_FILENAME="glibc-i18n-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
-    apk add --no-cache --virtual=.build-dependencies wget ca-certificates && \
+    apk add --no-cache --virtual=.build-dependencies  ca-certificates wget && \
     wget \
         "https://raw.githubusercontent.com/andyshinn/alpine-pkg-glibc/master/sgerrand.rsa.pub" \
         -O "/etc/apk/keys/sgerrand.rsa.pub" && \
@@ -77,48 +77,27 @@ RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases
     apk del glibc-i18n && \
     \
     rm "/root/.wget-hsts" && \
-    apk del .build-dependencies && \
     rm \
         "$ALPINE_GLIBC_BASE_PACKAGE_FILENAME" \
         "$ALPINE_GLIBC_BIN_PACKAGE_FILENAME" \
         "$ALPINE_GLIBC_I18N_PACKAGE_FILENAME"
 
-# Protobuf 3.5
-RUN apk add --update protobuf protobuf-dev   \
-&& /usr/glibc-compat/sbin/ldconfig
-
-#geos-3.4.3
-RUN apk update && apk add  g++ make automake autoconf cmake sqlite-dev linux-headers \
-&& apk add --update --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj4-dev \
-&& wget http://download.osgeo.org/geos/geos-3.4.3.tar.bz2 \
-&&  bunzip2 geos-3.4.3.tar.bz2 \
-&& tar xvf  geos-3.4.3.tar \
-&& cd geos-3.4.3 \
-&& ./configure  &&  make  &&  make install && cd .. &&  rm -rf geos-3.4.3
-
-#libspatialite-4.3.0
-RUN  wget http://www.gaia-gis.it/gaia-sins/libspatialite-4.3.0a.tar.gz \
-&& tar xzf libspatialite-4.3.0a.tar.gz \
-&& rm libspatialite-4.3.0a.tar.gz  \
-&& cd libspatialite-4.3.0a  \
-&& CFLAGS="-DSQLITE_ENABLE_RTREE=1" ./configure --disable-freexl --disable-libxml2 \
-&& make && make install-strip && cd .. && rm -rf libspatialite-4.3.0a
-
 
 WORKDIR /
-# Get the loc sourcecode
-COPY . iop-locnet
 ADD docker/run.sh run.sh
+ADD docker/iop-locnetd /usr/local/bin/iop-locnetd
 
-#Locaction network
-RUN /usr/glibc-compat/sbin/ldconfig \
-&& cd /iop-locnet/generated && sh regenerate.sh && cd .. \
-&& rm -rf build && mkdir build && cd build && cmake .. && make install \
-&& cd / rm -r iop-locnet &&   apk del  g++ make automake autoconf cmake protobuf-dev linux-headers  && rm -rf /var/cache/apk/*  \
-&& chmod +x run.sh && mkdir -p $IOPLOC_PATH \
+RUN  wget 'https://github.com/Internet-of-People/iop-location-based-network/releases/download/v1.2-Beta/libspatial-ARM7.tar.gz' \
+&& tar xvf libspatial-ARM7.tar.gz -C /usr/local/lib \
+&& chown -Rv 1000:$GID /usr/local/bin \
+&& /usr/glibc-compat/sbin/ldconfig \
+&& apk update && apk add   protobuf  protobuf-dev sqlite-dev \
+&& apk add --update --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj4-dev \
+&&  /usr/glibc-compat/sbin/ldconfig \
 && chmod +x run.sh && mkdir -p $IOPLOC_PATH \
 && adduser -D -h $IOPLOC_PATH -u 1000 iop  \
-&& chown iop:iop $IOPLOC_PATH && chmod 755 $IOPLOC_PATH && chown iop:iop /usr/local/bin/iop-locnetd
+&& chown iop:iop $IOPLOC_PATH && chmod 755 $IOPLOC_PATH && chown iop:iop /usr/local/bin/iop-locnetd \
+&& apk del  protobuf-dev wget .build-dependencies  && rm -rf /var/cache/apk/*
 
 # Call uid 1000 "loc"
 USER iop
