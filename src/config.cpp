@@ -22,10 +22,10 @@ namespace LocNet
 {
 
 
-static const uint16_t VERSION_MAJOR = 1;
-static const uint16_t VERSION_MINOR = 1;
+static const uint16_t VERSION_MAJOR = 2;
+static const uint16_t VERSION_MINOR = 0;
 static const uint16_t VERSION_PATCH = 0;
-static const string   RELEASE_STATE = "beta";
+static const string   RELEASE_STATE = "a1";
 
 static const string LOCNET_VERSION = to_string(VERSION_MAJOR) + "." +
     to_string(VERSION_MINOR) + "." + to_string(VERSION_PATCH) + "-" + RELEASE_STATE;
