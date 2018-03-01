@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/Internet-of-People/media/master/official/iop_logo_main.png" alt="IoP Logo" height="100px">
+<img width=200px src="https://github.com/Internet-of-People/iop-resources/blob/master/logo/v2/logo_iop.png" alt="IoP Logo">
 
 # IoP Location-based Network
 [![build status](https://travis-ci.org/Internet-of-People/iop-location-based-network/badges/master/build.svg)](https://travis-ci.org/Internet-of-People/iop-location-based-network/commits/master)
@@ -6,8 +6,6 @@
 IoP-locnet is the Internet of People implementation of a location based server that builds,
 maintains and explores a geographical network of similar nodes,
 enabling to search nodes, people and services by location.
-
-You can learn more why we need this network and it's place within the overall Internet of People concept by reading this [post](https://medium.com/@luisfernandomolina/the-location-based-network-d03e1e57b2b6#.acv7mm9wo).
 
 ## Installation
 
