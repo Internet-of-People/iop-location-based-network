@@ -7,6 +7,8 @@ IoP-locnet is the Internet of People implementation of a location based server t
 maintains and explores a geographical network of similar nodes,
 enabling to search nodes, people and services by location.
 
+You can learn more why we need this network and it's place within the overall Internet of People concept by reading this [post](https://iop.global/data-labor-internet-people/).
+
 ## Installation
 
 See the [installation guide](doc/INSTALL.md) to deploy the software.
