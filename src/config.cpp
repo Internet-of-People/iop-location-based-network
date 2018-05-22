@@ -104,6 +104,7 @@ static const TcpPort DefaultLocalPort   = 16982;
 static const string DEFAULT_NODE_PORT   = to_string(DefaultNodePort);
 static const string DEFAULT_CLIENT_PORT = to_string(DefaultClientPort);
 static const string DEFAULT_LOCAL_PORT  = to_string(DefaultLocalPort);
+static const string DEFAULT_LOCAL_DEVICE= "localhost";
 
 static const string DESC_OPTIONAL_DEFAULT = "Optional, default value: ";
 static const string DEFAULT_CONFIG_FILE = GetApplicationDataDirectory() + "iop-locnet.cfg";
@@ -120,6 +121,7 @@ static const char *OPTNAME_NODEID       = "--nodeid";
 static const char *OPTNAME_HOST         = "--host";
 static const char *OPTNAME_NODE_PORT    = "--nodeport";
 static const char *OPTNAME_CLIENT_PORT  = "--clientport";
+static const char *OPTNAME_LOCAL_DEVICE = "--localdevice";
 static const char *OPTNAME_LOCAL_PORT   = "--localport";
 static const char *OPTNAME_LATITUDE     = "--latitude";
 static const char *OPTNAME_LONGITUDE    = "--longitude";
@@ -169,6 +171,8 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
         DESC_OPTIONAL_DEFAULT + DEFAULT_NODE_PORT ).c_str(), OPTNAME_NODE_PORT);
     _optParser.add(DEFAULT_CLIENT_PORT.c_str(), false, 1, 0, ( "TCP port to serve client (i.e. end user) queries. " +
         DESC_OPTIONAL_DEFAULT + DEFAULT_CLIENT_PORT ).c_str(), OPTNAME_CLIENT_PORT);
+    _optParser.add(DEFAULT_LOCAL_DEVICE.c_str(), false, 1, 0, ( "Network device to serve other IoP services running on this node. " +
+        DESC_OPTIONAL_DEFAULT + DEFAULT_LOCAL_DEVICE ).c_str(), OPTNAME_LOCAL_DEVICE);
     _optParser.add(DEFAULT_LOCAL_PORT.c_str(), false, 1, 0, ( "TCP port to serve other IoP services running on this node. " +
         DESC_OPTIONAL_DEFAULT + DEFAULT_LOCAL_PORT ).c_str(), OPTNAME_LOCAL_PORT);
     _optParser.add("", true, 1, 0, "GPS latitude of this server "
@@ -239,10 +243,12 @@ bool EzParserConfig::Initialize(int argc, const char *argv[])
     unsigned long clientPort;
     _optParser.get(OPTNAME_CLIENT_PORT)->getULong(clientPort);
     _clientPort = clientPort;
-    
+
+    string localDevice;
+    _optParser.get(OPTNAME_LOCAL_DEVICE)->getString(localDevice);
     unsigned long localPort;
     _optParser.get(OPTNAME_LOCAL_PORT)->getULong(localPort);
-    _localPort = localPort;
+    _localEndpoint = NetworkEndpoint(localDevice,localPort);
     
     _myNodeInfo.reset( new NodeInfo( _nodeId, GpsLocation(_latitude, _longitude),
         NodeContact(_ipAddr, _nodePort, _clientPort), {} ) );
@@ -283,8 +289,8 @@ const vector<NetworkEndpoint>& EzParserConfig::seedNodes() const
 size_t EzParserConfig::neighbourhoodTargetSize() const
     { return isTestMode() ? 3 : NEIGHBOURHOOD_TARGET_SIZE; }
 
-TcpPort EzParserConfig::localServicePort() const
-    { return _localPort; }
+const NetworkEndpoint& EzParserConfig::localServiceEndpoint() const
+    { return _localEndpoint; }
 
 chrono::duration<uint32_t> EzParserConfig::requestExpirationPeriod() const
      { return isTestMode() ? chrono::duration<uint32_t>(chrono::seconds(60)) : _requestExpirationPeriod; }

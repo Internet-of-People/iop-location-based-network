@@ -140,7 +140,7 @@ struct TestConfig : public Config
     //static std::pair<size_t, const char**> TestArgs();
     
     NodeInfo        _nodeInfo;
-    TcpPort         _localPort = 0;
+    NetworkEndpoint _localEndpoint = NetworkEndpoint("",0);
     std::string     _logPath;
     std::string     _dbPath;
     size_t          _neighbourhoodTargetSize = 5;
@@ -151,7 +151,7 @@ struct TestConfig : public Config
     TestConfig();                           // For test clients where only network options matter
     
     const NodeInfo& myNodeInfo() const override;
-    TcpPort localServicePort() const override;
+    const NetworkEndpoint& localServiceEndpoint() const override;
     
     const std::string& logPath() const override;
     const std::string& dbPath() const override;
