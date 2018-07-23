@@ -37,6 +37,8 @@ ENV LOGPATH  "/data/locnet/debug.log"
 
 #   Externally accessible IP address (ipv4 or v6) to be advertised for other nodes or clients. Required for seeds only, autodetected otherwise.
 #ENV HOST
+#   Internally accessible IP address that is required for mercury services on the same node.
+#ENV LOCALHOST
 
 # Host name of seed node to be used instead of default seeds. You can repeat this option to define multiple custom seed nodes.
 ENV NODEID  "YourNodeIdHere"

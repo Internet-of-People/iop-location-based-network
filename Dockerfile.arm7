@@ -1,3 +1,61 @@
+FROM multiarch/alpine:armhf-v3.6 as build
+#add glibc
+RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" && \
+    ALPINE_GLIBC_PACKAGE_VERSION="2.26-r0" && \
+    ALPINE_GLIBC_BASE_PACKAGE_FILENAME="glibc-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
+    ALPINE_GLIBC_BIN_PACKAGE_FILENAME="glibc-bin-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
+    ALPINE_GLIBC_I18N_PACKAGE_FILENAME="glibc-i18n-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
+    apk add --no-cache --virtual=.build-dependencies wget ca-certificates && \
+    wget \
+        "https://raw.githubusercontent.com/andyshinn/alpine-pkg-glibc/master/sgerrand.rsa.pub" \
+        -O "/etc/apk/keys/sgerrand.rsa.pub" && \
+    wget \
+        "$ALPINE_GLIBC_BASE_URL/$ALPINE_GLIBC_PACKAGE_VERSION/$ALPINE_GLIBC_BASE_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_BASE_URL/$ALPINE_GLIBC_PACKAGE_VERSION/$ALPINE_GLIBC_BIN_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_BASE_URL/$ALPINE_GLIBC_PACKAGE_VERSION/$ALPINE_GLIBC_I18N_PACKAGE_FILENAME" && \
+    apk add --no-cache \
+        "$ALPINE_GLIBC_BASE_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_BIN_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_I18N_PACKAGE_FILENAME" && \
+    \
+    rm "/etc/apk/keys/sgerrand.rsa.pub" && \
+    /usr/glibc-compat/bin/localedef --force --inputfile POSIX --charmap UTF-8 C.UTF-8 || true && \
+    echo "export LANG=C.UTF-8" > /etc/profile.d/locale.sh && \
+    \
+    apk del glibc-i18n && \
+    \
+    rm "/root/.wget-hsts" && \
+    apk del .build-dependencies && \
+    rm \
+        "$ALPINE_GLIBC_BASE_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_BIN_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_I18N_PACKAGE_FILENAME"
+
+#geos-3.4.3
+RUN apk update && apk add  g++ make automake autoconf cmake sqlite-dev linux-headers  zlib-dev \
+&& apk add --update --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj4-dev \
+&& wget http://download.osgeo.org/geos/geos-3.4.3.tar.bz2 \
+&&  bunzip2 geos-3.4.3.tar.bz2 \
+&& tar xvf  geos-3.4.3.tar \
+&& cd geos-3.4.3 \
+&& ./configure  &&  make  &&  make install && cd .. &&  rm -rf geos-3.4.3
+
+#libspatialite-4.3.0
+RUN  wget http://www.gaia-gis.it/gaia-sins/libspatialite-4.3.0a.tar.gz \
+&& tar xzf libspatialite-4.3.0a.tar.gz \
+&& rm libspatialite-4.3.0a.tar.gz  \
+&& cd libspatialite-4.3.0a  \
+&& CFLAGS="-DSQLITE_ENABLE_RTREE=1" ./configure --disable-freexl --disable-libxml2 \
+&& make && make install
+
+
+RUN apk add protobuf-dev
+
+ADD ./ /iop-locnet/
+
+RUN cd iop-locnet    && \
+    cd generated && sh regenerate.sh && cd .. && sh build.sh
+
 FROM multiarch/alpine:armhf-v3.6
 MAINTAINER wessel<jimfromsa@gmail.com>
 
@@ -84,20 +142,22 @@ RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases
 
 
 WORKDIR /
-ADD docker/run.sh run.sh
-ADD docker/iop-locnetd /usr/local/bin/iop-locnetd
 
-RUN  wget 'https://github.com/Internet-of-People/iop-location-based-network/releases/download/v1.2-Beta/libspatial-ARM7.tar.gz' \
-&& tar xvf libspatial-ARM7.tar.gz -C /usr/local/lib \
+ADD docker/run.sh run.sh
+
+COPY --from=build /iop-locnet/build/src/iop-locnetd /usr/local/bin/iop-locnetd
+COPY --from=build /usr/local/lib/libspatialite.so.7 /usr/local/lib/libspatialite.so.7
+COPY --from=build /usr/local/lib/libgeos_c.so.1 /usr/local/lib/libgeos_c.so.1
+COPY --from=build /usr/local/lib/libgeos-3.4.3.so /usr/local/lib/libgeos-3.4.3.so
+
+RUN mkdir -p $IOPLOC_PATH  && adduser -D -h $IOPLOC_PATH -u 1000 iop  \
+&& chown iop:iop $IOPLOC_PATH && chmod 755 $IOPLOC_PATH && chown iop:iop /usr/local/bin/iop-locnetd \
 && chown -Rv 1000:$GID /usr/local/bin \
 && /usr/glibc-compat/sbin/ldconfig \
 && apk update && apk add   protobuf  protobuf-dev sqlite-dev \
 && apk add --update --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj4-dev \
 &&  /usr/glibc-compat/sbin/ldconfig \
-&& chmod +x run.sh && mkdir -p $IOPLOC_PATH \
-&& adduser -D -h $IOPLOC_PATH -u 1000 iop  \
-&& chown iop:iop $IOPLOC_PATH && chmod 755 $IOPLOC_PATH && chown iop:iop /usr/local/bin/iop-locnetd \
-&& apk del  protobuf-dev wget .build-dependencies  && rm -rf /var/cache/apk/*
+&& chmod +x run.sh
 
 # Call uid 1000 "loc"
 USER iop

@@ -2,73 +2,81 @@
 
 ## ARM 
 
-Build the build container
-```
-docker build  -f Dockerfile.libspatiallite-arm7-build -t build .
-docker run -it build /bin/sh
-```
-
-
-Find the Running container
-```
-docker ps
-```
-
-Copy the artifact
-
-```
-docker cp 8eba45b4af2d:/iop-locnet/build/src/iop-locnetd  docker/iop-locnetd
-```
-
-Build the container
+### Build the container
 ```
 docker build  -f Dockerfile.arm7 -t libertaria/iop-loc:arm7-v2.0.0 .
 ```
 
+### Run the container
+
+```
+docker run   \
+-e NODEID=058ab41184872391449f17d092f4c240ed87e3e9  \
+-e PUBLIC_IP=109.41.3.136  \
+-e LATITUDE=52.4713  \
+-e LONGITUDE=13.5168  \
+-e CONFIGFILE=/data/locnet/iop-locnet.cfg  \
+-e DBPATH=/data/locnet/iop-locnet.sqlite  \
+-e LOCALPORT=16982  \
+-e CLIENTPORT=16981  \
+-e IOPLOC_PATH=/data/locnet/  \
+-e NODEPORT=16980  \
+-e LOGPATH=/data/locnet/debug.log  \
+-e LOCALDEVICE= 172.17.0.1 \
+-p 16980:16980  \
+-p 16981:16981  \
+-p 16982:16982  \
+libertaria/iop-loc:arm7-v2.0.0
+
+```
+
+
+### Push the container
+
+This is only needed if the container is needed by other people
+
+```
+docker push libertaria/iop-loc:amd64-v2.0.0
+```
+
 ## x64
 
-First, you have to install all external dependencies.  
-If you are on Ubuntu 17.04 you are lucky and just have to do:
+### Build the container
+```
+docker build  -f Dockerfile.yml  -t libertaria/iop-loc:amd64-v2.0.0 .
+```
 
-    apt-get install -y g++ cmake protobuf-compiler libprotobuf-dev libspatialite-dev
+### Run the container
 
-Otherwise, for others Ubuntu distributions from 14.04, you will have to compile a protobuf compiler by yourself:
+```
+docker run   \
+-e NODEID=058ab41184872391449f17d092f4c240ed87e3e9  \
+-e PUBLIC_IP=109.41.3.136  \
+-e LATITUDE=52.4713  \
+-e LONGITUDE=13.5168  \
+-e CONFIGFILE=/data/locnet/iop-locnet.cfg  \
+-e DBPATH=/data/locnet/iop-locnet.sqlite  \
+-e LOCALPORT=16982  \
+-e CLIENTPORT=16981  \
+-e IOPLOC_PATH=/data/locnet/  \
+-e NODEPORT=16980  \
+-e LOGPATH=/data/locnet/debug.log  \
+-e LOCALDEVICE= 172.17.0.1 \
+-p 16980:16980  \
+-p 16981:16981  \
+-p 16982:16982  \
+libertaria/iop-loc:amd64-v2.0.0
+```
 
-    apt-get install -y curl g++ cmake automake autoconf libprotobuf-dev libspatialite-dev  
-    curl -OL https://github.com/google/protobuf/releases/download/v3.5.0/protobuf-cpp-3.5.0.tar.gz
-    tar zxvf protobuf-cpp-3.5.0.tar.gz
-    cd protobuf-3.5.0
-    ./configure
-    make
-    make install
-    ldconfig
+### Push the container
 
-Once this done, go inside the folder where you cloned or uncompressed this project in order to start to type the build commands.
+This is only needed if the container is needed by other people
 
-Optionally, you can regenerate the C++ sources from the protocol definitions in order to make sure these files are compatible with your protobuf version:
 
-    cd generated && ./regenerate.sh && cd ..
 
-Finally, you can just run `build.sh` or perform the same steps as the script as follows:
-
-First you have to generate build files with CMake, specifying the directory
-containing our main `CMakeLists.txt` file. We suggest running the build in a dedicated directory,
-the provided script uses directory `build`. Thus from the project root you can run
-
-    mkdir build
-    cd build
-    cmake ..
-
-CMake should have successfully generated a `Makefile`, so you can just execute
-
-    make
-
-Assuming the stars aligned luckily for your environment and you followed the suggested directory structure, you find the executable file `src/iop-locnetd` created under your `build` directory.
-If you also want to install the software to your system directories, you have to run
-
-    make install
-
+```
 docker push libertaria/iop-loc:amd64-v2.0.0
+```
 
 ## Manifest
 
