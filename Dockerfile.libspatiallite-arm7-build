@@ -1,0 +1,64 @@
+FROM multiarch/alpine:armhf-v3.6
+MAINTAINER wessel<jimfromsa@gmail.com>
+
+#add glibc
+RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" && \
+    ALPINE_GLIBC_PACKAGE_VERSION="2.26-r0" && \
+    ALPINE_GLIBC_BASE_PACKAGE_FILENAME="glibc-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
+    ALPINE_GLIBC_BIN_PACKAGE_FILENAME="glibc-bin-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
+    ALPINE_GLIBC_I18N_PACKAGE_FILENAME="glibc-i18n-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
+    apk add --no-cache --virtual=.build-dependencies wget ca-certificates && \
+    wget \
+        "https://raw.githubusercontent.com/andyshinn/alpine-pkg-glibc/master/sgerrand.rsa.pub" \
+        -O "/etc/apk/keys/sgerrand.rsa.pub" && \
+    wget \
+        "$ALPINE_GLIBC_BASE_URL/$ALPINE_GLIBC_PACKAGE_VERSION/$ALPINE_GLIBC_BASE_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_BASE_URL/$ALPINE_GLIBC_PACKAGE_VERSION/$ALPINE_GLIBC_BIN_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_BASE_URL/$ALPINE_GLIBC_PACKAGE_VERSION/$ALPINE_GLIBC_I18N_PACKAGE_FILENAME" && \
+    apk add --no-cache \
+        "$ALPINE_GLIBC_BASE_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_BIN_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_I18N_PACKAGE_FILENAME" && \
+    \
+    rm "/etc/apk/keys/sgerrand.rsa.pub" && \
+    /usr/glibc-compat/bin/localedef --force --inputfile POSIX --charmap UTF-8 C.UTF-8 || true && \
+    echo "export LANG=C.UTF-8" > /etc/profile.d/locale.sh && \
+    \
+    apk del glibc-i18n && \
+    \
+    rm "/root/.wget-hsts" && \
+    apk del .build-dependencies && \
+    rm \
+        "$ALPINE_GLIBC_BASE_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_BIN_PACKAGE_FILENAME" \
+        "$ALPINE_GLIBC_I18N_PACKAGE_FILENAME"
+
+#geos-3.4.3
+RUN apk update && apk add  g++ make automake autoconf cmake sqlite-dev linux-headers  zlib-dev \
+&& apk add --update --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj4-dev \
+&& wget http://download.osgeo.org/geos/geos-3.4.3.tar.bz2 \
+&&  bunzip2 geos-3.4.3.tar.bz2 \
+&& tar xvf  geos-3.4.3.tar \
+&& cd geos-3.4.3 \
+&& ./configure  &&  make  &&  make install && cd .. &&  rm -rf geos-3.4.3
+
+#libspatialite-4.3.0
+RUN  wget http://www.gaia-gis.it/gaia-sins/libspatialite-4.3.0a.tar.gz \
+&& tar xzf libspatialite-4.3.0a.tar.gz \
+&& rm libspatialite-4.3.0a.tar.gz  \
+&& cd libspatialite-4.3.0a  \
+&& CFLAGS="-DSQLITE_ENABLE_RTREE=1" ./configure --disable-freexl --disable-libxml2 \
+&& make && make install
+
+COPY . iop-locnet
+
+RUN apk update && apk add  g++ make automake autoconf cmake sqlite-dev linux-headers  protobuf  protobuf-dev \
+&& /usr/glibc-compat/sbin/ldconfig \
+&& cd /iop-locnet/generated && sh regenerate.sh && cd .. \
+&& rm -rf build && mkdir build && cd build && cmake .. && make install
+
+
+
+
+
+

@@ -1,5 +1,6 @@
 <img width=200px src="https://github.com/Internet-of-People/iop-resources/blob/master/logo/v2/logo_iop.png" alt="IoP Logo">
 
+
 # IoP Location-based Network
 [![build status](https://travis-ci.org/Internet-of-People/iop-location-based-network/badges/master/build.svg)](https://travis-ci.org/Internet-of-People/iop-location-based-network/commits/master)
 
@@ -12,6 +13,10 @@ You can learn more why we need this network and it's place within the overall In
 ## Installation
 
 See the [installation guide](doc/INSTALL.md) to deploy the software.
+
+## Docker Containers
+
+See the [docker guide](doc/Docker.md) to see how to build docker container for the arm7 and amd64.
 
 ## Developer guide
 
