@@ -9,6 +9,6 @@ sudo checkinstall \
     --pkglicense=GPLv3 \
     --pkggroup=net \
     --pkgname=iop-locnet \
-    --pkgversion=1.2.0-b1 \
+    --pkgversion=2.0.0-a1 \
     --pkgarch=$(dpkg --print-architecture) \
     $@
