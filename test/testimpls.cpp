@@ -317,7 +317,7 @@ TestConfig::TestConfig() :
 
 bool TestConfig::isTestMode() const             { return true; }
 const NodeInfo& TestConfig::myNodeInfo() const  { return _nodeInfo; }
-TcpPort TestConfig::localServicePort() const    { return _localPort; }
+const NetworkEndpoint& TestConfig::localServiceEndpoint() const { return _localEndpoint; }
 const std::string& TestConfig::logPath() const  { return _logPath; }
 const std::string& TestConfig::dbPath() const   { return _dbPath; }
 

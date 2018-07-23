@@ -95,7 +95,7 @@ int main(int argc, const char *argv[])
                 new IncomingClientRequestDispatcher(node) ) ) );
         
         shared_ptr<DispatchingTcpServer> localTcpServer = DispatchingTcpServer::Create(
-            "localhost", config->localServicePort(), localDispatcherFactory );
+            config->localServiceEndpoint().address(), config->localServiceEndpoint().port(), localDispatcherFactory );
         shared_ptr<DispatchingTcpServer> clientTcpServer = DispatchingTcpServer::Create(
             myNodeInfo.contact().clientPort(), clientDispatcherFactory );
 

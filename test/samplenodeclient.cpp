@@ -61,7 +61,7 @@ int main(int argc, const char* argv[])
         NodeMethodsProtoBufClient client(dispatcher, nullptr);
         size_t colleagueCount = client.GetNodeCount();
         LOG(INFO) << "Get node count " << colleagueCount;
-        vector<NodeInfo> randomNodes = client.GetRandomNodes(10, Neighbours::Included);
+        vector<NodeInfo> randomNodes = client.GetRandomNodes(50, Neighbours::Included);
         LOG(INFO) << "Got " << randomNodes.size() << " random nodes";
         for (const auto &node : randomNodes)
             { LOG(INFO) << "  " << node; }
