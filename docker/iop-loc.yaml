@@ -13,5 +13,5 @@ manifests:
     -
         image: libertaria/iop-loc:x86-v2.0.0
         platform:
-            architecture: x86
+            architecture: 386
             os: linux
