@@ -1,12 +1,17 @@
 image: libertaria/iop-loc:latest
 manifests:
     -
-        image: libertaria/iop-loc:2.0.0-rc1
+        image: libertaria/iop-loc:amd64-v2.0.0
         platform:
             architecture: amd64
             os: linux
     -
-        image: libertaria/iop-loc:2.0.0-rc1
+        image: libertaria/iop-loc:arm7-v2.0.0
         platform:
             architecture: arm
+            os: linux
+    -
+        image: libertaria/iop-loc:x86-v2.0.0
+        platform:
+            architecture: 386
             os: linux
